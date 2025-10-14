@@ -1,5 +1,5 @@
 <?php
-require 'C:\xampp\htdocs\lab_sync\config\db.php';
+// require 'C:\xampp\htdocs\lab_sync\config\db.php';
 
 
 

@@ -17,9 +17,15 @@ class TestCatalogController {
         $conn1 = connect();
         $model = new TestCatalog($conn1);
         $packages = $model->getAllTests();
-        
-        include 'C:\xampp\htdocs\lab_sync\app\views\receptionist\test_catalog.php';
+        if($packages === false) {
+            echo "Error fetching tests.";
+            return;
+        }else{
+            // extract(['packages' => $packages]);
+            include 'C:\xampp\htdocs\lab_sync\app\views\receptionist\test_catalog.php';
+        }
     }
+        
     public function add_test() {
         include 'C:\xampp\htdocs\lab_sync\app\views\receptionist\add_test.php';
     }
