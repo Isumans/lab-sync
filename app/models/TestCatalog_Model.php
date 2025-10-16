@@ -7,9 +7,9 @@ class TestCatalog {
         return $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
     }
 
-    public function addTest($name, $category, $price) {
-        $stmt = $this->db->prepare("INSERT INTO tests (test_name, category, price) VALUES (?, ?, ?)");
-        $stmt->bind_param("ssd", $name, $category, $price);
+    public function addTest($name, $category, $price, $description) {
+        $stmt = $this->db->prepare("INSERT INTO tests (test_name, category, price, description) VALUES (?, ?, ?, ?)");
+        $stmt->bind_param("ssds", $name, $category, $price, $description);
         return $stmt->execute();
     }
    

@@ -48,15 +48,33 @@ if ($controllerName === 'TestCatalog') {
     if ($action === 'login') {
         $authController->login();
     }elseif ($action === 'index') {
-        include 'C:\xampp\htdocs\lab_sync\app\views\auth\dash_login.php';
+        include 'app\views\auth\dash_login.php';
         
     }
     // ...other auth actions...
 }elseif($controllerName === 'administratorController'){
     $action = $_GET['action'] ?? 'settings'; // or your desired default
     if($action ==='settings'){
-        include 'C:\xampp\htdocs\lab_sync\app\views\administrator\settings.php';
+        include 'app\views\administrator\settings.php';
     }
+}
+elseif ($controllerName === 'appointmentsController') {
+    $action = $_GET['action'] ?? 'index'; // or your desired default
+    if ($action === 'index') {
+        include 'app\views\receptionist\appointments.php';
+    }elseif($action ==='test_catalog'){
+        include 'app\views\receptionist\test_catalog.php';
+    }
+    // ...other receptionist actions...
+}elseif($controllerName === 'patients'){
+    $action = $_GET['action'] ?? 'index'; // or your desired default
+    if($action ==='index'){
+        include 'app\views\patients\patients.php';
+
+}
+}
+ else {
+    echo "404 Not Found";
 }
 
 

@@ -35,14 +35,14 @@ class TestCatalogController {
             $testName = $_POST['test-name'];
             $category = $_POST['test-category'];
             $price = $_POST['test-price'];
-            $code = $_POST['test-code'];
+            $description = $_POST['test-description'];
+            // $code = $_POST['test-code'];
 
             $conn1 = connect();
             $model2 = new TestCatalog($conn1);
-            $success = $model2->addTest($testName, $category, $price, $code);
+            $success = $model2->addTest($testName, $category, $price, $description);
             if ($success) {
-                include 'C:\xampp\htdocs\lab_sync\app\views\receptionist\test_catalog.php';
-                exit();
+                return $this->index();
             } else {
                 echo "Error adding test.";
             }

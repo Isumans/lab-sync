@@ -29,8 +29,8 @@
                             <option value="molecular">Molecular Tests</option>
 
                         </select>
-                        <label for="test-code">Test Code:</label>
-                        <input type="text" id="test-code" name="test-code" required>
+                        <!-- <label for="test-code">Test Code:</label>
+                        <input type="text" id="test-code" name="test-code" required> -->
                         <label for="test-description">Description:</label>
                         <textarea id="test-description" name="test-description" required></textarea>
 

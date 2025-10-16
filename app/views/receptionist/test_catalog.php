@@ -4,6 +4,7 @@
     <head>
         <title>Test Catalog</title>
         <link rel="stylesheet" href="/lab_sync/public/styles.css">
+        <link rel="stylesheet" href="/lab_sync/public/table.css">
     </head>
     <body>
         
@@ -21,7 +22,7 @@
                          <button class="add-test-button" ><a href="/lab_sync/index.php?controller=TestCatalog&action=add_test">+ Add New Test</a></button>
                     </div>
                     <div>
-                        <p class="MC-p">Dashboard>Test-Catalog</p>
+                        <p class="MC-p">Test-Catalog-></p>
                     </div>
                     <div class="search-and-filter">
                         <input type="text" class="search-bar" placeholder="  Search tests...">

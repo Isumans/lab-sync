@@ -12,6 +12,7 @@
         <title>Dashboard</title>
         <!-- <link rel="stylesheet" href="stle1.css"> -->
         <link rel="stylesheet" href="/lab_sync/public/styles.css">
+        <link rel="stylesheet" href="/lab_sync/public/table.css">
     </head>
     <body>
         <!-- Navigation Bar -->

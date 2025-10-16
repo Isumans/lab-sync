@@ -21,7 +21,6 @@ body {
 
 .navbar {
     background: var(--secondary-color);
-    /* color: #fff; */
     padding: 0 24px;
     height: 56px;
     display: flex;
@@ -90,7 +89,6 @@ body {
 .sidebar {
     width: 260px;
     background: var(--secondary-color);
-    /* color: #fff; */
     padding: 24px 0;
     min-height: 85vh;
     font-size: 0.95rem;
@@ -134,6 +132,11 @@ body {
 .sidebar a:hover {
     background: var(--primary-color);
 }
+.sidebar a.active,
+.sidebar a.active:hover {
+    background: var(--primary-color);
+}
+
 
 .main-content {
     flex: 1;
@@ -149,7 +152,6 @@ body {
 .container-cards {
     display: flex;
     flex-direction: row;
-    /* grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); */
     gap: 24px;
     margin-top: 24px;
     align-items: stretch;
@@ -165,9 +167,6 @@ body {
     margin-bottom: 24px;
     max-height: 100%;
     flex:1;
-    /* font-size: 0.9rem; */
-    
-    
 
     
 }
@@ -193,60 +192,7 @@ body {
     border-radius: 15px;
     box-shadow: 0 2px 4px var(--primary-color);
 }
-table{
-    border-radius: 10px;
-}
-.appointments-table, .test-catalog-table {
-    width: 93%;
-    border-collapse: seperate;
-    border-spacing: 0;
-    border-radius: 12px;
-    overflow:hidden;
-    margin-top: 16px;
-    background-color: var(--secondary-color);
-    /* border-radius: 5px; */
-}
-.appointments-table th, .appointments-table td, .test-catalog-table th, .test-catalog-table td {
-    border: none;
-    border-bottom: 1px solid #ddd;
-    /* padding: px; */
-    text-align: left;
-    padding:10px;
-    margin:50px;
 
-}
-.appointments-table th, .test-catalog-table th {
-    background: var(--secondary-color);
-    /* color: #fff; */
-}
-.appointments-table th:first-child, .test-catalog-table th:first-child {
-    border-top-left-radius: 12px;
-}
-.appointments-table th:last-child, .test-catalog-table th:last-child {
-    border-top-right-radius: 12px;
-    
-}
-.appointments-table tr:last-child td, .test-catalog-table tr:last-child td {
-    /* border-top-right-radius: 12px; */
-    border-bottom-right-radius: 12px;
-    border-bottom: none;
-}
-.appointments-table td:first-child {
-    border-bottom-left-radius: 12px;
-}
-.appointments-table td:last-child {
-    border-bottom-right-radius: 12px;
-}
-.Status{
-    font-weight: bold;
-    background-color: #3DBDEC;
-    border-radius: 30px;
-    padding: 5px;
-    min-width: 90px;
-    width:fit-content;
-    justify-content: center;
-    text-align: center;
-}
 .test-catalog-header{
     display: flex;
     justify-content: space-between;
@@ -281,16 +227,11 @@ table{
 }
 .filter-section{
     flex: 1;
-    /* display: flex; */
     flex-direction: column;
-    /* justify-content: center; */
-    /* align-items: center; */
-    /* margin-top: 16px; */
-    /* margin-bottom: -8px; */
+
 }
 .Tmain-content {
     display:flex;
-    /* justify-content: center; */
     flex-direction: column;
     flex: 1;
     padding: 32px;
@@ -304,25 +245,13 @@ table{
     width: 10%;
     background-color: var(--secondary-color);
     border-radius: 10px 10px ;
-    /* border: #686868 2px solid; */
     border:none;
 }
 .category-filter .category-filter{
     margin-right: 10px;
 
 }
-/* .test-catalog-table{
-    width: 100%;
-    border: 2px solid #ddd;
-    border-collapse: seperate;
-    border-spacing: 0;
-    border-radius: 12px;
-    overflow:hidden;
-    margin-top: 16px;
-    border-radius: 5px;
-} */
  .test-catalog-table .TStatus{
-    /* font-weight: bold; */
     background-color: var(--background-color);
     border-radius: 30px;
     padding: 5px 15px;
@@ -366,6 +295,7 @@ table{
     display: flex;
     flex-direction: column;
     gap: 12px;
+    margin-bottom: 10px;
 }
 .formStyle label {
     font-weight: 600;
@@ -399,3 +329,4 @@ table{
     font-size: 1em;
     font-family: 'Inter', sans-serif;
 }
+
