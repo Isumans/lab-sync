@@ -49,3 +49,7 @@ table{
     justify-content: center;
     text-align: center;
 }
+.form1{
+    border: none;
+    background-color: transparent;
+}

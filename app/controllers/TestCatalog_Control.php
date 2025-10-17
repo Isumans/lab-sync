@@ -22,6 +22,7 @@ class TestCatalogController {
             return;
         }else{
             // extract(['packages' => $packages]);
+            $action = 'index';
             include 'C:\xampp\htdocs\lab_sync\app\views\receptionist\test_catalog.php';
         }
     }
@@ -45,6 +46,34 @@ class TestCatalogController {
                 return $this->index();
             } else {
                 echo "Error adding test.";
+            }
+        }
+    }
+    public function edit_test() {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $testId = $_POST['test_id'];
+            $testName = $_POST['test_name'];
+            $category = $_POST['category'];
+            $price = $_POST['price'];
+
+            $conn1 = connect();
+            $model2 = new TestCatalog($conn1);
+            if (isset($_POST['edit'])) {
+                $success = $model2->updateTest($testId, $testName, $category, $price);
+                if ($success) {
+                    header("Location: /lab_sync/index.php?controller=TestCatalog&action=index");
+                } else {
+                    echo "Error updating test.";
+                }
+            } elseif (isset($_POST['delete'])) {
+                $success = $model2->deleteTest($testId);
+                if ($success) {
+                    header("Location: /lab_sync/index.php?controller=TestCatalog&action=index");
+                    exit;
+
+                } else {
+                    echo "Error deleting test.";
+                }
             }
         }
     }

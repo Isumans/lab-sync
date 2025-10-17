@@ -2,7 +2,7 @@ function showSection(sectionId, event) {
             event.preventDefault(); // Prevent link jump
 
             // Hide all sections
-            document.querySelectorAll('#content-area .section').forEach(function(sec) {
+            document.querySelectorAll('.content-area .section').forEach(function(sec) {
                 sec.style.display = 'none';
             });
             // Show the selected section
@@ -15,7 +15,7 @@ function showSection(sectionId, event) {
             // Add 'active' to the clicked navItem
             event.target.closest('.navItem').classList.add('active');
             // Optionally, show the corresponding section
-            document.getElementById(sectionId).style.display = 'block';
+            // document.getElementById(sectionId).style.display = 'block';
     
 }
 

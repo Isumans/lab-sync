@@ -36,6 +36,10 @@ if ($controllerName === 'TestCatalog') {
 
     }elseif ($action === 'login_open') {
         include 'C:\xampp\htdocs\lab_sync\app\views\auth\dash_login.php';
+    }elseif($action ==='createAppointment'){
+        include 'C:\xampp\htdocs\lab_sync\app\views\receptionist\create_Appointment.php';
+    }elseif($action ==='edit_test'){
+        $Testcontroller->edit_test();
     }
     
     else {
@@ -72,10 +76,28 @@ elseif ($controllerName === 'appointmentsController') {
         include 'app\views\patients\patients.php';
 
 }
+}elseif($controllerName === 'reportsController'){
+    $action = $_GET['action'] ?? 'index'; // or your desired default
+    if ($action === 'index') {
+        include 'app\views\technicians\reports.php';
+
 }
- else {
-    echo "404 Not Found";
+}elseif($controllerName === 'supplierController'){
+    $action = $_GET['action'] ?? 'index'; // or your desired default
+    if($action ==='index'){
+        include 'app\views\administrator\suppliers.php';}
+    }
+elseif($controllerName === 'billingController'){
+    $action = $_GET['action'] ?? 'index'; // or your desired default
+    if($action ==='index'){
+        include 'app\views\receptionist\billing.php';
+    }elseif($action ==='Register_billing'){
+        include 'app\views\receptionist\createBill.php';
+    }
 }
 
+else {
+        echo "404 Not Found";
+    }
 
 ?>

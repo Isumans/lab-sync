@@ -1,0 +1,26 @@
+:root {
+    --primary-color: #3DBDEC;
+    --secondary-color: #ffffff;
+    --font-color: #000000;
+    --background-color: #F5F6FA;
+    --boder:#4F7A96;
+}
+
+.billingArea{
+    margin-top: 20px;
+}
+.payment-status{
+    border: none;
+    padding: 5px;
+    border-radius: 10px;
+    background-color: var(--primary-color);
+    font-weight: bold;
+}
+.view-button{
+    background-color: var(--primary-color);
+    color: var(--secondary-color);
+    border: none;
+    padding: 8px 12px;
+    border-radius: 5px;
+    cursor: pointer;
+}

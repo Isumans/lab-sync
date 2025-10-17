@@ -1,0 +1,16 @@
+.patient-search {
+    display: flex;
+    flex-direction: row;
+}
+
+.search-option {
+    margin-right: 10px;
+    padding: 5px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    background-color: var(--secondary-color);
+    border-radius: 10px 10px ;
+    border: 2px var(--secondary-color) solid;
+    margin-top: 10px;
+    justify-self: center;
+}

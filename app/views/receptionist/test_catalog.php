@@ -61,16 +61,20 @@
                     <tbody>
                         <?php if (is_array($packages)): ?>
                             <?php foreach ($packages as $package): ?>
-                                <tr>
-                                    <td><?php echo htmlspecialchars($package['test_name']); ?></td>
-                                    <td><?php echo htmlspecialchars($package['test_id']); ?></td>
-                                    <td><?php echo htmlspecialchars($package['category']); ?></td>
-                                    <td><?php echo htmlspecialchars($package['price']); ?></td>
-                                    <td>
-                                        <button class="edit-button"><img src="/lab_sync/public/assests/edit.png" alt="Edit"></button>
-                                        <button class="delete-button"><img src="/lab_sync/public/assests/delete.png" alt="Delete"></button>
-                                    </td>
-                                </tr>
+                                <form method="post" action="/lab_sync/index.php?controller=TestCatalog&action=edit_test" class="editForm">
+                                
+                                    <tr>
+                                    
+                                        <td><input id="test_name" class="form1" name="test_name" type="text" value="<?php echo htmlspecialchars($package['test_name']); ?>"></td>
+                                        <td><input id="test_id" class="form1" name="test_id" type="text" value="<?php echo htmlspecialchars($package['test_id']); ?>"></td>
+                                        <td><input id="category" class="form1" name="category" type="text" value="<?php echo htmlspecialchars($package['category']); ?>"></td>
+                                        <td><input id="price" class="form1" name="price" type="text" value="<?php echo htmlspecialchars($package['price']); ?>"></td>
+                                        <td>
+                                            <button id="edit" type="submit" name="edit" class="edit-button" onclick="showAlertAndSubmit (event,'edit')"><img src="/lab_sync/public/assests/edit.png" alt="Edit"></button>
+                                            <button id="delete" type="submit" name="delete" class="delete-button" onclick="showAlertAndSubmit(event,'delete')"><img src="/lab_sync/public/assests/delete.png" alt="Delete"></button>
+                                        </td>
+                                    </tr>
+                                </form>
                             <?php endforeach; ?>
                         <?php else: ?>
                             <tr><td colspan="5">No tests found or database error.</td></tr>
@@ -88,5 +92,6 @@
                 
             </main>
         </div>
+        <script src="/lab_sync/public/js/showAlert.js"></script>
     </body>
 </html>

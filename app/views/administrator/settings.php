@@ -40,8 +40,8 @@
                 </div>
                 
                 
-                <div id="content-area" class="content_area">
-                    <div id="team" class="section">
+                <div id="content-area" class="content-area">
+                    <div id="team" class="section active">
                         <h2>Team Section</h2>
                         <p>Manage your team members here.</p>
                         <div class="search-and-filter">
