@@ -18,8 +18,8 @@ $currentAction = $_GET['action'] ?? '';
             </a>
         </li>
         <li>
-            <a href="index.php?controller=patients&action=index"
-               class="<?php echo ($currentController === 'patients' && $currentAction === 'index') ? 'active' : ''; ?>">
+            <a href="index.php?controller=patientController&action=index"
+               class="<?php echo ($currentController === 'patientController' && $currentAction === 'index') ? 'active' : ''; ?>">
                 <img class="sidebar-icon" src="/lab_sync/public/assests/patients.png" alt="Patients Icon">Patients
             </a>
         </li>

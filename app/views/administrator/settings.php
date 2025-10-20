@@ -26,7 +26,7 @@
                 </div>
                 <div class="nav-bar-container">
                     <div class="nav-bar-line">
-                        <a class="navItem" onclick="showSection('team', event)" href="#">Team</a>
+                        <a class="navItem active" onclick="showSection('team', event)" href="#">Team</a>
 
 
                         <a class="navItem" onclick="showSection('partner-labs', event)" href="#">Partner Labs</a>
@@ -41,7 +41,7 @@
                 
                 
                 <div id="content-area" class="content-area">
-                    <div id="team" class="section active">
+                    <div id="team" class="section">
                         <h2>Team Section</h2>
                         <p>Manage your team members here.</p>
                         <div class="search-and-filter">

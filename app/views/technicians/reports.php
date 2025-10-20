@@ -52,7 +52,7 @@
                     </div>
                      <div class="nav-bar-container">
                         <div class="nav-bar-line">
-                            <a class="navItem" onclick="showSection('finalReports', event)" href="#">Final Reports</a>
+                            <a class="navItem active" onclick="showSection('finalReports', event)" href="#">Final Reports</a>
 
 
                             <a class="navItem" onclick="showSection('testSamples', event)" href="#">Test Samples</a>
@@ -63,7 +63,7 @@
                         </div>
                     </div>
                     <div id="content-area" class="content-area">
-                       <div id="finalReports" class="section active">
+                       <div id="finalReports" class="section">
                            <h2>Final Reports</h2>
                            <p>View and manage final reports here.</p>
                        </div>
@@ -74,6 +74,7 @@
                        <div id="createReports" class="section" style="display:none;">
                            <h2>Create Reports</h2>
                            <p>Create new reports here.</p>
+                           <?php require 'C:\xampp\htdocs\lab_sync\app\views\technicians\createReport.php'; ?>
                        </div>
                     </div>
                 </div>
@@ -86,11 +87,4 @@
 
 </html>
 
-            </main>
-
-        </div>
-        <script src="/lab_sync/public/js/showSection.js"></script>
-    </body>
-        
-        
-</html>
+            

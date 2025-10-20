@@ -19,10 +19,10 @@
                  <div class="Tmain-content">
                     <div class="test-catalog-header">
                         <h1>Patient</h1>
-                        <button class="add-test-button" ><a href="/lab_sync/index.php?controller=Patients&action=Register_patient">Register Walk-in Patient</a></button>
+                        <button class="add-test-button" ><a href="/lab_sync/index.php?controller=patientController&action=register_patient">Register Walk-in Patient</a></button>
                     </div>
                     <div>
-                        <p class="MC-p">Appointments-></p>
+                        <p class="MC-p">Patients-></p>
                     </div>
                     <div class="container-cards">
                         <div class="card c-card">
@@ -69,28 +69,35 @@
                                 <table class="test-catalog-table">
                                     <thead>
                                         <tr>
+                                            <th>Patient ID</th>
                                             <th>Name</th>
                                             <th>Email</th>
+                                            <th>Contact Number</th>
                                             <th>Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <tr>
-                                            <td>John Doe</td>
-                                            <td>johndoe@example.com</td>
-                                            <td>
-                                                <button class="edit-button">Edit</button>
-                                                <button class="delete-button">Delete</button>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td>Jane Smith</td>
-                                            <td>janesmith@example.com</td>
-                                            <td>
-                                                <button class="edit-button">Edit</button>
-                                                <button class="delete-button">Delete</button>
-                                            </td>
-                                        </tr>
+                                        <?php if (is_array($patients)): ?>
+                                        <?php foreach ($patients as $patient): ?>
+                                            <form method="post" action="/lab_sync/index.php?controller=patientController&action=edit_patient" class="editForm">
+                                            
+                                                <tr>
+                                                    <td><input id="patient_id" class="form1" name="patient_id" type="text" value="<?php echo htmlspecialchars($patient['patient_id']); ?>"></td>
+                                                    <td><input id="patient_name" class="form1" name="patient_name" type="text" value="<?php echo htmlspecialchars($patient['patient_name']); ?>"></td>
+                                                    <td><input id="patient_email" class="form1" name="patient_email" type="text" value="<?php echo htmlspecialchars($patient['email']); ?>"></td>
+                                                    <td><input id="contact_number" class="form1" name="contact_number" type="text" value="<?php echo htmlspecialchars($patient['contact_number']); ?>"></td>
+
+                                                    <td>
+                                                        <button id="edit" type="submit" name="edit" class="edit-button" onclick="showAlertAndSubmit(event,'edit')"><img src="/lab_sync/public/assests/edit.png" alt="Edit"></button>
+                                                        <button id="delete" type="submit" name="delete" class="delete-button" onclick="showAlertAndSubmit(event,'delete')"><img src="/lab_sync/public/assests/delete.png" alt="Delete"></button>
+                                                    </td>
+                                                </tr>
+                                            </form>
+                                        <?php endforeach; ?>
+                                    <?php else: ?>
+                                        <tr><td colspan="5">No tests found or database error.</td></tr>
+                                    <?php endif; ?>
+                        
                                     </tbody>
                                 </table>
                             </div>
@@ -159,6 +166,7 @@
 
         </div>
         <script src="/lab_sync/public/js/showSection.js"></script>
+        <script src="/lab_sync/public/js/showAlert.js"></script>
     </body>
 
 

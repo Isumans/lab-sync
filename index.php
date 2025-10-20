@@ -3,6 +3,9 @@
 require_once 'C:\xampp\htdocs\lab_sync\app\controllers\TestCatalog_control.php';
 require_once 'C:\xampp\htdocs\lab_sync\app\controllers\authController.php';
 require_once 'C:\xampp\htdocs\lab_sync\app\controllers\administratorController.php';
+require_once 'C:\xampp\htdocs\lab_sync\app\controllers\appointmentsController.php';
+require_once 'C:\xampp\htdocs\lab_sync\app\controllers\patientController.php';
+// require_once 'C:\xampp\htdocs\lab_sync\app\controllers\appointmentsController.php';
 require_once 'C:\xampp\htdocs\lab_sync\config\db.php';
 $controllerName = $_GET['controller'] ?? 'Auth'; // Default to 'Auth' controller
 // $controllerName = 'TestCatalog'; 
@@ -63,19 +66,18 @@ if ($controllerName === 'TestCatalog') {
     }
 }
 elseif ($controllerName === 'appointmentsController') {
+    $appointmentController = new appointmentsController();
     $action = $_GET['action'] ?? 'index'; // or your desired default
     if ($action === 'index') {
         include 'app\views\receptionist\appointments.php';
     }elseif($action ==='test_catalog'){
         include 'app\views\receptionist\test_catalog.php';
+    }elseif($action==='createAppointment'){
+        include 'app\views\receptionist\create_Appointment.php';
+    }elseif($action==='storeAppointment'){
+        $appointmentController->storeAppointment();
     }
     // ...other receptionist actions...
-}elseif($controllerName === 'patients'){
-    $action = $_GET['action'] ?? 'index'; // or your desired default
-    if($action ==='index'){
-        include 'app\views\patients\patients.php';
-
-}
 }elseif($controllerName === 'reportsController'){
     $action = $_GET['action'] ?? 'index'; // or your desired default
     if ($action === 'index') {
@@ -94,8 +96,26 @@ elseif($controllerName === 'billingController'){
     }elseif($action ==='Register_billing'){
         include 'app\views\receptionist\createBill.php';
     }
+}elseif($controllerName === 'inventoryController'){
+    $action = $_GET['action'] ?? 'index'; // or your desired default
+    if($action ==='index'){
+        include 'app\views\technicians\inventory.php';
+    }elseif($action ==='add_inventory'){
+        include 'app\views\technicians\add_inventory.php';
+    }
+}elseif($controllerName==='patientController'){
+    $patientsController = new patientController();
+    $action = $_GET['action'] ?? 'index'; // or your desired default
+    if($action==='index'){
+        $patientsController->index();
+    }elseif($action==='register_patient'){
+        $patientsController->register_patient();
+    }elseif($action==='register'){
+        $patientsController->register();
+    }elseif($action==='edit_patient'){
+        $patientsController->edit_patient();
+    }
 }
-
 else {
         echo "404 Not Found";
     }

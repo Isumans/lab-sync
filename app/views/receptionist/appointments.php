@@ -20,14 +20,11 @@
                 <div class="Tmain-content">
                     <div class="test-catalog-header">
                         <h1>Appointments</h1>
-                        <button class="add-test-button" ><a href="/lab_sync/index.php?controller=TestCatalog&action=createAppointment">Create Appointment</a></button>
+                        <button class="add-test-button" ><a href="/lab_sync/index.php?controller=appointmentsController&action=createAppointment">Create Appointment</a></button>
                     </div>
                     <div>
                         <p class="MC-p">Appointments-></p>
                     </div>
-            
-
-                    
                     <div class="heading-row">
                         <h2 class="heading3">Appointment Requests </h2>
                         <div class="user-list">

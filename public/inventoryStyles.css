@@ -1,0 +1,18 @@
+.search-option, .search-button {
+    padding:2px;
+    height: 30px;
+    
+    border-radius: 10px 10px ;
+    border: 2px var(--secondary-color) solid;
+    margin-top: 10px;
+    justify-self: center;
+}
+.search-option{
+    margin-right: 10px;
+    background-color: var(--secondary-color);
+}
+.search-button{
+    margin-left: 10px;
+    padding: 5px 10px;
+    background-color: var(--primary-color);
+}

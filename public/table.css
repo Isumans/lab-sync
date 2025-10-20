@@ -49,7 +49,21 @@ table{
     justify-content: center;
     text-align: center;
 }
-.form1{
+input.form1{
+    outline: none;
     border: none;
+    background-color: transparent;
+}
+.editform input {
+    outline: none;
+    border: none;
+    background-color: transparent;
+}
+input.form1:focus,
+input.form1:active {
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+    /* -webkit-appearance: none; */
     background-color: transparent;
 }

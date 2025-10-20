@@ -20,12 +20,17 @@ body {
 }
 
 .navbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
     background: var(--secondary-color);
     padding: 0 24px;
     height: 56px;
     display: flex;
     align-items: center;
     justify-content: space-between;
+    z-index: 1000;
 }
 .active{
     background-color: var(--primary-color);
@@ -89,14 +94,20 @@ body {
 }
 
 .sidebar {
-    width: 260px;
+    position:fixed;
+    top:56px;
+    left:0;
+    height: calc(100vh - 56px);
+    width: 256px;
     background: var(--secondary-color);
-    padding: 24px 0;
+    padding-bottom: 20px;
     min-height: 85vh;
     font-size: 0.95rem;
     display: flex;
     flex-direction: column;
+    z-index: 1000;
     justify-content: space-between;
+    margin-bottom: 50px;
 }
 
 .sidebar ul {
@@ -111,8 +122,9 @@ body {
 .sidebar ul li {
     margin: 3px 12px;
 }
+
 .sidebar ul li:nth-last-child(2) {
-    margin-top: auto;
+    margin-top:auto;
 }
 
 .sidebar a {
@@ -141,12 +153,13 @@ body {
 
 
 .main-content {
+    margin-left: 256px;
+    margin-top: 56px;
     flex: 1;
     padding: 32px;
     background: var(--background-color);
     min-height: 100%;
     box-shadow: 0 0;
-    margin: 10px;
 }
 .logo-color {
     color: var(--primary-color);
