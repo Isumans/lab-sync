@@ -10,6 +10,7 @@
         <link rel="stylesheet" href="/lab_sync/public/styles.css">
         <link rel="stylesheet" href="/lab_sync/public/settingStyles.css">
         <link rel="stylesheet" href="/lab_sync/public/table.css">
+        <link rel="stylesheet" href="/lab_sync/public/formStyles.css">
     </head>
     <body>
         <!-- Navigation Bar -->
@@ -40,10 +41,15 @@
                 </div>
                 
                 
-                <div id="content-area" class="content-area">
-                    <div id="team" class="section">
-                        <h2>Team Section</h2>
-                        <p>Manage your team members here.</p>
+                <div id="content-area" >
+                    <div id="team" class="Tmain-content">
+                        <div class="test-catalog-header">
+                            <h2>Team Section</h2>
+                            <button class="add-test-button" ><a href="/lab_sync/index.php?controller=administratorController&action=add_user">+Add New User</a></button>
+                        </div>
+                        <div>
+                            <p>Manage your team members here.</p>
+                        </div>
                         <div class="search-and-filter">
                             <input type="text" class="search-bar" placeholder="  Search Users...">
                         </div>
@@ -51,6 +57,7 @@
                             <table class="test-catalog-table">
                                 <thead>
                                     <tr>
+                                        <th>User ID</th>
                                         <th>Name</th>
                                         <th>Email</th>
                                         <th>Role</th>
@@ -60,16 +67,23 @@
                                 </thead>
                                 <tbody>
                                     <!-- Example user rows -->
+                                     <?php if (is_array($users)): ?>
+                                     <?php foreach ($users as $user): ?>
+                                    <form method="POST" action="/lab_sync/index.php?controller=administratorController&action=manageUser">
                                     <tr>
-                                        <td>John Doe</td>
-                                        <td>john.doe@example.com</td>
-                                        <td>Admin</td>
-                                        <td>Active</td>
+                                        <td><input class="form1" type="text" name="user_id" value="<?php echo htmlspecialchars($user['user_id']); ?>"></td>
+                                        <td><input class="form1" type="text" name="username" value="<?php echo htmlspecialchars($user['username']); ?>"></td>
+                                        <td><input class="form1" type="text" name="email" value="<?php echo htmlspecialchars($user['email']); ?>"></td>
+                                        <td><input class="form1" type="text" name="role" value="<?php echo htmlspecialchars($user['role']); ?>"></td>
+                                        <td><input class="form1" type="text" name="status" value="<?php echo htmlspecialchars($user['status']); ?>"></td>
                                         <td>
-                                            <button class="edit-button"><img src="/lab_sync/public/assests/edit.png" alt="Edit"></button>
-                                            <button class="delete-button"><img src="/lab_sync/public/assests/delete.png" alt="Delete"></button>
+                                            <button id="edit" type="submit" name="edit" class="edit-button" onclick="showAlertAndSubmit(event,'edit')"><img src="/lab_sync/public/assests/edit.png" alt="Edit"></button>
+                                            <button id="delete" type="submit" name="delete" class="delete-button" onclick="showAlertAndSubmit(event,'delete')"><img src="/lab_sync/public/assests/delete.png" alt="Delete"></button>
                                         </td>
                                     </tr>
+                                    </form>
+                                    <?php endforeach; ?>
+                                    <?php endif; ?>
                                 </tbody>
                             </table>
                         </div>
@@ -92,5 +106,6 @@
         </div>
 
         <script src="/lab_sync/public/js/showSection.js"></script>
+        <script src="/lab_sync/public/js/showAlert.js"></script>
     </body>
 </html>

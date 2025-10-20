@@ -61,9 +61,22 @@ if ($controllerName === 'TestCatalog') {
     }
     // ...other auth actions...
 }elseif($controllerName === 'administratorController'){
+    $adminController = new administratorController();
     $action = $_GET['action'] ?? 'settings'; // or your desired default
     if($action ==='settings'){
-        include 'app\views\administrator\settings.php';
+        $adminController->settings();
+    }elseif($action==='add_user'){
+        include 'app\views\administrator\add_user.php';
+    }elseif($action==='create_user'){
+        // $username = $_POST['username'];
+        // $password = $_POST['password'];
+        // $role = $_POST['role'];
+        $adminController->createUser();
+    }elseif($action==='manageUser'){
+        // $username = $_POST['username'];
+        // $password = $_POST['password'];
+        // $role = $_POST['role'];
+        $adminController->manageUser();
     }
 }
 elseif ($controllerName === 'appointmentsController') {
