@@ -5,9 +5,10 @@ require_once 'C:\xampp\htdocs\lab_sync\app\controllers\authController.php';
 require_once 'C:\xampp\htdocs\lab_sync\app\controllers\administratorController.php';
 require_once 'C:\xampp\htdocs\lab_sync\app\controllers\appointmentsController.php';
 require_once 'C:\xampp\htdocs\lab_sync\app\controllers\patientController.php';
+require_once 'C:\xampp\htdocs\lab_sync\app\controllers\homeController.php';
 // require_once 'C:\xampp\htdocs\lab_sync\app\controllers\appointmentsController.php';
 require_once 'C:\xampp\htdocs\lab_sync\config\db.php';
-$controllerName = $_GET['controller'] ?? 'Auth'; // Default to 'Auth' controller
+$controllerName = $_GET['controller'] ?? 'home'; // Default to 'home' controller
 // $controllerName = 'TestCatalog'; 
 // This should be set based 
 // on your routing logic
@@ -115,6 +116,17 @@ elseif($controllerName === 'billingController'){
     }elseif($action==='edit_patient'){
         $patientsController->edit_patient();
     }
+}elseif($controllerName==='home'){
+    $action = $_GET['action'] ?? 'index'; // or your desired default
+    if($action==='index'){
+        include 'C:\xampp\htdocs\lab_sync\app\views\patient\patientIndex.php';
+    }elseif($action==='explore'){
+        include 'C:\xampp\htdocs\lab_sync\app\views\patient\explore.php';
+    }elseif($action==='dashboard'){
+        include 'C:\xampp\htdocs\lab_sync\app\views\patient\dashboard.php';
+    }elseif($action==='book_test'){
+        include 'C:\xampp\htdocs\lab_sync\app\views\patient\book.php';
+}
 }
 else {
         echo "404 Not Found";

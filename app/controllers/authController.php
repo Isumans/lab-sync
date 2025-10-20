@@ -23,9 +23,16 @@ class AuthController {
             $user = $model->verifyUser($username, $password);
             if ($user) {
                 // Set session and redirect to dashboard
-                session_start();
-                $_SESSION['user'] = $user;
-                header('Location: /lab_sync/index.php?controller=dashboard&action=index');
+                // session_start();
+                // $_SESSION['user'] = $user;
+                // header('Location: /lab_sync/index.php?controller=dashboard&action=index');
+
+                if($user['role'] == 'admin'|| $user['role'] == 'receptionist'|| $user['role'] == 'technician'){
+                    header('Location: /lab_sync/index.php?controller=dashboard&action=index');
+                } elseif($user['role'] == 'patient'){
+                    header('Location: /lab_sync/index.php?controller=home&action=index');
+                }
+
                 exit;
             } else {
                 $error = "Invalid username or password";

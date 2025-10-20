@@ -30,7 +30,7 @@ class AuthModel {
     }
 
     // Step 2: The SQL query
-    $query = "SELECT * FROM dashboard_users WHERE username = ?";
+    $query = "SELECT * FROM users WHERE username = ?";
     $stmt = $this->db->prepare($query);
 
     // Step 3: Check if prepare() failed
@@ -46,6 +46,8 @@ class AuthModel {
 
     if (($password === $user['password'])) {
         return $user;
+    }else {
+        echo "Password mismatch for user: $username"; // Debug line
     }
 
     // return false;
