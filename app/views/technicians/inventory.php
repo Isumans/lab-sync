@@ -75,6 +75,44 @@
                        <div id="allItems" class="section">
                            <h2>All Items</h2>
                            <p>View and manage all inventory items here.</p>
+                           <div class="user-list">
+                                <table class="test-catalog-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Inventory ID</th>
+                                            <th>Item Name</th>
+                                            <th>Supplier ID</th>
+                                            <th>Quantity</th>
+                                            <th>Reorder Level</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php if (is_array($items)): ?>
+                                        <?php foreach ($items as $item): ?>
+                                            <form method="post" action="/lab_sync/index.php?controller=inventoryController&action=edit_item" class="editForm">
+
+                                                <tr>
+                                                    <td><input id="inventory_id" class="form1" name="inventory_id" type="text" value="<?php echo htmlspecialchars($item['inventory_id']); ?>"></td>
+                                                    <td><input id="item_name" class="form1" name="item_name" type="text" value="<?php echo htmlspecialchars($item['item_name']); ?>"></td>
+                                                    <td><input id="supplier_id" class="form1" name="supplier_id" type="text" value="<?php echo htmlspecialchars($item['supplier_id']); ?>"></td>
+                                                    <td><input id="quantity" class="form1" name="quantity" type="text" value="<?php echo htmlspecialchars($item['quantity']); ?>"></td>
+                                                    <td><input id="reorder_level" class="form1" name="reorder_level" type="text" value="<?php echo htmlspecialchars($item['reorder_level']); ?>"></td>
+
+                                                    <td>
+                                                        <button id="edit" type="submit" name="edit" class="edit-button" onclick="showAlertAndSubmit(event,'edit')"><img src="/lab_sync/public/assests/edit.png" alt="Edit"></button>
+                                                        <button id="delete" type="submit" name="delete" class="delete-button" onclick="showAlertAndSubmit(event,'delete')"><img src="/lab_sync/public/assests/delete.png" alt="Delete"></button>
+                                                    </td>
+                                                </tr>
+                                            </form>
+                                        <?php endforeach; ?>
+                                    <?php else: ?>
+                                        <tr><td colspan="5">No items found or database error.</td></tr>
+                                    <?php endif; ?>
+                        
+                                    </tbody>
+                                </table>
+                                </div>
                        </div>
                        <div id="stockHistory" class="section" style="display:none;">
                            <h2>Stock History</h2>
@@ -89,7 +127,8 @@
                 </div>
             </main>
         </div>
-                <script src="/lab_sync/public/js/showSection.js"></script>
+        <script src="/lab_sync/public/js/showSection.js"></script>
+        <script src="/lab_sync/public/js/showAlert.js"></script>
 
     </body>
 </html>

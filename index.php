@@ -6,6 +6,7 @@ require_once 'C:\xampp\htdocs\lab_sync\app\controllers\administratorController.p
 require_once 'C:\xampp\htdocs\lab_sync\app\controllers\appointmentsController.php';
 require_once 'C:\xampp\htdocs\lab_sync\app\controllers\patientController.php';
 require_once 'C:\xampp\htdocs\lab_sync\app\controllers\homeController.php';
+require_once 'C:\xampp\htdocs\lab_sync\app\controllers\inventoryController.php';
 // require_once 'C:\xampp\htdocs\lab_sync\app\controllers\appointmentsController.php';
 require_once 'C:\xampp\htdocs\lab_sync\config\db.php';
 $controllerName = $_GET['controller'] ?? 'home'; // Default to 'home' controller
@@ -111,11 +112,17 @@ elseif($controllerName === 'billingController'){
         include 'app\views\receptionist\createBill.php';
     }
 }elseif($controllerName === 'inventoryController'){
+    $inventoryController = new inventoryController();
     $action = $_GET['action'] ?? 'index'; // or your desired default
     if($action ==='index'){
-        include 'app\views\technicians\inventory.php';
+        $inventoryController->index();
     }elseif($action ==='add_inventory'){
-        include 'app\views\technicians\add_inventory.php';
+        include 'app\views\technicians\addInventory.php';
+    }elseif($action ==='store'){
+        $inventoryController->store();
+        // Logic to store inventory item
+    }elseif($action ==='edit_item'){
+        $inventoryController->edit_item();
     }
 }elseif($controllerName==='patientController'){
     $patientsController = new patientController();
