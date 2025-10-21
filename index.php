@@ -1,12 +1,13 @@
 <?php
+require_once __DIR__ . '/config/paths.php';
 
-require_once 'C:\xampp\htdocs\lab_sync\app\controllers\TestCatalog_control.php';
-require_once 'C:\xampp\htdocs\lab_sync\app\controllers\authController.php';
-require_once 'C:\xampp\htdocs\lab_sync\app\controllers\administratorController.php';
-require_once 'C:\xampp\htdocs\lab_sync\app\controllers\appointmentsController.php';
-require_once 'C:\xampp\htdocs\lab_sync\app\controllers\patientController.php';
-require_once 'C:\xampp\htdocs\lab_sync\app\controllers\homeController.php';
-require_once 'C:\xampp\htdocs\lab_sync\app\controllers\inventoryController.php';
+require_once CONTROLLER_PATH . '/TestCatalog_control.php';
+require_once CONTROLLER_PATH . '/authController.php';
+require_once CONTROLLER_PATH . '/administratorController.php';
+require_once CONTROLLER_PATH . '/appointmentsController.php';
+require_once CONTROLLER_PATH . '/patientController.php';
+require_once CONTROLLER_PATH . '/homeController.php';
+require_once CONTROLLER_PATH . '/inventoryController.php';
 // require_once 'C:\xampp\htdocs\lab_sync\app\controllers\appointmentsController.php';
 require_once 'C:\xampp\htdocs\lab_sync\config\db.php';
 $controllerName = $_GET['controller'] ?? 'home'; // Default to 'home' controller
@@ -18,7 +19,7 @@ if ($controllerName === 'dashboard') {
     $action = $_GET['action'] ?? 'index'; // or your desired default
     // include 'C:\xampp\htdocs\lab_sync\app\views\administrator\admin_dash.php';
     if($action === 'index'){
-        include 'C:\xampp\htdocs\lab_sync\app\views\administrator\admin_dash.php';
+        include VIEW_PATH . '/administrator/admin_dash.php';
     }
 }
 
@@ -32,17 +33,17 @@ if ($controllerName === 'TestCatalog') {
     } elseif ($action === 'store') {
         $Testcontroller->store();
     }elseif($action ==='dashboard'){
-        include 'C:\xampp\htdocs\lab_sync\app\views\administrator\admin_dash.php';
+        include VIEW_PATH . '/administrator/admin_dash.php';
     }elseif($action ==='appointments'){
-        include 'C:\xampp\htdocs\lab_sync\app\views\administrator\appointments.php';
+        include VIEW_PATH . '/administrator/appointments.php';
     }elseif($action =='test_catalog'){
         $Testcontroller->index();
         // include 'C:\xampp\htdocs\lab_sync\app\views\receptionist\test_catalog.php';
 
     }elseif ($action === 'login_open') {
-        include 'C:\xampp\htdocs\lab_sync\app\views\auth\dash_login.php';
+        include VIEW_PATH . '/auth/dash_login.php';
     }elseif($action ==='createAppointment'){
-        include 'C:\xampp\htdocs\lab_sync\app\views\receptionist\create_Appointment.php';
+        include VIEW_PATH . '/receptionist/create_Appointment.php';
     }elseif($action ==='edit_test'){
         $Testcontroller->edit_test();
     }
@@ -57,7 +58,7 @@ if ($controllerName === 'TestCatalog') {
     if ($action === 'login') {
         $authController->login();
     }elseif ($action === 'index') {
-        include 'app\views\auth\dash_login.php';
+        include VIEW_PATH . '/auth/dash_login.php';
         
     }
     // ...other auth actions...
@@ -67,7 +68,7 @@ if ($controllerName === 'TestCatalog') {
     if($action ==='settings'){
         $adminController->settings();
     }elseif($action==='add_user'){
-        include 'app\views\administrator\add_user.php';
+        include VIEW_PATH . '/administrator/add_user.php';
     }elseif($action==='create_user'){
         // $username = $_POST['username'];
         // $password = $_POST['password'];
@@ -84,11 +85,11 @@ elseif ($controllerName === 'appointmentsController') {
     $appointmentController = new appointmentsController();
     $action = $_GET['action'] ?? 'index'; // or your desired default
     if ($action === 'index') {
-        include 'app\views\receptionist\appointments.php';
+        include VIEW_PATH . '/receptionist/appointments.php';
     }elseif($action ==='test_catalog'){
-        include 'app\views\receptionist\test_catalog.php';
+        include VIEW_PATH . '/receptionist/test_catalog.php';
     }elseif($action==='createAppointment'){
-        include 'app\views\receptionist\create_Appointment.php';
+        include VIEW_PATH . '/receptionist/create_Appointment.php';
     }elseif($action==='storeAppointment'){
         $appointmentController->storeAppointment();
     }
@@ -96,20 +97,20 @@ elseif ($controllerName === 'appointmentsController') {
 }elseif($controllerName === 'reportsController'){
     $action = $_GET['action'] ?? 'index'; // or your desired default
     if ($action === 'index') {
-        include 'app\views\technicians\reports.php';
+        include VIEW_PATH . '/technicians/reports.php';
 
 }
 }elseif($controllerName === 'supplierController'){
     $action = $_GET['action'] ?? 'index'; // or your desired default
     if($action ==='index'){
-        include 'app\views\administrator\suppliers.php';}
+        include VIEW_PATH . '/administrator/suppliers.php';
     }
-elseif($controllerName === 'billingController'){
+}elseif($controllerName === 'billingController'){
     $action = $_GET['action'] ?? 'index'; // or your desired default
     if($action ==='index'){
-        include 'app\views\receptionist\billing.php';
+        include VIEW_PATH . '/receptionist/billing.php';
     }elseif($action ==='Register_billing'){
-        include 'app\views\receptionist\createBill.php';
+        include VIEW_PATH . '/receptionist/createBill.php';
     }
 }elseif($controllerName === 'inventoryController'){
     $inventoryController = new inventoryController();
@@ -117,7 +118,7 @@ elseif($controllerName === 'billingController'){
     if($action ==='index'){
         $inventoryController->index();
     }elseif($action ==='add_inventory'){
-        include 'app\views\technicians\addInventory.php';
+        include VIEW_PATH . '/technicians/addInventory.php';
     }elseif($action ==='store'){
         $inventoryController->store();
         // Logic to store inventory item
@@ -139,13 +140,13 @@ elseif($controllerName === 'billingController'){
 }elseif($controllerName==='home'){
     $action = $_GET['action'] ?? 'index'; // or your desired default
     if($action==='index'){
-        include 'C:\xampp\htdocs\lab_sync\app\views\patient\patientIndex.php';
+        include VIEW_PATH . '/patient/patientIndex.php';
     }elseif($action==='explore'){
-        include 'C:\xampp\htdocs\lab_sync\app\views\patient\explore.php';
+        include VIEW_PATH . '/patient/explore.php';
     }elseif($action==='dashboard'){
-        include 'C:\xampp\htdocs\lab_sync\app\views\patient\dashboard.php';
+        include VIEW_PATH . '/patient/dashboard.php';
     }elseif($action==='book_test'){
-        include 'C:\xampp\htdocs\lab_sync\app\views\patient\book.php';
+        include VIEW_PATH . '/patient/book.php';
 }
 }
 else {

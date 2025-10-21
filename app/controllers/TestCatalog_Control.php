@@ -1,5 +1,9 @@
 <?php
-require_once 'C:\xampp\htdocs\lab_sync\app\models\TestCatalog_Model.php';
+if (!defined('ROOT_PATH')) {
+    require_once __DIR__ . '/../../config/paths.php';
+}
+
+require_once MODEL_PATH . '/TestCatalog_Model.php';
 require_once 'C:\xampp\htdocs\lab_sync\config\db.php';
 
 // class TestCatalogController {
@@ -23,12 +27,12 @@ class TestCatalogController {
         }else{
             // extract(['packages' => $packages]);
             $action = 'index';
-            include 'C:\xampp\htdocs\lab_sync\app\views\receptionist\test_catalog.php';
+            include VIEW_PATH . '/receptionist/test_catalog.php';
         }
     }
         
     public function add_test() {
-        include 'C:\xampp\htdocs\lab_sync\app\views\receptionist\add_test.php';
+        include VIEW_PATH . '/receptionist/add_test.php';
     }
 
     public function store() {

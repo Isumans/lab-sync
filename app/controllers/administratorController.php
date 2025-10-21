@@ -1,5 +1,9 @@
 <?php
-require_once 'app/models/administratorModel.php';
+if (!defined('ROOT_PATH')) {
+    require_once __DIR__ . '/../../config/paths.php';  // ✅ correct
+}
+
+require_once MODEL_PATH . '/administratorModel.php';
 require_once 'C:\xampp\htdocs\lab_sync\config\db.php';
 
 class administratorController {
@@ -16,7 +20,7 @@ class administratorController {
 
         public function settings() {
             $users = $this->adminModel->getAllUsers();
-            include 'app/views/administrator/settings.php';
+            include VIEW_PATH . '/administrator/settings.php';
         }
         public function createUser() {
             // Logic to create a new user in the database

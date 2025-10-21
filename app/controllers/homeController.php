@@ -1,5 +1,9 @@
 <?php
-require_once 'C:\xampp\htdocs\lab_sync\app\models\homeModel.php';
+if (!defined('ROOT_PATH')) {
+    require_once __DIR__ . '/../../config/paths.php';  // ✅ correct
+}
+
+require_once MODEL_PATH . '/homeModel.php';
 require_once 'C:\xampp\htdocs\lab_sync\config\db.php';
 
 class HomeController {
@@ -11,13 +15,13 @@ class HomeController {
 
     public function index() {
         $data = $this->model->getData();
-        include 'C:\xampp\htdocs\lab_sync\app\views\patient\home.php';
+        include VIEW_PATH . '/patient/home.php';
     }
      public function explore(){
-        include 'C:\xampp\htdocs\lab_sync\app\views\patient\explore.php';
+        include VIEW_PATH . '/patient/explore.php';
      }
         public function dash(){
-            include 'C:\xampp\htdocs\lab_sync\app\views\patient\dashboard.php';
+            include VIEW_PATH . '/patient/dashboard.php';
         }
 }
 ?>

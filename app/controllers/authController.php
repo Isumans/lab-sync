@@ -1,5 +1,9 @@
 <?php
-require_once 'C:\xampp\htdocs\lab_sync\app\models\authModel.php';
+if (!defined('ROOT_PATH')) {
+    require_once __DIR__ . '/../../config/paths.php';  
+}
+
+require_once MODEL_PATH . '/authModel.php';
 require_once 'C:\xampp\htdocs\lab_sync\config\db.php';
 
 class AuthController {
@@ -38,7 +42,7 @@ class AuthController {
                 $error = "Invalid username or password";
             }
         }
-        include 'C:\xampp\htdocs\lab_sync\app\views\auth\dash_login.php';
+        include VIEW_PATH . '/auth/dash_login.php';
     }
     
 }

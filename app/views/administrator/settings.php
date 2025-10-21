@@ -41,8 +41,8 @@
                 </div>
                 
                 
-                <div id="content-area" >
-                    <div id="team" class="Tmain-content">
+                <div id="content-area" class="content-area" >
+                    <div id="team" class="section" class="Tmain-content">
                         <div class="test-catalog-header">
                             <h2>Team Section</h2>
                             <button class="add-test-button" ><a href="/lab_sync/index.php?controller=administratorController&action=add_user">+Add New User</a></button>
@@ -91,6 +91,34 @@
                     <div id="partner-labs" class="section" style="display:none;">
                         <h2>Partner Labs Section</h2>
                         <p>Manage partner labs here.</p>
+                        <div class="user-list">
+                            <table class="test-catalog-table">
+                                <thead>
+                                    <tr>
+                                        <th>Lab ID</th>
+                                        <th>Lab Name</th>
+                                        <th>Contact Person</th>
+                                        <th>Email</th>
+                                        <th>Phone</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Example partner lab rows -->
+                                    <tr>
+                                        <td>1</td>
+                                        <td>Lab A</td>
+                                        <td>John Doe</td>
+                                        <td>john.doe@example.com</td>
+                                        <td>123-456-7890</td>
+                                        <td>
+                                            <button class="edit-button"><img src="/lab_sync/public/assests/edit.png" alt="Edit"></button>
+                                            <button class="delete-button"><img src="/lab_sync/public/assests/delete.png" alt="Delete"></button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                     <div id="configuration" class="section" style="display:none;">
                         <h2>Lab Configuration Section</h2>

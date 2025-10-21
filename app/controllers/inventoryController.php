@@ -1,5 +1,9 @@
 <?php
-require_once 'app/models/inventoryModel.php';
+if (!defined('ROOT_PATH')) {
+    require_once __DIR__ . '/../../config/paths.php';  // ✅ correct
+}
+
+require_once MODEL_PATH . '/inventoryModel.php';
 require_once 'C:\xampp\htdocs\lab_sync\config\db.php';
 class inventoryController {
     private $db;
@@ -13,11 +17,11 @@ class inventoryController {
     public function index() {
         $inventoryModel = new inventoryModel();
         $items = $inventoryModel->getAllItems();
-        include 'C:\xampp\htdocs\lab_sync\app\views\technicians\inventory.php';
+        include VIEW_PATH . '/technicians/inventory.php';
     }
 
     public function add_inventory() {
-        include 'C:\xampp\htdocs\lab_sync\app\views\technicians\add_inventory.php';
+        include VIEW_PATH . '/technicians/add_inventory.php';
     }
     public function store() {
         // Logic to store a new inventory item in the database

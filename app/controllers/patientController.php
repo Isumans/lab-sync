@@ -1,5 +1,9 @@
 <?php
-require_once 'C:\xampp\htdocs\lab_sync\app\models\patientModel.php';
+if (!defined('ROOT_PATH')) {
+    require_once __DIR__ . '/../../config/paths.php';  // ✅ correct
+}
+
+require_once MODEL_PATH . '/patientModel.php';
 require_once 'C:\xampp\htdocs\lab_sync\config\db.php';
 
 class patientController {
@@ -13,12 +17,12 @@ class patientController {
         }else{
             // extract(['packages' => $packages]);
             $action = 'index';
-            include 'C:\xampp\htdocs\lab_sync\app\views\patients\patients.php';
+            include VIEW_PATH . '/patients/patients.php';
         }
     }
         
     public function register_patient() {
-        include 'C:\xampp\htdocs\lab_sync\app\views\patients\register_patient.php';
+        include VIEW_PATH . '/patients/register_patient.php';
     }
 
     public function register() {
