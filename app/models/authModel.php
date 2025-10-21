@@ -44,7 +44,7 @@ class AuthModel {
     $result = $stmt->get_result();
     $user = $result->fetch_assoc();
 
-    if (($password === $user['password'])) {
+    if (isset(($user['password'])) && password_verify($password, $user['password'])) {
         return $user;
     }else {
         echo "Password mismatch for user: $username"; // Debug line

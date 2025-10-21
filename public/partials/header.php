@@ -12,6 +12,6 @@
   <div class="nav-actions">
     <!-- As requested: show Login / Sign up on the front page nav -->
     <a href="/lab_sync/index.php?controller=Auth&action=login" class="login">Login</a>
-    <a href="/lab_sync/index.php?controller=Auth&action=signup" class="signup">Sign up</a>
+    <a href="/lab_sync/index.php?controller=Auth&action=patient_signup" class="signup">Sign up</a>
   </div>
 </header>

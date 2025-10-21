@@ -60,6 +60,8 @@ if ($controllerName === 'TestCatalog') {
     }elseif ($action === 'index') {
         include VIEW_PATH . '/auth/dash_login.php';
         
+    }elseif ($action === 'patient_signup') {
+        include VIEW_PATH . '/auth/patient_signup.php';
     }
     // ...other auth actions...
 }elseif($controllerName === 'administratorController'){
@@ -138,6 +140,7 @@ elseif ($controllerName === 'appointmentsController') {
         $patientsController->edit_patient();
     }
 }elseif($controllerName==='home'){
+    $homeController = new homeController(); 
     $action = $_GET['action'] ?? 'index'; // or your desired default
     if($action==='index'){
         include VIEW_PATH . '/patient/patientIndex.php';
@@ -147,6 +150,8 @@ elseif ($controllerName === 'appointmentsController') {
         include VIEW_PATH . '/patient/dashboard.php';
     }elseif($action==='book_test'){
         include VIEW_PATH . '/patient/book.php';
+}elseif($action==="signup"){
+        $homeController->signup();
 }
 }
 else {
