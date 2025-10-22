@@ -9,7 +9,7 @@ function connect() {
     if ($conn === null) {
         $servername = "localhost";
         $username = "root";
-        $password = "";
+        $password = " ";
         $database = "laboratory";
 
         $conn = new mysqli($servername, $username, $password, $database);
