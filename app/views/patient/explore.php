@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>LabSync - Home</title>
   <link rel="stylesheet" href="/lab_sync/public/css/patient.css" />
+  <link rel="stylesheet" href="/lab_sync/public/css/nav.css" />
+  <link rel="stylesheet" href="/lab_sync/public/css/book.css" />
 </head>
 <body>
   <?php require 'C:\xampp\htdocs\lab_sync\public\partials\header.php'; ?>
@@ -13,25 +15,14 @@
     <p class="muted">Find and book the lab tests you need.</p>
     <div class="catalog">
       <?php
-        $tests = [
-          ['Full Blood Count (FBC)','Measures components of your blood','No special preparation','15 minutes'],
-          ['Lipid Profile','Cholesterol & heart risk','12-hour fasting, water allowed','20 minutes'],
-          ['Fasting Blood Sugar (FBS)','Diabetes check','8–12 hour fasting preferred','15 minutes'],
-          ['Thyroid Panel (TSH/T3/T4)','Thyroid hormone levels','Avoid biotin for 48h if applicable','15 minutes'],
-          ['Liver Function Test (LFT)','Liver health markers','Avoid alcohol 24h before','20 minutes'],
-          ['Kidney Function Test (KFT)','Kidney function markers','Stay hydrated unless told otherwise','15 minutes'],
-          ['HbA1c','Average blood sugar over 3 months','No fasting required','15 minutes'],
-        ];
         foreach ($tests as $t):
-          [$name,$desc,$prep,$dur] = $t;
-          $id = 't_' . md5($name);
       ?>
       <div class="card test-card" id="<?= $id ?>">
         <div class="chip"></div>
-        <h3><?= htmlspecialchars($name) ?></h3>
-        <p class="muted"><?= htmlspecialchars($desc) ?></p>
-        <button class="btn-primary" onclick="location.href='/book.php?controller=home&action=book_test&test='.urlencode($name)">Book Test</button>
-        <button class="btn-ghost" onclick="openTestModal('<?= htmlspecialchars($name) ?>','<?= htmlspecialchars($prep) ?>','<?= htmlspecialchars($dur) ?>')">View details</button>
+        <h3><?= htmlspecialchars($t['test_name']) ?></h3>
+        <p class="muted"><?= htmlspecialchars($t['description']) ?></p>
+        <button class="btn-primary" ><a href='index.php?controller=home&action=book&test=<?= urlencode($t['test_id']) ?>'>Book Test</a></button>
+        <!-- <button class="btn-ghost" onclick="openTestModal()">View details</button> -->
       </div>
       <?php endforeach; ?>
     </div>

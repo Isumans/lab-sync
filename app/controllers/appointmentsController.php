@@ -9,6 +9,9 @@ require_once 'C:\xampp\htdocs\lab_sync\config\db.php';
 class appointmentsController {
     public function index() {
         // Logic to fetch and display appointments can be added here
+        $appointmentsModel = new AppointmentModel(connect());
+        $appointmentsOnline = $appointmentsModel->getAllAppointmentsbyMethod("online");
+        include VIEW_PATH . '/receptionist/appointments.php';
     }
 
     public function storeAppointment() {

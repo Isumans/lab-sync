@@ -18,3 +18,24 @@ define('BASE_URL', $base);
 
 /** Helper to build asset URLs from project root */
 function asset(string $path): string { return BASE_URL . '/' . ltrim($path, '/'); }
+
+// Start session once for the whole app
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+if (!defined('ROOT_PATH')) {
+    define('ROOT_PATH', realpath(dirname(APP_PATH)));
+}
+
+if (!defined('CONTROLLER_PATH')) {
+    define('CONTROLLER_PATH', APP_PATH . DIRECTORY_SEPARATOR . 'controllers');
+}
+
+if (!defined('MODEL_PATH')) {
+    define('MODEL_PATH', APP_PATH . DIRECTORY_SEPARATOR . 'models');
+}
+
+if (!defined('PUBLIC_PATH')) {
+    define('PUBLIC_PATH', realpath(__DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'public'));
+}

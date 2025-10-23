@@ -58,11 +58,15 @@ html,body{margin:0;font-family:Poppins,system-ui,Arial;background:var(--bg);colo
 .book-btn:hover{background:var(--blue);color:#fff}
 .details-link{display:inline-block;margin-left:12px;color:#667085}
 
-/* Explore catalog cards */
+
+
+
+
+
 .catalog{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;margin-top:12px}
 .test-card .chip{width:36px;height:36px;border-radius:50%;background:#eef7ff}
 
-/* Booking */
+
 .booking-grid{display:grid;grid-template-columns:2fr 1fr;gap:16px}
 .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .form-field{display:flex;flex-direction:column}
@@ -125,31 +129,51 @@ html,body{margin:0;font-family:Poppins,system-ui,Arial;background:var(--bg);colo
 
 /* Brand column */
 .brand-row{
-  display:flex; align-items:center; gap:10px;
+  display:flex; 
+  align-items:center; 
+  gap:10px;
 }
 .footer-logo{
-  height:28px; width:auto; object-fit:contain; display:block;
+  height:28px; 
+  width:auto; 
+  object-fit:contain; 
+  display:block;
 }
 .brand-name{
-  font-weight:700; color:#fff; font-size:1.1rem;
+  font-weight:700; 
+  color:#fff; 
+  font-size:1.1rem;
 }
-.footer-tagline{ margin:10px 0 0; color:#b9c3d7; line-height:1.6; }
+.footer-tagline{ 
+  margin:10px 0 0; 
+  color:#b9c3d7; 
+  line-height:1.6; }
 
 /* Link columns */
 .footer-title{
-  margin:0 0 10px; color:#fff; font-size:1rem; letter-spacing:.2px;
+  margin:0 0 10px; 
+  color:#fff; 
+  font-size:1rem; 
+  letter-spacing: 0.2px;
 }
 .footer-list{
-  list-style:none;              /* remove bullets */
-  padding:0; margin:0;          /* remove default margins */
-  display:flex; flex-direction:column; gap:8px;
+  list-style:none;              
+  padding:0; 
+  margin:0;          
+  display:flex; 
+  flex-direction:column; gap:8px;
 }
-.footer-list li{ line-height:1.6; }
+.footer-list li{ 
+  line-height:1.6;
+ }
 
 /* Bottom row */
 .footer-bottom{
-  display:flex; justify-content:space-between; align-items:center;
-  gap:16px; padding-top:14px; color:#aab6c9; font-size:.95rem;
+  display:flex; 
+  justify-content:space-between;
+   align-items:center;
+  gap:16px; padding-top:14px; 
+  color:#aab6c9; font-size:.95rem;
 }
 .footer-links{ display:flex; gap:16px; }
 .footer-links a{ color:#aab6c9; }

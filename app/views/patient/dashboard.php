@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>LabSync - Home</title>
   <link rel="stylesheet" href="/lab_sync/public/css/patient.css" />
+  <link rel="stylesheet" href="/lab_sync/public/css/nav.css" />
+  <link rel="stylesheet" href="/lab_sync/public/table.css" />
 </head>
 <body>
   <?php require 'C:\xampp\htdocs\lab_sync\public\partials\header.php'; ?>
@@ -25,28 +27,58 @@
       </div>
     </div>
 
-    <aside class="card">
+    <!-- <aside class="card">
       <h3>Quick Actions</h3>
       <div class="list">
         <a class="btn-primary" href="/explore.php">Book Test</a>
         <a class="btn-outline" href="/results.php">View Results</a>
       </div>
-    </aside>
+    </aside> -->
   </div>
 
   <div class="card" style="margin-top:16px">
     <div class="toolbar">
       <h3>Your Appointments</h3>
-      <input id="q" class="input input-sm" placeholder="Search…" oninput="renderAppointments()">
     </div>
-    <div class="row" style="margin-bottom:10px">
-      <a class="btn-primary" href="/explore.php">+ New Appointment</a>
-    </div>
-    <div id="list" class="list"></div>
-    <div id="empty" class="muted empty">
-      No appointments yet — <a href="/explore.php">Book your first test</a>.
-    </div>
-  </div>
+    <table class="test-catalog-table">
+        <thead>
+          <tr>
+            <th>Appointment ID</th>
+            <th>Test Id</th>
+            <th>Time</th>
+            <th>Date</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <?php if (is_array($appointments)): ?>
+          <?php foreach ($appointments as $appointment): ?>
+            <form method="POST" action="/lab_sync/index.php?controller=home&action=edit_appointment" class="editForm">
+              <input type="hidden" name="appointment_id" value="<?php echo htmlspecialchars($appointment['appointment_id']); ?>">
+              <tr>
+                <td><?php echo htmlspecialchars($appointment['appointment_id']); ?></td>
+                <td><?php echo htmlspecialchars($appointment['test_id']); ?></td>
+                <td><input class="form1" name="time" type="time" value="<?php echo htmlspecialchars($appointment['appointment_time']); ?>"></td>
+                <td><input class="form1" name="date" type="date" value="<?php echo htmlspecialchars($appointment['appointment_date']); ?>"></td>
+
+                <td>
+                  <button type="submit" name="edit" onclick="return showAlertAndSubmit(event, 'edit')">
+                    <img src="/lab_sync/public/assests/edit.png" alt="Edit">
+                  </button>
+                  <button type="submit" name="delete" onclick="return showAlertAndSubmit(event, 'delete')">
+                    <img src="/lab_sync/public/assests/delete.png" alt="Delete">
+                  </button>
+                </td>
+              </tr>
+            </form>
+            <?php endforeach; ?>
+          <?php else: ?>
+        <tr><td colspan="5">No tests found or database error.</td></tr>
+      <?php endif; ?>
+                        
+      </tbody>
+    </table>
+</div>
 </main>
 
 <!-- Edit/Reschedule Modal -->
@@ -74,58 +106,48 @@
 </div>
 
 <script>
-// same tiny CRUD as before (UI only)
-const KEY='labsync_appointments';
-const getAll=()=>JSON.parse(localStorage.getItem(KEY)||'[]');
-const putAll=(arr)=>localStorage.setItem(KEY,JSON.stringify(arr));
-let editingId=null;
-
-function renderAppointments(){
-  const q=document.getElementById('q').value.toLowerCase();
-  const listEl=document.getElementById('list'); listEl.innerHTML='';
-  const appts=getAll()
-    .filter(a=>`${a.test} ${a.date} ${a.time}`.toLowerCase().includes(q))
-    .sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time));
-  document.getElementById('empty').style.display = appts.length?'none':'block';
-
-  appts.forEach(a=>{
-    const row=document.createElement('div'); row.className='row-card';
-    row.innerHTML=`
-      <div><strong>${a.test}</strong><div class="muted">${a.date} • ${a.time}</div></div>
-      <div class="row">
-        <span class="pill ${a.status==='Pending'?'pill-pending':'pill-ok'}">${a.status}</span>
-        <button class="btn-outline" onclick="openEdit('${a.id}')">Edit</button>
-        <button class="btn-outline" onclick="cancel('${a.id}')">Cancel</button>
-        <button class="btn-outline" onclick="del('${a.id}')">Delete</button>
-      </div>`;
-    listEl.appendChild(row);
-  });
-
-  const next=appts[0];
-  const nextInfo=document.getElementById('nextInfo');
-  const nextStatus=document.getElementById('nextStatus');
-  if(next){ nextInfo.textContent=`${next.test} — ${next.date} at ${next.time}`;
-            nextStatus.textContent=next.status;
-            nextStatus.className='pill ' + (next.status==='Pending'?'pill-pending':'pill-ok'); }
-  else   { nextInfo.textContent='No appointment yet.'; nextStatus.textContent='Pending'; nextStatus.className='pill pill-pending'; }
+// Remove localStorage usage and modify renderAppointments to work with PHP data
+function renderAppointments() {
+    // Get the appointments from PHP-rendered table
+    const appointments = <?php echo json_encode($appointments ?? []); ?>;
+    
+    // Update next appointment card
+    const nextAppointment = appointments[0];
+    const nextInfo = document.getElementById('nextInfo');
+    const nextStatus = document.getElementById('nextStatus');
+    
+    if (nextAppointment) {
+        nextInfo.textContent = `Test ID: ${nextAppointment.test_id} — ${nextAppointment.appointment_date} at ${nextAppointment.appointment_time}`;
+        nextStatus.textContent = nextAppointment.status || 'Pending';
+        nextStatus.className = 'pill ' + (nextAppointment.status === 'Confirmed' ? 'pill-ok' : 'pill-pending');
+    } else {
+        nextInfo.textContent = 'No appointment yet.';
+        nextStatus.textContent = 'Pending';
+        nextStatus.className = 'pill pill-pending';
+    }
 }
 
-function openEdit(id){ editingId=id; const a=getAll().find(x=>x.id===id);
-  editDate.value=a.date; editTime.value=a.time; document.getElementById('editModal').classList.add('open'); }
-function closeEdit(){ document.getElementById('editModal').classList.remove('open'); }
-function saveEdit(){
-  putAll(getAll().map(a=>a.id===editingId?({...a,date:editDate.value,time:editTime.value,status:'Confirmed'}):a));
-  closeEdit(); renderAppointments();
+// Simplified modal functions
+function openEdit(id) {
+    document.getElementById('editModal').classList.add('open');
 }
-function cancel(id){ if(!confirm('Cancel this appointment?'))return;
-  putAll(getAll().map(a=>a.id===id?({...a,status:'Cancelled'}):a)); renderAppointments(); }
-function del(id){ if(!confirm('Delete this appointment?'))return;
-  putAll(getAll().filter(a=>a.id!==id)); renderAppointments(); }
-function openRescheduleFromNext(){ const a=getAll()[0]; if(!a) return alert('No appointment to reschedule.'); openEdit(a.id); }
-function cancelFromNext(){ const a=getAll()[0]; if(!a) return alert('No appointment to cancel.'); cancel(a.id); }
 
-renderAppointments();
+function closeEdit() {
+    document.getElementById('editModal').classList.remove('open');
+}
+
+function showAlertAndSubmit(event, action) {
+    event.preventDefault();
+    const message = action === 'delete' ? 'Delete this appointment?' : 'Update this appointment?';
+    if (confirm(message)) {
+        event.target.closest('form').submit();
+    }
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', renderAppointments);
 </script>
 <?php require 'C:\xampp\htdocs\lab_sync\public\partials\footer.php'; ?>
+<script src="/lab_sync/public/js/showAlert.js"></script>
 </body>
 </html>

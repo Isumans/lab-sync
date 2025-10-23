@@ -1,5 +1,6 @@
 <?php
-require_once __DIR__ . '/config/paths.php';
+require_once __DIR__ . '/app/bootstrap.php'; // <--- keep this
+// require_once __DIR__ . '/config/paths.php'; // <--- remove this line
 
 require_once CONTROLLER_PATH . '/TestCatalog_control.php';
 require_once CONTROLLER_PATH . '/authController.php';
@@ -8,6 +9,7 @@ require_once CONTROLLER_PATH . '/appointmentsController.php';
 require_once CONTROLLER_PATH . '/patientController.php';
 require_once CONTROLLER_PATH . '/homeController.php';
 require_once CONTROLLER_PATH . '/inventoryController.php';
+require_once CONTROLLER_PATH . '/profileController.php';
 // require_once 'C:\xampp\htdocs\lab_sync\app\controllers\appointmentsController.php';
 require_once 'C:\xampp\htdocs\lab_sync\config\db.php';
 $controllerName = $_GET['controller'] ?? 'home'; // Default to 'home' controller
@@ -26,10 +28,11 @@ if ($controllerName === 'dashboard') {
 if ($controllerName === 'TestCatalog') {
     $Testcontroller = new TestCatalogController();
     $action = $_GET['action'] ?? 'login_open'; // or your desired default
+    $role= $_GET['role'] ?? '';
     if ($action === 'index') {
-        $Testcontroller->index();
+        $Testcontroller->index($role);
     } elseif ($action === 'add_test') {
-        $Testcontroller->add_test();
+        $Testcontroller->add_test($role);
     } elseif ($action === 'store') {
         $Testcontroller->store();
     }elseif($action ==='dashboard'){
@@ -37,7 +40,7 @@ if ($controllerName === 'TestCatalog') {
     }elseif($action ==='appointments'){
         include VIEW_PATH . '/administrator/appointments.php';
     }elseif($action =='test_catalog'){
-        $Testcontroller->index();
+        $Testcontroller->index($role);
         // include 'C:\xampp\htdocs\lab_sync\app\views\receptionist\test_catalog.php';
 
     }elseif ($action === 'login_open') {
@@ -45,7 +48,7 @@ if ($controllerName === 'TestCatalog') {
     }elseif($action ==='createAppointment'){
         include VIEW_PATH . '/receptionist/create_Appointment.php';
     }elseif($action ==='edit_test'){
-        $Testcontroller->edit_test();
+        $Testcontroller->edit_test($role);
     }
     
     else {
@@ -62,38 +65,42 @@ if ($controllerName === 'TestCatalog') {
         
     }elseif ($action === 'patient_signup') {
         include VIEW_PATH . '/auth/patient_signup.php';
+    }elseif ($action === 'logout') {
+        $authController->logout();
     }
     // ...other auth actions...
 }elseif($controllerName === 'administratorController'){
     $adminController = new administratorController();
     $action = $_GET['action'] ?? 'settings'; // or your desired default
+    $role = $_GET['role'] ?? '';
     if($action ==='settings'){
-        $adminController->settings();
+        $adminController->settings($role);
     }elseif($action==='add_user'){
         include VIEW_PATH . '/administrator/add_user.php';
     }elseif($action==='create_user'){
         // $username = $_POST['username'];
         // $password = $_POST['password'];
         // $role = $_POST['role'];
-        $adminController->createUser();
+        $adminController->createUser($role);
     }elseif($action==='manageUser'){
         // $username = $_POST['username'];
         // $password = $_POST['password'];
         // $role = $_POST['role'];
-        $adminController->manageUser();
+        $adminController->manageUser($role);
     }
 }
 elseif ($controllerName === 'appointmentsController') {
     $appointmentController = new appointmentsController();
     $action = $_GET['action'] ?? 'index'; // or your desired default
+    $role = $_GET['role'] ?? '';
     if ($action === 'index') {
-        include VIEW_PATH . '/receptionist/appointments.php';
+        $appointmentController->index($role);
     }elseif($action ==='test_catalog'){
         include VIEW_PATH . '/receptionist/test_catalog.php';
     }elseif($action==='createAppointment'){
         include VIEW_PATH . '/receptionist/create_Appointment.php';
     }elseif($action==='storeAppointment'){
-        $appointmentController->storeAppointment();
+        $appointmentController->storeAppointment($role);
     }
     // ...other receptionist actions...
 }elseif($controllerName === 'reportsController'){
@@ -116,9 +123,10 @@ elseif ($controllerName === 'appointmentsController') {
     }
 }elseif($controllerName === 'inventoryController'){
     $inventoryController = new inventoryController();
+    $role = $_GET['role'] ?? '';
     $action = $_GET['action'] ?? 'index'; // or your desired default
     if($action ==='index'){
-        $inventoryController->index();
+        $inventoryController->index($role);
     }elseif($action ==='add_inventory'){
         include VIEW_PATH . '/technicians/addInventory.php';
     }elseif($action ==='store'){
@@ -129,15 +137,16 @@ elseif ($controllerName === 'appointmentsController') {
     }
 }elseif($controllerName==='patientController'){
     $patientsController = new patientController();
-    $action = $_GET['action'] ?? 'index'; // or your desired default
+    $action = $_GET['action'] ?? 'index'; 
+    $role = $_GET['role'] ?? '';
     if($action==='index'){
-        $patientsController->index();
+        $patientsController->index($role);
     }elseif($action==='register_patient'){
-        $patientsController->register_patient();
+        $patientsController->register_patient($role);
     }elseif($action==='register'){
-        $patientsController->register();
+        $patientsController->register($role);
     }elseif($action==='edit_patient'){
-        $patientsController->edit_patient();
+        $patientsController->edit_patient($role);
     }
 }elseif($controllerName==='home'){
     $homeController = new homeController(); 
@@ -145,14 +154,33 @@ elseif ($controllerName === 'appointmentsController') {
     if($action==='index'){
         include VIEW_PATH . '/patient/patientIndex.php';
     }elseif($action==='explore'){
-        include VIEW_PATH . '/patient/explore.php';
+        $homeController->getTests();
     }elseif($action==='dashboard'){
-        include VIEW_PATH . '/patient/dashboard.php';
+        $homeController->getAppointment();
     }elseif($action==='book_test'){
         include VIEW_PATH . '/patient/book.php';
 }elseif($action==="signup"){
         $homeController->signup();
+}elseif($action==="how"){
+        include VIEW_PATH . '/patient/how.php';
+}elseif($action==="profile"){
+        include VIEW_PATH . '/patient/profile.php';
+}elseif($action==="book"){
+        $homeController->bookTest();
+}elseif($action==="bookAppointment"){
+        $homeController->bookAppointment();
+}elseif($action==="edit_appointment"){
+        $homeController->edit_appointment();
 }
+
+}elseif($controllerName==='profile'){
+    $action = $_GET['action'] ?? 'view'; // or your desired default
+    $profileController = new ProfileController();
+    if($action==='view'){
+        $profileController->viewProfile();
+    }elseif($action==='update'){
+        $profileController->updateProfile();
+    }
 }
 else {
         echo "404 Not Found";

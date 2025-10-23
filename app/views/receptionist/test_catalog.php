@@ -1,25 +1,17 @@
-
-
-<html>
-    <head>
-        <title>Test Catalog</title>
-        <link rel="stylesheet" href="/lab_sync/public/styles.css">
-        <link rel="stylesheet" href="/lab_sync/public/table.css">
-    </head>
-    <body>
-        
-        <!-- Navigation Bar -->
-        <?php require 'C:\xampp\htdocs\lab_sync\public\navbar.php'; ?>
-        <div class="container">
-            <!-- Sidebar -->
-            <?php require 'C:\xampp\htdocs\lab_sync\public\sidebar.php'; ?>
-
-            <!-- Main Body Section -->
-            <main class="main-content">
+<?php
+$pageTitle = 'Test Catalog';
+$extraStyles = '<link rel="stylesheet" href="/lab_sync/public/table.css">';
+$role = $_GET['role'] ?? '';
+// Start output buffering
+ob_start();
+?>
+                
                 <div class="Tmain-content">
                     <div class="test-catalog-header">
-                         <h1>Test Catalog</h1>
-                         <button class="add-test-button" ><a href="/lab_sync/index.php?controller=TestCatalog&action=add_test">+ Add New Test</a></button>
+                        <h1>Test Catalog</h1>
+                        <button class="add-test-button">
+                            <a href="/lab_sync/index.php?controller=TestCatalog&action=add_test&role=<?php echo $role; ?>">+ Add New Test</a>
+                        </button>
                     </div>
                     <div>
                         <p class="MC-p">Test-Catalog-></p>
@@ -42,9 +34,9 @@
                             <option value="urine">Urine Tests</option>
                             <option value="imaging">Imaging</option>
                             <option value="molecular">Molecular Tests</option>
-                    </select>
+                        </select>
                     </div>
-                   
+                    
                 </div>
                 <div class="tDiv">
                     <table class="test-catalog-table">
@@ -89,9 +81,7 @@
                 <div>
 
                 </div>
-                
-            </main>
-        </div>
-        <script src="/lab_sync/public/js/showAlert.js"></script>
-    </body>
-</html>
+<?php
+$content = ob_get_clean();
+require VIEW_PATH . DIRECTORY_SEPARATOR . 'layouts' . DIRECTORY_SEPARATOR . 'main_layout.php';
+?>

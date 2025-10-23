@@ -32,6 +32,9 @@
             <main class="login-form-area">
                 <h2>SignUp to start your session</h2>
                 <!-- <p class="secure-text">Secure, quick, and easy.</p> -->
+                 <?php if (!empty($error)): ?>
+                    <div class="error-message"><?php echo htmlspecialchars($error); ?></div>
+                <?php endif; ?>
 
                 <form action="/lab_sync/index.php?controller=home&action=signup" method="POST">
 

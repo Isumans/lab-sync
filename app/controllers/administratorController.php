@@ -18,7 +18,7 @@ class administratorController {
         $this->adminModel = new administratorModel($this->db);
     }
 
-        public function settings() {
+        public function settings($role) {
             $users = $this->adminModel->getAllUsers();
             include VIEW_PATH . '/administrator/settings.php';
         }
@@ -32,6 +32,7 @@ class administratorController {
             $user=$this->adminModel->createUser($username, $password, $role, $contact_number, $email);
             if($user){
                 // Redirect back to settings or user list after creation
+                $role = $_POST['role'];
                 header('Location: /lab_sync/index.php?controller=administratorController&action=settings');
             } else{
                 echo "Error creating user.";

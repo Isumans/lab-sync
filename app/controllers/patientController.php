@@ -7,7 +7,7 @@ require_once MODEL_PATH . '/patientModel.php';
 require_once 'C:\xampp\htdocs\lab_sync\config\db.php';
 
 class patientController {
-    public function index() {
+    public function index($role) {
         $conn1 = connect();
         $model = new patientModel($conn1);
         $patients = $model->getAllPatients();
@@ -16,12 +16,15 @@ class patientController {
             return;
         }else{
             // extract(['packages' => $packages]);
+
             $action = 'index';
+            $role = $_GET['role'] ?? '';
             include VIEW_PATH . '/patients/patients.php';
         }
     }
         
-    public function register_patient() {
+    public function register_patient($role) {
+        $role=$_GET['role'] ?? '';
         include VIEW_PATH . '/patients/register_patient.php';
     }
 

@@ -12,6 +12,13 @@ class AppointmentModel {
         $stmt->bind_param("isss", $patientId, $appointmentDate, $appointmentTime, $reason);
         return $stmt->execute();
     }
+    public function getAllAppointmentsbyMethod($method) {
+        $stmt = $this->db->prepare("SELECT * FROM appointment WHERE method = ?");
+        $stmt->bind_param("s", $method);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        return $result->fetch_all(MYSQLI_ASSOC);
+    }
 
     // Other appointment-related methods can be added here
 }

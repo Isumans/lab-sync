@@ -17,9 +17,21 @@ require_once 'C:\xampp\htdocs\lab_sync\config\db.php';
 //     }
 // }
 class TestCatalogController {
+
+    private $db;
+
+     public function __construct() {
+        if (session_status() === PHP_SESSION_NONE) session_start();
+        
+        // Verify authentication
+        if (!isset($_SESSION['user_id'])) {
+            header('Location: /lab_sync/index.php?controller=Auth&action=login');
+            exit;
+        }
+        $this->db = connect();
+    }
     public function index() {
-        $conn1 = connect();
-        $model = new TestCatalog($conn1);
+        $model = new TestCatalog($this->db);
         $packages = $model->getAllTests();
         if($packages === false) {
             echo "Error fetching tests.";
@@ -31,7 +43,8 @@ class TestCatalogController {
         }
     }
         
-    public function add_test() {
+    public function add_test($role) {
+        $role=$_GET['role'] ?? '';
         include VIEW_PATH . '/receptionist/add_test.php';
     }
 
