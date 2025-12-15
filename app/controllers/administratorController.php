@@ -22,8 +22,9 @@ class administratorController {
             $users = $this->adminModel->getAllUsers();
             include VIEW_PATH . '/administrator/settings.php';
         }
-        public function createUser() {
+        public function createUser($role) {
             // Logic to create a new user in the database
+            $role=$_GET['role'] ?? '';
             $username = $_POST['username'];
             $password = $_POST['password'];
             $role = $_POST['role'];
@@ -33,7 +34,7 @@ class administratorController {
             if($user){
                 // Redirect back to settings or user list after creation
                 $role = $_POST['role'];
-                header('Location: /lab_sync/index.php?controller=administratorController&action=settings');
+                header('Location: /lab_sync/index.php?controller=administratorController&action=settings&role=' . urlencode($role));
             } else{
                 echo "Error creating user.";
             }
@@ -41,14 +42,15 @@ class administratorController {
 
         // Additional methods for adding, editing, deleting users can be added here
     }
-    public function manageUser() {
+    public function manageUser($role) {
         if (isset($_POST['delete'])) {
             $userId = $_POST['user_id'];
+            $role = $_POST['role'];
             // Logic to delete the user from the database
             $success=$this->adminModel->deleteUser($userId);
             // Redirect back to settings or user list after deletion
             if($success){
-                header('Location: /lab_sync/index.php?controller=administratorController&action=settings');
+                header('Location: /lab_sync/index.php?controller=administratorController&action=settings&role=' . urlencode($role));
             } else {
                 echo "Error deleting user.";
             }
@@ -63,7 +65,7 @@ class administratorController {
             $success=$this->adminModel->updateUser($userId, $username, $email, $role, $status);
             // Redirect back to settings or user list after update
             if($success){
-                header('Location: /lab_sync/index.php?controller=administratorController&action=settings');
+                header('Location: /lab_sync/index.php?controller=administratorController&action=settings&role=' . urlencode($role));
             } else {
                 echo "Error updating user.";
             }

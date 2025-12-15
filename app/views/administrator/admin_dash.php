@@ -32,7 +32,7 @@ if (!isset($_SESSION['user_id'])) {
                 <h3>Quick Stats</h3>
                 <div class="container-cards">
                     <div class="card">
-                        <h2>Total Patients</h2>
+                        <h2>Total Patients Within Year</h2>
                         <p>1,250</p>
                     </div>
                     <div class="card">
@@ -44,7 +44,7 @@ if (!isset($_SESSION['user_id'])) {
                         <p>320</p>
                     </div>
                      <div class="card">
-                        <h2>Pending Appointments</h2>
+                        <h2>Week's Appointments</h2>
                         <p>45</p>
                     </div>
                     <div class="card">

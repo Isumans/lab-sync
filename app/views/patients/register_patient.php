@@ -5,6 +5,7 @@ if (!isset($_SESSION['user_id'])) {
     header('Location: /lab_sync/index.php?controller=Auth&action=index');
     exit();
 }
+$role=$_GET['user_role'] ?? '';
 ?>
 <html>
 <head>
@@ -32,7 +33,7 @@ if (!isset($_SESSION['user_id'])) {
                         <p class="MC-p">Patients->Register-Walk-In-Patient</p>
                     </div>
                     <div>
-                        <form class="formStyle" action="/lab_sync/index.php?controller=patientController&action=register" method="POST">
+                        <form class="formStyle" action="/lab_sync/index.php?controller=patientController&action=register&role=<?php echo htmlspecialchars($role); ?>" method="POST">
                             <!-- Form fields for patient registration -->
                             <label for="patient_name">Patient Name:</label>
                             <input type="text" id="patient_name" name="patient_name" required>

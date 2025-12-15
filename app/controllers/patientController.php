@@ -28,7 +28,8 @@ class patientController {
         include VIEW_PATH . '/patients/register_patient.php';
     }
 
-    public function register() {
+    public function register($role) {
+        $role = $_GET['role'] ?? '';
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $patient_name = $_POST['patient_name'];
             $dob = $_POST['date_of_birth'];
@@ -40,14 +41,15 @@ class patientController {
             $model = new patientModel($conn1);
             $result = $model->registerPatient($patient_name, $dob, $gender, $contact_no, $email);
             if($result) {
-                header('Location: /lab_sync/index.php?controller=patientController&action=index');
+                header('Location: /lab_sync/index.php?controller=patientController&action=index&role=' . urlencode($role));
                 echo "Patient registered successfully.";
             } else {
                 echo "Error registering patient.";
             }
         }
     }
-    public function edit_patient() {
+    public function edit_patient($role) {
+        $role = $_GET['role'] ?? '';
         // Implementation for editing patient details
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
@@ -62,14 +64,14 @@ class patientController {
             if (isset($_POST['edit'])) {
                 $success = $model->updatePatient($patient_id, $patient_name, $contact_number, $email);
                 if ($success) {
-                    header("Location: /lab_sync/index.php?controller=patientController&action=index");
+                    header("Location: /lab_sync/index.php?controller=patientController&action=index&role=" . urlencode($role));
                 } else {
                     echo "Error updating patient.";
                 }
             } elseif (isset($_POST['delete'])) {
                 $success = $model->deletePatient($patient_id);
                 if ($success) {
-                    header("Location: /lab_sync/index.php?controller=patientController&action=index");
+                    header("Location: /lab_sync/index.php?controller=patientController&action=index&role=" . urlencode($role));
                     exit;
 
                 } else {

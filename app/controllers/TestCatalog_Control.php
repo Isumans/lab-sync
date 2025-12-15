@@ -30,7 +30,8 @@ class TestCatalogController {
         }
         $this->db = connect();
     }
-    public function index() {
+    public function index($role) {
+        $role=$_GET['role'] ?? '';
         $model = new TestCatalog($this->db);
         $packages = $model->getAllTests();
         if($packages === false) {
@@ -48,7 +49,8 @@ class TestCatalogController {
         include VIEW_PATH . '/receptionist/add_test.php';
     }
 
-    public function store() {
+    public function store($role) {
+        $role=$_GET['role'] ?? '';
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $testName = $_POST['test-name'];
             $category = $_POST['test-category'];
@@ -60,13 +62,14 @@ class TestCatalogController {
             $model2 = new TestCatalog($conn1);
             $success = $model2->addTest($testName, $category, $price, $description);
             if ($success) {
-                return $this->index();
+                header("Location: /lab_sync/index.php?controller=TestCatalog&action=index&role=" . urlencode($role));
             } else {
                 echo "Error adding test.";
             }
         }
     }
-    public function edit_test() {
+    public function edit_test($role) {
+        $role = $_GET['role'] ?? '';
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $testId = $_POST['test_id'];
             $testName = $_POST['test_name'];
@@ -78,14 +81,14 @@ class TestCatalogController {
             if (isset($_POST['edit'])) {
                 $success = $model2->updateTest($testId, $testName, $category, $price);
                 if ($success) {
-                    header("Location: /lab_sync/index.php?controller=TestCatalog&action=index");
+                    header("Location: /lab_sync/index.php?controller=TestCatalog&action=index&role=" . urlencode($role));
                 } else {
                     echo "Error updating test.";
                 }
             } elseif (isset($_POST['delete'])) {
                 $success = $model2->deleteTest($testId);
                 if ($success) {
-                    header("Location: /lab_sync/index.php?controller=TestCatalog&action=index");
+                    header("Location: /lab_sync/index.php?controller=TestCatalog&action=index&role=" . urlencode($role));
                     exit;
 
                 } else {

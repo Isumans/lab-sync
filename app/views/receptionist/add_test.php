@@ -2,7 +2,7 @@
 session_start();
 if (!isset($_SESSION['user_id'])) {
     // User is not logged in, redirect to login page
-    header('Location: /lab_sync/index.php?controller=Auth&action=index');
+    header('Location: /lab_sync/index.php?controller=Auth&action=index&role=' . urlencode($_GET['role'] ?? ''));
     exit();
 }
 ?>
@@ -24,7 +24,7 @@ if (!isset($_SESSION['user_id'])) {
                 <div >
                     <h1>Add New Test</h1>
                     <p class="MC-p">Dashboard>Test-Catalog>Add-New-Test</p>
-                    <form class="Tmain-content formStyle" action="/lab_sync/index.php?controller=TestCatalog&action=store" method="POST">
+                    <form class="Tmain-content formStyle" action="/lab_sync/index.php?controller=TestCatalog&action=store&role=<?php echo urlencode($role); ?>" method="POST">
                         <label for="test-name">Test Name:</label>
                         <input type="text" id="test-name" name="test-name" required>
                         <label for="test-category">Category:</label>

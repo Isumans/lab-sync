@@ -86,27 +86,26 @@ if (!isset($_SESSION['user_id'])) {
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <?php if (is_array($patients)): ?>
-                                        <?php foreach ($patients as $patient): ?>
-                                            <form method="post" action="/lab_sync/index.php?controller=patientController&action=edit_patient" class="editForm">
-                                            
-                                                <tr>
-                                                    <td><input id="patient_id" class="form1" name="patient_id" type="text" value="<?php echo htmlspecialchars($patient['patient_id']); ?>"></td>
-                                                    <td><input id="patient_name" class="form1" name="patient_name" type="text" value="<?php echo htmlspecialchars($patient['patient_name']); ?>"></td>
-                                                    <td><input id="patient_email" class="form1" name="patient_email" type="text" value="<?php echo htmlspecialchars($patient['email']); ?>"></td>
-                                                    <td><input id="contact_number" class="form1" name="contact_number" type="text" value="<?php echo htmlspecialchars($patient['contact_number']); ?>"></td>
-
+                                        <?php if (is_array($patients) && count($patients) > 0): ?>
+                                            <?php foreach ($patients as $patient): ?>
+                                                <tr class="patient-row"
+                                                    data-id="<?php echo htmlspecialchars($patient['patient_id']); ?>"
+                                                    data-name="<?php echo htmlspecialchars($patient['patient_name']); ?>"
+                                                    data-email="<?php echo htmlspecialchars($patient['email']); ?>"
+                                                    data-contact="<?php echo htmlspecialchars($patient['contact_number']); ?>">
+                                                    <td><?php echo htmlspecialchars($patient['patient_id']); ?></td>
+                                                    <td><?php echo htmlspecialchars($patient['patient_name']); ?></td>
+                                                    <td><?php echo htmlspecialchars($patient['email']); ?></td>
+                                                    <td><?php echo htmlspecialchars($patient['contact_number']); ?></td>
                                                     <td>
-                                                        <button id="edit" type="submit" name="edit" class="edit-button" onclick="showAlertAndSubmit(event,'edit')"><img src="/lab_sync/public/assests/edit.png" alt="Edit"></button>
-                                                        <button id="delete" type="submit" name="delete" class="delete-button" onclick="showAlertAndSubmit(event,'delete')"><img src="/lab_sync/public/assests/delete.png" alt="Delete"></button>
+                                                        <button type="button" class="edit-btn" title="Edit"><img src="/lab_sync/public/assests/edit.png" alt="Edit"></button>
+                                                        <button type="button" class="delete-btn" title="Delete"><img src="/lab_sync/public/assests/delete.png" alt="Delete"></button>
                                                     </td>
                                                 </tr>
-                                            </form>
-                                        <?php endforeach; ?>
-                                    <?php else: ?>
-                                        <tr><td colspan="5">No tests found or database error.</td></tr>
-                                    <?php endif; ?>
-                        
+                                            <?php endforeach; ?>
+                                        <?php else: ?>
+                                            <tr><td colspan="5">No patients found or database error.</td></tr>
+                                        <?php endif; ?>
                                     </tbody>
                                 </table>
                             </div>
@@ -174,6 +173,98 @@ if (!isset($_SESSION['user_id'])) {
             </main>
 
         </div>
+        <!-- Edit Patient Modal -->
+        <style>
+        /* basic modal styles (scoped for this view) */
+        #editModal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background: rgba(0,0,0,0.4); }
+        #editModal .modal-content { background: #fff; margin: 6% auto; padding: 20px; border-radius: 6px; width: 92%; max-width: 600px; }
+        #editModal .close { float: right; font-size: 24px; font-weight: bold; cursor: pointer; }
+        #editPatientForm .form-row { margin-bottom: 10px; }
+        #editPatientForm label { display: block; font-weight: 600; margin-bottom: 4px; }
+        #editPatientForm input[type=text], #editPatientForm input[type=email] { width: 100%; padding: 8px; box-sizing: border-box; }
+        #editPatientForm .actions { text-align: right; margin-top: 12px; }
+        </style>
+
+        <div id="editModal">
+            <div class="modal-content">
+                <span id="editModalClose" class="close">&times;</span>
+                <h3>Edit Patient</h3>
+                <form id="editPatientForm" method="post" action="/lab_sync/index.php?controller=patientController&action=edit_patient&role=<?php echo urlencode($role); ?>">
+                    <input type="hidden" name="patient_id" value="" />
+                    <div class="form-row">
+                        <label for="patient_name">Name</label>
+                        <input type="text" id="patient_name" name="patient_name" required />
+                    </div>
+                    <div class="form-row">
+                        <label for="patient_email">Email</label>
+                        <input type="email" id="patient_email" name="patient_email" required />
+                    </div>
+                    <div class="form-row">
+                        <label for="contact_number">Contact Number</label>
+                        <input type="text" id="contact_number" name="contact_number" />
+                    </div>
+                    <div class="actions">
+                        <button type="button" id="cancelEdit">Cancel</button>
+                        <button type="submit" name="edit" value="1">Save changes</button>
+                        <button type="submit" name="delete" value="1" style="margin-left:8px; background:#c33; color:#fff;">Delete</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const modal = document.getElementById('editModal');
+            const form = document.getElementById('editPatientForm');
+            const closeBtn = document.getElementById('editModalClose');
+            const cancelBtn = document.getElementById('cancelEdit');
+
+            function openModalWithData(data) {
+                form.elements['patient_id'].value = data.id || '';
+                form.elements['patient_name'].value = data.name || '';
+                form.elements['patient_email'].value = data.email || '';
+                form.elements['contact_number'].value = data.contact || '';
+                modal.style.display = 'block';
+            }
+
+            document.querySelectorAll('.edit-btn').forEach(function (btn) {
+                btn.addEventListener('click', function (e) {
+                    const tr = e.currentTarget.closest('tr');
+                    if (!tr) return;
+                    const data = {
+                        id: tr.dataset.id,
+                        name: tr.dataset.name,
+                        email: tr.dataset.email,
+                        contact: tr.dataset.contact
+                    };
+                    openModalWithData(data);
+                });
+            });
+
+            closeBtn.addEventListener('click', function () { modal.style.display = 'none'; });
+            cancelBtn.addEventListener('click', function () { modal.style.display = 'none'; });
+            window.addEventListener('click', function (e) { if (e.target === modal) modal.style.display = 'none'; });
+
+            // Delete from table button (quick submit with confirmation)
+            document.querySelectorAll('.delete-btn').forEach(function (btn) {
+                btn.addEventListener('click', function (e) {
+                    const tr = e.currentTarget.closest('tr');
+                    if (!tr) return;
+                    const id = tr.dataset.id;
+                    if (!id) return;
+                    if (!confirm('Delete this patient? This action cannot be undone.')) return;
+                    const f = document.createElement('form');
+                    f.method = 'post';
+                    f.action = '/lab_sync/index.php?controller=patientController&action=edit_patient&role=<?php echo urlencode($role); ?>';
+                    const inp = document.createElement('input'); inp.type = 'hidden'; inp.name = 'patient_id'; inp.value = id; f.appendChild(inp);
+                    const del = document.createElement('input'); del.type = 'hidden'; del.name = 'delete'; del.value = '1'; f.appendChild(del);
+                    document.body.appendChild(f);
+                    f.submit();
+                });
+            });
+        });
+        </script>
+
         <script src="/lab_sync/public/js/showSection.js"></script>
         <script src="/lab_sync/public/js/showAlert.js"></script>
     </body>

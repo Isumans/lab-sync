@@ -22,7 +22,7 @@ if (session_status() === PHP_SESSION_NONE) {
         <p>Book lab tests online, get fast results, and take control of your health journey with LabSync's modern platform.</p>
         <div class="hero-buttons">
           <a href="/lab_sync/index.php?controller=home&action=explore" class="btn-primary">Book a Test →</a>
-          <?php if (isset($_SESSION['user_id'])): ?>
+          <?php if (isset($_SESSION['user_id'])&& isset($_SESSION['user_role'])&& $_SESSION['user_role']==='patient'): ?>
             <a href="/lab_sync/index.php?controller=home&action=dashboard" class="btn-outline">Go to Dashboard</a>
           <?php endif; ?>
         </div>

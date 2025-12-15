@@ -4,6 +4,7 @@ if (!isset($_SESSION['user_id'])) {
     // User is not logged in, redirect to login page
     header('Location: /lab_sync/index.php?controller=Auth&action=index');
     exit();
+    $role=$_GET['user_role'] ?? '';
 }
 
 ?>
@@ -50,7 +51,7 @@ if (!isset($_SESSION['user_id'])) {
                     <div id="team" class="section" class="Tmain-content">
                         <div class="test-catalog-header">
                             <h2>Team Section</h2>
-                            <button class="add-test-button" ><a href="/lab_sync/index.php?controller=administratorController&action=add_user">+Add New User</a></button>
+                            <button class="add-test-button" ><a href="/lab_sync/index.php?controller=administratorController&action=add_user&role=<?php echo htmlspecialchars($role); ?>">+Add New User</a></button>
                         </div>
                         <div>
                             <p>Manage your team members here.</p>
@@ -74,7 +75,7 @@ if (!isset($_SESSION['user_id'])) {
                                     <!-- Example user rows -->
                                      <?php if (is_array($users)): ?>
                                      <?php foreach ($users as $user): ?>
-                                    <form method="POST" action="/lab_sync/index.php?controller=administratorController&action=manageUser">
+                                    <form method="POST" action="/lab_sync/index.php?controller=administratorController&action=manageUser&role=<?php echo htmlspecialchars($role); ?>" class="editForm">
                                     <tr>
                                         <td><input class="form1" type="text" name="user_id" value="<?php echo htmlspecialchars($user['user_id']); ?>"></td>
                                         <td><input class="form1" type="text" name="username" value="<?php echo htmlspecialchars($user['username']); ?>"></td>

@@ -23,13 +23,13 @@ if (session_status() === PHP_SESSION_NONE) {
     <!-- As requested: show Login / Sign up on the front page nav -->
      <?php if (isset($username)){ ?>
       <?php if($user_role === 'admin' || $user_role === 'receptionist' || $user_role === 'technician'){ ?>
-        <a href="/lab_sync/index.php?controller=dashboard&action=index" class="logout"><span class="user-role"><?php echo htmlspecialchars($user_role); ?> panel</span></a>
+        <a href="/lab_sync/index.php?controller=dashboard&action=index" class="login"><span class="user-role"><?php echo htmlspecialchars($user_role); ?> panel</span></a>
       <?php } ?>
-       <span class="user-name"><?php echo htmlspecialchars($username); ?></span>
+       <!-- <span class="user-name" class="login"><?php echo htmlspecialchars($username); ?></span> -->
        
-       <a href="/lab_sync/index.php?controller=Auth&action=logout" class="logout">Logout</a>
+       <a href="/lab_sync/index.php?controller=Auth&action=logout" class="login">Logout</a>
         <?php if($user_role === 'patient'){ ?>
-          <a href="/lab_sync/index.php?controller=profile&action=view"><img id="user-icon" class="profile-logo" src="/lab_sync/public/assests/user.png"></a>
+          <a href="/lab_sync/index.php?controller=profile&action=view" ><img id="user-icon" class="profile-logo" src="/lab_sync/public/assests/user.png"></a>
         <?php } ?>
      <?php } else { ?>
        <a href="/lab_sync/index.php?controller=Auth&action=login" class="login">Login</a>

@@ -74,10 +74,68 @@ if (!isset($_SESSION['user_id'])) {
                        <div id="finalReports" class="section">
                            <h2>Final Reports</h2>
                            <p>View and manage final reports here.</p>
+                           <table class="test-catalog-table">
+        <thead>
+            <tr>
+                <th>Appointment ID</th>
+                <th>Test Request ID</th>
+                <th>Test Type</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>RPT001</td>
+                <td>req001</td>
+                <td>Blood Test</td>
+                <td>
+                    <button class="status">View Report</button>
+                </td>
+            </tr>
+            <tr>
+                <td>RPT002</td>
+                <td>req002</td>
+                <td>Urine Test</td>
+                <td>
+                    <button class="status">View Report</button>
+                </td>
+            </tr>
+        </tbody>
+
+    </table>
                        </div>
                        <div id="testSamples" class="section" style="display:none;">
                            <h2>Test Samples</h2>
                            <p>View and manage test samples here.</p>
+                           <table class="test-catalog-table">
+        <thead>
+            <tr>
+                <th>Appointment ID</th>
+                <th>Sample ID</th>
+                <th>Sample Type</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>RPT001</td>
+                <td>sam001</td>
+                <td>Blood Test</td>
+                <td>
+                    <button class="status">Create Report</button>
+                </td>
+            </tr>
+            <tr>
+                <td>RPT002</td>
+                <td>req002</td>
+                <td>Urine Test</td>
+                <td>
+                    <button class="status">Create Report</button>
+                </td>
+            </tr>
+
+    </table>
+            
                        </div>
                        <div id="createReports" class="section" style="display:none;">
                            <h2>Create Reports</h2>

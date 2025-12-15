@@ -34,7 +34,7 @@ if ($controllerName === 'TestCatalog') {
     } elseif ($action === 'add_test') {
         $Testcontroller->add_test($role);
     } elseif ($action === 'store') {
-        $Testcontroller->store();
+        $Testcontroller->store($role);
     }elseif($action ==='dashboard'){
         include VIEW_PATH . '/administrator/admin_dash.php';
     }elseif($action ==='appointments'){
@@ -113,6 +113,8 @@ elseif ($controllerName === 'appointmentsController') {
     $action = $_GET['action'] ?? 'index'; // or your desired default
     if($action ==='index'){
         include VIEW_PATH . '/administrator/suppliers.php';
+    }elseif($action==="Register_supplier"){
+        include VIEW_PATH . '/administrator/regSupplier.php';
     }
 }elseif($controllerName === 'billingController'){
     $action = $_GET['action'] ?? 'index'; // or your desired default
@@ -171,8 +173,9 @@ elseif ($controllerName === 'appointmentsController') {
         $homeController->bookAppointment();
 }elseif($action==="edit_appointment"){
         $homeController->edit_appointment();
+}elseif($action==="about"){
+        include VIEW_PATH .'/patient/about.php';
 }
-
 }elseif($controllerName==='profile'){
     $action = $_GET['action'] ?? 'view'; // or your desired default
     $profileController = new ProfileController();

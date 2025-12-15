@@ -53,7 +53,7 @@ ob_start();
                     <tbody>
                         <?php if (is_array($packages)): ?>
                             <?php foreach ($packages as $package): ?>
-                                <form method="post" action="/lab_sync/index.php?controller=TestCatalog&action=edit_test" class="editForm">
+                                <form method="post" action="/lab_sync/index.php?controller=TestCatalog&action=edit_test&role=<?php echo urlencode($role); ?>" class="editForm">
                                 
                                     <tr>
                                     
