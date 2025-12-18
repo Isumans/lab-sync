@@ -52,47 +52,82 @@ class TestCatalogController {
     public function store($role) {
         $role=$_GET['role'] ?? '';
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $testName = $_POST['test-name'];
-            $category = $_POST['test-category'];
-            $price = $_POST['test-price'];
-            $description = $_POST['test-description'];
+            $testName = trim($_POST['test-name'] ?? '');
+            $category = trim($_POST['test-category'] ?? '');
+            $price = trim($_POST['test-price'] ?? '');
+            $description = trim($_POST['test-description'] ?? '');
             // $code = $_POST['test-code'];
+
+            $errors = [];
+            if ($testName === '') $errors[] = 'Test name is required.';
+            if ($price === '' || !is_numeric($price)) $errors[] = 'Price is required and must be numeric.';
+            if (count($errors) > 0) {
+                $_SESSION['flash'] = ['type' => 'error', 'message' => implode(' ', $errors)];
+                header("Location: /lab_sync/index.php?controller=TestCatalog&action=add_test&role=" . urlencode($role));
+                exit;
+            }
 
             $conn1 = connect();
             $model2 = new TestCatalog($conn1);
-            $success = $model2->addTest($testName, $category, $price, $description);
+            $success = $model2->addTest($testName, $category, (float)$price, $description);
             if ($success) {
+                $_SESSION['flash'] = ['type' => 'success', 'message' => 'Test added successfully.'];
                 header("Location: /lab_sync/index.php?controller=TestCatalog&action=index&role=" . urlencode($role));
+                exit;
             } else {
-                echo "Error adding test.";
+                $_SESSION['flash'] = ['type' => 'error', 'message' => 'Error adding test.'];
+                header("Location: /lab_sync/index.php?controller=TestCatalog&action=add_test&role=" . urlencode($role));
+                exit;
             }
         }
     }
     public function edit_test($role) {
         $role = $_GET['role'] ?? '';
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $testId = $_POST['test_id'];
-            $testName = $_POST['test_name'];
-            $category = $_POST['category'];
-            $price = $_POST['price'];
+            $testId = trim($_POST['test_id'] ?? '');
+            $testName = trim($_POST['test_name'] ?? '');
+            $category = trim($_POST['category'] ?? '');
+            $price = trim($_POST['price'] ?? '');
 
             $conn1 = connect();
             $model2 = new TestCatalog($conn1);
             if (isset($_POST['edit'])) {
-                $success = $model2->updateTest($testId, $testName, $category, $price);
-                if ($success) {
+                $errors = [];
+                if ($testId === '' || !ctype_digit((string)$testId)) $errors[] = 'Invalid test id.';
+                if ($testName === '') $errors[] = 'Test name is required.';
+                if ($price === '' || !is_numeric($price)) $errors[] = 'Price is required and must be numeric.';
+                if (count($errors) > 0) {
+                    $_SESSION['flash'] = ['type' => 'error', 'message' => implode(' ', $errors)];
                     header("Location: /lab_sync/index.php?controller=TestCatalog&action=index&role=" . urlencode($role));
+                    exit;
+                }
+
+                $success = $model2->updateTest((int)$testId, $testName, $category, (float)$price);
+                if ($success) {
+                    $_SESSION['flash'] = ['type' => 'success', 'message' => 'Test updated successfully.'];
+                    header("Location: /lab_sync/index.php?controller=TestCatalog&action=index&role=" . urlencode($role));
+                    exit;
                 } else {
-                    echo "Error updating test.";
+                    $_SESSION['flash'] = ['type' => 'error', 'message' => 'Error updating test.'];
+                    header("Location: /lab_sync/index.php?controller=TestCatalog&action=index&role=" . urlencode($role));
+                    exit;
                 }
             } elseif (isset($_POST['delete'])) {
-                $success = $model2->deleteTest($testId);
+                if ($testId === '' || !ctype_digit((string)$testId)) {
+                    $_SESSION['flash'] = ['type' => 'error', 'message' => 'Invalid test id for deletion.'];
+                    header("Location: /lab_sync/index.php?controller=TestCatalog&action=index&role=" . urlencode($role));
+                    exit;
+                }
+                $success = $model2->deleteTest((int)$testId);
                 if ($success) {
+                    $_SESSION['flash'] = ['type' => 'success', 'message' => 'Test deleted successfully.'];
                     header("Location: /lab_sync/index.php?controller=TestCatalog&action=index&role=" . urlencode($role));
                     exit;
 
                 } else {
-                    echo "Error deleting test.";
+                    $_SESSION['flash'] = ['type' => 'error', 'message' => 'Error deleting test.'];
+                    header("Location: /lab_sync/index.php?controller=TestCatalog&action=index&role=" . urlencode($role));
+                    exit;
                 }
             }
         }

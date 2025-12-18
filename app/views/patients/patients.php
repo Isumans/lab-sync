@@ -36,14 +36,14 @@ if (!isset($_SESSION['user_id'])) {
                     <div class="container-cards">
                         <div class="card c-card">
                                 <h3>New This Week</h3>
-                                <h1>10</h1>
-                                <p>+2%</p>
+                                <h1 class="countup" data-target="<?php echo (int)($newThisWeek ?? 10); ?>">0</h1>
+                                <p><span class="countup-percent" data-target="<?php echo (int)($percentNewThisWeek ?? 2); ?>">0</span>%</p>
                                 <!-- <img src="assests/chart1.png" alt="Chart 1" style="width:100%; height:auto;"> -->
                         </div>
                         <div class="card c-card">
                             <h3>Total New For the Month</h3>
-                            <h1>40</h1>
-                            <p>+5%</p>
+                            <h1 class="countup" data-target="<?php echo (int)($totalThisMonth ?? 40); ?>">0</h1>
+                            <p><span class="countup-percent" data-target="<?php echo (int)($percentTotalThisMonth ?? 5); ?>">0</span>%</p>
                             <!-- <img src="assests/chart2.png" alt="Chart 2" style="width:100%; height:auto;"> -->
                         </div>
                     
@@ -213,7 +213,66 @@ if (!isset($_SESSION['user_id'])) {
         </div>
 
         <script>
+        /* Count-up animation for stat cards */
+        function animateCount(el, target, duration) {
+            target = Number(target) || 0;
+            if (el.getAttribute('data-animated') === '1') return;
+            if (target <= 0) { el.textContent = '0'; el.setAttribute('data-animated','1'); return; }
+            const start = 0;
+            let startTime = null;
+            duration = duration || Math.min(1400, 300 + target * 12);
+            function step(timestamp) {
+                if (!startTime) startTime = timestamp;
+                const progress = Math.min((timestamp - startTime) / duration, 1);
+                const value = Math.floor(progress * (target - start) + start);
+                el.textContent = value;
+                if (progress < 1) {
+                    requestAnimationFrame(step);
+                } else {
+                    el.textContent = target;
+                    el.setAttribute('data-animated','1');
+                }
+            }
+            requestAnimationFrame(step);
+        }
+
+        function animateStats() {
+            const els = document.querySelectorAll('.countup');
+            const percents = document.querySelectorAll('.countup-percent');
+            
+            // Collect all targets to find max for synchronized duration
+            let maxTarget = 0;
+            const targets = [];
+            
+            els.forEach(el => {
+                const dataTarget = el.getAttribute('data-target');
+                const target = dataTarget !== null ? Number(dataTarget) : Number(el.textContent.replace(/[^0-9.-]+/g, '')) || 0;
+                targets.push({ el, target, type: 'count' });
+                maxTarget = Math.max(maxTarget, target);
+                el.textContent = '0';
+            });
+
+            percents.forEach(el => {
+                const dataTarget = el.getAttribute('data-target');
+                const target = dataTarget !== null ? Number(dataTarget) : Number(el.textContent.replace(/[^0-9.-]+/g, '')) || 0;
+                targets.push({ el, target, type: 'percent' });
+                maxTarget = Math.max(maxTarget, target);
+                el.textContent = '0';
+            });
+
+            // Calculate synchronized duration based on max target
+            const syncDuration = Math.min(1400, 300 + maxTarget * 12);
+            
+            // Start all animations at the same time with same duration
+            setTimeout(() => {
+                targets.forEach(({ el, target }) => {
+                    animateCount(el, target, syncDuration);
+                });
+            }, 20);
+        }
+
         document.addEventListener('DOMContentLoaded', function () {
+            animateStats();
             const modal = document.getElementById('editModal');
             const form = document.getElementById('editPatientForm');
             const closeBtn = document.getElementById('editModalClose');
