@@ -21,7 +21,19 @@ if (!isset($_SESSION['user_id'])) {
     <div class="container">
         <?php require PUBLIC_PATH . '/sidebar.php'; ?>
         <main class="main-content">
-            <?php echo $content ?? ''; ?>
+            <?php
+            if (isset($_SESSION['flash'])) {
+                $flash = $_SESSION['flash'];
+                $type = $flash['type'] ?? 'info';
+                $msg = $flash['message'] ?? '';
+                $class = 'flash-info';
+                if ($type === 'success') $class = 'flash-success';
+                if ($type === 'error') $class = 'flash-error';
+                echo "<div class=\"$class\">" . htmlspecialchars($msg) . "</div>";
+                unset($_SESSION['flash']);
+            }
+            echo $content ?? '';
+            ?>
         </main>
     </div>
     <script src="/lab_sync/public/js/showSection.js"></script>
