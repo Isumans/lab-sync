@@ -16,10 +16,15 @@ class appointmentsController {
 
     public function storeAppointment() {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $patientId = $_POST['patient_id'];
-            $appointmentDate = $_POST['appointment_date'];
-            $appointmentTime = $_POST['appointment_time'];
-            $reason = $_POST['reason'];
+            $patientId = isset($_POST['patient_id']) ? intval($_POST['patient_id']) : 0;
+            $appointmentDate = $_POST['appointment_date'] ?? '';
+            $appointmentTime = $_POST['appointment_time'] ?? '';
+            $reason = $_POST['reason'] ?? '';
+
+            if ($patientId <= 0) {
+                echo "Error: patient_id is missing or invalid.";
+                return;
+            }
 
             $conn = connect();
             $model = new AppointmentModel($conn);
@@ -28,7 +33,15 @@ class appointmentsController {
                 echo "Appointment created successfully.";
                 // Optionally redirect or load the appointments view
             } else {
+                $err = $model->getLastError();
                 echo "Error creating appointment.";
+                if ($err) {
+                    echo " Details: " . htmlspecialchars($err);
+                } elseif ($conn && $conn->error) {
+                    echo " DB error: " . htmlspecialchars($conn->error);
+                } else {
+                    echo " (no DB error available).";
+                }
             }
         }
     }
