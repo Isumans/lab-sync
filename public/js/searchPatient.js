@@ -41,6 +41,11 @@ searchInput.addEventListener('input', async () => {
 suggestionsBox.addEventListener('click', (e) => {
     if (e.target.classList.contains('suggestion-item')) {
         searchInput.value = e.target.dataset.name;
+        // set hidden patient_id input if present
+        const patientIdInput = document.getElementById('patient_id');
+        if (patientIdInput) {
+            patientIdInput.value = e.target.dataset.id;
+        }
         suggestionsBox.style.display = 'none';
     }
 });
