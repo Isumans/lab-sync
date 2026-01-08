@@ -6,14 +6,17 @@
 html,body{margin:0;font-family:Poppins,system-ui,Arial;background:var(--bg);color:#101828}
 
 /* NAVBAR */
+
 .navbar{display:flex;align-items:center;justify-content:space-between;padding:18px 6%;background:#fff;border-bottom:1px solid #e0e0e0;position:sticky;top:0;z-index:10}
 .nav-logo{display:flex;align-items:center;gap:8px;color:var(--blue);font-weight:700}
+.nav-logo a{display:flex;align-items:center;gap:8px;text-decoration:none;color:inherit}
 .nav-logo img{height:42px;width:auto;display:block}
 .nav-logo span{font-size:1.2rem;}
 .nav-links a{margin:0 14px;text-decoration:none;color:#333;font-weight:500;font-size:1.25rem;}
 .nav-actions a{margin-left:10px;padding:8px 16px;border-radius:20px;text-decoration:none;font-weight:600}
 .login{color:var(--blue);border:1px solid var(--blue);background:#fff}
 .signup{background:var(--blue);color:#fff;border:1px solid var(--blue)}
+
 
 /* COMMON */
 .container{max-width:1180px;margin:0 auto;padding:24px 6%}
