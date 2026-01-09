@@ -8,34 +8,34 @@ class AppointmentModel {
         $this->db = $db;
     }
 
-    public function createAppointment($patientId, $appointmentDate, $appointmentTime, $reason) {
-        // Try using the singular table name 'appointment' (other models use this)
-        $sqlWithReason = "INSERT INTO appointment (patient_id, appointment_date, appointment_time, reason) VALUES (?, ?, ?, ?)";
+    public function createAppointment($patientId, $appointmentDate, $appointmentTime, $reason = '', $method = 'online') {
+        // Insert including method column. Try with reason first.
+        $sqlWithReason = "INSERT INTO appointment (patient_id, appointment_date, appointment_time, reason, method) VALUES (?, ?, ?, ?, ?)";
         $stmt = $this->db->prepare($sqlWithReason);
         if ($stmt !== false) {
-            $stmt->bind_param("isss", $patientId, $appointmentDate, $appointmentTime, $reason);
+            $stmt->bind_param("issss", $patientId, $appointmentDate, $appointmentTime, $reason, $method);
             $result = $stmt->execute();
             if ($result === false) {
-                $this->lastError = 'Execute failed in createAppointment (with reason): ' . $stmt->error;
+                $this->lastError = 'Execute failed in createAppointment (with reason+method): ' . $stmt->error;
                 error_log($this->lastError);
             }
             return $result;
         }
 
-        // If preparing with 'reason' failed (maybe column missing), try without reason
-        $this->lastError = 'Prepare (with reason) failed in createAppointment: ' . $this->db->error;
+        // If prepare failed (maybe 'reason' column missing), try without reason but include method.
+        $this->lastError = 'Prepare (with reason+method) failed in createAppointment: ' . $this->db->error;
         error_log($this->lastError);
-        $sqlNoReason = "INSERT INTO appointment (patient_id, appointment_date, appointment_time) VALUES (?, ?, ?)";
+        $sqlNoReason = "INSERT INTO appointment (patient_id, appointment_date, appointment_time, method) VALUES (?, ?, ?, ?)";
         $stmt2 = $this->db->prepare($sqlNoReason);
         if ($stmt2 === false) {
-            $this->lastError = 'Prepare failed in createAppointment (no reason): ' . $this->db->error;
+            $this->lastError = 'Prepare failed in createAppointment (no reason, with method): ' . $this->db->error;
             error_log($this->lastError);
             return false;
         }
-        $stmt2->bind_param("iss", $patientId, $appointmentDate, $appointmentTime);
+        $stmt2->bind_param("isss", $patientId, $appointmentDate, $appointmentTime, $method);
         $result2 = $stmt2->execute();
         if ($result2 === false) {
-            $this->lastError = 'Execute failed in createAppointment (no reason): ' . $stmt2->error;
+            $this->lastError = 'Execute failed in createAppointment (no reason, with method): ' . $stmt2->error;
             error_log($this->lastError);
         }
         return $result2;
@@ -58,6 +58,6 @@ class AppointmentModel {
         return $this->lastError;
     }
 
-    // Other appointment-related methods can be added here
+
 }
 ?>
