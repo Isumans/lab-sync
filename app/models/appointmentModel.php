@@ -58,6 +58,6 @@ class AppointmentModel {
         return $this->lastError;
     }
 
-    // Other appointment-related methods can be added here
+
 }
 ?>
