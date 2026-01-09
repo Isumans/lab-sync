@@ -11,8 +11,10 @@ if (session_status() === PHP_SESSION_NONE) {
 ?>
 <header class="navbar">
   <div class="nav-logo" style="cursor:pointer">
+    <a href="/lab_sync/index.php">
     <img src="/lab_sync/public/assests/Labsync-3.png" alt="LabSync Logo"/>
     <span>LabSync</span>
+</a>
   </div>
   <nav class="nav-links">
     <a href="index.php?controller=home&action=explore">Tests</a>
