@@ -20,6 +20,14 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
       document.body.style.overflow = '';
       document.documentElement.style.paddingRight = '';
+      // Reset form and patient selection
+      if (form) {
+        form.reset();
+        const patientIdInput = document.getElementById('patient_id');
+        const patientSearchInput = document.getElementById('patient-search');
+        if (patientIdInput) patientIdInput.value = '';
+        if (patientSearchInput) patientSearchInput.style.borderColor = '';
+      }
     }
   }
 
@@ -31,7 +39,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   modal?.addEventListener('click', e => { if (e.target === modal) setVisible(false); });
   modal?.querySelector('#closeModal')?.addEventListener('click', () => setVisible(false));
-  modal?.querySelector('#cancelModal')?.addEventListener('click', () => setVisible(false));
+  modal?.querySelector('#cancel')?.addEventListener('click', () => setVisible(false));
 
   window.addEventListener('keydown', e => {
     if (e.key === 'Escape' && modal && modal.style.display !== 'none') {

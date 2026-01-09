@@ -1,6 +1,8 @@
 const searchInput = document.getElementById('patient-search');
 const suggestionsBox = document.getElementById('patient-suggestions');
 const searchBy = document.getElementById('patient-search-by');
+const patientIdInput = document.getElementById('patient_id');
+const createAppointmentForm = document.getElementById('createAppointmentForm');
 
 // Trigger search when typing
 searchInput.addEventListener('input', async () => {
@@ -39,13 +41,36 @@ searchInput.addEventListener('input', async () => {
 
 // Handle click on suggestion
 suggestionsBox.addEventListener('click', (e) => {
-    if (e.target.classList.contains('suggestion-item')) {
+    if (e.target.classList.contains('suggestion-item') && e.target.dataset.id) {
         searchInput.value = e.target.dataset.name;
-        // set hidden patient_id input if present
-        const patientIdInput = document.getElementById('patient_id');
+        // set hidden patient_id input
         if (patientIdInput) {
             patientIdInput.value = e.target.dataset.id;
         }
         suggestionsBox.style.display = 'none';
+        // Show success indicator
+        searchInput.style.borderColor = '#4CAF50';
     }
 });
+
+// Close suggestions when clicking elsewhere
+document.addEventListener('click', (e) => {
+    if (e.target !== searchInput && e.target !== suggestionsBox) {
+        suggestionsBox.style.display = 'none';
+    }
+});
+
+// Form submission validation
+if (createAppointmentForm) {
+    createAppointmentForm.addEventListener('submit', (e) => {
+        if (!patientIdInput || !patientIdInput.value) {
+            e.preventDefault();
+            alert('Please select a patient from the search results before submitting.');
+            searchInput.focus();
+            searchInput.style.borderColor = '#f44336';
+            return false;
+        }
+        // Reset border color on successful validation
+        searchInput.style.borderColor = '';
+    });
+}

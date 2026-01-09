@@ -23,6 +23,8 @@
            placeholder="Search patient..." 
            autocomplete="off">
     
+    <div id="patient-suggestions" class="suggestion-box"></div>
+    
     <input type="hidden" id="patient_id" name="patient_id" value="">
     <input type="hidden" id="method" name="method" value="physical">
 
