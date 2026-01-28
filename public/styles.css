@@ -154,9 +154,9 @@ body {
 
 .main-content {
     margin-left: 256px;
-    margin-top: 56px;
+    margin-top: 16px; 
     flex: 1;
-    padding: 32px;
+    padding: 8px 16px 16px 16px;
     background: var(--background-color);
     min-height: 100%;
     box-shadow: 0 0;
@@ -344,4 +344,5 @@ body {
     font-size: 1em;
     font-family: 'Inter', sans-serif;
 }
+
 

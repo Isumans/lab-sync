@@ -42,8 +42,8 @@ ob_start();
                     <table class="test-catalog-table">
                     <thead>
                         <tr>
+                            <th>Test ID</th>
                             <th>Test Name</th>
-                            <th>Code</th>
                             <th>Category</th>
                             <th>Price</th>
                             <!-- <th>Status</th> -->
@@ -58,8 +58,8 @@ ob_start();
                                     data-name="<?php echo htmlspecialchars($package['test_name']); ?>"
                                     data-category="<?php echo htmlspecialchars($package['category']); ?>"
                                     data-price="<?php echo htmlspecialchars($package['price']); ?>">
-                                    <td><?php echo htmlspecialchars($package['test_name']); ?></td>
                                     <td><?php echo htmlspecialchars($package['test_id']); ?></td>
+                                    <td><?php echo htmlspecialchars($package['test_name']); ?></td>
                                     <td><?php echo htmlspecialchars($package['category']); ?></td>
                                     <td><?php echo htmlspecialchars($package['price']); ?></td>
                                     <td>

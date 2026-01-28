@@ -10,6 +10,13 @@ class administratorModel {
         $result = $this->db->query("SELECT * FROM users WHERE role='admin' OR role='receptionist' OR role='technician'");
         return $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
     }
+    public function getUserByRole($role) {
+        $stmt = $this->db->prepare("SELECT * FROM users WHERE role = ?");
+        $stmt->bind_param("s", $role);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        return $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
+    }
     public function createUser($username, $password, $role, $contact_number, $email) {
         $stmt = $this->db->prepare("INSERT INTO users (username, password, role, contact_number, email) VALUES (?, ?, ?, ?, ?)");
         $stmt->bind_param("sssss", $username, password_hash($password, PASSWORD_BCRYPT), $role, $contact_number, $email);
