@@ -1,0 +1,201 @@
+.modal {
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0,0,0,0.5);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.modal-content {
+  background-color: #ffffff;
+  padding: 24px 28px 24px 28px;  
+  border-radius: 14px;
+  position: relative;
+  max-width: 420px;
+  width: 98%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.18), 0 1.5px 6px rgba(0,0,0,0.10);
+  border: 1.5px solid #e0e0e0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  margin: 10px;
+}
+
+.modal-content h2 {
+  font-size: 1.7rem;
+  font-weight: 600;
+  margin: 12px 0 8px 0;
+  text-align: center;
+}
+
+.modal .close {
+  color: #333;
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  font-size: 28px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.modal .close:hover {
+  color: #000;
+}
+
+/* Form Labels */
+.appointment-form label[for="patient-search-by"] {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 2px;
+  font-size: 0.9rem;
+}
+
+.appointment-form label[for="patient-search-by"] select {
+  width: auto;
+  padding: 6px 10px;
+  margin-bottom: 0;
+  font-size: 0.9rem;
+  flex-shrink: 0;
+  min-width: 140px;
+}
+
+/* Form Inputs */
+.appointment-form input[type="text"],
+.appointment-form input[type="date"],
+.appointment-form input[type="time"],
+.appointment-form select {
+  width: 100%;
+  padding: 10px 10px;
+  margin-bottom: 18px;
+  border: 1.5px solid #bfc7d1;
+  border-radius: 7px;
+  box-sizing: border-box;
+  font-size: 1.07rem;
+  background: #fafbfc;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.appointment-form input[type="text"]:focus,
+.appointment-form input[type="date"]:focus,
+.appointment-form input[type="time"]:focus,
+.appointment-form select:focus {
+  border-color: #1976d2;
+  outline: none;
+  box-shadow: 0 0 0 2px #1976d220;
+}
+
+.appointment-form .add-button {
+  margin-top: 8px;  
+  margin-bottom: 0;
+  background: #00bcd4;
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 8px 14px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(30,144,255,0.08);
+  transition: background 0.18s, box-shadow 0.18s;
+  outline: none;
+  width: auto;
+  display: inline-block;
+}
+
+.appointment-form .test-group {
+  margin-bottom: 10px;  
+  padding: 12px;
+  background: #fff;
+  border-radius: 7px;
+  border: 1px solid #e0e0e0;
+}
+
+.appointment-form .add-button:hover {
+  background: #1976d2;
+  box-shadow: 0 4px 16px rgba(30,144,255,0.13);
+}
+
+/* Button Group Container */
+.appointment-form .button-group {
+  display: flex;
+  gap: 10px;
+  margin-top: 14px;
+  justify-content: center;
+}
+
+/* Submit Button */
+.appointment-form .submit-button {
+  background: #00bcd4;
+  color: #ffffff;
+  border: none;
+  border-radius: 12px;
+  padding: 8px 12px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin: 0;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0,184,148,0.08);
+  transition: background 0.18s, box-shadow 0.18s;
+  outline: none;
+  letter-spacing: 0.03em;
+  width: auto;
+  min-width: 100px;
+  display: inline-block;
+}
+
+.appointment-form .submit-button:hover {
+  background: #0095a8;
+  box-shadow: 0 4px 16px rgba(0,184,148,0.13);
+}
+
+/* Cancel Button */
+.appointment-form .cancel-btn {
+  background: #e0e0e0;
+  color: #ca0000;
+  border: none;
+  border-radius: 12px;
+  padding: 8px 12px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  margin: 0;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(30,144,255,0.06);
+  transition: background 0.18s, box-shadow 0.18s;
+  outline: none;
+  display: inline-block;
+  width: auto;
+  min-width: 100px;
+}
+
+.appointment-form .cancel-btn:hover {
+  background: #fc1e1e;
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(30,144,255,0.10);
+}
+
+/* Test Group */
+.appointment-form .test-group {
+  margin-bottom: 10px;
+}
+
+/* Modal Message */
+#modalMessage {
+  margin-bottom: 12px;
+  min-height: 18px;
+}
+
+/* Media Query */
+@media (min-width: 800px) {
+  .modal-content { 
+    width: 720px; 
+  }
+}
