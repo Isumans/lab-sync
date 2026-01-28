@@ -30,33 +30,33 @@ class HomeController {
     }
     public function  signup(){
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $username = trim($_POST['username'] ?? '');
+            $name = trim($_POST['name'] ?? '');
             $email = trim($_POST['email'] ?? '');
             $contact_number = trim($_POST['contact_number'] ?? '');
             $password = $_POST['password'] ?? '';
             $role = 'patient';
 
             // validate minimal inputs (optional, add more validation as needed)
-            if ($username === '' || $email === '' || $password === '') {
+            if ($name === '' || $email === '' || $password === '') {
                 $error = 'Please fill all required fields.';
             } else {
                 // prepare and check for existing user (use IF, not while)
-                $checkUserStmt = $this->db->prepare("SELECT user_id FROM users WHERE username = ? OR email = ? LIMIT 1");
+                $checkUserStmt = $this->db->prepare("SELECT user_id FROM users WHERE email = ? LIMIT 1");
                 if (!$checkUserStmt) {
                     // debug-friendly failure message — remove in production
                     die("Prepare failed: " . $this->db->error);
                 }
 
-                $checkUserStmt->bind_param("ss", $username, $email);
+                $checkUserStmt->bind_param("s", $email);
                 $checkUserStmt->execute();
                 $checkUserStmt->store_result();
 
                 if ($checkUserStmt->num_rows > 0) {
-                    $error = "Username or email already exists. Please choose another.";
+                    $error = "Email already exists. Please choose another.";
                 } else {
                     // register user: hash password and call model
                     $hashed = password_hash($password, PASSWORD_BCRYPT);
-                    $user = $this->model->registerPatient($username, $email, $contact_number, $hashed, $role);
+                    $user = $this->model->registerPatient($name, $email, $contact_number, $hashed, $role);
 
                     if ($user) {
                         header('Location: /lab_sync/index.php?controller=Auth&action=login');
