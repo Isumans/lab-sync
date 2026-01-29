@@ -15,22 +15,21 @@ class AuthController {
     public function login() {
         $error = '';
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $username = $_POST['username'] ?? '';
+            $email = $_POST['email'] ?? '';
             $password = $_POST['password'] ?? '';
 
             $model = new AuthModel($this->db);
-            $user = $model->verifyUser($username, $password);
+            $user = $model->verifyUser($email, $password);
             if ($user) {
                 // ensure session started (bootstrap should start it)
                 session_regenerate_id(true);
                 $_SESSION['user_id'] = $user['user_id'] ?? $user['id'] ?? null;
-                $_SESSION['username'] = $user['username'] ?? $user['name'] ?? '';
                 $_SESSION['email'] = $user['email'] ?? '';
                 $_SESSION['user_role'] = $user['role'] ?? '';
                 header('Location: /lab_sync/index.php?controller=home&action=index');
                 exit;
             } else {
-                $error = 'Invalid credentials';
+                $error = 'Invalid email or password.';
             }
         }
         include VIEW_PATH . '/auth/dash_login.php';
