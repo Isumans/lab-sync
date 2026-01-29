@@ -23,14 +23,14 @@ class AuthModel {
     //     return $stmt->execute();
     // }
    
-    public function verifyUser($username, $password) {
+    public function verifyUser($email, $password) {
     // Step 1: Check database connection
     if (!$this->db) {
         die("Database connection not established properly.");
     }
 
-    // Step 2: The SQL query
-    $query = "SELECT * FROM users WHERE username = ?";
+    // Step 2: The SQL query - authenticate using email
+    $query = "SELECT * FROM users WHERE email = ?";
     $stmt = $this->db->prepare($query);
 
     // Step 3: Check if prepare() failed
@@ -39,18 +39,16 @@ class AuthModel {
     }
 
     // Step 4: Proceed only if prepare() worked
-    $stmt->bind_param("s", $username);
+    $stmt->bind_param("s", $email);
     $stmt->execute();
     $result = $stmt->get_result();
     $user = $result->fetch_assoc();
 
     if (isset(($user['password'])) && password_verify($password, $user['password'])) {
         return $user;
-    }else {
-        echo "Password mismatch for user: $username"; // Debug line
     }
-
-    // return false;
+    
+    return false;
 }
 
 }

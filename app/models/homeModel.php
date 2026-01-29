@@ -16,17 +16,15 @@ class HomeModel {
         ];
     }
 
-    public function registerPatient($username, $email, $contact_number, $password, $role) {
-        // Sample registration logic
-        // In a real application, you would save this data to a database
-        // Here, we just simulate a successful registration
-        $stmt = $this->db->prepare("INSERT INTO users (username, password, role, contact_number, email) VALUES (?, ?, ?, ?, ?)");
-        $stmt->bind_param("sssss", $username,$password, $role, $contact_number, $email);
-        $stmt2= $this-> db->prepare("INSERT INTO patients (patient_name, contact_number, email) VALUES (?, ?, ?)");
-        $stmt2-> bind_param("sss", $username, $contact_number, $email);
+    public function registerPatient($name, $email, $contact_number, $password, $role) {
+        // Register patient - insert into users and patients tables
+        $stmt = $this->db->prepare("INSERT INTO users (email, password, role, contact_number) VALUES (?, ?, ?, ?)");
+        $stmt->bind_param("ssss", $email, $password, $role, $contact_number);
         
-        return $stmt->execute()&& $stmt2->execute();
-        // return true;
+        $stmt2 = $this->db->prepare("INSERT INTO patients (patient_name, contact_number, email) VALUES (?, ?, ?)");
+        $stmt2->bind_param("sss", $name, $contact_number, $email);
+        
+        return $stmt->execute() && $stmt2->execute();
     }
     public function getAllTests() {
         $result = $this->db->query("SELECT * FROM tests");
