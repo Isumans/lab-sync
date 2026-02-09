@@ -11,24 +11,40 @@ class appointmentsController {
         // Logic to fetch and display appointments can be added here
         $appointmentsModel = new AppointmentModel(connect());
         $appointmentsOnline = $appointmentsModel->getAllAppointmentsbyMethod("online");
+        $appointmentsPhysical = $appointmentsModel->getAllAppointmentsbyMethod("physical");
         include VIEW_PATH . '/receptionist/appointments.php';
     }
 
     public function storeAppointment() {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $patientId = $_POST['patient_id'];
-            $appointmentDate = $_POST['appointment_date'];
-            $appointmentTime = $_POST['appointment_time'];
-            $reason = $_POST['reason'];
+            $patientId = isset($_POST['patient_id']) ? intval($_POST['patient_id']) : 0;
+            $appointmentDate = $_POST['appointment_date'] ?? '';
+            $appointmentTime = $_POST['appointment_time'] ?? '';
+            $reason = $_POST['reason'] ?? '';
+            $method = $_POST['method'] ?? 'physical';
+
+            if ($patientId <= 0) {
+                echo "Error: patient_id is missing or invalid.";
+                return;
+            }
 
             $conn = connect();
             $model = new AppointmentModel($conn);
-            $success = $model->createAppointment($patientId, $appointmentDate, $appointmentTime, $reason);
+            $success = $model->createAppointment($patientId, $appointmentDate, $appointmentTime, $reason, $method);
             if ($success) {
-                echo "Appointment created successfully.";
-                // Optionally redirect or load the appointments view
+                // Redirect back to appointments page to show saved appointment
+                header('Location: /lab_sync/index.php?controller=appointmentsController&action=index');
+                exit();
             } else {
+                $err = $model->getLastError();
                 echo "Error creating appointment.";
+                if ($err) {
+                    echo " Details: " . htmlspecialchars($err);
+                } elseif ($conn && $conn->error) {
+                    echo " DB error: " . htmlspecialchars($conn->error);
+                } else {
+                    echo " (no DB error available).";
+                }
             }
         }
     }
