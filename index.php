@@ -87,6 +87,8 @@ if ($controllerName === 'TestCatalog') {
         // $password = $_POST['password'];
         // $role = $_POST['role'];
         $adminController->manageUser($role);
+    }elseif($action==='usersByRole'){
+        $adminController->usersByRole($role);
     }
 }
 elseif ($controllerName === 'appointmentsController') {

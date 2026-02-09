@@ -22,6 +22,11 @@ class administratorController {
             $users = $this->adminModel->getAllUsers();
             include VIEW_PATH . '/administrator/settings.php';
         }
+
+        public function usersByRole($role) {
+            $users = $this->adminModel->getUserByRole($role);
+            include VIEW_PATH . '/administrator/settings.php';
+        }
         public function createUser($role) {
             // Logic to create a new user in the database
             $role=$_GET['role'] ?? '';
