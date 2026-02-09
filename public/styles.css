@@ -166,9 +166,9 @@ body {
 
 .main-content {
     margin-left: 256px;
-    margin-top: 56px;
+    margin-top: 16px; 
     flex: 1;
-    padding: 32px;
+    padding: 8px 16px 16px 16px;
     background: var(--background-color);
     min-height: calc(100vh - 56px);
     box-shadow: 0 0;

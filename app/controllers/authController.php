@@ -30,7 +30,7 @@ class AuthController {
                 // Redirect based on user role
                 $role = $_SESSION['user_role'] ?? '';
                 if ($role === 'admin' || $role === 'receptionist' || $role === 'technician') {
-                    header('Location: /lab_sync/index.php?controller=dashboard&action=index');
+                    header('Location: /lab_sync/index.php?controller=home&action=index');
                 } else {
                     // Default to patient dashboard
                     header('Location: /lab_sync/index.php?controller=home&action=dashboard');

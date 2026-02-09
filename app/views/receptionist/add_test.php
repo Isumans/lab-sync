@@ -27,9 +27,9 @@ if (!isset($_SESSION['user_id'])) {
                     <form class="Tmain-content formStyle" action="/lab_sync/index.php?controller=TestCatalog&action=store&role=<?php echo urlencode($role); ?>" method="POST">
                         <label for="test-name">Test Name:</label>
                         <input type="text" id="test-name" name="test-name" required>
-                        <label for="test-category">Category:</label>
+                        <label for="test-category">Department:</label>
                         <select id="test-category" name="test-category" required>
-                            <option value="">Select Category</option>
+                            <option value="">Select Department</option>
                             <option value="blood">Blood Tests</option>
                             <option value="urine">Urine Tests</option>
                             <option value="imaging">Imaging</option>

@@ -18,6 +18,8 @@ if (!isset($_SESSION['user_id'])) {
         <!-- <link rel="stylesheet" href="stle1.css"> -->
         <link rel="stylesheet" href="/lab_sync/public/styles.css">
         <link rel="stylesheet" href="/lab_sync/public/table.css">
+        <link rel="stylesheet" href="/lab_sync/public/dashboardCards.css">
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     </head>
     <body>
         <!-- Navigation Bar -->
@@ -25,112 +27,69 @@ if (!isset($_SESSION['user_id'])) {
         <div class="container">
             <!-- Sidebar -->
             <?php require 'C:\xampp\htdocs\lab_sync\public\sidebar.php'; ?>
-        
             <!-- Main Body Section -->
             <main class="main-content">
-                <h1>Dashboard</h1><br>
-                <h3>Quick Stats</h3>
-                <div class="container-cards">
-                    <div class="card">
-                        <h2>Total Patients Within Year</h2>
-                        <p>1,250</p>
+                <h1>Dashboard</h1>
+                <br />
+                <h3>Quick Overview</h3>
+                <br />
+                
+                <!-- Metric Cards Section -->
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="metric-icon user-icon">👤</div>
+                        <div class="metric-content">
+                            <h3>Total Patients past week</h3>
+                            <p class="metric-value">40,689</p>
+                            <span class="metric-change up">↑ 8.5% Up from previous</span>
+                        </div>
                     </div>
-                    <div class="card">
-                        <h2>Pending Appointments</h2>
-                        <p>45</p>
+                    
+                    <div class="metric-card">
+                        <div class="metric-icon order-icon">📦</div>
+                        <div class="metric-content">
+                            <h3>Samples Collected past week</h3>
+                            <p class="metric-value">10293</p>
+                            <span class="metric-change up">↑ 1.3% Up from past week</span>
+                        </div>
                     </div>
-                    <div class="card">
-                        <h2>Tests Conducted Today</h2>
-                        <p>320</p>
+                    
+                    <div class="metric-card">
+                        <div class="metric-icon sales-icon">📈</div>
+                        <div class="metric-content">
+                            <h3>Payments pending</h3>
+                            <p class="metric-value">$89,000</p>
+                            <span class="metric-change down">↓ 4.3% Down from yesterday</span>
+                        </div>
                     </div>
-                     <div class="card">
-                        <h2>Week's Appointments</h2>
-                        <p>45</p>
-                    </div>
-                    <div class="card">
-                        <h2>Tests Conducted Today</h2>
-                        <p>320</p>
-                    </div>
-                </div>
-                <div class="container-cards">
-                    <div class="wide-card">
-                        <h2>OutSourced Tests</h2><br>
-                        <p>120</p>
-                    </div>
-                </div>
-                <br>
-                <br>
-                <div>
-                    <h2>Charts/Graphs</h2>
-                    <div class="container-cards">
-                        <div class="card, c-card">
-                            <h3>Monthly Test Volume</h3>
-                            <!-- <img src="assests/chart1.png" alt="Chart 1" style="width:100%; height:auto;"> -->
-                    </div>
-                    <div class="card, c-card">
-                        <h3>Revenue Trends</h3>
-                        <!-- <img src="assests/chart2.png" alt="Chart 2" style="width:100%; height:auto;"> -->
-                    </div>
-                    <div class="card, c-card">
-                        <h3>Patient Demographics</h3>
-                        <!-- <img src="assests/chart3.png" alt="Chart 3" style="width:100%; height:auto;"> -->
+                    
+                    <div class="metric-card">
+                        <div class="metric-icon pending-icon">⏱️</div>
+                        <div class="metric-content">
+                            <h3>Pending Reports</h3>
+                            <p class="metric-value">2040</p>
+                            <span class="metric-change up">↑ 1.8% Up from yesterday</span>
+                        </div>
                     </div>
                 </div>
-                <div>
-                    <h2>Today's Appointements/ Orders</h2>
-                    <table class="appointments-table">
-                        <thead>
-                            <tr>
-                                <th>Time</th>
-                                <th>Patient Name</th>
-                                <th>Test Type</th>
-                                <th >Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>09:00 AM</td>
-                                <td>John Doe</td>
-                                <td>Blood Test</td>
-                                <td ><div class="status">Completed</div></td>
-                            </tr>
-                            <tr>
-                                <td>10:30 AM</td>
-                                <td>Jane Smith</td>
-                                <td>X-Ray</td>
-                                <td ><div class="Status">
-                                        Pending
-                                    </div></td>
-                            </tr>
-                            <tr>
-                                <td>11:00 AM</td>
-                                <td>Mike Johnson</td>
-                                <td>MRI Scan</td>
-                                <td><div class="Status">
-                                        In Progress
-                                    </div></td>
-                            </tr>
-                            <tr>
-                                <td>01:00 PM</td>
-                                <td>Emily Davis</td>
-                                <td>CT Scan</td>
-                                <td ><div class="Status">
-                                        Completed
-                                    </div></td>
-                            </tr>
-                            <tr>
-                                <td>02:30 PM</td>
-                                <td>Chris Brown</td>
-                                <td>Ultrasound</td>
-                                <td >
-                                    <div class="Status">
-                                        Completed
-                                    </div></td>
-                            </tr>
-                        </tbody>
+
+                <!-- Sales Details Section -->
+                <div class="sales-section">
+                    <div class="section-header">
+                        <h2>Revenue Details</h2>
+                        <select class="month-selector">
+                            <option>October</option>
+                            <option>November</option>
+                            <option>December</option>
+                        </select>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="salesChart"></canvas>
+                    </div>
                 </div>
                 
             </main>
         </div>
     </body>
+    <script src="/lab_sync/public/js/revenueStat.js"></script>
 </html>
