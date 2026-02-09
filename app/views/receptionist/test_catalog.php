@@ -82,7 +82,7 @@ ob_start();
 <div id="editTestModal" class="modal-overlay">
     <div class="modal-content">
         <div class="modal-header">
-            <h3>Edit Test</h3>
+            <h2>Edit Test</h2>
             <button id="editTestModalClose" class="modal-close" aria-label="Close">&times;</button>
         </div>
 
@@ -111,7 +111,7 @@ ob_start();
                 <div class="form-row">
                     <label for="price">Price</label>
                     <div class="input-group">
-                        <span class="input-prefix">$</span>
+                        <span class="input-prefix">Rs</span>
                         <input type="number" step="0.01" id="price" name="price" placeholder="145.00" />
                     </div>
                 </div>
