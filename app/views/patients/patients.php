@@ -81,6 +81,7 @@ if (!isset($_SESSION['user_id'])) {
                                             <th>Patient ID</th>
                                             <th>Name</th>
                                             <th>Email</th>
+                                            <th>Gender</th>
                                             <th>Contact Number</th>
                                             <th>Actions</th>
                                         </tr>
@@ -96,6 +97,7 @@ if (!isset($_SESSION['user_id'])) {
                                                     <td><?php echo htmlspecialchars($patient['patient_id']); ?></td>
                                                     <td><?php echo htmlspecialchars($patient['patient_name']); ?></td>
                                                     <td><?php echo htmlspecialchars($patient['email']); ?></td>
+                                                    <td><?php echo htmlspecialchars($patient['gender']); ?></td>
                                                     <td><?php echo htmlspecialchars($patient['contact_number']); ?></td>
                                                     <td>
                                                         <button type="button" class="edit-btn" title="Edit"><img src="/lab_sync/public/assests/edit.png" alt="Edit"></button>
@@ -104,7 +106,7 @@ if (!isset($_SESSION['user_id'])) {
                                                 </tr>
                                             <?php endforeach; ?>
                                         <?php else: ?>
-                                            <tr><td colspan="5">No patients found or database error.</td></tr>
+                                            <tr><td colspan="6">No patients found or database error.</td></tr>
                                         <?php endif; ?>
                                     </tbody>
                                 </table>
@@ -117,28 +119,38 @@ if (!isset($_SESSION['user_id'])) {
                                 <table class="test-catalog-table">
                                     <thead>
                                         <tr>
+                                            <th>Patient ID</th>
                                             <th>Name</th>
                                             <th>Email</th>
+                                            <th>Gender</th>
+                                            <th>Contact Number</th>
                                             <th>Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <tr>
-                                            <td>John Doe</td>
-                                            <td>johndoe@example.com</td>
-                                            <td>
-                                                <button class="edit-button">Edit</button>
-                                                <button class="delete-button">Delete</button>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td>Jane Smith</td>
-                                            <td>janesmith@example.com</td>
-                                            <td>
-                                                <button class="edit-button">Edit</button>
-                                                <button class="delete-button">Delete</button>
-                                            </td>
-                                        </tr>
+                                        <?php 
+                                        $malePatients = is_array($patients) ? array_filter($patients, function($p) { return $p['gender'] === 'Male'; }) : [];
+                                        if (count($malePatients) > 0): ?>
+                                            <?php foreach ($malePatients as $patient): ?>
+                                                <tr class="patient-row"
+                                                    data-id="<?php echo htmlspecialchars($patient['patient_id']); ?>"
+                                                    data-name="<?php echo htmlspecialchars($patient['patient_name']); ?>"
+                                                    data-email="<?php echo htmlspecialchars($patient['email']); ?>"
+                                                    data-contact="<?php echo htmlspecialchars($patient['contact_number']); ?>">
+                                                    <td><?php echo htmlspecialchars($patient['patient_id']); ?></td>
+                                                    <td><?php echo htmlspecialchars($patient['patient_name']); ?></td>
+                                                    <td><?php echo htmlspecialchars($patient['email']); ?></td>
+                                                    <td><?php echo htmlspecialchars($patient['gender']); ?></td>
+                                                    <td><?php echo htmlspecialchars($patient['contact_number']); ?></td>
+                                                    <td>
+                                                        <button type="button" class="edit-btn" title="Edit"><img src="/lab_sync/public/assests/edit.png" alt="Edit"></button>
+                                                        <button type="button" class="delete-btn" title="Delete"><img src="/lab_sync/public/assests/delete.png" alt="Delete"></button>
+                                                    </td>
+                                                </tr>
+                                            <?php endforeach; ?>
+                                        <?php else: ?>
+                                            <tr><td colspan="6">No male patients found.</td></tr>
+                                        <?php endif; ?>
                                     </tbody>
                                 </table>
                             </div>
@@ -150,20 +162,38 @@ if (!isset($_SESSION['user_id'])) {
                                 <table class="test-catalog-table">
                                     <thead>
                                         <tr>
+                                            <th>Patient ID</th>
                                             <th>Name</th>
                                             <th>Email</th>
+                                            <th>Gender</th>
+                                            <th>Contact Number</th>
                                             <th>Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <tr>
-                                            <td>Jane Smith</td>
-                                            <td>janesmith@example.com</td>
-                                            <td>
-                                                <button class="edit-button">Edit</button>
-                                                <button class="delete-button">Delete</button>
-                                            </td>
-                                        </tr>
+                                        <?php 
+                                        $femalePatients = is_array($patients) ? array_filter($patients, function($p) { return $p['gender'] === 'Female'; }) : [];
+                                        if (count($femalePatients) > 0): ?>
+                                            <?php foreach ($femalePatients as $patient): ?>
+                                                <tr class="patient-row"
+                                                    data-id="<?php echo htmlspecialchars($patient['patient_id']); ?>"
+                                                    data-name="<?php echo htmlspecialchars($patient['patient_name']); ?>"
+                                                    data-email="<?php echo htmlspecialchars($patient['email']); ?>"
+                                                    data-contact="<?php echo htmlspecialchars($patient['contact_number']); ?>">
+                                                    <td><?php echo htmlspecialchars($patient['patient_id']); ?></td>
+                                                    <td><?php echo htmlspecialchars($patient['patient_name']); ?></td>
+                                                    <td><?php echo htmlspecialchars($patient['email']); ?></td>
+                                                    <td><?php echo htmlspecialchars($patient['gender']); ?></td>
+                                                    <td><?php echo htmlspecialchars($patient['contact_number']); ?></td>
+                                                    <td>
+                                                        <button type="button" class="edit-btn" title="Edit"><img src="/lab_sync/public/assests/edit.png" alt="Edit"></button>
+                                                        <button type="button" class="delete-btn" title="Delete"><img src="/lab_sync/public/assests/delete.png" alt="Delete"></button>
+                                                    </td>
+                                                </tr>
+                                            <?php endforeach; ?>
+                                        <?php else: ?>
+                                            <tr><td colspan="6">No female patients found.</td></tr>
+                                        <?php endif; ?>
                                     </tbody>
                                 </table>
                             </div>

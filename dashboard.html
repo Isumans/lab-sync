@@ -1,0 +1,132 @@
+<html>
+    <head>
+        <title>Dashboard</title>
+        <link rel="stylesheet" href="styles.css">
+    </head>
+    <body>
+        <!-- Navigation Bar -->
+        <nav class="navbar">
+            <div class="navbar-brand"><img src="assests/Labsync-3.png">Lab<span style="color:#3DBDEC">Sync</span></div>
+            <ul class="navbar-menu">
+                <li><form class="search-form"><input class="search-input" type="text" placeholder="Search 🔎︎"></form></li>
+                <li><a href="#"><img class="bell" src="assests/bell.png"></a></li>
+                <li><a href="#"><img id="user-icon" src="assests/user.png"></a></li>
+            </ul>
+        </nav>
+
+        <div class="container">
+            <!-- Sidebar -->
+            <aside class="sidebar">
+                <ul>
+                    <li><a href="#"><img class="sidebar-icon" src="assests/dashboard.png" alt="Dashboard Icon">Dashboard</a></li>
+                    <li><a href="#"><img class="sidebar-icon" src="assests/appointment.png" alt="Appointments Icon">Appointments</a></li>
+                    <li><a href="#"><img class="sidebar-icon" src="assests/patients.png" alt="Patients Icon">Patients</a></li>
+                    <li><a href="#"><img class="sidebar-icon" src="assests/test-catalog.png" alt="Test Catalog Icon">Test-Catalog</a></li>
+                    <li><a href="#"><img class="sidebar-icon" src="assests/results.png" alt="Reports Icon">Reports</a></li>
+                    <li><a href="#"><img class="sidebar-icon" src="assests/inventory.png" alt="Inventory Icon">Inventory</a></li>
+                    <li><a href="#"><img class="sidebar-icon" src="assests/billing.png" alt="Billing Icon">Billing</a></li>
+                    <li><a href="#"><img class="sidebar-icon" src="assests/supplier.png" alt="Suppliers Icon">Suppliers</a></li>
+                    <li><a href="#"><img class="sidebar-icon" src="assests/settings.png" alt="Employees Icon">Settings</a></li>
+                    <li><a href="#"><img class="sidebar-icon" src="assests/logout.png" alt="Logout Icon">Logout</a></li>
+                </ul>
+            </aside>
+
+            <!-- Main Body Section -->
+            <main class="main-content">
+                <h1>Dashboard</h1><br>
+                <h3>Quick Stats</h3>
+                <div class="container-cards">
+                    <div class="card">
+                        <h2>Total Patients</h2>
+                        <p>1,250</p>
+                    </div>
+                    <div class="card">
+                        <h2>Pending Appointments</h2>
+                        <p>45</p>
+                    </div>
+                    <div class="card">
+                        <h2>Tests Conducted Today</h2>
+                        <p>320</p>
+                    </div>
+                     <div class="card">
+                        <h2>Pending Appointments</h2>
+                        <p>45</p>
+                    </div>
+                    <div class="card">
+                        <h2>Tests Conducted Today</h2>
+                        <p>320</p>
+                    </div>
+                </div>
+                <div class="container-cards">
+                    <div class="wide-card">
+                        <h2>OutSourced Tests</h2><br>
+                        <p>120</p>
+                    </div>
+                </div>
+                <br>
+                <br>
+                <div>
+                    <h2>Charts/Graphs</h2>
+                    <div class="container-cards">
+                        <div class="card, c-card">
+                            <h3>Monthly Test Volume</h3>
+                            <!-- <img src="assests/chart1.png" alt="Chart 1" style="width:100%; height:auto;"> -->
+                    </div>
+                    <div class="card, c-card">
+                        <h3>Revenue Trends</h3>
+                        <!-- <img src="assests/chart2.png" alt="Chart 2" style="width:100%; height:auto;"> -->
+                    </div>
+                    <div class="card, c-card">
+                        <h3>Patient Demographics</h3>
+                        <!-- <img src="assests/chart3.png" alt="Chart 3" style="width:100%; height:auto;"> -->
+                    </div>
+                </div>
+                <div>
+                    <h2>Today's Appointements/ Orders</h2>
+                    <table class="appointments-table">
+                        <thead>
+                            <tr>
+                                <th>Time</th>
+                                <th>Patient Name</th>
+                                <th>Test Type</th>
+                                <th >Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>09:00 AM</td>
+                                <td>John Doe</td>
+                                <td>Blood Test</td>
+                                <td class="Status">Completed</td>
+                            </tr>
+                            <tr>
+                                <td>10:30 AM</td>
+                                <td>Jane Smith</td>
+                                <td>X-Ray</td>
+                                <td class="Status">Pending</td>
+                            </tr>
+                            <tr>
+                                <td>11:00 AM</td>
+                                <td>Mike Johnson</td>
+                                <td>MRI Scan</td>
+                                <td class="Status">In Progress</td>
+                            </tr>
+                            <tr>
+                                <td>01:00 PM</td>
+                                <td>Emily Davis</td>
+                                <td>CT Scan</td>
+                                <td class="Status">Pending</td>
+                            </tr>
+                            <tr>
+                                <td>02:30 PM</td>
+                                <td>Chris Brown</td>
+                                <td>Ultrasound</td>
+                                <td class="Status">Completed</td>
+                            </tr>
+                        </tbody>
+                </div>
+                
+            </main>
+        </div>
+    </body>
+</html>
