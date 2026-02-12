@@ -64,9 +64,9 @@ if (!isset($_SESSION['user_id'])) {
                 <!-- Appointment Tabs -->
                 <div class="nav-bar-container" style="margin-top: 20px; margin-bottom: 20px;">
                     <div class="team-tabs">
-                        <button class="team-tab active" data-filter="all" onclick="showSection('all', this, event)">All Appointments</button>
-                        <button class="team-tab" data-filter="online" onclick="showSection('online', this, event)">Online</button>
-                        <button class="team-tab" data-filter="physical" onclick="showSection('physical', this, event)">Physical/Call</button>
+                        <button class="team-tab active" data-filter="all" onclick="filterAppointments('all', this, event)">All Appointments</button>
+                        <button class="team-tab" data-filter="online" onclick="filterAppointments('online', this, event)">Online</button>
+                        <button class="team-tab" data-filter="physical" onclick="filterAppointments('physical', this, event)">Physical/Call</button>
                     </div>
                 </div>
 
@@ -108,12 +108,11 @@ if (!isset($_SESSION['user_id'])) {
                                                 <td style="text-align: center;"><?php echo htmlspecialchars($appointment['appointment_date']); ?></td>
                                                 <td style="text-align: center;"><?php echo htmlspecialchars($appointment['appointment_time']); ?></td>
                                                 <td style="text-align: center;">
-                                                    <span class="status-badge <?php echo strpos($appointment['appointment_id'], 'ONLINE') !== false ? 'status-active' : 'status-inactive'; ?>">
-                                                        <?php echo strpos($appointment['appointment_id'], 'ONLINE') !== false ? 'Online' : 'Physical'; ?>
+                                                    <span class="status-badge <?php echo isset($appointment['method']) && $appointment['method'] === 'online' ? 'status-active' : 'status-inactive'; ?>">
+                                                        <?php echo isset($appointment['method']) ? ucfirst($appointment['method']) : 'N/A'; ?>
                                                     </span>
                                                 </td>
                                             </tr>
-            <script src="/lab_sync/public/js/showSection.js"></script>
                                         <?php endforeach; ?>
                                     <?php else: ?>
                                         <tr>
@@ -122,6 +121,7 @@ if (!isset($_SESSION['user_id'])) {
                                             </td>
                                         </tr>
                                     <?php endif; ?>
+            <script src="/lab_sync/public/js/showSection.js"></script>
                                 </tbody>
                             </table>
                         </div>
@@ -204,6 +204,7 @@ if (!isset($_SESSION['user_id'])) {
                 </div>
             </main>
             <script src="/lab_sync/public/js/appointmentPopup.js"></script>
+            <script src="/lab_sync/public/js/appointmentFilter.js"></script>
             <script src="/lab_sync/public/js/addTest.js"></script>
             <script src="/lab_sync/public/js/searchPatient.js"></script>
         </body>
