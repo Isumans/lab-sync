@@ -16,6 +16,7 @@ if (!isset($_SESSION['user_id'])) {
     <link rel="stylesheet" href="/lab_sync/public/table.css">
     <link rel="stylesheet" href="/lab_sync/public/appointmentStyles.css">
     <link rel="stylesheet" href="/lab_sync/public/appointmentPopup.css">
+    <link rel="stylesheet" href="/lab_sync/public/teamStyles.css">
 </head>
 <body>
         <!-- Navigation Bar -->
@@ -26,87 +27,180 @@ if (!isset($_SESSION['user_id'])) {
 
             <!-- Main Body Section -->
             <main class="main-content">
-                <div class="Tmain-content">
-                    <div class="test-catalog-header">
-                        <h1>Appointments</h1>
-                        <button id="openCreateAppointment" class="add-test-button">Create Appointment</button>
+                <div class="main-content-header">
+                    <h1>Appointments</h1>
+                    <p class="MC-p">Appointments-></p>
+                </div>
+
+                <!-- Appointment Header with Stats -->
+                <div class="team-header-container">
+                    <div class="team-header">
+                        <h2>Appointment Management</h2>
+                        <button id="openCreateAppointment" class="add-user-button">+ Create Appointment</button>
                     </div>
 
-                    <!-- Create Appointment Modal -->
-                    <div id="createAppointmentModal" class="modal" aria-hidden="true">
-                        <div class="modal-content">
-                            <span id="closeModal" class="close">&times;</span>
-                            <h2>Create Appointment</h2>
-                            <div id="modalMessage"></div>
-                            <?php include __DIR__ . '/appointment_form.php'; ?>
+                    <!-- Stats Cards -->
+                    <div class="team-stats-grid" style="grid-template-columns: repeat(2, 1fr);">
+                        <div class="stat-card-team">
+                            <div class="stat-label-team">TOTAL APPOINTMENTS</div>
+                            <div class="stat-value-team countup" data-target="<?php echo count($appointmentsOnline ?? []) + count($appointmentsPhysical ?? []); ?>">0</div>
+                            <div class="stat-change"><span class="countup-percent" data-target="5">0</span>% from last month</div>
+                        </div>
+
+                        <div class="stat-card-team">
+                            <div class="stat-label-team">UPCOMING THIS WEEK</div>
+                            <div class="stat-value-team countup" data-target="<?php echo count($appointmentsPhysical ?? []); ?>">0</div>
+                            <div class="stat-change"><span class="countup-percent" data-target="3">0</span>% increase</div>
                         </div>
                     </div>
+                </div>
+
+                <!-- Search and Controls -->
+                <div class="team-controls">
+                    <input type="text" class="team-search-bar" placeholder="🔍 Search Appointments..." id="appointmentSearchInput">
+                    <button class="team-filter-button">↓ Filter</button>
+                </div>
+
+                <!-- Appointment Tabs -->
+                <div class="nav-bar-container" style="margin-top: 20px; margin-bottom: 20px;">
+                    <div class="team-tabs">
+                        <button class="team-tab active" data-filter="all" onclick="showSection('all', this, event)">All Appointments</button>
+                        <button class="team-tab" data-filter="online" onclick="showSection('online', this, event)">Online</button>
+                        <button class="team-tab" data-filter="physical" onclick="showSection('physical', this, event)">Physical/Call</button>
                     </div>
-                  
-                    <div class="heading-row">
-                        <h2 class="heading3">Online Appointment </h2>
-                        <div class="user-list">
-                            <table class="test-catalog-table">
+                </div>
+
+                <!-- Create Appointment Modal -->
+                <div id="createAppointmentModal" class="modal" aria-hidden="true">
+                    <div class="modal-content">
+                        <span id="closeModal" class="close">&times;</span>
+                        <h2>Create Appointment</h2>
+                        <div id="modalMessage"></div>
+                        <?php include __DIR__ . '/appointment_form.php'; ?>
+                    </div>
+                </div>
+
+                <div id="content-area" class="content-area">
+                    <!-- All Appointments Section -->
+                    <div id="all" class="section">
+                        <div class="team-table-container">
+                            <table class="team-users-table">
                                 <thead>
                                     <tr>
-                                        <th>Appointment ID</th>
-                                        <th>Patient ID</th>
-                                        <th>Date</th>
-                                        <th>Time</th>
-                                        <!-- <th>Test ID</th> -->
-                                        <!-- <th>Actions</th> -->
+                                        <th style="width: 30%;">APPOINTMENT ID</th>
+                                        <th style="width: 25%;">PATIENT ID</th>
+                                        <th style="width: 20%;text-align: center;">DATE</th>
+                                        <th style="width: 15%;text-align: center;">TIME</th>
+                                        <th style="width: 10%;text-align: center;">TYPE</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <?php foreach ($appointmentsOnline as $appointment): ?>
-                                    <tr>
-                                        <td><?php echo $appointment['appointment_id']; ?></td>
-                                        <td><?php echo $appointment['patient_id']; ?></td>
-                                        <td><?php echo $appointment['appointment_date']; ?></td>
-                                        <td><?php echo $appointment['appointment_time']; ?></td>
-                                        <!-- <td>Blood Test</td> -->
-                                    </tr>
-                                    <?php endforeach; ?>
+                                    <?php 
+                                    $allAppointments = array_merge(
+                                        $appointmentsOnline ?? [],
+                                        $appointmentsPhysical ?? []
+                                    );
+                                    if (!empty($allAppointments)): ?>
+                                        <?php foreach ($allAppointments as $appointment): ?>
+                                            <tr>
+                                                <td><strong><?php echo htmlspecialchars($appointment['appointment_id']); ?></strong></td>
+                                                <td><?php echo htmlspecialchars($appointment['patient_id']); ?></td>
+                                                <td style="text-align: center;"><?php echo htmlspecialchars($appointment['appointment_date']); ?></td>
+                                                <td style="text-align: center;"><?php echo htmlspecialchars($appointment['appointment_time']); ?></td>
+                                                <td style="text-align: center;">
+                                                    <span class="status-badge <?php echo strpos($appointment['appointment_id'], 'ONLINE') !== false ? 'status-active' : 'status-inactive'; ?>">
+                                                        <?php echo strpos($appointment['appointment_id'], 'ONLINE') !== false ? 'Online' : 'Physical'; ?>
+                                                    </span>
+                                                </td>
+                                            </tr>
+            <script src="/lab_sync/public/js/showSection.js"></script>
+                                        <?php endforeach; ?>
+                                    <?php else: ?>
+                                        <tr>
+                                            <td colspan="5" style="text-align: center; padding: 40px;">
+                                                <p>No appointments found. <a href="#" onclick="document.getElementById('openCreateAppointment').click()">Create your first appointment</a></p>
+                                            </td>
+                                        </tr>
+                                    <?php endif; ?>
                                 </tbody>
-                            </table>   
+                            </table>
                         </div>
-                                 
-                </div>
-                <div class="heading-row">
-                        <h2 class="heading3">Physical/Call Appointments</h2>
-                        <div class="user-list">
-                            <table class="test-catalog-table">
+                    </div>
+
+                    <!-- Online Appointments Section -->
+                    <div id="online" class="section" style="display:none;">
+                        <div class="team-table-container">
+                            <table class="team-users-table">
                                 <thead>
                                     <tr>
-                                        <th>Appointment ID</th>
-                                        <th>Patient ID</th>
-                                        <th>Date</th>
-                                        <th>Time</th>
-                                        <!-- <th>Test Type</th> -->
-                                        <th>Actions</th>
+                                        <th style="width: 30%;">APPOINTMENT ID</th>
+                                        <th style="width: 25%;">PATIENT ID</th>
+                                        <th style="width: 20%;text-align: center;">DATE</th>
+                                        <th style="width: 25%;text-align: center;">TIME</th>
                                     </tr>
                                 </thead>
-                                                <tbody>
-                                                    <?php if (!empty($appointmentsPhysical)): ?>
-                                                        <?php foreach ($appointmentsPhysical as $appointment): ?>
-                                                            <tr>
-                                                                <td><?php echo htmlspecialchars($appointment['appointment_id']); ?></td>
-                                                                <td><?php echo htmlspecialchars($appointment['patient_id']); ?></td>
-                                                                <td><?php echo htmlspecialchars($appointment['appointment_date']); ?></td>
-                                                                <td><?php echo htmlspecialchars($appointment['appointment_time']); ?></td>
-                                                                <td>
-                                                                    <button class="Status">Cancel</button>
-                                                                    <button class="Status">Reschedule</button>
-                                                                </td>
-                                                            </tr>
-                                                        <?php endforeach; ?>
-                                                    <?php else: ?>
-                                                        <tr><td colspan="5">No physical appointments found.</td></tr>
-                                                    <?php endif; ?>
-                                                </tbody>
-                            </table>   
+                                <tbody>
+                                    <?php if (!empty($appointmentsOnline)): ?>
+                                        <?php foreach ($appointmentsOnline as $appointment): ?>
+                                            <tr>
+                                                <td><strong><?php echo htmlspecialchars($appointment['appointment_id']); ?></strong></td>
+                                                <td><?php echo htmlspecialchars($appointment['patient_id']); ?></td>
+                                                <td style="text-align: center;"><?php echo htmlspecialchars($appointment['appointment_date']); ?></td>
+                                                <td style="text-align: center;"><?php echo htmlspecialchars($appointment['appointment_time']); ?></td>
+                                            </tr>
+                                        <?php endforeach; ?>
+                                    <?php else: ?>
+                                        <tr><td colspan="4" style="text-align: center; padding: 40px;">No online appointments found.</td></tr>
+                                    <?php endif; ?>
+                                </tbody>
+                            </table>
                         </div>
-                                 
+                    </div>
+
+                    <!-- Physical/Call Appointments Section -->
+                    <div id="physical" class="section" style="display:none;">
+                        <div class="team-table-container">
+                            <table class="team-users-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 25%;">APPOINTMENT ID</th>
+                                        <th style="width: 20%;">PATIENT ID</th>
+                                        <th style="width: 20%;text-align: center;">DATE</th>
+                                        <th style="width: 15%;text-align: center;">TIME</th>
+                                        <th style="width: 20%;text-align: center;">ACTIONS</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php if (!empty($appointmentsPhysical)): ?>
+                                        <?php foreach ($appointmentsPhysical as $appointment): ?>
+                                            <tr>
+                                                <td><strong><?php echo htmlspecialchars($appointment['appointment_id']); ?></strong></td>
+                                                <td><?php echo htmlspecialchars($appointment['patient_id']); ?></td>
+                                                <td style="text-align: center;"><?php echo htmlspecialchars($appointment['appointment_date']); ?></td>
+                                                <td style="text-align: center;"><?php echo htmlspecialchars($appointment['appointment_time']); ?></td>
+                                                <td style="text-align: center;">
+                                                    <div style="display: flex; gap: 8px; align-items: center; justify-content: center;">
+                                                        <button type="button" class="action-btn-edit" title="Reschedule" onclick="alert('Reschedule functionality')">
+                                                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                                                <path d="M3 13.5H13M2 11L11.5 1.5C11.8 1.2 12.3 1.2 12.6 1.5L14.5 3.4C14.8 3.7 14.8 4.2 14.5 4.5L5 14H2V11Z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+                                                            </svg>
+                                                        </button>
+                                                        <button type="button" class="action-btn-delete" title="Cancel" onclick="alert('Cancel functionality')">
+                                                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                                                <path d="M2 4H14M6.5 7V11M9.5 7V11M3 4L4 13C4 13.5 4.5 14 5 14H11C11.5 14 12 13.5 12 13L13 4M5.5 4V2.5C5.5 2.2 5.7 2 6 2H10C10.3 2 10.5 2.2 10.5 2.5V4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+                                                            </svg>
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        <?php endforeach; ?>
+                                    <?php else: ?>
+                                        <tr><td colspan="5" style="text-align: center; padding: 40px;">No physical appointments found.</td></tr>
+                                    <?php endif; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </main>
             <script src="/lab_sync/public/js/appointmentPopup.js"></script>
