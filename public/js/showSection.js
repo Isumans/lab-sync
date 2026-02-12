@@ -1,4 +1,4 @@
-function showSection(sectionId, event) {
+function showSection(sectionId, tabElement, event) {
             event.preventDefault(); // Prevent link jump
 
             // Hide all sections
@@ -8,15 +8,12 @@ function showSection(sectionId, event) {
             // Show the selected section
             document.getElementById(sectionId).style.display = 'block';
 
-            // Remove 'active' from all navItems
-            document.querySelectorAll('.navItem').forEach(function(item) {
-                item.classList.remove('active');
+            // Remove 'active' from all tabs
+            document.querySelectorAll('.team-tab').forEach(function(tab) {
+                tab.classList.remove('active');
             });
-            // Add 'active' to the clicked navItem
-            event.target.closest('.navItem').classList.add('active');
-            // Optionally, show the corresponding section
-            // document.getElementById(sectionId).style.display = 'block';
-    
+            // Add 'active' to the clicked tab
+            tabElement.classList.add('active');
 }
 
 document.querySelectorAll('.sidebar a').forEach(link => {
