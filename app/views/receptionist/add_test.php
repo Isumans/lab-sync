@@ -1,58 +1,18 @@
 <?php
-session_start();
-if (!isset($_SESSION['user_id'])) {
-    header('Location: /lab_sync/index.php?controller=Auth&action=index&role=' . urlencode($_GET['role'] ?? ''));
-    exit();
-}
+$pageTitle = 'Add New Laboratory Test';
+$extraStyles = '<link rel="stylesheet" href="/lab_sync/public/table.css"><link rel="stylesheet" href="/lab_sync/public/css/add_test.css">';
+$role = $_GET['role'] ?? '';
+// Start output buffering
+ob_start();
 ?>
 
-<!doctype html>
-<html>
-    <head>
-        <title>Add New Laboratory Test</title>
-        <link rel="stylesheet" href="/lab_sync/public/styles.css">
-        <link rel="stylesheet" href="/lab_sync/public/table.css">
-        <link rel="stylesheet" href="/lab_sync/public/css/add_test.css">
-    </head>
-    <body>
-        <?php require 'C:\xampp\htdocs\lab_sync\public\navbar.php'; ?>
-        <div class="container add-test-page">
-            <?php require 'C:\xampp\htdocs\lab_sync\public\sidebar.php'; ?>
-            <main class="main-content">
-                <div >
-                    <h1>Add New Test</h1>
-                    <p class="MC-p">Dashboard>Test-Catalog>Add-New-Test</p>
-                    <form class="Tmain-content formStyle" action="/lab_sync/index.php?controller=TestCatalog&action=store&role=<?php echo urlencode($role); ?>" method="POST">
-                        <label for="test-name">Test Name:</label>
-                        <input type="text" id="test-name" name="test-name" required>
-                        <label for="test-category">Department:</label>
-                        <select id="test-category" name="test-category" required>
-                            <option value="">Select Department</option>
-                            <option value="blood">Blood Tests</option>
-                            <option value="urine">Urine Tests</option>
-                            <option value="imaging">Imaging</option>
-                            <option value="molecular">Molecular Tests</option>
+<div class="add-test-page">
+    <div class="d-header">
+        <h1>Add New Test</h1>
+        <p class="MC-p">Dashboard > Test-Catalog > Add-New-Test</p>
+    </div>
 
-                        </select>
-                        <!-- <label for="test-code">Test Code:</label>
-                        <input type="text" id="test-code" name="test-code" required> -->
-                        <label for="test-description">Description:</label>
-                        <textarea id="test-description" name="test-description" required></textarea>
-
-                        <label for="test-price">Price:</label>
-                        <input type="number" id="test-price" name="test-price" required>
-
-                        <label for="test-status">Status:</label>
-                        <select id="test-status" name="test-status" required>
-                            <option value="">Select Status</option>
-                            <option value="active">Active</option>
-                            <option value="inactive">Inactive</option>
-                        </select>
-                        <button type="submit">Add Test</button>
-                    </form>
-                </div>
-
-                <form id="addTestForm" action="/lab_sync/index.php?controller=TestCatalog&action=store&role=<?php echo urlencode($role); ?>" method="POST">
+    <form id="addTestForm" action="/lab_sync/index.php?controller=TestCatalog&action=store&role=<?php echo urlencode($role); ?>" method="POST">
 
                     <!-- SECTION 1: Test Information -->
                     <div class="card">
@@ -159,13 +119,13 @@ if (!isset($_SESSION['user_id'])) {
                                 </tr>
                             </tbody>
                         </table>
-                        <div style="margin-top:12px;"><button type="button" id="addExternalBtn" class="btn">Add Entry</button></div>
+                        <div class="table-action"><button type="button" id="addExternalBtn" class="btn">Add Entry</button></div>
                     </div>
 
                     <!-- SECTION 4: Report Comments -->
                     <div class="card">
                         <h4>Report Comments</h4>
-                        <div class="toolbar" style="margin-bottom:8px;">
+                        <div class="toolbar">
                             <button type="button" data-cmd="bold"><b>B</b></button>
                             <button type="button" data-cmd="italic"><i>I</i></button>
                             <button type="button" data-cmd="underline"><u>U</u></button>
@@ -173,7 +133,7 @@ if (!isset($_SESSION['user_id'])) {
                             <button type="button" data-cmd="insertOrderedList">1. List</button>
                         </div>
                         <div id="reportEditor" class="report-editor" contenteditable="true" data-placeholder="Enter default report comments here..."></div>
-                        <textarea name="report_comments" id="report_comments" style="display:none;"></textarea>
+                        <textarea name="report_comments" id="report_comments" class="hidden-textarea"></textarea>
                     </div>
 
                     <!-- SECTION 5: Flags & Status -->
@@ -182,22 +142,23 @@ if (!isset($_SESSION['user_id'])) {
                         <label for="flags">Flags (comma-separated: L, M, H)</label>
                         <input type="text" id="flags" name="flags" placeholder="L,M,H">
 
-                        <div style="margin-top:12px;">
+                        <div class="checkbox-group">
                             <label><input type="checkbox" name="is_active" value="1" checked> Is Active</label>
-                            <label style="margin-left:12px;"><input type="checkbox" name="requires_validation" value="1"> Requires Validation</label>
+                            <label><input type="checkbox" name="requires_validation" value="1"> Requires Validation</label>
                         </div>
 
                         <div class="actions">
-                            <a href="/lab_sync/index.php?controller=TestCatalog&action=test_catalog&role=<?php echo urlencode($role); ?>" class="btn">Cancel</a>
-                            <button type="submit" class="btn btn-primary">Save Test</button>
+                            <a href="/lab_sync/index.php?controller=TestCatalog&action=test_catalog&role=<?php echo urlencode($role); ?>" class="btn-cancel">Cancel</a>
+                            <button type="submit" class="btn-save">Save Test</button>
                         </div>
                     </div>
-
                 </form>
-            </main>
-        </div>
+            </div>
 
-        <!-- Page-specific JS loaded separately -->
-        <script src="/lab_sync/public/js/add_test_page.js" defer></script>
-    </body>
-</html>
+<!-- Page-specific JS -->
+<script src="/lab_sync/public/js/add_test_page.js" defer></script>
+
+<?php
+$content = ob_get_clean();
+require VIEW_PATH . DIRECTORY_SEPARATOR . 'layouts' . DIRECTORY_SEPARATOR . 'main_layout.php';
+?>

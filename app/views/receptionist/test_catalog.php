@@ -9,23 +9,16 @@ ob_start();
                 <div class="Tmain-content">
                     <div class="test-catalog-header">
                         <h1>Test Catalog</h1>
-                        <button type="button" id="openAddTest" class="add-test-button">+ Add New Test</button>
+                        <a href="/lab_sync/index.php?controller=TestCatalog&action=add_test&role=<?php echo urlencode($role); ?>" id="openAddTest" class="add-test-button">+ Add New Test</a>
                     </div>
                     <div>
-                        <p class="MC-p">Test-Catalog-></p>
+                        <p class="MC-p">Dashboard > Test Catalog</p>
                     </div>
                     <div class="search-and-filter">
                         <input type="text" class="search-bar" placeholder="  Search tests...">
                     </div>
                     <div class="select-category">
                         <!-- <label for="category-filter">Filter by Category:</label> -->
-                        <select class="category-filter" name="category-filter" placeholder="Category">
-                            <option value="all">All</option>
-                            <option value="blood">Blood Tests</option>
-                            <option value="urine">Urine Tests</option>
-                            <option value="imaging">Imaging</option>
-                            <option value="molecular">Molecular Tests</option>
-                        </select>
                         <select class="category-filter" name="category-filter" placeholder="Category">
                             <option value="all">All</option>
                             <option value="blood">Blood Tests</option>
@@ -71,11 +64,6 @@ ob_start();
                         <?php endif; ?>
                     </tbody>
                 </table>
-
-                </div>
-                
-                <div>
-
                 </div>
 
 <!-- Edit Test Modal -->
@@ -119,9 +107,9 @@ ob_start();
             </div>
 
             <div class="modal-actions">
-                <button type="button" id="cancelEditTest" class="btn btn-cancel">Cancel</button>
+                <button type="button" id="cancelEditTest" class="btn-cancel">Cancel</button>
                 <div style="display:flex; gap:8px;">
-                    <button type="submit" name="edit" value="1" class="btn btn-save">Save Changes</button>
+                    <button type="submit" name="edit" value="1" class="btn-save">Save Changes</button>
                 </div>
             </div>
         </form>

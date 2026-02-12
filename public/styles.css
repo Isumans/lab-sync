@@ -197,8 +197,6 @@ body {
     margin-bottom: 24px;
     max-height: 100%;
     flex: 1;
-
-
 }
 
 .c-card {
@@ -244,10 +242,12 @@ body {
     font-size: 0.9rem;
     font-weight: 600;
     margin-bottom: 10px;
+    text-decoration: none;   
+    display: inline-block;      
 }
 
 .add-test-button:hover {
-    background-color: #003a55;
+    background-color: #31a8e0;
 }
 
 .MC-p {
@@ -276,14 +276,12 @@ body {
     flex-direction: column;
     flex: 1;
     padding: 32px;
-
-
 }
 
 .category-filter {
     margin-top: 10px;
-    margin-left: 10px;
-    height: 25px;
+    margin-left: 2px;
+    height: 35px;
     width: 10%;
     background-color: var(--secondary-color);
     border-radius: 10px 10px;
@@ -387,8 +385,4 @@ body {
     border: 1px solid #ccc;
     font-size: 1em;
     font-family: 'Inter', sans-serif;
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> c4e5b3a1019c2241e662eabbbe64a6eebd1108f4

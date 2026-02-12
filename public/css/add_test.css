@@ -1,13 +1,22 @@
 /* Header styling for the page title */
 .add-test-page .d-header {
-    margin-bottom: 24px;
+    margin-top: 0;
+    margin-bottom: 32px;
+    padding: 30px 0px 10px 0px;
+    background: transparent;
 }
 
 .add-test-page .d-header h1 {
-    font-size: 24px;
-    font-weight: 600;
-    color: #333;
-    margin: 0;
+    font-size: 32px;
+    font-weight: 700;
+    color: #000000;
+    margin: 10px 0 8px 10px;
+}
+
+.add-test-page .d-header .MC-p {
+    font-size: 0.9rem;
+    color: var(--primary-color);
+    margin: 0 0 0 10px;
 }
 
 .add-test-page .card {
@@ -81,6 +90,10 @@ table.external-table td {
     text-align: left;
 }
 
+.toolbar {
+    margin-bottom: 8px;
+}
+
 .toolbar button {
     background: #f5f5f5;
     border: 1px solid #ddd;
@@ -98,6 +111,19 @@ table.external-table td {
     background: #fff;
 }
 
+.hidden-textarea {
+    display: none;
+}
+
+.table-action {
+    margin-top: 12px;
+}
+
+.checkbox-group {
+    margin-top: 12px;
+}
+
+
 .actions {
     display: flex;
     gap: 8px;
@@ -109,13 +135,52 @@ table.external-table td {
     border-radius: 4px;
     border: 1px solid #ccc;
     cursor: pointer;
-    background: transparent;
+    background: #f5f5f5;
+    font-size: 0.9rem;
 }
 
-.btn-primary {
+.btn:hover {
+    background-color: #e0e0e0;
+    border-color: #999;
+}
+
+/* Cancel button - separate styling */
+.btn-cancel,
+a.btn {
+    padding: 10px 12px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    cursor: pointer;
+    background-color: #fff;
+    color: #333;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 0.9rem;
+}
+
+.btn-cancel:hover,
+a.btn:hover {
+    background-color: #ff4444;
+    border-color: #999;
+}
+
+/* Save/Submit button - separate styling */
+.btn-save {
+    padding: 10px 20px;
+    border-radius: 4px;
     background: var(--primary-color);
     color: var(--secondary-color);
-    border-color: var(--primary-color);
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    font-size: 0.95rem;
+}
+
+.btn-save:hover {
+    background: #31a8e0;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(61, 189, 236, 0.4);
 }
 
 @media (max-width: 900px) {
