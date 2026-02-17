@@ -27,6 +27,15 @@
       </div>
     </div>
 
+    <div class="card">
+      <h3>Blogs</h3>
+      <p class="muted">Read new test updates, preparation instructions, and health articles.</p>
+      <div class="list" style="margin-top:12px">
+        <a class="btn-primary" href="/lab_sync/index.php?controller=blog&action=index">Browse Blogs</a>
+        <a class="btn-outline" href="/lab_sync/index.php?controller=blog&action=index&cat=patient-instructions">Patient Instructions</a>
+      </div>
+    </div>
+
     <!-- <aside class="card">
       <h3>Quick Actions</h3>
       <div class="list">

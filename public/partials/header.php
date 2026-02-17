@@ -16,6 +16,7 @@ $user_role = $_SESSION['user_role'] ?? null;
   </div>
   <nav class="nav-links">
     <a href="index.php?controller=home&action=explore">Tests</a>
+    <a href="index.php?controller=blog&action=index">Blogs</a>
     <a href="index.php?controller=home&action=how">How it works</a>
     <a href="index.php?controller=home&action=about">About</a>
   </nav>

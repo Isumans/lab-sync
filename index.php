@@ -10,6 +10,7 @@ require_once CONTROLLER_PATH . '/patientController.php';
 require_once CONTROLLER_PATH . '/homeController.php';
 require_once CONTROLLER_PATH . '/inventoryController.php';
 require_once CONTROLLER_PATH . '/profileController.php';
+require_once CONTROLLER_PATH . '/blogController.php';
 // require_once 'C:\xampp\htdocs\lab_sync\app\controllers\appointmentsController.php';
 require_once 'C:\xampp\htdocs\lab_sync\config\db.php';
 $controllerName = $_GET['controller'] ?? 'home'; // Default to 'home' controller
@@ -183,6 +184,14 @@ elseif ($controllerName === 'appointmentsController') {
         $profileController->viewProfile();
     }elseif($action==='update'){
         $profileController->updateProfile();
+    }
+}elseif($controllerName==='blog'){
+    $blogController = new blogController();
+    $action = $_GET['action'] ?? 'index';
+    if($action==='index'){
+        $blogController->index();
+    }elseif($action==='view'){
+        $blogController->view();
     }
 }
 else {
