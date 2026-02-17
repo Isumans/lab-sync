@@ -10,6 +10,7 @@ require_once CONTROLLER_PATH . '/patientController.php';
 require_once CONTROLLER_PATH . '/homeController.php';
 require_once CONTROLLER_PATH . '/inventoryController.php';
 require_once CONTROLLER_PATH . '/profileController.php';
+require_once CONTROLLER_PATH . '/partnerLabController.php';
 // require_once 'C:\xampp\htdocs\lab_sync\app\controllers\appointmentsController.php';
 require_once 'C:\xampp\htdocs\lab_sync\config\db.php';
 $controllerName = $_GET['controller'] ?? 'home'; // Default to 'home' controller
@@ -186,8 +187,19 @@ elseif ($controllerName === 'appointmentsController') {
     }elseif($action==='update'){
         $profileController->updateProfile();
     }
-}
-else {
+}elseif($controllerName==='partnerLabController'){
+    $partnerLabController = new partnerLabController();
+    $action = $_GET['action'] ?? 'index'; 
+    $role = $_GET['role'] ?? '';
+    // $partnerLabController = new partnerLabController();
+    if($action === 'index'){
+        $partnerLabController->index();
+    }elseif($action === 'RegisterLab'){
+        $partnerLabController->index($role);
+    }elseif($action === 'storeLab'){
+        $partnerLabController->storeLab();
+    }
+}else {
         echo "404 Not Found";
     }
 
