@@ -64,7 +64,7 @@
         <?php foreach ($filteredPosts as $post): ?>
           <article class="blog-card">
             <?php if (!empty($post['featured_image'])): ?>
-              <img src="<?php echo htmlspecialchars($post['featured_image']); ?>" alt="<?php echo htmlspecialchars($post['title']); ?>" class="blog-card-image">
+              <img src="/lab_sync/public/<?php echo htmlspecialchars($post['featured_image']); ?>" alt="<?php echo htmlspecialchars($post['title']); ?>" class="blog-card-image">
             <?php else: ?>
               <div class="blog-card-image">📄</div>
             <?php endif; ?>
@@ -75,8 +75,8 @@
               <p class="blog-excerpt"><?php echo htmlspecialchars($post['excerpt']); ?></p>
               
               <div class="blog-meta">
-                <span class="blog-date"><?php echo date('M j, Y', strtotime($post['date'])); ?></span>
-                <span class="blog-author"><?php echo htmlspecialchars($post['author']); ?></span>
+                <span class="blog-date"><?php echo htmlspecialchars($post['display_date']); ?></span>
+                <span class="blog-author"><?php echo htmlspecialchars($post['author_name'] ?? 'LabSync Team'); ?></span>
               </div>
               
               <a href="/lab_sync/index.php?controller=blog&action=view&slug=<?php echo urlencode($post['slug']); ?>" class="blog-read-more">

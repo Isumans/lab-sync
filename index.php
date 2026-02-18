@@ -188,10 +188,28 @@ elseif ($controllerName === 'appointmentsController') {
 }elseif($controllerName==='blog'){
     $blogController = new blogController();
     $action = $_GET['action'] ?? 'index';
+    $role = $_GET['role'] ?? '';
+    
     if($action==='index'){
-        $blogController->index();
+        $blogController->index($role);
     }elseif($action==='view'){
-        $blogController->view();
+        $blogController->view($role);
+    }elseif($action==='manage'){
+        $blogController->manage($role);
+    }elseif($action==='create'){
+        $blogController->create($role);
+    }elseif($action==='store'){
+        $blogController->store($role);
+    }elseif($action==='edit'){
+        $blogController->edit($role);
+    }elseif($action==='update'){
+        $blogController->update($role);
+    }elseif($action==='publish'){
+        $blogController->publish($role);
+    }elseif($action==='unpublish'){
+        $blogController->unpublish($role);
+    }elseif($action==='archive'){
+        $blogController->archive($role);
     }
 }
 else {

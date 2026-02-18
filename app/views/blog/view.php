@@ -28,14 +28,14 @@
         <span class="blog-category"><?php echo htmlspecialchars($post['category']); ?></span>
         <h1><?php echo htmlspecialchars($post['title']); ?></h1>
         <div class="post-meta">
-          <span>📅 <?php echo date('F j, Y', strtotime($post['date'])); ?></span>
-          <span>✍️ <?php echo htmlspecialchars($post['author']); ?></span>
+          <span>📅 <?php echo htmlspecialchars($post['display_date']); ?></span>
+          <span>✍️ <?php echo htmlspecialchars($post['author_name'] ?? 'LabSync Team'); ?></span>
         </div>
       </div>
 
       <!-- Featured Image -->
       <?php if (!empty($post['featured_image'])): ?>
-        <img src="<?php echo htmlspecialchars($post['featured_image']); ?>" alt="<?php echo htmlspecialchars($post['title']); ?>" class="post-featured-image" style="object-fit: cover;">
+        <img src="/lab_sync/public/<?php echo htmlspecialchars($post['featured_image']); ?>" alt="<?php echo htmlspecialchars($post['title']); ?>" class="post-featured-image" style="object-fit: cover;">
       <?php else: ?>
         <div class="post-featured-image">
           <span style="position: relative; z-index: 1;">📄</span>
