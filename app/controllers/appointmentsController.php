@@ -61,6 +61,27 @@ class appointmentsController {
     echo json_encode($results);
 }
 
+public function filterAppointments() {
+    header('Content-Type: application/json');
+    
+    $filter = $_GET['filter'] ?? 'all';
+    $appointmentsModel = new AppointmentModel(connect());
+    
+    $appointments = [];
+    
+    if ($filter === 'online') {
+        $appointments = $appointmentsModel->getAllAppointmentsbyMethod("online");
+    } elseif ($filter === 'physical') {
+        $appointments = $appointmentsModel->getAllAppointmentsbyMethod("physical");
+    } else { // 'all'
+        $online = $appointmentsModel->getAllAppointmentsbyMethod("online");
+        $physical = $appointmentsModel->getAllAppointmentsbyMethod("physical");
+        $appointments = array_merge($online, $physical);
+    }
+    
+    echo json_encode($appointments);
+}
+
 }
 
 
