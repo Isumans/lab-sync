@@ -87,11 +87,13 @@ if (!isset($_SESSION['user_id'])) {
                             <table class="team-users-table">
                                 <thead>
                                     <tr>
-                                        <th style="width: 30%;">APPOINTMENT ID</th>
-                                        <th style="width: 25%;">PATIENT ID</th>
-                                        <th style="width: 20%;text-align: center;">DATE</th>
-                                        <th style="width: 15%;text-align: center;">TIME</th>
-                                        <th style="width: 10%;text-align: center;">TYPE</th>
+                                        <th style="width: 15%;">APPOINTMENT ID</th>
+                                        <th style="width: 15%;">PATIENT ID</th>
+                                        <th style="width: 14%;text-align: center;">DATE</th>
+                                        <th style="width: 14%;text-align: center;">TIME</th>
+                                        <th style="width: 14%;text-align: center;">TYPE</th>
+                                        <th style="width: 14%;text-align: center;">BILLING</th>
+                                        <th style="width: 14%;text-align: center;">ACTIONS</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -112,11 +114,28 @@ if (!isset($_SESSION['user_id'])) {
                                                         <?php echo isset($appointment['method']) ? ucfirst($appointment['method']) : 'N/A'; ?>
                                                     </span>
                                                 </td>
+                                                <td style="text-align: center;">
+                                                    <button type="button" class="billing-action-btn" onclick="window.location.href='/lab_sync/index.php?controller=billingController&action=Register_billing&appointment_id=<?php echo htmlspecialchars($appointment['appointment_id']); ?>'" title="<?php echo (isset($appointment['bill_id']) && $appointment['bill_id']) ? 'View Bill' : 'Create Bill'; ?>">
+                                                        <?php echo (isset($appointment['bill_id']) && $appointment['bill_id']) ? 'View Bill' : 'Create Bill'; ?>
+                                                    </button>
+                                                </td>
+                                                <td class="user-actions" style="align-items: center; justify-content: center;">
+                                                    <button type="button" class="action-btn-edit edit-btn" title="Edit" onclick="alert('Edit functionality coming soon')">
+                                                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                                            <path d="M3 13.5H13M2 11L11.5 1.5C11.8 1.2 12.3 1.2 12.6 1.5L14.5 3.4C14.8 3.7 14.8 4.2 14.5 4.5L5 14H2V11Z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+                                                        </svg>
+                                                    </button>
+                                                    <button type="button" class="action-btn-delete delete-btn" title="Delete" onclick="alert('Delete functionality coming soon')">
+                                                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                                            <path d="M2 4H14M6.5 7V11M9.5 7V11M3 4L4 13C4 13.5 4.5 14 5 14H11C11.5 14 12 13.5 12 13L13 4M5.5 4V2.5C5.5 2.2 5.7 2 6 2H10C10.3 2 10.5 2.2 10.5 2.5V4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+                                                        </svg>
+                                                    </button>
+                                                </td>
                                             </tr>
                                         <?php endforeach; ?>
                                     <?php else: ?>
                                         <tr>
-                                            <td colspan="5" style="text-align: center; padding: 40px;">
+                                            <td colspan="7" style="text-align: center; padding: 40px;">
                                                 <p>No appointments found. <a href="#" onclick="document.getElementById('openCreateAppointment').click()">Create your first appointment</a></p>
                                             </td>
                                         </tr>
@@ -133,10 +152,12 @@ if (!isset($_SESSION['user_id'])) {
                             <table class="team-users-table">
                                 <thead>
                                     <tr>
-                                        <th style="width: 30%;">APPOINTMENT ID</th>
-                                        <th style="width: 25%;">PATIENT ID</th>
-                                        <th style="width: 20%;text-align: center;">DATE</th>
-                                        <th style="width: 25%;text-align: center;">TIME</th>
+                                        <th style="width: 17%;">APPOINTMENT ID</th>
+                                        <th style="width: 17%;">PATIENT ID</th>
+                                        <th style="width: 17%;text-align: center;">DATE</th>
+                                        <th style="width: 17%;text-align: center;">TIME</th>
+                                        <th style="width: 16%;text-align: center;">BILLING</th>
+                                        <th style="width: 16%;text-align: center;">ACTIONS</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -147,10 +168,27 @@ if (!isset($_SESSION['user_id'])) {
                                                 <td><?php echo htmlspecialchars($appointment['patient_id']); ?></td>
                                                 <td style="text-align: center;"><?php echo htmlspecialchars($appointment['appointment_date']); ?></td>
                                                 <td style="text-align: center;"><?php echo htmlspecialchars($appointment['appointment_time']); ?></td>
+                                                <td style="text-align: center;">
+                                                    <button type="button" class="billing-action-btn" onclick="window.location.href='/lab_sync/index.php?controller=billingController&action=Register_billing&appointment_id=<?php echo htmlspecialchars($appointment['appointment_id']); ?>'" title="<?php echo (isset($appointment['bill_id']) && $appointment['bill_id']) ? 'View Bill' : 'Create Bill'; ?>">
+                                                        <?php echo (isset($appointment['bill_id']) && $appointment['bill_id']) ? 'View Bill' : 'Create Bill'; ?>
+                                                    </button>
+                                                </td>
+                                                <td class="user-actions" style="align-items: center; justify-content: center;">
+                                                    <button type="button" class="action-btn-edit edit-btn" title="Edit" onclick="alert('Edit functionality coming soon')">
+                                                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                                            <path d="M3 13.5H13M2 11L11.5 1.5C11.8 1.2 12.3 1.2 12.6 1.5L14.5 3.4C14.8 3.7 14.8 4.2 14.5 4.5L5 14H2V11Z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+                                                        </svg>
+                                                    </button>
+                                                    <button type="button" class="action-btn-delete delete-btn" title="Delete" onclick="alert('Delete functionality coming soon')">
+                                                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                                            <path d="M2 4H14M6.5 7V11M9.5 7V11M3 4L4 13C4 13.5 4.5 14 5 14H11C11.5 14 12 13.5 12 13L13 4M5.5 4V2.5C5.5 2.2 5.7 2 6 2H10C10.3 2 10.5 2.2 10.5 2.5V4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+                                                        </svg>
+                                                    </button>
+                                                </td>
                                             </tr>
                                         <?php endforeach; ?>
                                     <?php else: ?>
-                                        <tr><td colspan="4" style="text-align: center; padding: 40px;">No online appointments found.</td></tr>
+                                        <tr><td colspan="6" style="text-align: center; padding: 40px;">No online appointments found.</td></tr>
                                     <?php endif; ?>
                                 </tbody>
                             </table>
@@ -163,11 +201,12 @@ if (!isset($_SESSION['user_id'])) {
                             <table class="team-users-table">
                                 <thead>
                                     <tr>
-                                        <th style="width: 25%;">APPOINTMENT ID</th>
-                                        <th style="width: 20%;">PATIENT ID</th>
-                                        <th style="width: 20%;text-align: center;">DATE</th>
-                                        <th style="width: 15%;text-align: center;">TIME</th>
-                                        <th style="width: 20%;text-align: center;">ACTIONS</th>
+                                        <th style="width: 17%;">APPOINTMENT ID</th>
+                                        <th style="width: 17%;">PATIENT ID</th>
+                                        <th style="width: 17%;text-align: center;">DATE</th>
+                                        <th style="width: 17%;text-align: center;">TIME</th>
+                                        <th style="width: 16%;text-align: center;">BILLING</th>
+                                        <th style="width: 16%;text-align: center;">ACTIONS</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -179,23 +218,26 @@ if (!isset($_SESSION['user_id'])) {
                                                 <td style="text-align: center;"><?php echo htmlspecialchars($appointment['appointment_date']); ?></td>
                                                 <td style="text-align: center;"><?php echo htmlspecialchars($appointment['appointment_time']); ?></td>
                                                 <td style="text-align: center;">
-                                                    <div style="display: flex; gap: 8px; align-items: center; justify-content: center;">
-                                                        <button type="button" class="action-btn-edit" title="Reschedule" onclick="alert('Reschedule functionality')">
-                                                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                                                                <path d="M3 13.5H13M2 11L11.5 1.5C11.8 1.2 12.3 1.2 12.6 1.5L14.5 3.4C14.8 3.7 14.8 4.2 14.5 4.5L5 14H2V11Z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
-                                                            </svg>
-                                                        </button>
-                                                        <button type="button" class="action-btn-delete" title="Cancel" onclick="alert('Cancel functionality')">
-                                                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                                                                <path d="M2 4H14M6.5 7V11M9.5 7V11M3 4L4 13C4 13.5 4.5 14 5 14H11C11.5 14 12 13.5 12 13L13 4M5.5 4V2.5C5.5 2.2 5.7 2 6 2H10C10.3 2 10.5 2.2 10.5 2.5V4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
-                                                            </svg>
-                                                        </button>
-                                                    </div>
+                                                    <button type="button" class="billing-action-btn" onclick="window.location.href='/lab_sync/index.php?controller=billingController&action=Register_billing&appointment_id=<?php echo htmlspecialchars($appointment['appointment_id']); ?>'" title="<?php echo (isset($appointment['bill_id']) && $appointment['bill_id']) ? 'View Bill' : 'Create Bill'; ?>">
+                                                        <?php echo (isset($appointment['bill_id']) && $appointment['bill_id']) ? 'View Bill' : 'Create Bill'; ?>
+                                                    </button>
+                                                </td>
+                                                <td class="user-actions" style="align-items: center; justify-content: center;">
+                                                    <button type="button" class="action-btn-edit edit-btn" title="Edit" onclick="alert('Edit functionality coming soon')">
+                                                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                                            <path d="M3 13.5H13M2 11L11.5 1.5C11.8 1.2 12.3 1.2 12.6 1.5L14.5 3.4C14.8 3.7 14.8 4.2 14.5 4.5L5 14H2V11Z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+                                                        </svg>
+                                                    </button>
+                                                    <button type="button" class="action-btn-delete delete-btn" title="Delete" onclick="alert('Delete functionality coming soon')">
+                                                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                                            <path d="M2 4H14M6.5 7V11M9.5 7V11M3 4L4 13C4 13.5 4.5 14 5 14H11C11.5 14 12 13.5 12 13L13 4M5.5 4V2.5C5.5 2.2 5.7 2 6 2H10C10.3 2 10.5 2.2 10.5 2.5V4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+                                                        </svg>
+                                                    </button>
                                                 </td>
                                             </tr>
                                         <?php endforeach; ?>
                                     <?php else: ?>
-                                        <tr><td colspan="5" style="text-align: center; padding: 40px;">No physical appointments found.</td></tr>
+                                        <tr><td colspan="6" style="text-align: center; padding: 40px;">No physical appointments found.</td></tr>
                                     <?php endif; ?>
                                 </tbody>
                             </table>
