@@ -1,4 +1,7 @@
-<div id="team" class="section" class="Tmain-content">
+<!-- Modal Styles and Scripts -->
+<link rel="stylesheet" href="/lab_sync/public/editUserModal.css">
+
+<div id="team" class="section Tmain-content">
     <!-- Team Section Header with Stats -->
     <div class="team-header-container">
         <div class="team-header">
@@ -81,7 +84,13 @@
                                     <input type="hidden" name="email" value="<?php echo htmlspecialchars($user['email']); ?>">
                                     <input type="hidden" name="role" value="<?php echo htmlspecialchars($user['role']); ?>">
                                     <input type="hidden" name="status" value="<?php echo htmlspecialchars($user['status']); ?>">
-                                    <button type="submit" name="edit" class="action-btn-edit" title="Edit" onclick="showAlertAndSubmit(event,'edit')">
+                                    <button type="button" class="action-btn-edit" title="Edit" 
+                                            data-user-id="<?php echo htmlspecialchars($user['user_id']); ?>"
+                                            data-username="<?php echo htmlspecialchars($user['username']); ?>"
+                                            data-email="<?php echo htmlspecialchars($user['email']); ?>"
+                                            data-role="<?php echo htmlspecialchars($user['role']); ?>"
+                                            data-contact-number=""
+                                            onclick="event.preventDefault();">
                                         <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                                             <path d="M3 13.5H13M2 11L11.5 1.5C11.8 1.2 12.3 1.2 12.6 1.5L14.5 3.4C14.8 3.7 14.8 4.2 14.5 4.5L5 14H2V11Z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
                                         </svg>
@@ -117,3 +126,4 @@
         </div>
     </div>
 </div>
+

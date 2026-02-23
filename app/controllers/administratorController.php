@@ -77,6 +77,18 @@ class administratorController {
                 echo "Error updating user.";
             }
         }
-    }}
+        }
+
+    public function getLabConfigurationSection() {
+
+        // In the future, fetch configuration data from DB
+        include VIEW_PATH . '/administrator/settings/lab_configuration.php';
+    }
+
+    public function getGeneralSettingsSection() {
+        // In the future, fetch general settings from DB
+        include VIEW_PATH . '/administrator/settings/general_settings.php';
+    }
+}
 
 ?>

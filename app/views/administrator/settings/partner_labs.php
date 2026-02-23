@@ -1,4 +1,3 @@
-<div id="partner-labs" class="section" style="display:none;">
     
     <div class="partner-labs-header">
         <div class="header-content">
@@ -37,106 +36,64 @@
                     <th>LAB NAME</th>
                     <th>CONTACT PERSON</th>
                     <th>CONTACT NUMBER</th>
-                    <th>EMAIL</th>
                     <th>TOTAL TESTS</th>
                     <th>ACTIONS</th>
                 </tr>
             </thead>
             <tbody>
-                <tr>
-                    <td>
-                        <div class="lab-info-cell">
-                            <div class="lab-avatar">LH</div>
-                            <div class="lab-details">
-                                <div class="lab-name">Lanka Hospital Diagnostics</div>
-                                <div class="lab-contact">contact@lankahospital.lk</div>
-                            </div>
-                        </div>
-                    </td>
-                    <td>
-                        <div class="specialization-badges">
-                            <span class="spec-badge">MOLECULAR</span>
-                            <span class="spec-badge">HISTOPATHOLOGY</span>
-                        </div>
-                    </td>
-                    <td>
-                        <div class="outsourcing-mode">
-                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                                <path d="M1 8H15M12 5L15 8L12 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                            </svg>
-                            API Integrated
-                        </div>
-                    </td>
-                    <td>
-                        <span class="status-badge active">Active</span>
-                    </td>
-                    <td>
-                        <button class="action-menu"><span>⋮</span></button>
-                    </td>
-                </tr>
-                <tr>
-                    <td>
-                        <div class="lab-info-cell">
-                            <div class="lab-avatar" style="background: #e8f5e9;">PD</div>
-                            <div class="lab-details">
-                                <div class="lab-name">Precision Diagnostics</div>
-                                <div class="lab-contact">logistics@precisionlabs.com</div>
-                            </div>
-                        </div>
-                    </td>
-                    <td>
-                        <div class="specialization-badges">
-                            <span class="spec-badge">GENETICS</span>
-                        </div>
-                    </td>
-                    <td>
-                        <div class="outsourcing-mode">
-                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                                <path d="M2 3H14C14.55 3 15 3.45 15 4V12C15 12.55 14.55 13 14 13H2C1.45 13 1 12.55 1 12V4C1 3.45 1.45 3 2 3Z" stroke="currentColor" stroke-width="1.5"/>
-                                <path d="M1 5H15" stroke="currentColor" stroke-width="1.5"/>
-                            </svg>
-                            Manual Reporting
-                        </div>
-                    </td>
-                    <td>
-                        <span class="status-badge active">Active</span>
-                    </td>
-                    <td>
-                        <button class="action-menu"><span>⋮</span></button>
-                    </td>
-                </tr>
-                <tr>
-                    <td>
-                        <div class="lab-info-cell">
-                            <div class="lab-avatar" style="background: #fff3e0;">CL</div>
-                            <div class="lab-details">
-                                <div class="lab-name">City Lab Central</div>
-                                <div class="lab-contact">info@citylabs.io</div>
-                            </div>
-                        </div>
-                    </td>
-                    <td>
-                        <div class="specialization-badges">
-                            <span class="spec-badge">BIOCHEMISTRY</span>
-                        </div>
-                    </td>
-                    <td>
-                        <div class="outsourcing-mode">
-                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                                <path d="M2 2H14V14H2V2Z" stroke="currentColor" stroke-width="1.5"/>
-                                <path d="M2 5H14" stroke="currentColor" stroke-width="1.5"/>
-                                <path d="M8 5V14" stroke="currentColor" stroke-width="1.5"/>
-                            </svg>
-                            Legacy Fax
-                        </div>
-                    </td>
-                    <td>
-                        <span class="status-badge inactive">Inactive</span>
-                    </td>
-                    <td>
-                        <button class="action-menu"><span>⋮</span></button>
-                    </td>
-                </tr>
+                <?php if (!empty($partnerLabs)): ?>
+                    <?php foreach ($partnerLabs as $lab): ?>
+                        <tr>
+                            <td>
+                                <div class="lab-info-cell">
+                                    <div class="lab-avatar" style="background: #e8f5e9;"><?php echo strtoupper(substr($lab['lab_name'], 0, 2)); ?></div>
+                                    <div class="lab-details">
+                                        <div class="lab-name"><?php echo htmlspecialchars($lab['lab_name']); ?></div>
+                                        <div class="lab-contact"><?php echo htmlspecialchars($lab['email']); ?></div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <!-- Contact Person -->
+                                <div class="lab-contact-person">
+                                    <?php echo htmlspecialchars($lab['contact_person_name']); ?>
+                                </div>
+                            </td>
+                            <td>
+                                <!-- Contact Number -->
+                                <div class="lab-phone">
+                                    <?php echo htmlspecialchars($lab['contact_person_phone']); ?>
+                                </div>
+                            </td>
+                            <td>
+                                <!-- Placeholder for total tests or services -->
+                                <span class="test-count-badge" style="background: #e3f2fd; color: #1565c0; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 500;"><?php echo $lab['total_tests'] ?? 0; ?> Tests</span>
+                            </td>
+                            <td class="user-actions">
+                                    <button type="submit" name="view" class="action-btn-view" title="View Details">
+                                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                            <path d="M1 8C1 8 3.5 2 8 2C12.5 2 15 8 15 8C15 8 12.5 14 8 14C3.5 14 1 8 1 8Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                            <path d="M8 5C6.34315 5 5 6.34315 5 8C5 9.65685 6.34315 11 8 11C9.65685 11 11 9.65685 11 8C11 6.34315 9.65685 5 8 5Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                        </svg>
+                                    </button>
+                                    <button type="submit" name="edit" class="action-btn-edit" title="Edit" onclick="showAlertAndSubmit(event,'edit')">
+                                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                            <path d="M3 13.5H13M2 11L11.5 1.5C11.8 1.2 12.3 1.2 12.6 1.5L14.5 3.4C14.8 3.7 14.8 4.2 14.5 4.5L5 14H2V11Z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+                                        </svg>
+                                    </button>
+                                    <button type="submit" name="delete" class="action-btn-delete" title="Delete" onclick="showAlertAndSubmit(event,'delete')">
+                                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                            <path d="M2 4H14M6.5 7V11M9.5 7V11M3 4L4 13C4 13.5 4.5 14 5 14H11C11.5 14 12 13.5 12 13L13 4M5.5 4V2.5C5.5 2.2 5.7 2 6 2H10C10.3 2 10.5 2.2 10.5 2.5V4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+                                        </svg>
+                                    </button>
+                           </td>
+                        </tr>
+                    <?php endforeach; ?>
+                <?php else: ?>
+                    <tr>
+                        <td colspan="6" style="text-align:center; padding: 20px;">No partner labs found.</td>
+                    </tr>
+                <?php endif; ?>
             </tbody>
         </table>
     </div>
@@ -191,4 +148,3 @@
             </div>
         </div>
     </div>
-</div>

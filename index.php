@@ -90,6 +90,10 @@ if ($controllerName === 'TestCatalog') {
         $adminController->manageUser($role);
     }elseif($action==='usersByRole'){
         $adminController->usersByRole($role);
+    }elseif($action==='getLabConfigurationSection'){
+        $adminController->getLabConfigurationSection();
+    }elseif($action==='getGeneralSettingsSection'){
+        $adminController->getGeneralSettingsSection();
     }
 }
 elseif ($controllerName === 'appointmentsController') {
@@ -198,6 +202,8 @@ elseif ($controllerName === 'appointmentsController') {
         $partnerLabController->index($role);
     }elseif($action === 'storeLab'){
         $partnerLabController->storeLab();
+    }elseif($action === 'getPartnerLabsSection'){
+        $partnerLabController->getPartnerLabsSection();
     }
 }else {
         echo "404 Not Found";

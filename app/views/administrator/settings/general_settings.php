@@ -1,4 +1,3 @@
-<div id="general" class="section" style="display:none;">
     <form class="config-form">
         <!-- Notifications Section -->
         <div class="config-section">
@@ -127,4 +126,3 @@
             <button type="submit" class="save-btn">Save Changes</button>
         </div>
     </form>
-</div>

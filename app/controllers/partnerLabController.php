@@ -27,13 +27,14 @@ class PartnerLabController {
 
         public function storeLab() {
             // Validate and sanitize input
-                $role = $_GET['role'] ?? '';
+            $role = $_GET['role'] ?? '';
             $lab_name = trim($_POST['lab_name']);
             $email = trim($_POST['email']);
             $contact_person = trim($_POST['contact_person']);
             $phone = trim($_POST['phone']);
             $website = trim($_POST['website']);
             $address = trim($_POST['address']);
+            
             $services = isset($_POST['services']) ? $_POST['services'] : [];
 
             // Basic validation
@@ -56,6 +57,20 @@ class PartnerLabController {
             }
 
        
+        }
+        public function getPartnerLabsSection() {
+
+            // Fetch partner labs from the database
+            $partnerLabs = $this->partnerModel->getAllPartnerLabs();            
+            // Include the partial view. The view should now use $partnerLabs to render data.
+            // We assume the view is located at app/views/administrator/settings/partner_labs.php
+            // and it will output the HTML directly.
+            $viewPath = VIEW_PATH . '/administrator/settings/partner_labs.php';
+            if (!file_exists($viewPath)) {
+                echo "ERROR: View file not found at $viewPath";
+            } else {
+                include $viewPath;
+            }
         }
 }
 

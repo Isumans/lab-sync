@@ -49,15 +49,17 @@ if (!isset($_SESSION['user_id'])) {
                 
                 <div id="content-area" class="content-area" >
                     <?php require __DIR__ . '/settings/team_management.php'; ?>
-                    <?php require __DIR__ . '/settings/partner_labs.php'; ?>
-                    <?php require __DIR__ . '/settings/lab_configuration.php'; ?>
-                    <?php require __DIR__ . '/settings/general_settings.php'; ?>
+                    <div id="partner-labs" class="section" style="display:none;"></div>
+                    <div id="configuration" class="section" style="display:none;"></div>
+                    <div id="general" class="section" style="display:none;"></div>
                 </div>
             </main>
         </div>
 
-        <script src="/lab_sync/public/js/showSection.js"></script>
+        <script src="/lab_sync/public/js/showSection.js?v=1"></script>
         <script src="/lab_sync/public/js/showAlert.js"></script>
         <script src="/lab_sync/public/js/teamManagement.js"></script>
+        <script src="/lab_sync/public/js/editUserModal.js?v=2"></script>
+        
     </body>
 </html>

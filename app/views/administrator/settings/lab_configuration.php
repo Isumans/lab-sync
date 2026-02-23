@@ -1,4 +1,3 @@
-<div id="configuration" class="section" style="display:none;">
     <form class="config-form">
         <!-- General Information Section -->
         <div class="config-section">
@@ -160,4 +159,3 @@
             <button type="reset" class="cancel-btn">Cancel</button>
         </div>
     </form>
-</div>

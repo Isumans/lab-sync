@@ -27,5 +27,16 @@ class PartnerModel {
 
 
 
+    public function getAllPartnerLabs() {
+        $sql = "SELECT p.*, COUNT(plt.test_id) as total_tests 
+                FROM partner_labs p 
+                LEFT JOIN partner_lab_tests plt ON p.id = plt.partner_lab_id 
+                GROUP BY p.id 
+                ORDER BY p.created_at DESC";
+        $result = $this->db->query($sql);
+        return $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
+    }
+    
+
 }
 ?>
