@@ -4,7 +4,9 @@ if (session_status() === PHP_SESSION_NONE) session_start();
 $role = $_SESSION['user_role'] ?? '';
 
 function showMenuItem($rolesAllowed, $content) {
-    global $role;
+    if (session_status() === PHP_SESSION_NONE) session_start();
+    $role = $_SESSION['user_role'] ?? '';
+    
     if ($role && in_array($role, $rolesAllowed)) {
         echo $content;
     }
@@ -101,7 +103,7 @@ $currentAction = $_GET['action'] ?? '';
         showMenuItem(['admin'], "
             <li>
                 <a href='index.php?controller=administratorController&action=settings&role=" . $role . "'
-                   class='" . (($currentController === 'administratorController' && $currentAction === 'settings') ? 'active' : '') . "'>
+                   class='" . ((($currentController === 'administratorController' && ($currentAction === 'settings' || $currentAction === 'add_user')) || $currentController === 'partnerLabController') ? 'active' : '') . "'>
                     <img class='sidebar-icon' src='/lab_sync/public/assests/settings.png' alt='Settings Icon'>Settings
                 </a>
             </li>

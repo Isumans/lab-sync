@@ -33,8 +33,9 @@ class administratorModel {
         $stmt->bind_param("ssssi", $username, $email, $role, $status, $userId);
         return $stmt->execute();
     }
+    
 
 
-    // Additional methods for adding, editing, deleting users can be added here
+
 }
 ?>
