@@ -1,5 +1,5 @@
-function showSection(sectionId, event) {
-    if (event) event.preventDefault(); // Prevent link jump
+function showSection(sectionId, tabElement, event) {
+            event.preventDefault(); // Prevent link jump
 
     // Mapping of section IDs to their corresponding controller actions
     const sectionUrls = {
@@ -57,6 +57,12 @@ function showSection(sectionId, event) {
         if (link) link.classList.add('active');
     }
 
+            // Remove 'active' from all tabs
+            document.querySelectorAll('.team-tab').forEach(function(tab) {
+                tab.classList.remove('active');
+            });
+            // Add 'active' to the clicked tab
+            tabElement.classList.add('active');
 }
 
 document.querySelectorAll('.sidebar a').forEach(link => {
