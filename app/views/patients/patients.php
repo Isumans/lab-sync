@@ -15,75 +15,69 @@ if (!isset($_SESSION['user_id'])) {
         <link rel="stylesheet" href="/lab_sync/public/settingStyles.css">
         <link rel="stylesheet" href="/lab_sync/public/table.css">
         <link rel="stylesheet" href="/lab_sync/public/patientStyles.css">
+        <link rel="stylesheet" href="/lab_sync/public/teamStyles.css">
 </head>
     <body>
         <!-- Navigation Bar -->
-        <?php require PUBLIC_PATH . '/navbar.php'; ?>
+        <?php require 'C:\xampp\htdocs\lab_sync\public\navbar.php'; ?>
         <div class="container">
             <!-- Sidebar -->
-            <?php require PUBLIC_PATH . '/sidebar.php'; ?>
+            <?php require 'C:\xampp\htdocs\lab_sync\public\sidebar.php'; ?>
 
             <!-- Main Body Section -->
             <main class="main-content">
-                 <div class="Tmain-content">
-                    <div class="test-catalog-header">
-                        <h1>Patient</h1>
-                        <button class="add-test-button" ><a href="/lab_sync/index.php?controller=patientController&action=register_patient&role=<?php echo $role; ?>">Register Walk-in Patient</a></button>
+                <div class="main-content-header">
+                    <h1>Patients</h1>
+                    <p class="MC-p">Patients-></p>
+                </div>
+
+                <!-- Patient Header with Stats -->
+                <div class="team-header-container">
+                    <div class="team-header">
+                        <h2>Patient Management</h2>
+                        <button class="add-user-button"><a href="/lab_sync/index.php?controller=patientController&action=register_patient&role=<?php echo htmlspecialchars($role); ?>">+ Register Walk-in Patient</a></button>
                     </div>
-                    <div>
-                        <p class="MC-p">Patients-></p>
-                    </div>
-                    <div class="container-cards">
-                        <div class="card c-card">
-                                <h3>New This Week</h3>
-                                <h1 class="countup" data-target="<?php echo (int)($newThisWeek ?? 10); ?>">0</h1>
-                                <p><span class="countup-percent" data-target="<?php echo (int)($percentNewThisWeek ?? 2); ?>">0</span>%</p>
-                                <!-- <img src="assests/chart1.png" alt="Chart 1" style="width:100%; height:auto;"> -->
+
+                    <!-- Stats Cards -->
+                    <div class="team-stats-grid" style="grid-template-columns: repeat(2, 1fr);">
+                        <div class="stat-card-team">
+                            <div class="stat-label-team">NEW THIS WEEK</div>
+                            <div class="stat-value-team countup" data-target="<?php echo (int)($newThisWeek ?? 10); ?>">0</div>
+                            <div class="stat-change"><span class="countup-percent" data-target="<?php echo (int)($percentNewThisWeek ?? 2); ?>">0</span>% increase</div>
                         </div>
-                        <div class="card c-card">
-                            <h3>Total New For the Month</h3>
-                            <h1 class="countup" data-target="<?php echo (int)($totalThisMonth ?? 40); ?>">0</h1>
-                            <p><span class="countup-percent" data-target="<?php echo (int)($percentTotalThisMonth ?? 5); ?>">0</span>%</p>
-                            <!-- <img src="assests/chart2.png" alt="Chart 2" style="width:100%; height:auto;"> -->
-                        </div>
-                    
 
-                    </div>
-                    <div class="search-and-filter patient-search">
-                            
-                        <select class="search-option" id="patient-name" name="patient-name" required>
-                                    <option value="">Email</option>
-                                    <option value="John Doe">UserId</option>
-                        </select>
-                        <input type="text" class="search-bar" placeholder="  Search Patients...">
-                        
-                    </div>
-                     <div class="nav-bar-container">
-                        <div class="nav-bar-line">
-                            <a class="navItem" onclick="showSection('all', event)" href="#">All</a>
-
-
-                            <a class="navItem" onclick="showSection('male', event)" href="#">Male</a>
-
-                            <a class="navItem" onclick="showSection('female', event)" href="#">Female</a>
-
-
+                        <div class="stat-card-team">
+                            <div class="stat-label-team">TOTAL NEW FOR THE MONTH</div>
+                            <div class="stat-value-team countup" data-target="<?php echo (int)($totalThisMonth ?? 40); ?>">0</div>
+                            <div class="stat-change"><span class="countup-percent" data-target="<?php echo (int)($percentTotalThisMonth ?? 5); ?>">0</span>% increase</div>
                         </div>
                     </div>
+                </div>
+
+                <!-- Search and Controls -->
+                <div class="team-controls">
+                    <input type="text" class="team-search-bar" placeholder="🔍 Search Patients..." id="patientSearchInput">
+                    <button class="team-filter-button">↓ Filter</button>
+                </div>
+
+                <!-- Gender Tabs -->
+                <div class="nav-bar-container" style="margin-top: 20px; margin-bottom: 20px;">
+                    <div class="team-tabs">
+                        <button class="team-tab active" data-filter="all" onclick="showSection('all', event)">All Patients</button>
+                        <button class="team-tab" data-filter="male" onclick="showSection('male', event)">Male</button>
+                        <button class="team-tab" data-filter="female" onclick="showSection('female', event)">Female</button>
+                    </div>
+                </div>
                     <div id="content-area" class="content-area">
                         <div id="all" class="section">
-                            <h2>All Patients</h2>
-                            <p>Manage your patients here.</p>
-                            <div class="user-list">
-                                <table class="test-catalog-table">
+                            <div class="team-table-container">
+                                <table class="team-users-table">
                                     <thead>
                                         <tr>
-                                            <th>Patient ID</th>
-                                            <th>Name</th>
-                                            <th>Email</th>
-                                            <th>Gender</th>
-                                            <th>Contact Number</th>
-                                            <th>Actions</th>
+                                            <th style="width: 40%;">PATIENT</th>
+                                            <th style="width: 20%;text-align: center;">GENDER</th>
+                                            <th style="width: 20%;text-align: center;">CONTACT</th>
+                                            <th style="width: 20%;text-align: center;">ACTIONS</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -94,37 +88,53 @@ if (!isset($_SESSION['user_id'])) {
                                                     data-name="<?php echo htmlspecialchars($patient['patient_name']); ?>"
                                                     data-email="<?php echo htmlspecialchars($patient['email']); ?>"
                                                     data-contact="<?php echo htmlspecialchars($patient['contact_number']); ?>">
-                                                    <td><?php echo htmlspecialchars($patient['patient_id']); ?></td>
-                                                    <td><?php echo htmlspecialchars($patient['patient_name']); ?></td>
-                                                    <td><?php echo htmlspecialchars($patient['email']); ?></td>
-                                                    <td><?php echo htmlspecialchars($patient['gender']); ?></td>
-                                                    <td><?php echo htmlspecialchars($patient['contact_number']); ?></td>
-                                                    <td>
-                                                        <button type="button" class="edit-btn" title="Edit"><img src="/lab_sync/public/assests/edit.png" alt="Edit"></button>
-                                                        <button type="button" class="delete-btn" title="Delete"><img src="/lab_sync/public/assests/delete.png" alt="Delete"></button>
+                                                    <td class="user-name-cell">
+                                                        <div class="user-avatar"><?php echo strtoupper(substr($patient['patient_name'], 0, 2)); ?></div>
+                                                        <div class="user-info">
+                                                            <div class="user-name"><?php echo htmlspecialchars($patient['patient_name']); ?></div>
+                                                            <div class="user-email"><?php echo htmlspecialchars($patient['email']); ?></div>
+                                                        </div>
+                                                    </td>
+                                                    <td class="user-status" style="text-align: center;">
+                                                        <span class="status-badge <?php echo strtolower($patient['gender']) === 'male' ? 'status-male' : 'status-female'; ?>">
+                                                            <?php echo htmlspecialchars($patient['gender']); ?>
+                                                        </span>
+                                                    </td>
+                                                    <td style="text-align: center;"><?php echo htmlspecialchars($patient['contact_number']); ?></td>
+                                                    <td class="user-actions" style="align-items: center; justify-content: center;">
+                                                        <button type="button" class="action-btn-edit edit-btn" title="Edit">
+                                                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                                                <path d="M3 13.5H13M2 11L11.5 1.5C11.8 1.2 12.3 1.2 12.6 1.5L14.5 3.4C14.8 3.7 14.8 4.2 14.5 4.5L5 14H2V11Z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+                                                            </svg>
+                                                        </button>
+                                                        <button type="button" class="action-btn-delete delete-btn" title="Delete">
+                                                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                                                <path d="M2 4H14M6.5 7V11M9.5 7V11M3 4L4 13C4 13.5 4.5 14 5 14H11C11.5 14 12 13.5 12 13L13 4M5.5 4V2.5C5.5 2.2 5.7 2 6 2H10C10.3 2 10.5 2.2 10.5 2.5V4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+                                                            </svg>
+                                                        </button>
                                                     </td>
                                                 </tr>
                                             <?php endforeach; ?>
                                         <?php else: ?>
-                                            <tr><td colspan="6">No patients found or database error.</td></tr>
+                                            <tr>
+                                                <td colspan="4" style="text-align: center; padding: 40px;">
+                                                    <p>No patients found. <a href="/lab_sync/index.php?controller=patientController&action=register_patient&role=<?php echo htmlspecialchars($role); ?>">Register your first patient</a></p>
+                                                </td>
+                                            </tr>
                                         <?php endif; ?>
                                     </tbody>
                                 </table>
                             </div>
                         </div>
                         <div id="male" class="section" style="display:none;">
-                            <h2>Male Patients</h2>
-                            <p>Manage your male patients here.</p>
-                            <div class="user-list">
-                                <table class="test-catalog-table">
+                            <div class="team-table-container">
+                                <table class="team-users-table">
                                     <thead>
                                         <tr>
-                                            <th>Patient ID</th>
-                                            <th>Name</th>
-                                            <th>Email</th>
-                                            <th>Gender</th>
-                                            <th>Contact Number</th>
-                                            <th>Actions</th>
+                                            <th style="width: 40%;">PATIENT</th>
+                                            <th style="width: 20%;text-align: center;">GENDER</th>
+                                            <th style="width: 20%;text-align: center;">CONTACT</th>
+                                            <th style="width: 20%;text-align: center;">ACTIONS</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -137,37 +147,53 @@ if (!isset($_SESSION['user_id'])) {
                                                     data-name="<?php echo htmlspecialchars($patient['patient_name']); ?>"
                                                     data-email="<?php echo htmlspecialchars($patient['email']); ?>"
                                                     data-contact="<?php echo htmlspecialchars($patient['contact_number']); ?>">
-                                                    <td><?php echo htmlspecialchars($patient['patient_id']); ?></td>
-                                                    <td><?php echo htmlspecialchars($patient['patient_name']); ?></td>
-                                                    <td><?php echo htmlspecialchars($patient['email']); ?></td>
-                                                    <td><?php echo htmlspecialchars($patient['gender']); ?></td>
-                                                    <td><?php echo htmlspecialchars($patient['contact_number']); ?></td>
-                                                    <td>
-                                                        <button type="button" class="edit-btn" title="Edit"><img src="/lab_sync/public/assests/edit.png" alt="Edit"></button>
-                                                        <button type="button" class="delete-btn" title="Delete"><img src="/lab_sync/public/assests/delete.png" alt="Delete"></button>
+                                                    <td class="user-name-cell">
+                                                        <div class="user-avatar"><?php echo strtoupper(substr($patient['patient_name'], 0, 2)); ?></div>
+                                                        <div class="user-info">
+                                                            <div class="user-name"><?php echo htmlspecialchars($patient['patient_name']); ?></div>
+                                                            <div class="user-email"><?php echo htmlspecialchars($patient['email']); ?></div>
+                                                        </div>
+                                                    </td>
+                                                    <td class="user-status" style="text-align: center;">
+                                                        <span class="status-badge status-male">
+                                                            <?php echo htmlspecialchars($patient['gender']); ?>
+                                                        </span>
+                                                    </td>
+                                                    <td style="text-align: center;"><?php echo htmlspecialchars($patient['contact_number']); ?></td>
+                                                    <td class="user-actions" style="align-items: center; justify-content: center;">
+                                                        <button type="button" class="action-btn-edit edit-btn" title="Edit">
+                                                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                                                <path d="M3 13.5H13M2 11L11.5 1.5C11.8 1.2 12.3 1.2 12.6 1.5L14.5 3.4C14.8 3.7 14.8 4.2 14.5 4.5L5 14H2V11Z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+                                                            </svg>
+                                                        </button>
+                                                        <button type="button" class="action-btn-delete delete-btn" title="Delete">
+                                                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                                                <path d="M2 4H14M6.5 7V11M9.5 7V11M3 4L4 13C4 13.5 4.5 14 5 14H11C11.5 14 12 13.5 12 13L13 4M5.5 4V2.5C5.5 2.2 5.7 2 6 2H10C10.3 2 10.5 2.2 10.5 2.5V4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+                                                            </svg>
+                                                        </button>
                                                     </td>
                                                 </tr>
                                             <?php endforeach; ?>
                                         <?php else: ?>
-                                            <tr><td colspan="6">No male patients found.</td></tr>
+                                            <tr>
+                                                <td colspan="4" style="text-align: center; padding: 40px;">
+                                                    <p>No male patients found.</p>
+                                                </td>
+                                            </tr>
                                         <?php endif; ?>
                                     </tbody>
                                 </table>
                             </div>
                         </div>
                         <div id="female" class="section" style="display:none;">
-                            <h2>Female Patients</h2>
-                            <p>Manage your female patients here.</p>    
-                            <div class="user-list">
-                                <table class="test-catalog-table">
+                            <div class="team-table-container">
+                                <table class="team-users-table">
                                     <thead>
                                         <tr>
-                                            <th>Patient ID</th>
-                                            <th>Name</th>
-                                            <th>Email</th>
-                                            <th>Gender</th>
-                                            <th>Contact Number</th>
-                                            <th>Actions</th>
+                                            <th style="width: 40%;">PATIENT</th>
+                                            <th style="width: 20%;text-align: center;">GENDER</th>
+                                            <th style="width: 20%;text-align: center;">CONTACT</th>
+                                            <th style="width: 20%;text-align: center;">ACTIONS</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -180,19 +206,39 @@ if (!isset($_SESSION['user_id'])) {
                                                     data-name="<?php echo htmlspecialchars($patient['patient_name']); ?>"
                                                     data-email="<?php echo htmlspecialchars($patient['email']); ?>"
                                                     data-contact="<?php echo htmlspecialchars($patient['contact_number']); ?>">
-                                                    <td><?php echo htmlspecialchars($patient['patient_id']); ?></td>
-                                                    <td><?php echo htmlspecialchars($patient['patient_name']); ?></td>
-                                                    <td><?php echo htmlspecialchars($patient['email']); ?></td>
-                                                    <td><?php echo htmlspecialchars($patient['gender']); ?></td>
-                                                    <td><?php echo htmlspecialchars($patient['contact_number']); ?></td>
-                                                    <td>
-                                                        <button type="button" class="edit-btn" title="Edit"><img src="/lab_sync/public/assests/edit.png" alt="Edit"></button>
-                                                        <button type="button" class="delete-btn" title="Delete"><img src="/lab_sync/public/assests/delete.png" alt="Delete"></button>
+                                                    <td class="user-name-cell">
+                                                        <div class="user-avatar"><?php echo strtoupper(substr($patient['patient_name'], 0, 2)); ?></div>
+                                                        <div class="user-info">
+                                                            <div class="user-name"><?php echo htmlspecialchars($patient['patient_name']); ?></div>
+                                                            <div class="user-email"><?php echo htmlspecialchars($patient['email']); ?></div>
+                                                        </div>
+                                                    </td>
+                                                    <td class="user-status" style="text-align: center;">
+                                                        <span class="status-badge status-female">
+                                                            <?php echo htmlspecialchars($patient['gender']); ?>
+                                                        </span>
+                                                    </td>
+                                                    <td style="text-align: center;"><?php echo htmlspecialchars($patient['contact_number']); ?></td>
+                                                    <td class="user-actions" style="align-items: center; justify-content: center;">
+                                                        <button type="button" class="action-btn-edit edit-btn" title="Edit">
+                                                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                                                <path d="M3 13.5H13M2 11L11.5 1.5C11.8 1.2 12.3 1.2 12.6 1.5L14.5 3.4C14.8 3.7 14.8 4.2 14.5 4.5L5 14H2V11Z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+                                                            </svg>
+                                                        </button>
+                                                        <button type="button" class="action-btn-delete delete-btn" title="Delete">
+                                                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                                                <path d="M2 4H14M6.5 7V11M9.5 7V11M3 4L4 13C4 13.5 4.5 14 5 14H11C11.5 14 12 13.5 12 13L13 4M5.5 4V2.5C5.5 2.2 5.7 2 6 2H10C10.3 2 10.5 2.2 10.5 2.5V4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+                                                            </svg>
+                                                        </button>
                                                     </td>
                                                 </tr>
                                             <?php endforeach; ?>
                                         <?php else: ?>
-                                            <tr><td colspan="6">No female patients found.</td></tr>
+                                            <tr>
+                                                <td colspan="4" style="text-align: center; padding: 40px;">
+                                                    <p>No female patients found.</p>
+                                                </td>
+                                            </tr>
                                         <?php endif; ?>
                                     </tbody>
                                 </table>
@@ -303,6 +349,18 @@ if (!isset($_SESSION['user_id'])) {
 
         document.addEventListener('DOMContentLoaded', function () {
             animateStats();
+            
+            // Handle team-tab switching
+            const teamTabs = document.querySelectorAll('.team-tab');
+            teamTabs.forEach(tab => {
+                tab.addEventListener('click', function(e) {
+                    // Remove active class from all tabs
+                    teamTabs.forEach(t => t.classList.remove('active'));
+                    // Add active class to clicked tab
+                    this.classList.add('active');
+                });
+            });
+            
             const modal = document.getElementById('editModal');
             const form = document.getElementById('editPatientForm');
             const closeBtn = document.getElementById('editModalClose');

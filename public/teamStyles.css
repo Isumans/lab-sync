@@ -290,6 +290,8 @@
     border-radius: 4px;
     font-size: 12px;
     font-weight: 600;
+    min-width: 65px;
+    text-align: center;
 }
 
 .status-active {
@@ -300,6 +302,16 @@
 .status-inactive {
     background-color: #f3f4f6;
     color: #6b7280;
+}
+
+.status-male {
+    background-color: #d1fae5;
+    color: #065f46;
+}
+
+.status-female {
+    background-color: #fce7f3;
+    color: #be185d;
 }
 
 /* User Actions */
