@@ -80,14 +80,89 @@ class administratorController {
         }
 
     public function getLabConfigurationSection() {
-
-        // In the future, fetch configuration data from DB
+        $config = $this->adminModel->getLabConfig();
         include VIEW_PATH . '/administrator/settings/lab_configuration.php';
     }
 
+    public function saveLabConfiguration() {
+        header('Content-Type: application/json');
+
+        // Handle logo upload
+        $logoPath = $_POST['existing_logo_path'] ?? '';
+        if (!empty($_FILES['logo']['name'])) {
+            $allowed = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+            $ftype   = mime_content_type($_FILES['logo']['tmp_name']);
+            $fsize   = $_FILES['logo']['size'];
+
+            if (!in_array($ftype, $allowed)) {
+                echo json_encode(['success' => false, 'message' => 'Invalid file type. Only PNG, JPG, GIF, WEBP allowed.']);
+                exit;
+            }
+            if ($fsize > 2 * 1024 * 1024) {
+                echo json_encode(['success' => false, 'message' => 'File too large (max 2MB).']);
+                exit;
+            }
+
+            $ext      = pathinfo($_FILES['logo']['name'], PATHINFO_EXTENSION);
+            $filename = 'lab_logo_' . time() . '.' . $ext;
+            $dest     = ROOT_PATH . '/public/uploads/' . $filename;
+            if (move_uploaded_file($_FILES['logo']['tmp_name'], $dest)) {
+                $logoPath = '/lab_sync/public/uploads/' . $filename;
+            }
+        }
+
+        $data = [
+            'lab_name'               => trim($_POST['lab_name']         ?? ''),
+            'accreditation'          => trim($_POST['accreditation']    ?? ''),
+            'address'                => trim($_POST['address']          ?? ''),
+            'phone'                  => trim($_POST['phone']            ?? ''),
+            'email'                  => trim($_POST['email']            ?? ''),
+            'logo_path'              => $logoPath,
+            'hours_mon_fri_open'     => $_POST['hours_mon_fri_open']    ?? '08:00',
+            'hours_mon_fri_close'    => $_POST['hours_mon_fri_close']   ?? '17:00',
+            'hours_mon_fri_enabled'  => isset($_POST['hours_mon_fri_enabled'])  ? 1 : 0,
+            'hours_sat_open'         => $_POST['hours_sat_open']        ?? '09:00',
+            'hours_sat_close'        => $_POST['hours_sat_close']       ?? '14:00',
+            'hours_sat_enabled'      => isset($_POST['hours_sat_enabled'])       ? 1 : 0,
+            'hours_sun_open'         => $_POST['hours_sun_open']        ?? '12:00',
+            'hours_sun_close'        => $_POST['hours_sun_close']       ?? '12:00',
+            'hours_sun_enabled'      => isset($_POST['hours_sun_enabled'])       ? 1 : 0,
+            'allow_walkins'          => isset($_POST['allow_walkins'])           ? 1 : 0,
+            'auto_email_reports'     => isset($_POST['auto_email_reports'])      ? 1 : 0,
+        ];
+
+        $ok = $this->adminModel->saveLabConfig($data);
+        echo json_encode([
+            'success'   => (bool)$ok,
+            'message'   => $ok ? 'Lab configuration saved successfully.' : 'Failed to save. Please try again.',
+            'logo_path' => $logoPath,
+        ]);
+    }
+
     public function getGeneralSettingsSection() {
-        // In the future, fetch general settings from DB
+        $settings = $this->adminModel->getGeneralSettings();
         include VIEW_PATH . '/administrator/settings/general_settings.php';
+    }
+
+    public function saveGeneralSettings() {
+        header('Content-Type: application/json');
+
+        $data = [
+            'sms_alerts'      => isset($_POST['sms_alerts'])     ? 1 : 0,
+            'email_reports'   => isset($_POST['email_reports'])  ? 1 : 0,
+            'password_policy' => trim($_POST['password_policy']  ?? '60'),
+            'session_timeout' => (int)($_POST['session_timeout'] ?? 15),
+            'language'        => trim($_POST['language']         ?? 'en_US'),
+            'timezone'        => trim($_POST['timezone']         ?? 'America/New_York'),
+            'currency'        => trim($_POST['currency']         ?? 'USD'),
+            'date_format'     => trim($_POST['date_format']      ?? 'dd/mm/yyyy'),
+        ];
+
+        $ok = $this->adminModel->saveGeneralSettings($data);
+        echo json_encode([
+            'success' => (bool)$ok,
+            'message' => $ok ? 'General settings saved successfully.' : 'Failed to save. Please try again.',
+        ]);
     }
 }
 

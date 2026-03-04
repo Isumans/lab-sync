@@ -94,6 +94,10 @@ if ($controllerName === 'TestCatalog') {
         $adminController->getLabConfigurationSection();
     }elseif($action==='getGeneralSettingsSection'){
         $adminController->getGeneralSettingsSection();
+    }elseif($action==='saveLabConfiguration'){
+        $adminController->saveLabConfiguration();
+    }elseif($action==='saveGeneralSettings'){
+        $adminController->saveGeneralSettings();
     }
 }
 elseif ($controllerName === 'appointmentsController') {

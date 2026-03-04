@@ -60,6 +60,8 @@ if (!isset($_SESSION['user_id'])) {
         <script src="/lab_sync/public/js/showAlert.js"></script>
         <script src="/lab_sync/public/js/teamManagement.js"></script>
         <script src="/lab_sync/public/js/editUserModal.js?v=2"></script>
+        <script src="/lab_sync/public/js/labConfig.js"></script>
+        <script src="/lab_sync/public/js/generalSettings.js"></script>
         
     </body>
 </html>
