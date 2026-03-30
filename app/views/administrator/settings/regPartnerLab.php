@@ -78,6 +78,7 @@ if (!isset($_SESSION['user_id'])) {
                                         <textarea name="address" placeholder="Enter the full laboratory street address, city, and zip code" required></textarea>
                                     </div>
                                 </div>
+                                
                             </div>
 
                             <!-- Tests Offered Section -->

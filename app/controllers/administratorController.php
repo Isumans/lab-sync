@@ -21,7 +21,6 @@ class administratorController {
 
         public function settings($role) {
             $users = $this->adminModel->getAllUsers();
-            // $tests = $this->adminModel->getAllTests();
             include VIEW_PATH . '/administrator/settings.php';
         }
 
