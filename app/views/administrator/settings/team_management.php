@@ -84,13 +84,7 @@
                                     <input type="hidden" name="email" value="<?php echo htmlspecialchars($user['email']); ?>">
                                     <input type="hidden" name="role" value="<?php echo htmlspecialchars($user['role']); ?>">
                                     <input type="hidden" name="status" value="<?php echo htmlspecialchars($user['status']); ?>">
-                                    <button type="button" class="action-btn-edit" title="Edit" 
-                                            data-user-id="<?php echo htmlspecialchars($user['user_id']); ?>"
-                                            data-username="<?php echo htmlspecialchars($user['username']); ?>"
-                                            data-email="<?php echo htmlspecialchars($user['email']); ?>"
-                                            data-role="<?php echo htmlspecialchars($user['role']); ?>"
-                                            data-contact-number=""
-                                            onclick="event.preventDefault();">
+                                    <button type="button" id="edit-user-<?php echo htmlspecialchars($user['user_id']); ?>" class="action-btn-edit" title="Edit" data-user-id="<?php echo htmlspecialchars($user['user_id']); ?>" data-username="<?php echo htmlspecialchars($user['username']); ?>" data-email="<?php echo htmlspecialchars($user['email']); ?>" data-role="<?php echo htmlspecialchars($user['role']); ?>" data-contact-number="">
                                         <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                                             <path d="M3 13.5H13M2 11L11.5 1.5C11.8 1.2 12.3 1.2 12.6 1.5L14.5 3.4C14.8 3.7 14.8 4.2 14.5 4.5L5 14H2V11Z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
                                         </svg>
@@ -127,3 +121,4 @@
     </div>
 </div>
 
+<script src="/lab_sync/public/js/editUserModal.js"></script>

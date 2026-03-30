@@ -4,8 +4,8 @@ if (!isset($_SESSION['user_id'])) {
     // User is not logged in, redirect to login page
     header('Location: /lab_sync/index.php?controller=Auth&action=index');
     exit();
-    $role=$_GET['user_role'] ?? '';
 }
+$role = $_GET['user_role'] ?? '';
 
 ?>
 
@@ -35,13 +35,13 @@ if (!isset($_SESSION['user_id'])) {
                 </div>
                 <div class="nav-bar-container">
                     <div class="nav-bar-line">
-                        <a class="navItem active" onclick="showSection('team', event)" href="#">Team</a>
+                        <a class="navItem active" onclick="showSection('team', this, event)" href="#">Team</a>
 
-                        <a class="navItem" onclick="showSection('partner-labs', event)" href="#">Partner Labs</a>
+                        <a class="navItem" onclick="showSection('partner-labs', this, event)" href="#">Partner Labs</a>
                         
-                        <a class="navItem" onclick="showSection('configuration', event)" href="#">Lab Configuration</a>
+                        <a class="navItem" onclick="showSection('configuration', this, event)" href="#">Lab Configuration</a>
 
-                        <a class="navItem" onclick="showSection('general', event)" href="#">General Settings</a>
+                        <a class="navItem" onclick="showSection('general', this, event)" href="#">General Settings</a>
 
                     </div>
                 </div>
@@ -60,6 +60,8 @@ if (!isset($_SESSION['user_id'])) {
         <script src="/lab_sync/public/js/showAlert.js"></script>
         <script src="/lab_sync/public/js/teamManagement.js"></script>
         <script src="/lab_sync/public/js/editUserModal.js?v=2"></script>
+        <script src="/lab_sync/public/js/labConfig.js"></script>
+        <script src="/lab_sync/public/js/generalSettings.js"></script>
         
     </body>
 </html>

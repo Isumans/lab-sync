@@ -53,7 +53,7 @@ $currentAction = $_GET['action'] ?? '';
         showMenuItem(['admin', 'technician'], "
             <li>
                 <a href='index.php?controller=TestCatalog&action=index&role=" . $role . "'
-                   class='" . (($currentController === 'TestCatalog' && $currentAction === 'index') ? 'active' : '') . "'>
+                   class='" . (($currentController === 'TestCatalog' && ($currentAction === 'index' || $currentAction === 'add_test')) ? 'active' : '') . "'>
                     <img class='sidebar-icon' src='/lab_sync/public/assests/test-catalog.png' alt='Test Catalog Icon'>Test Catalog
                 </a>
             </li>

@@ -13,7 +13,7 @@ if (!isset($_SESSION['user_id'])) {
     <title>Inventory</title>
         <link rel="stylesheet" href="/lab_sync/public/styles.css">
         <link rel="stylesheet" href="/lab_sync/public/settingStyles.css">
-        <link rel="stylesheet" href="/lab_sync/public/table.css">
+        <link rel="stylesheet" href="/lab_sync/public/teamStyles.css">
         <link rel="stylesheet" href="/lab_sync/public/inventoryStyles.css">
 </head>
     <body>
@@ -84,44 +84,49 @@ if (!isset($_SESSION['user_id'])) {
                        <div id="allItems" class="section">
                            <h2>All Items</h2>
                            <p>View and manage all inventory items here.</p>
-                           <div class="user-list">
-                                <table class="test-catalog-table">
+                           <div class="team-table-container">
+                                <table class="team-users-table">
                                     <thead>
                                         <tr>
-                                            <th>Inventory ID</th>
-                                            <th>Item Name</th>
-                                            <th>Supplier ID</th>
-                                            <th>Quantity</th>
-                                            <th>Reorder Level</th>
-                                            <th>Actions</th>
+                                            <th>INVENTORY ID</th>
+                                            <th>ITEM NAME</th>
+                                            <th>SUPPLIER ID</th>
+                                            <th>QUANTITY</th>
+                                            <th>REORDER LEVEL</th>
+                                            <th>ACTIONS</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         <?php if (is_array($items)): ?>
                                         <?php foreach ($items as $item): ?>
                                             <form method="post" action="/lab_sync/index.php?controller=inventoryController&action=edit_item" class="editForm">
-
                                                 <tr>
                                                     <td><input id="inventory_id" class="form1" name="inventory_id" type="text" value="<?php echo htmlspecialchars($item['inventory_id']); ?>"></td>
                                                     <td><input id="item_name" class="form1" name="item_name" type="text" value="<?php echo htmlspecialchars($item['item_name']); ?>"></td>
                                                     <td><input id="supplier_id" class="form1" name="supplier_id" type="text" value="<?php echo htmlspecialchars($item['supplier_id']); ?>"></td>
                                                     <td><input id="quantity" class="form1" name="quantity" type="text" value="<?php echo htmlspecialchars($item['quantity']); ?>"></td>
                                                     <td><input id="reorder_level" class="form1" name="reorder_level" type="text" value="<?php echo htmlspecialchars($item['reorder_level']); ?>"></td>
-
-                                                    <td>
-                                                        <button id="edit" type="submit" name="edit" class="edit-button" onclick="showAlertAndSubmit(event,'edit')"><img src="/lab_sync/public/assests/edit.png" alt="Edit"></button>
-                                                        <button id="delete" type="submit" name="delete" class="delete-button" onclick="showAlertAndSubmit(event,'delete')"><img src="/lab_sync/public/assests/delete.png" alt="Delete"></button>
+                                                    <td class="user-actions">
+                                                        <button type="submit" name="edit" class="action-btn-edit" title="Edit" onclick="showAlertAndSubmit(event,'edit')">
+                                                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                                                <path d="M3 13.5H13M2 11L11.5 1.5C11.8 1.2 12.3 1.2 12.6 1.5L14.5 3.4C14.8 3.7 14.8 4.2 14.5 4.5L5 14H2V11Z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+                                                            </svg>
+                                                        </button>
+                                                        <button type="submit" name="delete" class="action-btn-delete" title="Delete" onclick="showAlertAndSubmit(event,'delete')">
+                                                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                                                <path d="M2 4H14M6.5 7V11M9.5 7V11M3 4L4 13C4 13.5 4.5 14 5 14H11C11.5 14 12 13.5 12 13L13 4M5.5 4V2.5C5.5 2.2 5.7 2 6 2H10C10.3 2 10.5 2.2 10.5 2.5V4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+                                                            </svg>
+                                                        </button>
                                                     </td>
                                                 </tr>
                                             </form>
                                         <?php endforeach; ?>
                                     <?php else: ?>
-                                        <tr><td colspan="5">No items found or database error.</td></tr>
+                                        <tr><td colspan="6" style="text-align: center; padding: 40px;">No items found or database error.</td></tr>
                                     <?php endif; ?>
-                        
                                     </tbody>
                                 </table>
-                                </div>
+                           </div>
                        </div>
                        <div id="stockHistory" class="section" style="display:none;">
                            <h2>Stock History</h2>

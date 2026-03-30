@@ -1,5 +1,5 @@
-function showSection(sectionId, event) {
-    if (event) event.preventDefault(); // Prevent link jump
+function showSection(sectionId, tabElement, event) {
+    event.preventDefault(); // Prevent link jump
 
     // Mapping of section IDs to their corresponding controller actions
     const sectionUrls = {
@@ -57,12 +57,12 @@ function showSection(sectionId, event) {
         if (link) link.classList.add('active');
     }
 
-            // Remove 'active' from all tabs
-            document.querySelectorAll('.team-tab').forEach(function(tab) {
-                tab.classList.remove('active');
-            });
-            // Add 'active' to the clicked tab
-            tabElement.classList.add('active');
+    // Remove 'active' from all tabs
+    document.querySelectorAll('.team-tab').forEach(function (tab) {
+        tab.classList.remove('active');
+    });
+    // Add 'active' to the clicked tab
+    tabElement.classList.add('active');
 }
 
 document.querySelectorAll('.sidebar a').forEach(link => {
@@ -80,7 +80,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const link = document.querySelector(`.navItem[onclick*="'${section}'"]`);
         if (link) {
             // Simulate click or manually trigger showSection
-            showSection(section, { preventDefault: () => { }, target: link });
+            showSection(section, link, { preventDefault: () => { }, target: link });
         }
     } else {
         // Default to first section or 'team' if no section specified
