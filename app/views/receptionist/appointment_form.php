@@ -30,7 +30,7 @@
                        class="patient-search-input" 
                        id="patient-search" 
                        name="patient_search" 
-                       placeholder="Start typing patient name (e.g. yashen)..." 
+                       placeholder="Start typing patient name (e.g. John Doe)..." 
                        autocomplete="off">
                 
                 <div id="patient-suggestions" class="patient-suggestions"></div>
@@ -53,7 +53,7 @@
             <!-- Test Selection Section -->
             <div class="form-section test-selection-section">
                 <div class="section-header">
-                    <span class="section-icon"></span>
+                    <span class="section-icon">🧪</span>
                     <h3>Test Selection</h3>
                     <span class="selected-tests-badge">SELECTED TESTS: <span id="selectedTestsCount">0</span></span>
                 </div>

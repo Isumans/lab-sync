@@ -65,6 +65,10 @@ if ($controllerName === 'TestCatalog') {
         $Testcontroller->getTestsForAppointment();
     } elseif ($action === 'getLatestTestsForAppointment') {
         $Testcontroller->getLatestTestsForAppointment();
+    } elseif ($action === 'getTestsForAppointment') {
+        $Testcontroller->getTestsForAppointment();
+    } elseif ($action === 'getLatestTestsForAppointment') {
+        $Testcontroller->getLatestTestsForAppointment();
     } elseif ($action === 'add_test') {
         $Testcontroller->add_test($role);
     } elseif ($action === 'store') {
@@ -151,6 +155,9 @@ elseif ($controllerName === 'appointmentsController') {
         $appointmentController->prescriptionRequestDetails();
     } elseif ($action === 'processPrescriptionDecision') {
         $appointmentController->processPrescriptionDecision();
+    } elseif ($action === 'storeAppointment') {
+    } elseif ($action === 'createAppointment') {
+        $appointmentController->createAppointment($role);
     } elseif ($action === 'storeAppointment') {
         $appointmentController->storeAppointment($role);
     } elseif ($action === 'searchPatients') {
