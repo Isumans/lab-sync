@@ -43,6 +43,30 @@ class TestCatalogController {
             include VIEW_PATH . '/receptionist/test_catalog.php';
         }
     }
+
+    public function getTestsForAppointment() {
+        header('Content-Type: application/json');
+
+        $model = new TestCatalog($this->db);
+        $tests = $model->getTestsForAppointment();
+
+        echo json_encode([
+            'success' => true,
+            'data' => $tests,
+        ]);
+    }
+
+    public function getLatestTestsForAppointment() {
+        header('Content-Type: application/json');
+
+        $model = new TestCatalog($this->db);
+        $tests = $model->getLatestTestsForAppointment(3);
+
+        echo json_encode([
+            'success' => true,
+            'data' => $tests,
+        ]);
+    }
         
     public function add_test($role) {
         $role=$_GET['role'] ?? '';

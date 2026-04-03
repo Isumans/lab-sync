@@ -51,12 +51,12 @@ function generateAllAppointmentsHTML(appointments) {
     return appointments.map(apt => `
         <tr>
             <td><strong>${escapeHtml(apt.appointment_id)}</strong></td>
-            <td>${escapeHtml(apt.patient_id)}</td>
+            <td>${escapeHtml(resolvePatientLabel(apt))}</td>
             <td style="text-align: center;">${escapeHtml(apt.appointment_date)}</td>
             <td style="text-align: center;">${escapeHtml(apt.appointment_time)}</td>
             <td style="text-align: center;">
-                <span class="status-badge ${apt.appointment_id.includes('ONLINE') ? 'status-active' : 'status-inactive'}">
-                    ${apt.appointment_id.includes('ONLINE') ? 'Online' : 'Physical'}
+                <span class="status-badge ${apt.method === 'online' ? 'status-active' : 'status-inactive'}">
+                    ${apt.method === 'online' ? 'Online' : 'Physical'}
                 </span>
             </td>
         </tr>
@@ -71,7 +71,7 @@ function generateOnlineAppointmentsHTML(appointments) {
     return appointments.map(apt => `
         <tr>
             <td><strong>${escapeHtml(apt.appointment_id)}</strong></td>
-            <td>${escapeHtml(apt.patient_id)}</td>
+            <td>${escapeHtml(resolvePatientLabel(apt))}</td>
             <td style="text-align: center;">${escapeHtml(apt.appointment_date)}</td>
             <td style="text-align: center;">${escapeHtml(apt.appointment_time)}</td>
         </tr>
@@ -86,7 +86,7 @@ function generatePhysicalAppointmentsHTML(appointments) {
     return appointments.map(apt => `
         <tr>
             <td><strong>${escapeHtml(apt.appointment_id)}</strong></td>
-            <td>${escapeHtml(apt.patient_id)}</td>
+            <td>${escapeHtml(resolvePatientLabel(apt))}</td>
             <td style="text-align: center;">${escapeHtml(apt.appointment_date)}</td>
             <td style="text-align: center;">${escapeHtml(apt.appointment_time)}</td>
             <td style="text-align: center;">
@@ -107,7 +107,21 @@ function generatePhysicalAppointmentsHTML(appointments) {
     `).join('');
 }
 
+function resolvePatientLabel(appointment) {
+    if (appointment && appointment.patient_name) {
+        return appointment.patient_name;
+    }
+    if (appointment && appointment.patient_display_name) {
+        return appointment.patient_display_name;
+    }
+    if (appointment && appointment.patient_id !== undefined && appointment.patient_id !== null) {
+        return appointment.patient_id;
+    }
+    return 'N/A';
+}
+
 function escapeHtml(text) {
+    const normalized = text === undefined || text === null ? '' : String(text);
     const map = {
         '&': '&amp;',
         '<': '&lt;',
@@ -115,5 +129,5 @@ function escapeHtml(text) {
         '"': '&quot;',
         "'": '&#039;'
     };
-    return text.replace(/[&<>"']/g, m => map[m]);
+    return normalized.replace(/[&<>"']/g, m => map[m]);
 }
