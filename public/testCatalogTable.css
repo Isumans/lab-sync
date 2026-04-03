@@ -1,28 +1,7 @@
 /* Test Catalog Table Styles */
 
 /* Controls Section */
-@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
 
-* {
-    margin: 0;
-    padding: 0;
-    font-family: 'Inter', sans-serif;
-}
-
-/* Test Catalog Workflow Styles */
-:root {
-    --primary-color: #3DBDEC;
-    --secondary-color: #ffffff;
-    --font-color: #000000;
-    --background-color: #F5F6FA;
-    --boder: #4F7A96;
-}
-
-body {
-    margin: 0;
-    font-family: Arial, sans-serif;
-    background: var(--background-color);
-}
 
 .catalog-controls {
     display: flex;

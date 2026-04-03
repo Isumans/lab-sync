@@ -16,6 +16,8 @@ if (!isset($_SESSION['user_id'])) {
     <link rel="stylesheet" href="/lab_sync/public/table.css">
     <link rel="stylesheet" href="/lab_sync/public/appointmentStyles.css">
     <link rel="stylesheet" href="/lab_sync/public/patientStyles.css">
+    <link rel="stylesheet" href="/lab_sync/public/appointmentFormStyles.css">
+
 </head>
 <body>
     <?php require 'C:\xampp\htdocs\lab_sync\public\navbar.php'; ?>
@@ -28,17 +30,18 @@ if (!isset($_SESSION['user_id'])) {
                     <h1>Create Appointment</h1>
                 </div>
                 <div>
-                    <p class="MC-p">Appointments->Create</p>
+                    <p class="MC-p"><a href="javascript:history.back()" style="color: var(--primary-color); text-decoration: none;">Appointments-></a>Create-Appointment</p></br>
                 </div>
 
                 <div>
-                    <?php include __DIR__ . '/appointment_form.php'; ?>
+                    <?php include VIEW_PATH . '/receptionist/appointment_form.php'; ?>
+
                 </div>
             </div>
         </main>
     </div>
 
-    <script src="/lab_sync/public/js/addTest.js"></script>
+    <script src="/lab_sync/public/js/appointmentForm.js"></script>
     <script src="/lab_sync/public/js/searchPatient.js"></script>
 </body>
 </html>

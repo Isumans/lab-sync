@@ -32,6 +32,10 @@ if ($controllerName === 'TestCatalog') {
     $role= $_GET['role'] ?? '';
     if ($action === 'index') {
         $Testcontroller->index($role);
+    } elseif ($action === 'getTestsForAppointment') {
+        $Testcontroller->getTestsForAppointment();
+    } elseif ($action === 'getLatestTestsForAppointment') {
+        $Testcontroller->getLatestTestsForAppointment();
     } elseif ($action === 'add_test') {
         $Testcontroller->add_test($role);
     } elseif ($action === 'store') {
@@ -102,18 +106,33 @@ if ($controllerName === 'TestCatalog') {
 }
 elseif ($controllerName === 'appointmentsController') {
     $appointmentController = new appointmentsController();
-    $action = $_GET['action'] ?? 'index'; // or your desired default
+    $action = $_GET['action'] ?? 'index';
     $role = $_GET['role'] ?? '';
     if ($action === 'index') {
         $appointmentController->index($role);
-    }elseif($action ==='test_catalog'){
+    } elseif ($action === 'test_catalog') {
         include VIEW_PATH . '/receptionist/test_catalog.php';
-    }elseif($action==='createAppointment'){
-        include VIEW_PATH . '/receptionist/create_Appointment.php';
-    }elseif($action==='storeAppointment'){
+    } elseif ($action === 'createAppointment') {
+        $appointmentController->createAppointment($role);
+    } elseif ($action === 'storeAppointment') {
         $appointmentController->storeAppointment($role);
+    } elseif ($action === 'searchPatients') {
+        $appointmentController->searchPatients();
+    } elseif ($action === 'filterAppointments') {
+        $appointmentController->filterAppointments();
+    } elseif ($action === 'getAppointmentDetails') {
+        $appointmentController->getAppointmentDetails();
+    } elseif ($action === 'getAppointmentEditData') {
+        $appointmentController->getAppointmentEditData();
+    } elseif ($action === 'searchTests') {
+        $appointmentController->searchTests();
+    } elseif ($action === 'updateAppointment') {
+        $appointmentController->updateAppointment();
+    } elseif ($action === 'updateTestStatus') {
+        $appointmentController->updateTestStatus();
+    }elseif ($action === 'deleteAppointment') {
+        $appointmentController->deleteAppointment();
     }
-    // ...other receptionist actions...
 }elseif($controllerName === 'reportsController'){
     $action = $_GET['action'] ?? 'index'; // or your desired default
     if ($action === 'index') {

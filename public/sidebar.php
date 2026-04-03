@@ -33,7 +33,7 @@ $currentAction = $_GET['action'] ?? '';
         showMenuItem(['admin', 'receptionist', 'technician'], "
             <li>
                 <a href='index.php?controller=appointmentsController&action=index&role=" . $role . "'
-                   class='" . (($currentController === 'appointmentsController' && $currentAction === 'index') ? 'active' : '') . "'>
+                   class='" . (($currentController === 'appointmentsController' && ($currentAction === 'index')|| $currentAction === 'createAppointment') ? 'active' : '') . "'>
                     <img class='sidebar-icon' src='/lab_sync/public/assests/appointment.png' alt='Appointments Icon'>Appointments
                 </a>
             </li>
