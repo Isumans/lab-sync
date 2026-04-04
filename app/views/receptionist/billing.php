@@ -30,7 +30,7 @@ if (!isset($_SESSION['user_id'])) {
                         <h1>Billing</h1>
                         <p class="breadcrumb">Dashboard > Billing</p>
                     </div>
-                    <a href="/lab_sync/index.php?controller=Billing&action=create_bill" class="create-btn">Create New Bill</a>
+                    <a href="/lab_sync/index.php?controller=billingController&action=create_bill" class="create-btn">Create New Bill</a>
                 </div>
 
                 <div class="filters">

@@ -9,14 +9,22 @@ if (!isset($_SESSION['user_id'])) {
 <html>
 <head>
 
-
-    <title>Create Supplier</title>
-        <link rel="stylesheet" href="/lab_sync/public/styles.css">
-        <!-- <link rel="stylesheet" href="/lab_sync/public/settingStyles.css"> -->
-        <link rel="stylesheet" href="/lab_sync/public/table.css">
-        <link rel="stylesheet" href="/lab_sync/public/appointmentStyles.css">
+    <title>Register New Supplier</title>
+    <link rel="stylesheet" href="/lab_sync/public/styles.css">
+    <link rel="stylesheet" href="/lab_sync/public/settingStyles.css">
+    <link rel="stylesheet" href="/lab_sync/public/teamStyles.css">
+    <link rel="stylesheet" href="/lab_sync/public/suppliers.css">
 </head>
     <body>
+        <?php
+        $supplierError = $_SESSION['supplier_error'] ?? '';
+        $supplierSuccess = $_SESSION['supplier_success'] ?? '';
+        $supplierOld = $_SESSION['supplier_old'] ?? [];
+        unset($_SESSION['supplier_error'], $_SESSION['supplier_success']);
+
+        $role = $_GET['role'] ?? '';
+        $roleParam = $role !== '' ? '&role=' . urlencode($role) : '';
+        ?>
         <!-- Navigation Bar -->
         <?php require 'C:\xampp\htdocs\lab_sync\public\navbar.php'; ?>
         <div class="container">
@@ -25,54 +33,63 @@ if (!isset($_SESSION['user_id'])) {
 
             <!-- Main Body Section -->
             <main class="main-content">
-                <div class="Tmain-content">
-                    <div class="test-catalog-header">
-                        <h1>Create Supplier</h1>
-                    </div>
-                    <div>
-                        <p class="MC-p">Suppliers->Create Supplier</p>
-                    </div>
-                
-                    <div class="heading-row">
-                        <h2 class="heading2">
-                            Add New Supplier
-                        </h2>
+                <div class="main-content-header supplier-register-header">
+                    <h1 class="supplier-register-title">Register New Supplier</h1>
+                    <p class="supplier-register-breadcrumb">Suppliers -> Register New Supplier</p>
+                </div>
 
-                        <form action="/lab_sync/index.php?controller=appointmentController&action=storeAppointment" class="appointment-form formStyle"><br>
+                <section class="section suppliers-section supplier-register-section">
+                    <?php if ($supplierError !== ''): ?>
+                        <p class="supplier-alert supplier-alert-error"><?php echo htmlspecialchars($supplierError); ?></p>
+                    <?php endif; ?>
 
+                    <?php if ($supplierSuccess !== ''): ?>
+                        <p class="supplier-alert supplier-alert-success"><?php echo htmlspecialchars($supplierSuccess); ?></p>
+                    <?php endif; ?>
 
-                            <div id="patient-suggestions" class="suggestion-box"></div>
+                    <form class="supplier-register-form" action="/lab_sync/index.php?controller=supplierController&action=store<?php echo $roleParam; ?>" method="POST">
+                        <h2 class="supplier-register-form-title">Supplier Information</h2>
 
-                            <label for="appointment-date">Name:</label>
-                            <input type="date" id="appointment-date" name="appointment-date" required>
+                        <div class="supplier-register-fields">
+                            <div class="supplier-register-field">
+                                <label for="supplier_name">Name</label>
+                                <input type="text" id="supplier_name" name="supplier_name" placeholder="ABC Diagnostics" value="<?php echo htmlspecialchars($supplierOld['supplier_name'] ?? ''); ?>" required>
+                            </div>
 
-                            <label for="appointment-time">Contact:</label>
-                            <input type="time" id="appointment-time" name="appointment-time" required>
-                            
-                            <div id="additional-tests">
-                            <div class="test-group">
-                                <label for="test-type-1">Item 1 type:</label>
-                                <select id="test-type-1" name="test-types[]" class="test-select" required>
-                                    <option value="">Select Test Type</option>
-                                    <option value="Blood Test">Blood Test</option>
-                                    <option value="Urine Test">Urine Test</option>
-                                    <option value="X-Ray">X-Ray</option>
-                                    <option value="MRI">MRI</option>
-                                    <option value="CT Scan">CT Scan</option>
-                                    <option value="Other">Other</option>
-                                </select>
+                            <div class="supplier-register-field">
+                                <label for="company_email">Email</label>
+                                <input type="email" id="company_email" name="company_email" placeholder="supplier@company.com" value="<?php echo htmlspecialchars($supplierOld['company_email'] ?? ''); ?>" required>
+                            </div>
+
+                            <div class="supplier-register-field">
+                                <label for="phone_number">Contact Number</label>
+                                <input type="text" id="phone_number" name="phone_number" placeholder="0712345678" value="<?php echo htmlspecialchars($supplierOld['phone_number'] ?? ''); ?>" required>
                             </div>
                         </div>
 
-                        <button type="button" id="add-test-button" class="add-button">+ Add Another Test</button>
-                        <br>
-                        <button type="submit">Add New Supplier
-                        </form>
-                    </div>
-                </div>
-         </main>
+                        <div class="supplier-register-items">
+                            <h2>Supplying Items</h2>
+
+                            <div class="supplier-item-search-wrap">
+                                <label for="supplier-item-search" class="supplier-item-search-label">Search Items</label>
+                                <input type="text" id="supplier-item-search" class="supplier-item-search" placeholder="Type item name to search..." autocomplete="off">
+                                <div id="supplier-item-results" class="supplier-item-results" role="listbox" aria-label="Search results"></div>
+                            </div>
+
+                            <h3 class="supplier-selected-title">Selected Items</h3>
+                            <div id="supplier-selected-items" class="supplier-register-items-list"></div>
+                            <p id="supplier-item-empty" class="supplier-item-empty">No items selected.</p>
+                            <div id="supplier-item-hidden-inputs"></div>
+                        </div>
+
+                        <div class="supplier-register-actions">
+                            <a class="supplier-register-cancel" href="/lab_sync/index.php?controller=supplierController&action=index<?php echo $roleParam; ?>">Cancel</a>
+                            <button class="supplier-register-submit" type="submit">Save Supplier</button>
+                        </div>
+                    </form>
+                </section>
+            </main>
         </div>
-        <script src="/lab_sync/public/js/addTest.js"></script>
-        <script src="/lab_sync/public/js/searchPatient.js"></script>
+        <script src="/lab_sync/public/js/supplierItemPicker.js"></script>
     </body>
-</html> 
+</html>
