@@ -1,19 +1,21 @@
-function showSection(sectionId, tabElement, event) {
-            event.preventDefault(); // Prevent link jump
+function showSection(sectionId, event) {
+    event.preventDefault(); // Prevent link jump
 
-            // Hide all sections
-            document.querySelectorAll('.content-area .section').forEach(function(sec) {
-                sec.style.display = 'none';
-            });
-            // Show the selected section
-            document.getElementById(sectionId).style.display = 'block';
+    // Hide all sections
+    document.querySelectorAll('.content-area .section').forEach(function(sec) {
+        sec.style.display = 'none';
+    });
+    
+    // Show the selected section
+    document.getElementById(sectionId).style.display = 'block';
 
-            // Remove 'active' from all tabs
-            document.querySelectorAll('.team-tab').forEach(function(tab) {
-                tab.classList.remove('active');
-            });
-            // Add 'active' to the clicked tab
-            tabElement.classList.add('active');
+    // Remove 'active' from all tabs
+    document.querySelectorAll('.navItem').forEach(function(tab) {
+        tab.classList.remove('active');
+    });
+    
+    // Add 'active' to the clicked tab
+    event.currentTarget.classList.add('active');
 }
 
 document.querySelectorAll('.sidebar a').forEach(link => {
