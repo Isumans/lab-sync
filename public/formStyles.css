@@ -5,8 +5,9 @@
     --secondary-color: #ffffff;
     --font-color: #000000;
     --background-color: #F5F6FA;
-    --boder:#4F7A96;
+    --boder: #4F7A96;
 }
+
 .config-form {
     background: white;
     border-radius: 8px;
@@ -68,7 +69,7 @@
 .config-group input:focus,
 .config-group textarea:focus {
     outline: none;
-    border-color:var(--primary-color);
+    border-color: var(--primary-color);
     box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.1);
 }
 
@@ -240,11 +241,11 @@
     transition: left 0.3s;
 }
 
-.toggle input:checked + .toggle-slider {
+.toggle input:checked+.toggle-slider {
     background: var(--primary-color)
 }
 
-.toggle input:checked + .toggle-slider::after {
+.toggle input:checked+.toggle-slider::after {
     left: 22px;
 }
 
@@ -388,6 +389,10 @@
         grid-template-columns: 1fr;
     }
 
+    .services-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
     .config-actions {
         flex-direction: column;
     }
@@ -395,6 +400,12 @@
     .save-btn,
     .cancel-btn {
         width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .services-grid {
+        grid-template-columns: 1fr;
     }
 }
 
@@ -846,8 +857,6 @@
 .action-menu:hover {
     color: #718096;
 }
-
-/* Pagination */
 .pagination {
     display: flex;
     justify-content: space-between;
@@ -939,65 +948,4 @@
 .stat-description {
     font-size: 13px;
     color: #718096;
-}
-
-@media (max-width: 768px) {
-    .partner-labs-header {
-        flex-direction: column;
-    }
-
-    .partner-labs-controls {
-        flex-direction: column;
-    }
-
-    .search-container {
-        width: 100%;
-    }
-
-    .filter-buttons {
-        width: 100%;
-        justify-content: space-between;
-    }
-
-    .partner-labs-table {
-        font-size: 12px;
-    }
-
-    .partner-labs-table th,
-    .partner-labs-table td {
-        padding: 10px 8px;
-    }
-
-    .lab-info-cell {
-        gap: 8px;
-    }
-
-    .lab-avatar {
-        width: 32px;
-        height: 32px;
-        font-size: 11px;
-    }
-
-    .specialization-badges {
-        gap: 4px;
-    }
-
-    .spec-badge {
-        font-size: 10px;
-        padding: 3px 8px;
-    }
-
-    .pagination {
-        flex-direction: column;
-        gap: 12px;
-        text-align: center;
-    }
-
-    .partner-stats-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .stat-value {
-        font-size: 24px;
-    }
 }
