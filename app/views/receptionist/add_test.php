@@ -44,58 +44,32 @@ if (!isset($_SESSION['user_id'])) {
                         </div>
                     </div>
 
-                    <!-- Multi-Step Form -->
-                    <form id="test-catalog-form" class="workflow-form" action="/lab_sync/index.php?controller=TestCatalog&action=store&role=<?php echo urlencode($role); ?>" method="POST">
-                        
-                        <!-- STEP 1: TEST INFORMATION -->
-                        <div class="workflow-step active" id="step-1">
-                            <div class="step-content">
-                                <div class="form-row">
-                                    <div class="form-group">
-                                        <label for="department">DEPARTMENT</label>
-                                        <select id="department" name="department" required>
-                                            <option value="">Select Department</option>
-                                            <option value="Biochemistry">Biochemistry</option>
-                                            <option value="Hematology">Hematology</option>
-                                            <option value="Microbiology">Microbiology</option>
-                                            <option value="Immunology">Immunology</option>
-                                            <option value="Radiology">Radiology</option>
-                                        </select>
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="test-code">TEST CODE</label>
-                                        <input type="text" id="test-code" name="test_code" placeholder="e.g., T-001" required>
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="lab-id">LAB # / LIB ID</label>
-                                        <input type="text" id="lab-id" name="lab_id" placeholder="e.g., L-4829">
-                                    </div>
-                                </div>
+                <form id="addTestForm" action="/lab_sync/index.php?controller=TestCatalog&action=store&role=<?php echo urlencode($role); ?>" method="POST">
 
-                                <div class="form-row">
-                                    <div class="form-group">
-                                        <label for="test-name">TEST NAME</label>
-                                        <input type="text" id="test-name" name="test_name" placeholder="e.g., Serum Creatinine" required>
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="default-unit">DEFAULT UNIT</label>
-                                        <input type="text" id="default-unit" name="default_unit" placeholder="e.g., mg/dL" required>
-                                    </div>
-                                </div>
+                    <!-- SECTION 1: Test Information -->
+                    <div class="card">
+                        <h4>Test Information</h4>
+                        <div class="form-grid">
+                            <div class="col">
+                                <label for="department">Department</label>
+                                <select id="department" name="department">
+                                    <option value="">Select Department</option>
+                                    <option value="hematology">Hematology</option>
+                                    <option value="biochemistry">Biochemistry</option>
+                                    <option value="microbiology">Microbiology</option>
+                                </select>
 
-                                <div class="form-row">
-                                    <div class="form-group">
-                                        <label for="print-name">PRINT NAME</label>
-                                        <input type="text" id="print-name" name="print_name" placeholder="e.g., Creatinine" required>
-                                    </div>
-                                </div>
+                                <label for="test_name">Test Name</label>
+                                <input type="text" id="test_name" name="test_name" required>
 
-                                <div class="form-row">
-                                    <div class="form-group full-width">
-                                        <label for="description">DESCRIPTION</label>
-                                        <textarea id="description" name="description" placeholder="Enter test clinical indications or technical notes..." rows="4"></textarea>
-                                    </div>
-                                </div>
+                                <label for="print_name">Print Name</label>
+                                <input type="text" id="print_name" name="print_name">
+
+                                <label for="code">Code</label>
+                                <input type="text" id="code" name="code">
+
+                                <label for="cost">Cost (Rs.)</label>
+                                <input type="number" id="cost" name="cost" step="0.01">
                             </div>
 
                             <div class="step-actions">
@@ -222,89 +196,68 @@ if (!isset($_SESSION['user_id'])) {
                                             <button type="button" class="btn-add-range" onclick="addNewRange()">+ Add Reference Range</button>
                                         </div>
 
-                                        <div class="empty-state" id="empty-ranges">
-                                            <p>Dynamic unit blocks will appear here as you add them.</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+                    <!-- SECTION 3: External Charges -->
+                    <div class="card">
+                        <h4>External Charges</h4>
+                        <table class="external-table">
+                            <thead>
+                                <tr>
+                                    <th>Test Code</th>
+                                    <th>Hospital</th>
+                                    <th>Cost</th>
+                                    <th>Remove</th>
+                                </tr>
+                            </thead>
+                            <tbody id="externalBody">
+                                <tr>
+                                    <td><input type="text" name="external[0][test_code]"></td>
+                                    <td>
+                                        <select name="external[0][hospital]"><option value="">Select Hospital</option><option value="HospA">Hospital A</option><option value="HospB">Hospital B</option></select>
+                                    </td>
+                                    <td><input type="number" name="external[0][cost]"></td>
+                                    <td><button type="button" class="btn delete-external">Remove</button></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <div style="margin-top:12px;"><button type="button" id="addExternalBtn" class="btn">Add Entry</button></div>
+                    </div>
 
-                            <div class="step-actions">
-                                <button type="button" class="btn-prev" onclick="prevStep(2)">< Previous Step</button>
-                                <button type="button" class="btn-save" onclick="saveProgress(2)">Save Progress</button>
-                                <button type="button" class="btn-next" onclick="nextStep(2)">Next Step ></button>
-                            </div>
+                    <!-- SECTION 4: Report Comments -->
+                    <div class="card">
+                        <h4>Report Comments</h4>
+                        <div class="toolbar" style="margin-bottom:8px;">
+                            <button type="button" data-cmd="bold"><b>B</b></button>
+                            <button type="button" data-cmd="italic"><i>I</i></button>
+                            <button type="button" data-cmd="underline"><u>U</u></button>
+                            <button type="button" data-cmd="insertUnorderedList">• List</button>
+                            <button type="button" data-cmd="insertOrderedList">1. List</button>
+                        </div>
+                        <div id="reportEditor" class="report-editor" contenteditable="true" data-placeholder="Enter default report comments here..."></div>
+                        <textarea name="report_comments" id="report_comments" style="display:none;"></textarea>
+                    </div>
+
+                    <!-- SECTION 5: Flags & Status -->
+                    <div class="card">
+                        <h4>Flags & Status</h4>
+                        <label for="flags">Flags (comma-separated: L, M, H)</label>
+                        <input type="text" id="flags" name="flags" placeholder="L,M,H">
+
+                        <div style="margin-top:12px;">
+                            <label><input type="checkbox" name="is_active" value="1" checked> Is Active</label>
+                            <label style="margin-left:12px;"><input type="checkbox" name="requires_validation" value="1"> Requires Validation</label>
                         </div>
 
-                        <!-- STEP 3: CHARGES & COMMENTS -->
-                        <div class="workflow-step" id="step-3">
-                            <div class="step-content">
-                                <h2 class="step-title">Finalize Test Configuration</h2>
-                                <p class="step-subtitle">Specify external hospital billing details and interpretative reporting standards.</p>
-
-                                <!-- External Hospital Charges -->
-                                <div class="section-box">
-                                    <div class="section-title">
-                                        <span class="icon">🏥</span> External Hospital Charges
-                                    </div>
-
-                                    <div class="form-row">
-                                        <div class="form-group">
-                                            <label for="external-test-code">EXTERNAL TEST CODE</label>
-                                            <input type="text" id="external-test-code" name="external_test_code" placeholder="e.g., EXT-LIB-001">
-                                        </div>
-                                        <div class="form-group">
-                                            <label for="partner-hospital">PARTNER HOSPITAL</label>
-                                            <select id="partner-hospital" name="partner_hospital">
-                                                <option value="">Select Hospital</option>
-                                                <option value="hospital-1">Hospital A</option>
-                                                <option value="hospital-2">Hospital B</option>
-                                                <option value="hospital-3">Hospital C</option>
-                                            </select>
-                                        </div>
-                                        <div class="form-group">
-                                            <label for="charge-cost">CHARGE COST (RS)</label>
-                                            <div class="input-wrapper">
-                                                <span class="currency">₨</span>
-                                                <input type="number" id="charge-cost" name="charge_cost" placeholder="0.00" step="0.01">
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Report Comments & Interpretation -->
-                                <div class="section-box">
-                                    <div class="section-title">
-                                        <span class="icon">📝</span> Report Comments & Interpretation
-                                    </div>
-
-                                    <div class="form-group">
-                                        <label for="report-comments">COMMENTS</label>
-                                        <div class="editor-toolbar">
-                                            <button type="button" class="toolbar-btn" title="Bold"><b>B</b></button>
-                                            <button type="button" class="toolbar-btn" title="Italic"><i>I</i></button>
-                                            <button type="button" class="toolbar-btn" title="Underline"><u>U</u></button>
-                                            <button type="button" class="toolbar-btn" title="Bullet List">•</button>
-                                            <button type="button" class="toolbar-btn" title="Numbered List">1.</button>
-                                            <button type="button" class="toolbar-btn" title="Link">🔗</button>
-                                        </div>
-                                        <textarea id="report-comments" name="report_comments" placeholder="Standard interpretative comments for the patient report..." rows="6"></textarea>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="step-actions">
-                                <button type="button" class="btn-prev" onclick="prevStep(3)">< Previous Step</button>
-                                <button type="button" class="btn-save" onclick="saveProgress(3)">Save Draft</button>
-                                <button type="submit" class="btn-finish">✓ Finalize & Add Test</button>
-                            </div>
+                        <div class="actions">
+                            <a href="/lab_sync/index.php?controller=TestCatalog&action=test_catalog&role=<?php echo urlencode($role); ?>" class="btn">Cancel</a>
+                            <button type="submit" class="btn btn-primary">Save Test</button>
                         </div>
+                    </div>
 
-                    </form>
-                </div>
+                </form>
             </main>
         </div>
 
-        <script src="/lab_sync/public/js/testCatalogWorkflow.js"></script>
+        <!-- Page-specific JS loaded separately -->
+        <script src="/lab_sync/public/js/add_test_page.js" defer></script>
     </body>
 </html>

@@ -11,6 +11,7 @@ require_once CONTROLLER_PATH . '/homeController.php';
 require_once CONTROLLER_PATH . '/inventoryController.php';
 require_once CONTROLLER_PATH . '/profileController.php';
 require_once CONTROLLER_PATH . '/partnerLabController.php';
+require_once CONTROLLER_PATH . '/supplierController.php';
 // require_once 'C:\xampp\htdocs\lab_sync\app\controllers\appointmentsController.php';
 require_once 'C:\xampp\htdocs\lab_sync\config\db.php';
 $controllerName = $_GET['controller'] ?? 'home'; // Default to 'home' controller
@@ -140,17 +141,30 @@ elseif ($controllerName === 'appointmentsController') {
 
 }
 }elseif($controllerName === 'supplierController'){
-    $action = $_GET['action'] ?? 'index'; // or your desired default
-    if($action ==='index'){
-        include VIEW_PATH . '/administrator/suppliers.php';
-    }elseif($action==="Register_supplier"){
-        include VIEW_PATH . '/administrator/regSupplier.php';
+    $supplierController = new supplierController();
+    $action = $_GET['action'] ?? 'index';
+    $role = $_GET['role'] ?? '';
+
+    if($action === 'index'){
+        $supplierController->index($role);
+    }elseif($action === 'Register_supplier' || $action === 'register'){
+        $supplierController->register($role);
+    }elseif($action === 'store'){
+        $supplierController->store($role);
+    }elseif($action === 'update'){
+        $supplierController->update($role);
+    }elseif($action === 'delete'){
+        $supplierController->delete($role);
+    }else{
+        echo "404 Not Found";
     }
 }elseif($controllerName === 'billingController'){
     $action = $_GET['action'] ?? 'index'; // or your desired default
     if($action ==='index'){
         include VIEW_PATH . '/receptionist/billing.php';
     }elseif($action ==='Register_billing'){
+        include VIEW_PATH . '/receptionist/createBill.php';
+    }elseif($action ==='create_bill'){
         include VIEW_PATH . '/receptionist/createBill.php';
     }
 }elseif($controllerName === 'inventoryController'){

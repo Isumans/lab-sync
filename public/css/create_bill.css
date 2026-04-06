@@ -1,0 +1,471 @@
+/* Create Bill Page Styles */
+
+.create-bill-page {
+    padding: 30px;
+    background: #f8f9fa;
+}
+
+/* Header Section */
+.billing-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 30px;
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+}
+
+.billing-header h1 {
+    font-size: 28px;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin: 0 0 12px 0;
+}
+
+.invoice-status {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 14px;
+}
+
+.invoice-label {
+    color: #666;
+    font-weight: 500;
+}
+
+.invoice-number {
+    color: #1a1a1a;
+    font-weight: 600;
+}
+
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.status-badge.pending {
+    background: #fef3cd;
+    color: #856404;
+}
+
+.header-actions {
+    display: flex;
+    gap: 12px;
+}
+
+.btn-print {
+    background: white;
+    color: #333;
+    border: 1px solid #ddd;
+    padding: 10px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.btn-print:hover {
+    background: #f5f5f5;
+    border-color: #999;
+}
+
+.btn-finalize {
+    background: #5b7cfa;
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.btn-finalize:hover {
+    background: #4c63d2;
+}
+
+/* Container Layout */
+.billing-container {
+    display: grid;
+    grid-template-columns: 1fr 350px;
+    gap: 24px;
+    margin-bottom: 24px;
+}
+
+.billing-left {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.billing-right {
+    display: flex;
+    flex-direction: column;
+}
+
+/* Card Styles */
+.card {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: none;
+}
+
+.card-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 0 0 16px 0;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.card-title-with-btn {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #e5e7eb;
+    margin-bottom: 16px;
+}
+
+.card-title-with-btn .card-title {
+    margin: 0;
+    padding: 0;
+    border: none;
+}
+
+.btn-add-test-link {
+    background: none;
+    border: none;
+    color: #5b7cfa;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 0;
+}
+
+.btn-add-test-link:hover {
+    color: #4c63d2;
+}
+
+/* Patient Demographics */
+.patient-demographics {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.demo-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.demo-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.demo-item label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    margin-bottom: 6px;
+}
+
+.demo-item input,
+.demo-item select {
+    padding: 10px 12px;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    font-size: 14px;
+    box-sizing: border-box;
+    transition: border-color 0.2s ease;
+}
+
+.demo-item input:focus,
+.demo-item select:focus {
+    outline: none;
+    border-color: #5b7cfa;
+    box-shadow: 0 0 0 3px rgba(91, 124, 250, 0.1);
+}
+
+/* Tests Table */
+.tests-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 16px;
+    font-size: 13px;
+}
+
+.tests-table thead {
+    background: #f8f9fa;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.tests-table th {
+    padding: 12px;
+    text-align: left;
+    font-weight: 600;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    font-size: 11px;
+}
+
+.tests-table td {
+    padding: 12px;
+    border-bottom: 1px solid #f3f4f6;
+    vertical-align: middle;
+}
+
+.tests-table tbody tr:hover {
+    background: #f9fafb;
+}
+
+.tests-table select,
+.tests-table input {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid #e5e7eb;
+    border-radius: 4px;
+    font-size: 13px;
+    box-sizing: border-box;
+}
+
+.tests-table input[type="number"] {
+    width: 70px;
+}
+
+.test-category,
+.test-price,
+.test-subtotal {
+    color: #1a1a1a;
+    font-weight: 500;
+}
+
+.test-price,
+.test-subtotal {
+    text-align: right;
+    padding-right: 8px;
+}
+
+.remove-test-btn {
+    background: none;
+    border: none;
+    color: #999;
+    font-size: 20px;
+    cursor: pointer;
+    padding: 0;
+    width: 30px;
+    text-align: center;
+    transition: color 0.2s ease;
+}
+
+.remove-test-btn:hover {
+    color: #ff4444;
+}
+
+/* Billing Notes */
+.notes-textarea {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    font-size: 13px;
+    font-family: inherit;
+    min-height: 100px;
+    resize: vertical;
+    box-sizing: border-box;
+}
+
+.notes-textarea:focus {
+    outline: none;
+    border-color: #5b7cfa;
+    box-shadow: 0 0 0 3px rgba(91, 124, 250, 0.1);
+}
+
+/* Financial Summary Card */
+.financial-summary-card {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 20px;
+    position: sticky;
+    top: 30px;
+}
+
+.financial-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 0 0 16px 0;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.summary-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    font-size: 13px;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.summary-label {
+    color: #666;
+    font-weight: 500;
+}
+
+.discount-code {
+    font-size: 11px;
+    color: #999;
+    margin-left: 4px;
+}
+
+.discount-input-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.discount-input-group input {
+    width: 80px;
+    padding: 6px 8px;
+    border: 1px solid #e5e7eb;
+    border-radius: 4px;
+    font-size: 12px;
+}
+
+.summary-value {
+    color: #1a1a1a;
+    font-weight: 600;
+}
+
+.discount-amount {
+    color: #28a745;
+}
+
+.summary-input {
+    width: 70px;
+    padding: 6px 8px;
+    border: 1px solid #e5e7eb;
+    border-radius: 4px;
+    font-size: 12px;
+    box-sizing: border-box;
+}
+
+.summary-divider {
+    height: 2px;
+    background: #e5e7eb;
+    margin: 12px 0;
+}
+
+.total-row {
+    border: none;
+    padding: 14px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.total-label {
+    font-weight: 700;
+    color: #1a1a1a;
+    font-size: 13px;
+}
+
+.total-amount-group {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
+.total-value {
+    font-weight: 700;
+    font-size: 18px;
+    color: #1a1a1a;
+}
+
+.currency-label {
+    font-size: 10px;
+    color: #999;
+    text-transform: uppercase;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    margin-top: 2px;
+}
+
+
+/* Responsive */
+@media (max-width: 1024px) {
+    .billing-container {
+        grid-template-columns: 1fr;
+    }
+    
+    .financial-summary-card {
+        position: static;
+    }
+}
+
+@media (max-width: 768px) {
+    .create-bill-page {
+        padding: 16px;
+    }
+    
+    .billing-header {
+        flex-direction: column;
+        gap: 16px;
+    }
+    
+    .header-actions {
+        width: 100%;
+        flex-wrap: wrap;
+    }
+    
+    .demo-row {
+        grid-template-columns: 1fr;
+    }
+
+    .tests-table {
+        font-size: 12px;
+    }
+    
+    .tests-table th,
+    .tests-table td {
+        padding: 8px;
+    }
+    
+    .tests-table input[type="number"] {
+        width: 60px;
+    }
+    
+    .form-actions {
+        flex-direction: column;
+    }
+    
+    .btn-cancel-bottom,
+    .btn-save-bottom {
+        width: 100%;
+        text-align: center;
+    }
+}
+
