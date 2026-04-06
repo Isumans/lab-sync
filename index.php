@@ -11,6 +11,7 @@ require_once CONTROLLER_PATH . '/homeController.php';
 require_once CONTROLLER_PATH . '/inventoryController.php';
 require_once CONTROLLER_PATH . '/profileController.php';
 require_once CONTROLLER_PATH . '/partnerLabController.php';
+require_once CONTROLLER_PATH . '/supplierController.php';
 // require_once 'C:\xampp\htdocs\lab_sync\app\controllers\appointmentsController.php';
 require_once 'C:\xampp\htdocs\lab_sync\config\db.php';
 $controllerName = $_GET['controller'] ?? 'home'; // Default to 'home' controller
