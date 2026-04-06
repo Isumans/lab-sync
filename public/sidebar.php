@@ -4,7 +4,9 @@ if (session_status() === PHP_SESSION_NONE) session_start();
 $role = $_SESSION['user_role'] ?? '';
 
 function showMenuItem($rolesAllowed, $content) {
-    global $role;
+    if (session_status() === PHP_SESSION_NONE) session_start();
+    $role = $_SESSION['user_role'] ?? '';
+    
     if ($role && in_array($role, $rolesAllowed)) {
         echo $content;
     }
@@ -31,7 +33,7 @@ $currentAction = $_GET['action'] ?? '';
         showMenuItem(['admin', 'receptionist', 'technician'], "
             <li>
                 <a href='index.php?controller=appointmentsController&action=index&role=" . $role . "'
-                   class='" . (($currentController === 'appointmentsController' && $currentAction === 'index') ? 'active' : '') . "'>
+                   class='" . (($currentController === 'appointmentsController' && ($currentAction === 'index')|| $currentAction === 'createAppointment') ? 'active' : '') . "'>
                     <img class='sidebar-icon' src='/lab_sync/public/assests/appointment.png' alt='Appointments Icon'>Appointments
                 </a>
             </li>
@@ -51,7 +53,7 @@ $currentAction = $_GET['action'] ?? '';
         showMenuItem(['admin', 'technician'], "
             <li>
                 <a href='index.php?controller=TestCatalog&action=index&role=" . $role . "'
-                   class='" . (($currentController === 'TestCatalog' && $currentAction === 'index') ? 'active' : '') . "'>
+                   class='" . (($currentController === 'TestCatalog' && ($currentAction === 'index' || $currentAction === 'add_test')) ? 'active' : '') . "'>
                     <img class='sidebar-icon' src='/lab_sync/public/assests/test-catalog.png' alt='Test Catalog Icon'>Test Catalog
                 </a>
             </li>
@@ -101,7 +103,7 @@ $currentAction = $_GET['action'] ?? '';
         showMenuItem(['admin'], "
             <li>
                 <a href='index.php?controller=administratorController&action=settings&role=" . $role . "'
-                   class='" . (($currentController === 'administratorController' && $currentAction === 'settings') ? 'active' : '') . "'>
+                   class='" . ((($currentController === 'administratorController' && ($currentAction === 'settings' || $currentAction === 'add_user')) || $currentController === 'partnerLabController') ? 'active' : '') . "'>
                     <img class='sidebar-icon' src='/lab_sync/public/assests/settings.png' alt='Settings Icon'>Settings
                 </a>
             </li>

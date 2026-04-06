@@ -7,6 +7,19 @@ class TestCatalog {
         return $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
     }
 
+    public function getTestsForAppointment() {
+        $sql = "SELECT test_id, test_name, category, price, description FROM tests ORDER BY test_name ASC";
+        $result = $this->db->query($sql);
+        return $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
+    }
+
+    public function getLatestTestsForAppointment($limit = 3) {
+        $safeLimit = max(1, (int)$limit);
+        $sql = "SELECT test_id, test_name, category, price, description FROM tests ORDER BY test_id DESC LIMIT {$safeLimit}";
+        $result = $this->db->query($sql);
+        return $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
+    }
+
     public function addTest($name, $category, $price, $description) {
         $stmt = $this->db->prepare("INSERT INTO tests (test_name, category, price, description) VALUES (?, ?, ?, ?)");
         $stmt->bind_param("ssds", $name, $category, $price, $description);

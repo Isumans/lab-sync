@@ -13,6 +13,7 @@ if (!isset($_SESSION['user_id'])) {
         <link rel="stylesheet" href="/lab_sync/public/styles.css">
         <link rel="stylesheet" href="/lab_sync/public/settingStyles.css">
         <link rel="stylesheet" href="/lab_sync/public/table.css">
+        <link rel="stylesheet" href="/lab_sync/public/add_user_styles.css">
     </head>
     <body>
         <!-- Navigation Bar -->
@@ -31,29 +32,86 @@ if (!isset($_SESSION['user_id'])) {
                         <p class="MC-p">Settings->Add User</p>
                     </div>
                     <br/>
-                    <div>
-                        <form class="formStyle" action="/lab_sync/index.php?controller=administratorController&action=create_user" method="POST">
-                            <!-- Form fields for adding a user -->
-                            <label for="username">Username:</label>
-                            <input type="text" id="username" name="username" required>
+                    <div class="add-user-form-container">
+                        <form action="/lab_sync/index.php?controller=administratorController&action=create_user" method="POST">
+                            
+                            <!-- Account Information Section -->
+                            <div class="form-section">
+                                <div class="section-header">
+                                    <span class="section-icon">ℹ️</span>
+                                    <h2>Account Information</h2>
+                                </div>
 
-                            <label for="password">Password:</label>
-                            <input type="password" id="password" name="password" required>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label class="required">Username</label>
+                                        <input type="text" name="username" placeholder="e.g. pdoe_tech" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="required">Password</label>
+                                        <div class="password-wrapper">
+                                            <input type="password" id="password" name="password" placeholder="••••••••" required>
+                                            <button type="button" class="toggle-password" onclick="togglePasswordVisibility()">
+                                                <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                                    <circle cx="12" cy="12" r="3"></circle>
+                                                </svg>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
 
-                            <label for="role">Role:</label>
-                            <select id="role" name="role" required>
-                                <option value="">Select Role</option>
-                                <option value="admin">Admin</option>
-                                <option value="receptionist">Receptionist</option>
-                                <option value="technician">Technician</option>
-                            </select>
-                            <!-- <label for="date_of_birth">Date of Birth:</label>
-                            <input type="date" id="date_of_birth" name="date_of_birth" required> -->
-                            <label for="contact_number">Contact Number:</label>
-                            <input type="tel" id="contact_number" name="contact_number" required>
-                            <label for="email">Email:</label>
-                            <input type="email" id="email" name="email" required>
-                            <button type="submit">Create User</button>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label class="required">Email Address</label>
+                                        <input type="email" name="email" placeholder="john.doe@labsystem.com" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="required">Contact Number</label>
+                                        <input type="tel" name="contact_number" placeholder="+1 (555) 000-0000" required>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Role Assignment Section -->
+                            <div class="form-section">
+                                <div class="section-header">
+                                    <span class="section-icon">🔐</span>
+                                    <h2>Role Assignment</h2>
+                                </div>
+
+                                <div class="role-grid">
+                                    <div class="role-option">
+                                        <input type="radio" id="role_admin" name="role" value="admin">
+                                        <label for="role_admin">
+                                            <span class="role-title">System Administrator</span>
+                                            <span class="role-description">Full system access, managing users, laboratory settings, and security audits.</span>
+                                        </label>
+                                    </div>
+
+                                    <div class="role-option">
+                                        <input type="radio" id="role_receptionist" name="role" value="receptionist">
+                                        <label for="role_receptionist">
+                                            <span class="role-title">Receptionist</span>
+                                            <span class="role-description">Manage patient registration, appointment scheduling, and front-desk billing workflows.</span>
+                                        </label>
+                                    </div>
+
+                                    <div class="role-option">
+                                        <input type="radio" id="role_technician" name="role" value="technician">
+                                        <label for="role_technician">
+                                            <span class="role-title">Laboratory Technician</span>
+                                            <span class="role-description">Direct access to lab results entry, sample processing queues, and equipment calibration logs.</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Form Actions -->
+                            <div class="form-actions">
+                                <button type="button" class="btn-cancel" onclick="window.history.back()">Cancel</button>
+                                <button type="submit" class="btn-save">Save User</button>
+                            </div>
 
                         </form>
                     </div>
@@ -62,3 +120,18 @@ if (!isset($_SESSION['user_id'])) {
         </div>
     </body>
 </html>
+
+<script>
+function togglePasswordVisibility() {
+    const passwordInput = document.getElementById('password');
+    const toggleBtn = document.querySelector('.toggle-password');
+    
+    if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        toggleBtn.style.color = 'var(--primary-color)';
+    } else {
+        passwordInput.type = 'password';
+        toggleBtn.style.color = '#a0aec0';
+    }
+}
+</script>
