@@ -81,10 +81,12 @@
 
         if (!selectedItems.length) {
             emptyState.style.display = 'block';
+            emptyState.textContent = 'Start typing to search for more items.';
             return;
         }
 
-        emptyState.style.display = 'none';
+        emptyState.style.display = 'block';
+        emptyState.textContent = 'Start typing to search for more items.';
 
         selectedItems.forEach(function (item) {
             var selectedRow = document.createElement('div');
@@ -97,7 +99,7 @@
             var removeBtn = document.createElement('button');
             removeBtn.type = 'button';
             removeBtn.className = 'supplier-item-remove';
-            removeBtn.textContent = 'Remove';
+            removeBtn.textContent = 'x';
             removeBtn.addEventListener('click', function () {
                 removeItem(item);
                 filterItems(itemSearchInput.value);
