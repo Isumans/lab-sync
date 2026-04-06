@@ -1,68 +1,21 @@
-function showSection(sectionId, tabElement, event) {
+function showSection(sectionId, event) {
     event.preventDefault(); // Prevent link jump
 
-    // Mapping of section IDs to their corresponding controller actions
-    const sectionUrls = {
-        'partner-labs': '/lab_sync/index.php?controller=partnerLabController&action=getPartnerLabsSection',
-        'configuration': '/lab_sync/index.php?controller=administratorController&action=getLabConfigurationSection',
-        'general': '/lab_sync/index.php?controller=administratorController&action=getGeneralSettingsSection'
-    };
-
-    const sectionElement = document.getElementById(sectionId);
-    if (!sectionElement) {
-        console.error('Section element not found:', sectionId);
-        return;
-    }
-
-    console.log('Showing section:', sectionId);
-
-    // Check if content needs to be loaded
-    if (sectionUrls[sectionId] && sectionElement.innerHTML.trim() === '') {
-        console.log('Fetching content for:', sectionId);
-        // Show loading state
-        sectionElement.innerHTML = '<div class="loading-spinner">Loading...</div>'; // basic loading indicator
-
-        fetch(sectionUrls[sectionId])
-            .then(response => {
-                if (!response.ok) throw new Error('Network response was not ok');
-                return response.text();
-            })
-            .then(html => {
-                sectionElement.innerHTML = html;
-                // Re-initialize any scripts if necessary (e.g., event listeners)
-            })
-            .catch(error => {
-                console.error('Error loading section:', error);
-                sectionElement.innerHTML = '<div class="error-message">Error loading content. Please try again.</div>';
-            });
-    }
-
     // Hide all sections
-    document.querySelectorAll('.content-area .section').forEach(function (sec) {
+    document.querySelectorAll('.content-area .section').forEach(function(sec) {
         sec.style.display = 'none';
     });
+    
     // Show the selected section
-    sectionElement.style.display = 'block';
-
-    // Remove 'active' from all navItems
-    document.querySelectorAll('.navItem').forEach(function (item) {
-        item.classList.remove('active');
-    });
-    // Add 'active' to the clicked navItem
-    if (event && event.target) {
-        event.target.closest('.navItem').classList.add('active');
-    } else {
-        // Fallback or handle initial load if needed
-        const link = document.querySelector(`.navItem[onclick*="'${sectionId}'"]`);
-        if (link) link.classList.add('active');
-    }
+    document.getElementById(sectionId).style.display = 'block';
 
     // Remove 'active' from all tabs
-    document.querySelectorAll('.team-tab').forEach(function (tab) {
+    document.querySelectorAll('.navItem').forEach(function(tab) {
         tab.classList.remove('active');
     });
+    
     // Add 'active' to the clicked tab
-    tabElement.classList.add('active');
+    event.currentTarget.classList.add('active');
 }
 
 document.querySelectorAll('.sidebar a').forEach(link => {

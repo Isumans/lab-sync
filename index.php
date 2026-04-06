@@ -160,7 +160,7 @@ elseif ($controllerName === 'appointmentsController') {
     if($action ==='index'){
         $inventoryController->index($role);
     }elseif($action ==='add_inventory'){
-        include VIEW_PATH . '/technicians/addInventory.php';
+        $inventoryController->add_inventory();
     }elseif($action ==='store'){
         $inventoryController->store();
         // Logic to store inventory item
