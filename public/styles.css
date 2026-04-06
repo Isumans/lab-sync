@@ -172,7 +172,6 @@ body {
     background: var(--background-color);
     min-height: calc(100vh - 56px);
     box-shadow: 0 0;
-    width: calc(100% - 256px);
 }
 
 .logo-color {
