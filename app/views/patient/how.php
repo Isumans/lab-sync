@@ -1,264 +1,210 @@
-<?php /* app/views/patient/how.php (clean, airy version) */ ?>
+<?php /* app/views/patient/how.php */ ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>LabSync – How It Works</title>
-  <link rel="stylesheet" href="/lab_sync/public/css/patient.css" />
+  <title>How It Works – LabSync</title>
+  <meta name="description" content="From booking to digital results in 24 hours. See how LabSync's home-visit lab testing works.">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/lab_sync/public/css/globals.css" />
   <link rel="stylesheet" href="/lab_sync/public/css/nav.css" />
-  
+  <link rel="stylesheet" href="/lab_sync/public/css/footer.css" />
   <style>
-    :root{
-      --navy:#1F2B5B; --blue:#3DBDEC; --white:#fff; --bay:#2E3B63;
-      --ink:#101828; --muted:#667085; --ring:#e8edf3;
-    }
+    body { font-family: var(--font-body); background: var(--bg-100); color: var(--neutral-700); -webkit-font-smoothing: antialiased; }
 
-    /* Page-scoped styling */
-    .how-hero{
-      position:relative; overflow:hidden;
-      background: radial-gradient(1400px 500px at 50% -200px, rgba(61,189,236,.20), transparent 60%),
-                  linear-gradient(#fff, #F6F9FC);
-      padding:72px 6% 44px;
-      text-align:center;
-      border-bottom:1px solid var(--ring);
-    }
-    .how-eyebrow{ color:#6B7AA1; font-weight:600; letter-spacing:.08em; text-transform:uppercase; }
-    .how-title{ margin:.35rem 0; font-size:clamp(2rem, 3.6vw, 3rem); color:var(--navy); }
-    .how-sub{ color:#5b6a94; max-width:880px; margin:0 auto; }
+    .page-hero { padding: 7rem 1.5rem 5rem; background: var(--tertiary-900); position: relative; overflow: hidden; text-align: center; }
+    .page-hero::before { content:''; position:absolute; inset:0; background:radial-gradient(ellipse 120% 80% at 50% -30%, rgba(0,180,216,.22), transparent 70%); pointer-events:none; }
+    .page-hero-inner { position:relative; z-index:1; max-width:50rem; margin:0 auto; }
+    .page-eyebrow { display:inline-flex; align-items:center; gap:.5rem; padding:.3rem 1rem; border-radius:9999px; border:1px solid rgba(0,180,216,.3); background:rgba(0,180,216,.08); font-size:.7rem; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:var(--primary-300); margin-bottom:1.25rem; }
+    .page-hero h1 { font-family:var(--font-heading); font-size:clamp(2rem,5vw,3.25rem); font-weight:800; color:#fff; letter-spacing:-.02em; line-height:1.2; margin-bottom:1rem; }
+    .page-hero p { font-size:1.0625rem; color:rgba(219,234,254,.75); line-height:1.7; max-width:40rem; margin:0 auto 2.5rem; }
 
-    /* Timeline */
-    .steps-timeline{ display:flex; gap:18px; justify-content:center; align-items:center; margin:30px auto 10px; flex-wrap:wrap;}
-    .dot{
-      width:46px; height:46px; border-radius:999px; background:var(--white);
-      border:2px solid var(--blue); color:var(--navy); font-weight:700; display:grid; place-items:center;
-      box-shadow:0 6px 18px rgba(61,189,236,.25);
-    }
-    .dash{ width:70px; height:2px; background:linear-gradient(90deg, rgba(61,189,236,.35), rgba(61,189,236,1), rgba(61,189,236,.35)); }
-    .step-labels{ display:flex; gap:56px; justify-content:center; flex-wrap:wrap; color:var(--muted); font-weight:600;}
+    .step-progress { display:flex; align-items:center; justify-content:center; gap:0; margin-bottom:1rem; }
+    .sp-col { display:flex; flex-direction:column; align-items:center; }
+    .sp-dot { width:2.75rem; height:2.75rem; border-radius:50%; background:rgba(0,180,216,.15); border:2px solid rgba(0,180,216,.4); color:var(--primary-300); font-family:var(--font-heading); font-weight:800; font-size:1rem; display:flex; align-items:center; justify-content:center; }
+    .sp-label { display:block; font-size:.7rem; font-weight:600; color:rgba(219,234,254,.55); margin-top:.35rem; white-space:nowrap; }
+    .sp-line { width:5rem; height:1px; background:rgba(0,180,216,.25); flex-shrink:0; }
 
-    /* Wider wrapper to give more breathing room than the default container */
-    .how-wrap{
-      max-width:1280px;
-      margin:0 auto;
-      padding:40px 6% 10px;
-    }
+    .workflow-section { padding:5rem 1.5rem; }
+    .workflow-inner { max-width:1100px; margin:0 auto; }
+    .workflow-step { display:grid; grid-template-columns:1fr 1fr; gap:4rem; align-items:center; margin-bottom:5rem; }
+    .workflow-step:last-child { margin-bottom:0; }
+    .workflow-step.reverse { direction:rtl; }
+    .workflow-step.reverse > * { direction:ltr; }
 
-    /* Workflow rail */
-    .rail{
-      position:relative;
-      display:grid; grid-template-columns:repeat(4,1fr);
-      gap:24px;          /* more horizontal breathing room */
-    }
-    .rail-card{
-      background:#fff; border:1px solid var(--ring); border-radius:20px; padding:22px;
-      box-shadow:0 12px 28px rgba(16,24,40,.06);
-      transition:transform .2s ease, box-shadow .2s ease, border-color .2s ease;
-      cursor:pointer; position:relative; min-height:200px; /* taller card */
-    }
-    .rail-card:hover{ transform:translateY(-3px); box-shadow:0 18px 36px rgba(16,24,40,.10); border-color:#d7e6f3; }
-    .ic{
-      width:44px; height:44px; border-radius:12px; display:grid; place-items:center;
-      background:rgba(61,189,236,.12); color:var(--bay); margin-bottom:10px;
-    }
-    .rail-card h4{ margin:.25rem 0 .45rem; color:var(--ink); }
-    .rail-card p{ color:#5b6a94; margin:0; line-height:1.55; }
-    .arrow{
-      position:absolute; top:58%; transform:translateY(-50%); right:-12px; width:30px; height:30px;
-      background:var(--blue); border-radius:999px; display:grid; place-items:center; color:#fff;
-      box-shadow:0 10px 22px rgba(61,189,236,.35);
-    }
-    .rail .rail-card:last-child .arrow{ display:none; }
+    .ws-visual { background:#fff; border:1px solid var(--neutral-200); border-radius:var(--radius-lg); padding:2.5rem; box-shadow:var(--shadow); display:flex; align-items:center; justify-content:center; min-height:16rem; position:relative; overflow:hidden; }
+    .ws-visual::before { content:''; position:absolute; inset:0; background:radial-gradient(circle at 70% 30%, rgba(0,180,216,.06), transparent 65%); }
+    .ws-icon-big { width:7rem; height:7rem; border-radius:50%; background:var(--primary-50); border:4px solid var(--primary-100); display:flex; align-items:center; justify-content:center; color:var(--primary-600); position:relative; z-index:1; }
 
-    /* Reveal panel */
-    .reveal{
-      grid-column:1 / -1; background:#F7FBFF; border:1px dashed #cfeaf6; border-radius:16px; padding:18px 18px 14px; margin-top:14px;
-      display:none;
-    }
-    .reveal.open{ display:block; }
-    .reveal h5{ margin:0 0 10px; color:#355a7a; font-size:1.05rem; }
-    .reveal-grid{ display:grid; grid-template-columns:repeat(3, 1fr); gap:14px; }
-    .reveal-item{ background:#fff; border:1px solid #e7f1f8; border-radius:12px; padding:14px; }
-    .reveal-item strong{ display:block; color:#355a7a; margin-bottom:6px; }
-    .note{ font-size:.98rem; color:#4a6b85; line-height:1.55; }
+    .step-num { font-family:var(--font-heading); font-size:.75rem; font-weight:800; text-transform:uppercase; letter-spacing:.12em; color:var(--primary-500); margin-bottom:.5rem; }
+    .ws-content h2 { font-family:var(--font-heading); font-size:clamp(1.5rem,3vw,2rem); font-weight:800; color:var(--tertiary-900); letter-spacing:-.02em; line-height:1.2; margin-bottom:.875rem; }
+    .ws-content p { font-size:1rem; color:var(--neutral-500); line-height:1.75; margin-bottom:1.25rem; }
+    .ws-highlights { list-style:none; display:flex; flex-direction:column; gap:.6rem; }
+    .ws-highlights li { display:flex; align-items:center; gap:.6rem; font-size:.9rem; font-weight:600; color:var(--neutral-600); }
+    .ws-highlights li svg { color:var(--primary-500); flex-shrink:0; }
 
-    /* CTAs */
-    .cta-row{ display:flex; gap:14px; justify-content:center; margin:26px 0 34px; }
-    .btn-primary{ background:var(--blue); color:#fff; border-color:var(--blue); }
-    .btn-outline{ border-color:var(--blue); color:var(--bay); background:#fff; }
+    .cta-section { background:linear-gradient(135deg, var(--primary-600) 0%, var(--tertiary-900) 100%); padding:5rem 1.5rem; text-align:center; position:relative; overflow:hidden; }
+    .cta-section::before { content:''; position:absolute; right:-6rem; top:-6rem; width:24rem; height:24rem; border-radius:50%; background:rgba(255,255,255,.04); }
+    .cta-inner { position:relative; z-index:1; max-width:40rem; margin:0 auto; }
+    .cta-inner h2 { font-family:var(--font-heading); font-size:clamp(1.75rem,4vw,2.5rem); font-weight:800; color:#fff; letter-spacing:-.02em; margin-bottom:.875rem; }
+    .cta-inner p { color:rgba(219,234,254,.75); line-height:1.7; margin-bottom:2rem; }
+    .cta-buttons { display:flex; gap:1rem; justify-content:center; flex-wrap:wrap; }
+    .btn-white { display:inline-flex; align-items:center; gap:.5rem; background:#fff; color:var(--primary-700); padding:.875rem 2rem; border-radius:var(--radius-sm); font-weight:700; font-size:.95rem; text-decoration:none; transition:box-shadow .2s; }
+    .btn-white:hover { box-shadow:0 6px 24px rgba(0,0,0,.18); }
+    .btn-ghost-white { display:inline-flex; align-items:center; gap:.5rem; background:transparent; color:rgba(255,255,255,.85); padding:.875rem 2rem; border-radius:var(--radius-sm); border:1.5px solid rgba(255,255,255,.35); font-weight:700; font-size:.95rem; text-decoration:none; transition:border-color .2s, color .2s; }
+    .btn-ghost-white:hover { border-color:#fff; color:#fff; }
 
-    /* FAQ */
-    .faq{ max-width:1000px; margin:28px auto 10px; }
-    .faq h3{ text-align:center; color:var(--navy); margin-bottom:16px; }
-    .qa{ background:#fff; border:1px solid var(--ring); border-radius:14px; padding:12px 16px; margin-bottom:12px; }
-    .qa summary{ cursor:pointer; list-style:none; color:var(--ink); font-weight:600; }
-    .qa summary::-webkit-details-marker{ display:none; }
-    .qa p{ color:#5b6a94; margin-top:8px; line-height:1.6; }
+    .faq-section { padding:5rem 1.5rem; background:#fff; }
+    .faq-inner { max-width:760px; margin:0 auto; }
+    .section-heading { font-family:var(--font-heading); font-size:clamp(1.5rem,3vw,2rem); font-weight:800; color:var(--tertiary-900); letter-spacing:-.02em; text-align:center; margin-bottom:2.5rem; }
+    .faq-item { background:var(--bg-100); border:1px solid var(--neutral-200); border-radius:var(--radius-sm); margin-bottom:.75rem; overflow:hidden; transition:border-color .2s; }
+    .faq-item:hover { border-color:var(--primary-200); }
+    .faq-q { display:flex; align-items:center; justify-content:space-between; padding:1.1rem 1.25rem; cursor:pointer; font-weight:600; color:var(--neutral-700); font-size:.975rem; user-select:none; list-style:none; }
+    .faq-q::-webkit-details-marker { display:none; }
+    .faq-icon { transition:transform .25s; flex-shrink:0; color:var(--primary-500); }
+    details[open] .faq-icon { transform:rotate(45deg); }
+    .faq-a { padding:0 1.25rem 1.1rem; color:var(--neutral-500); line-height:1.75; font-size:.9375rem; }
 
-    @media (max-width:1100px){
-      .rail{ grid-template-columns:repeat(2,1fr); }
-    }
-    @media (max-width:640px){
-      .rail{ grid-template-columns:1fr; }
-      .reveal-grid{ grid-template-columns:1fr; }
-    }
+    @media (max-width:900px) { .workflow-step { grid-template-columns:1fr; gap:2rem; } .workflow-step.reverse { direction:ltr; } }
+    @media (max-width:480px) { .sp-line { width:2.5rem; } }
   </style>
 </head>
 <body>
+  <?php require_once __DIR__ . '/../../../public/partials/header.php'; ?>
 
-  <?php require_once PUBLIC_PATH . '/partials/header.php'; ?>
-
-  <!-- HERO -->
-  <section class="how-hero">
-    <div class="how-eyebrow">Guided workflow</div>
-    <h1 class="how-title">How LabSync Works</h1>
-    <p class="how-sub">From selecting your test to getting your results, here’s the simple, streamlined flow built for patients.</p>
-
-    <div class="steps-timeline">
-      <div class="dot">1</div><div class="dash"></div>
-      <div class="dot">2</div><div class="dash"></div>
-      <div class="dot">3</div><div class="dash"></div>
-      <div class="dot">4</div>
-    </div>
-    <div class="step-labels">
-      <span>Choose Test</span><span>Pick Time</span><span>Visit Lab</span><span>Get Results</span>
+  <section class="page-hero">
+    <div class="page-hero-inner">
+      <div class="page-eyebrow">Guided Workflow</div>
+      <h1>From Booking to<br>Results in 24 Hours</h1>
+      <p>No clinics, no queues. Our certified phlebotomists come to you — here's exactly how it works.</p>
+      <div class="step-progress">
+        <div class="sp-col"><div class="sp-dot">1</div><span class="sp-label">Choose Test</span></div>
+        <div class="sp-line"></div>
+        <div class="sp-col"><div class="sp-dot">2</div><span class="sp-label">Pick Slot</span></div>
+        <div class="sp-line"></div>
+        <div class="sp-col"><div class="sp-dot">3</div><span class="sp-label">We Visit</span></div>
+        <div class="sp-line"></div>
+        <div class="sp-col"><div class="sp-dot">4</div><span class="sp-label">Get Results</span></div>
+      </div>
     </div>
   </section>
 
-  <!-- WIDE WRAP to avoid cramped look -->
-  <div class="how-wrap">
-    <!-- WORKFLOW RAIL -->
-    <section class="rail" id="rail">
-      <!-- 1 -->
-      <article class="rail-card" data-step="1">
-        <div class="ic">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M9 3h6M10 3v5l-5.5 8.7A3 3 0 0 0 7 21h10a3 3 0 0 0 2.5-4.7L14 8V3" stroke="#2E3B63" stroke-width="1.7" stroke-linecap="round"/></svg>
-        </div>
-        <h4>Choose Test / Package</h4>
-        <p>Browse our catalog and pick the test or health package you need.</p>
-        <div class="arrow">→</div>
-      </article>
+  <section class="workflow-section">
+    <div class="workflow-inner">
 
-      <!-- 2 -->
-      <article class="rail-card" data-step="2">
-        <div class="ic">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="16" rx="3" stroke="#2E3B63" stroke-width="1.7"/><path d="M8 3v4M16 3v4M3 10h18" stroke="#2E3B63" stroke-width="1.7" stroke-linecap="round"/></svg>
-        </div>
-        <h4>Select Date & Time</h4>
-        <p>Pick a convenient slot. We’ll show prep notes (e.g., fasting) if needed.</p>
-        <div class="arrow">→</div>
-      </article>
-
-      <!-- 3 -->
-      <article class="rail-card" data-step="3">
-        <div class="ic">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M12 21s7-6.3 7-11a7 7 0 1 0-14 0c0 4.7 7 11 7 11Z" stroke="#2E3B63" stroke-width="1.7"/><circle cx="12" cy="10" r="2.5" stroke="#2E3B63" stroke-width="1.7"/></svg>
-        </div>
-        <h4>Visit the Lab</h4>
-        <p>Arrive a few minutes early; our staff will take care of the rest.</p>
-        <div class="arrow">→</div>
-      </article>
-
-      <!-- 4 -->
-      <article class="rail-card" data-step="4">
-        <div class="ic">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-5Z" stroke="#2E3B63" stroke-width="1.7"/><path d="m9 13 2.2 2.2L15 11" stroke="#2E3B63" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </div>
-        <h4>Results & Follow-up</h4>
-        <p>Get secure results online. Download PDFs or share with your doctor.</p>
-      </article>
-
-      <!-- reveal panel -->
-      <section class="reveal" id="reveal">
-        <h5 id="rvTitle">Step details</h5>
-        <div class="reveal-grid">
-          <div class="reveal-item">
-            <strong>Preparation</strong>
-            <p id="rvPrep" class="note">—</p>
-          </div>
-          <div class="reveal-item">
-            <strong>What happens</strong>
-            <p id="rvWhat" class="note">—</p>
-          </div>
-          <div class="reveal-item">
-            <strong>Time estimate</strong>
-            <p id="rvTime" class="note">—</p>
+      <div class="workflow-step">
+        <div class="ws-visual">
+          <div class="ws-icon-big">
+            <svg width="52" height="52" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
           </div>
         </div>
-      </section>
-    </section>
+        <div class="ws-content">
+          <p class="step-num">Step 01</p>
+          <h2>Browse & Choose Your Test</h2>
+          <p>Search our catalogue of 150+ certified tests. Filter by health category, read preparation notes, and select what you need — all in under a minute.</p>
+          <ul class="ws-highlights">
+            <li><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg> 150+ tests &amp; health panels</li>
+            <li><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg> Clear descriptions &amp; prep instructions</li>
+            <li><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg> No prescription needed for most tests</li>
+          </ul>
+        </div>
+      </div>
 
-    <!-- CTAs -->
-    <div class="cta-row">
-      <a class="btn-primary" href="/lab_sync/app/views/patient/explore.php">Book a Test →</a>
-      <a class="btn-outline" href="/lab_sync/app/views/patient/dashboard.php">Go to Dashboard</a>
+      <div class="workflow-step reverse">
+        <div class="ws-visual">
+          <div class="ws-icon-big">
+            <svg width="52" height="52" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M8 3v4M16 3v4M3 10h18" stroke-linecap="round"/></svg>
+          </div>
+        </div>
+        <div class="ws-content">
+          <p class="step-num">Step 02</p>
+          <h2>Select a Home-Visit Slot</h2>
+          <p>Pick any convenient time slot. Real-time availability for your area. For fasting tests, we suggest early-morning slots and send prep reminders the night before.</p>
+          <ul class="ws-highlights">
+            <li><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg> Same-day slots available</li>
+            <li><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg> SMS &amp; email confirmation</li>
+            <li><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg> Free rescheduling up to 2 hours before</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="workflow-step">
+        <div class="ws-visual">
+          <div class="ws-icon-big">
+            <svg width="52" height="52" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          </div>
+        </div>
+        <div class="ws-content">
+          <p class="step-num">Step 03</p>
+          <h2>We Come to Your Home</h2>
+          <p>A certified, background-verified phlebotomist arrives at your doorstep. The entire collection takes under 10 minutes. No clinic visit needed.</p>
+          <ul class="ws-highlights">
+            <li><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg> Certified &amp; ID-verified phlebotomists</li>
+            <li><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg> Sterile equipment, sealed packaging</li>
+            <li><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg> Real-time technician tracking</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="workflow-step reverse">
+        <div class="ws-visual">
+          <div class="ws-icon-big">
+            <svg width="52" height="52" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-5Z"/><path d="m9 13 2.2 2.2L15 11" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+        </div>
+        <div class="ws-content">
+          <p class="step-num">Step 04</p>
+          <h2>Receive Digital Results</h2>
+          <p>You'll get a notification the moment results are ready. View your detailed report, download a PDF, or share it directly with your doctor — all from your secure dashboard.</p>
+          <ul class="ws-highlights">
+            <li><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg> Most results within 24 hours</li>
+            <li><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg> Download PDF report</li>
+            <li><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg> Securely share with your physician</li>
+          </ul>
+        </div>
+      </div>
     </div>
+  </section>
 
-    <!-- FAQ -->
-    <section class="faq">
-      <h3>Frequently asked</h3>
-      <details class="qa">
-        <summary>Do I need a doctor’s prescription?</summary>
-        <p>For most routine tests, no. If a prescription is needed, the UI will indicate it during booking.</p>
+  <section class="cta-section">
+    <div class="cta-inner">
+      <h2>Ready for Lab Testing at Your Doorstep?</h2>
+      <p>Join 50,000+ patients who've switched to a smarter, more convenient way to manage their health.</p>
+      <div class="cta-buttons">
+        <a href="/lab_sync/index.php?controller=home&action=explore" class="btn-white">Browse Tests <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg></a>
+        <a href="/lab_sync/index.php?controller=Auth&action=patient_signup" class="btn-ghost-white">Create Free Account</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="faq-section">
+    <div class="faq-inner">
+      <h2 class="section-heading">Frequently Asked Questions</h2>
+      <details class="faq-item">
+        <summary class="faq-q">Do I need a doctor's prescription? <svg class="faq-icon" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></summary>
+        <p class="faq-a">For most routine tests, no prescription is required. If a test does require a referral, you'll be notified clearly during booking.</p>
       </details>
-      <details class="qa">
-        <summary>How will I receive my results?</summary>
-        <p>Results appear in your LabSync account with status updates. You can view, download PDF, or share securely.</p>
+      <details class="faq-item">
+        <summary class="faq-q">How will I receive my results? <svg class="faq-icon" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></summary>
+        <p class="faq-a">Results appear in your LabSync dashboard with SMS & email notifications. You can view, download as PDF, or share securely with your physician.</p>
       </details>
-      <details class="qa">
-        <summary>What if I need to reschedule?</summary>
-        <p>Use the Dashboard → Your Appointments. Tap “Edit/Reschedule” to pick a new slot.</p>
+      <details class="faq-item">
+        <summary class="faq-q">Can I reschedule or cancel my visit? <svg class="faq-icon" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></summary>
+        <p class="faq-a">Yes — free rescheduling or cancellation from Dashboard → Appointments, up to 2 hours before the visit.</p>
       </details>
-    </section>
-  </div>
+      <details class="faq-item">
+        <summary class="faq-q">What areas do you cover? <svg class="faq-icon" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></summary>
+        <p class="faq-a">We currently serve Colombo and surrounding districts and expanding rapidly. Enter your postal code during booking to check availability.</p>
+      </details>
+      <details class="faq-item">
+        <summary class="faq-q">Is my health data secure? <svg class="faq-icon" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></summary>
+        <p class="faq-a">All data is encrypted using AES-256 at rest and TLS in transit with strict access controls and audit trails.</p>
+      </details>
+    </div>
+  </section>
 
-  <?php require __DIR__ . '/../../../public/partials/footer.php'; ?>
-
-  <script>
-    // Step details (UI only)
-    const detail = {
-      1:{ title:'Choose Test / Package',
-          prep:'Some tests include fasting or medication notes which you’ll see before booking.',
-          what:'Browse tests, read descriptions and preparation tips, and add to booking.',
-          time:'~1–2 minutes to choose.'
-        },
-      2:{ title:'Select Date & Time',
-          prep:'For fasting tests (e.g., Lipid Profile), morning slots are suggested.',
-          what:'Pick a preferred date and an available time slot. You’ll see any prep reminders.',
-          time:'~30–60 seconds.'
-        },
-      3:{ title:'Visit the Lab',
-          prep:'Bring your ID. Stay hydrated unless fasting is required.',
-          what:'Our staff verifies details and collects the sample quickly and safely.',
-          time:'~10–15 minutes on site.'
-        },
-      4:{ title:'Results & Follow-up',
-          prep:'No prep needed. You’ll get a notification when your results are ready.',
-          what:'View results online, download PDFs, and share with your physician.',
-          time:'Most results within 24–48 hours.'
-        }
-    };
-
-    const rail = document.getElementById('rail');
-    const reveal = document.getElementById('reveal');
-    const rvTitle = document.getElementById('rvTitle');
-    const rvPrep  = document.getElementById('rvPrep');
-    const rvWhat  = document.getElementById('rvWhat');
-    const rvTime  = document.getElementById('rvTime');
-
-    rail.addEventListener('click', (e)=>{
-      const card = e.target.closest('.rail-card');
-      if(!card) return;
-      const step = card.getAttribute('data-step');
-      const d = detail[step];
-      if(!d) return;
-      rvTitle.textContent = d.title;
-      rvPrep.textContent  = d.prep;
-      rvWhat.textContent  = d.what;
-      rvTime.textContent  = d.time;
-      reveal.classList.add('open');
-      reveal.scrollIntoView({behavior:'smooth', block:'center'});
-    });
-  </script>
+  <?php require_once __DIR__ . '/../../../public/partials/footer.php'; ?>
 </body>
 </html>
