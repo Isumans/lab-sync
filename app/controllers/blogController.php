@@ -44,6 +44,7 @@ class blogController {
         $activeCategory = $category;
         $activeSort = $sort;
         $currentPage = $page;
+        $categories = $model->getCategories(); // for dynamic filter dropdown
 
         // Compute display_date for each post: published_at → created_at → updated_at → null
         foreach ($filteredPosts as &$p) {

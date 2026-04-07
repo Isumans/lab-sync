@@ -3,75 +3,98 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title><?php echo htmlspecialchars($post['title']); ?> - LabSync Blogs</title>
-  <meta name="description" content="<?php echo htmlspecialchars(substr($post['excerpt'], 0, 155)); ?>">
+  <title><?php echo htmlspecialchars($post['title']); ?> - LabSync Health Updates</title>
+  <meta name="description" content="<?php echo htmlspecialchars(substr($post['excerpt'] ?? '', 0, 155)); ?>">
   <link rel="stylesheet" href="/lab_sync/public/css/patient.css" />
   <link rel="stylesheet" href="/lab_sync/public/css/nav.css" />
   <link rel="stylesheet" href="/lab_sync/public/css/blog.css" />
 </head>
 <body>
   <?php require 'C:\xampp\htdocs\lab_sync\public\partials\header.php'; ?>
-  
+
   <main>
     <div class="post-container">
+
       <!-- Breadcrumb -->
-      <div class="breadcrumb">
+      <nav class="breadcrumb" aria-label="Breadcrumb">
         <a href="/lab_sync/index.php">Home</a>
-        <span>/</span>
-        <a href="/lab_sync/index.php?controller=blog&action=index">Blogs</a>
-        <span>/</span>
+        <span aria-hidden="true">/</span>
+        <a href="/lab_sync/index.php?controller=blog&action=index">Health Updates</a>
+        <span aria-hidden="true">/</span>
         <span><?php echo htmlspecialchars($post['title']); ?></span>
-      </div>
+      </nav>
 
       <!-- Post Header -->
-      <div class="post-header">
-        <span class="blog-category"><?php echo htmlspecialchars($post['category']); ?></span>
+      <header class="post-header">
+        <?php if (!empty($post['category'])): ?>
+          <span class="blog-category"><?php echo htmlspecialchars($post['category']); ?></span>
+        <?php endif; ?>
         <h1><?php echo htmlspecialchars($post['title']); ?></h1>
         <div class="post-meta">
           <span>📅 <?php echo htmlspecialchars($post['display_date']); ?></span>
-          <span>✍️ <?php echo htmlspecialchars($post['author_name'] ?? 'LabSync Team'); ?></span>
+          <span>✍️ LabSync Team</span>
         </div>
-      </div>
+      </header>
 
       <!-- Featured Image -->
       <?php if (!empty($post['featured_image'])): ?>
-        <img src="/lab_sync/public/<?php echo htmlspecialchars($post['featured_image']); ?>" alt="<?php echo htmlspecialchars($post['title']); ?>" class="post-featured-image" style="object-fit: cover;">
+        <div class="post-featured-wrap">
+          <img
+            src="/lab_sync/public/<?php echo htmlspecialchars($post['featured_image']); ?>"
+            alt="<?php echo htmlspecialchars($post['title']); ?>"
+            class="post-featured-img"
+          >
+        </div>
       <?php else: ?>
-        <div class="post-featured-image">
-          <span style="position: relative; z-index: 1;">📄</span>
+        <?php
+          $catSlug = $post['category_slug'] ?? '';
+          if ($catSlug === 'new-tests') {
+              $fbIcon = '🔬'; $fbLabel = 'New Test Announcement'; $fbMod = 'fallback-tests';
+          } elseif ($catSlug === 'patient-instructions') {
+              $fbIcon = '📋'; $fbLabel = 'Patient Guide'; $fbMod = 'fallback-guide';
+          } else {
+              $fbIcon = '💡'; $fbLabel = 'Health Education'; $fbMod = 'fallback-health';
+          }
+        ?>
+        <div class="post-featured-image post-featured-fallback <?php echo $fbMod; ?>">
+          <span class="fallback-icon" aria-hidden="true"><?php echo $fbIcon; ?></span>
+          <span class="fallback-label"><?php echo $fbLabel; ?></span>
         </div>
       <?php endif; ?>
 
-    <!-- Post Content -->
-    <div class="post-content">
-      <?php 
-        // Safely render content with line breaks
-        $content = htmlspecialchars($post['content']);
-        $content = nl2br($content);
-        echo $content;
-      ?>
-    </div>
+      <!-- Post Content -->
+      <div class="post-content">
+        <?php
+          $content = htmlspecialchars($post['content'] ?? '');
+          echo nl2br($content);
+        ?>
+      </div>
 
-    <!-- Post Actions -->
-    <div class="post-actions">
-      <a href="/lab_sync/index.php?controller=blog&action=index" class="post-back">
-        ← Back to Blogs
-      </a>
+      <!-- Medical Disclaimer -->
+      <div class="post-disclaimer">
+        📋 <strong>Educational content only.</strong> This article is for informational purposes and is not a substitute for professional medical advice, diagnosis, or treatment. Always consult your healthcare provider.
+      </div>
 
-      <!-- CTA Card -->
-      <div class="cta-card">
-        <h3>Ready to book a test?</h3>
-        <p>Explore our test catalog and book online in minutes.</p>
-        <a href="/lab_sync/index.php?controller=home&action=explore" class="btn-primary">
-          Explore Tests
+      <!-- CTA -->
+      <div class="post-cta">
+        <div class="post-cta-inner">
+          <div class="post-cta-text">
+            <h3>Ready to book a test?</h3>
+            <p>Browse our full test catalog and schedule an appointment online.</p>
+          </div>
+          <a href="/lab_sync/index.php?controller=home&action=explore" class="btn-primary">
+            Explore Tests →
+          </a>
+        </div>
+      </div>
+
+      <!-- Back Link -->
+      <div class="post-actions">
+        <a href="/lab_sync/index.php?controller=blog&action=index" class="post-back">
+          ← Back to Health Updates
         </a>
       </div>
 
-      <!-- Footer Note -->
-     <!-- <div class="post-footer-note">
-        📋 <strong>Educational Content:</strong> This information is for educational purposes only and is not a substitute for professional medical advice, diagnosis, or treatment. Always consult your healthcare provider with any questions about your health.
-      </div>-->
-    </div><!-- .post-actions -->
     </div><!-- .post-container -->
   </main>
 
