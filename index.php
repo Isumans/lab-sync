@@ -20,7 +20,7 @@ if (!$isAllowed && !isset($_SESSION['user_id'])) {
     exit();
 }
 
-require_once CONTROLLER_PATH . '/TestCatalog_control.php';
+require_once CONTROLLER_PATH . '/TestCatalog_Control.php';
 require_once CONTROLLER_PATH . '/authController.php';
 require_once CONTROLLER_PATH . '/administratorController.php';
 require_once CONTROLLER_PATH . '/appointmentsController.php';
@@ -32,7 +32,7 @@ require_once CONTROLLER_PATH . '/blogController.php';
 require_once CONTROLLER_PATH . '/partnerLabController.php';
 require_once CONTROLLER_PATH . '/supplierController.php';
 // require_once 'C:\xampp\htdocs\lab_sync\app\controllers\appointmentsController.php';
-require_once 'C:\xampp\htdocs\lab_sync\config\db.php';
+require_once __DIR__ . '/config/db.php';
 // $controllerName = 'TestCatalog'; 
 // This should be set based 
 // on your routing logic
@@ -45,7 +45,7 @@ if ($controllerName === 'dashboard') {
     }
 }
 
-if ($controllerName === 'TestCatalog') {
+elseif ($controllerName === 'TestCatalog') {
     $Testcontroller = new TestCatalogController();
     $action = $_GET['action'] ?? 'login_open'; // or your desired default
     $role= $_GET['role'] ?? '';
@@ -133,9 +133,6 @@ elseif ($controllerName === 'appointmentsController') {
         include VIEW_PATH . '/receptionist/test_catalog.php';
     } elseif ($action === 'createAppointment') {
         $appointmentController->createAppointment($role);
-    } elseif ($action === 'storeAppointment') {
-    }elseif($action==='createAppointment'){
-        $appointmentController->createAppointment();
     }elseif($action==='prescriptionQueue'){
         $appointmentController->prescriptionQueue();
     }elseif($action==='prescriptionDecisionReport'){
@@ -146,8 +143,6 @@ elseif ($controllerName === 'appointmentsController') {
         $appointmentController->processPrescriptionDecision();
     }elseif($action==='storeAppointment'){
         $appointmentController->storeAppointment($role);
-    }elseif($action==='searchPatients'){
-        $appointmentController->searchPatients();
     } elseif ($action === 'searchPatients') {
         $appointmentController->searchPatients();
     } elseif ($action === 'filterAppointments') {
