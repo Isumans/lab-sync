@@ -80,7 +80,21 @@
   text-decoration: none;
   transition: background .2s;
 }
-.nav-actions a.signup:hover { background: #14284a; }
+.nav-actions a.signup:hover { background: var(--primary-600); }
+.nav-actions .appointment-cta {
+  background: var(--tertiary-900);
+  color: #fff;
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-sm);
+  font-weight: 700;
+  font-size: 0.85rem;
+  text-decoration: none;
+  transition: transform .2s, background .2s;
+}
+.nav-actions .appointment-cta:hover {
+  background: #112a4b;
+  transform: translateY(-1px);
+}
 .nav-actions .profile-logo { width: 2.5rem; height: 2.5rem; border-radius: 50%; object-fit: cover; border: 2px solid #fff; box-shadow: 0 2px 6px rgba(0,0,0,.1); }
 .user-role { font-size: 0.75rem; font-weight: 700; text-transform: capitalize; }
 

@@ -1,0 +1,357 @@
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap');
+
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --ink:#0f1117;--ink2:#4a4f5c;--ink3:#8a8f9a;
+  --surf:#ffffff;--surf2:#f7f8fa;--surf3:#f0f1f4;
+  --accent:#1a6b55;--accent2:#e8f4f0;--accent3:#c6e6dc;
+  --border:rgba(0,0,0,.09);--border2:rgba(0,0,0,.15);
+  --red:#d94040;--red2:#fff0f0;
+  --r:12px;--r2:8px;
+}
+body{font-family:'DM Sans',sans-serif;background:var(--surf2);color:var(--ink);min-height:600px}
+
+.page{display:grid;grid-template-columns:1fr 340px;gap:24px;padding:24px;max-width:1100px;margin:0 auto;align-items:start}
+
+/* Steps */
+.steps-bar{display:flex;align-items:center;gap:0;margin-bottom:28px;grid-column:1/-1;background:var(--surf);border:0.5px solid var(--border);border-radius:var(--r);padding:16px 24px}
+.step-item{display:flex;align-items:center;gap:10px;flex:1}
+.step-num{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:500;flex-shrink:0;border:1.5px solid var(--border2);color:var(--ink3)}
+.step-txt{font-size:13px;color:var(--ink3)}
+.step-item.done .step-num{background:var(--accent);border-color:var(--accent);color:#fff}
+.step-item.done .step-txt{color:var(--accent);font-weight:500}
+.step-item.active .step-num{background:var(--ink);border-color:var(--ink);color:#fff}
+.step-item.active .step-txt{color:var(--ink);font-weight:500}
+.step-sep{width:32px;height:1.5px;background:var(--border2);flex-shrink:0;margin:0 4px}
+.step-sep.done{background:var(--accent)}
+
+/* Cards */
+.card{background:var(--surf);border:0.5px solid var(--border);border-radius:var(--r);overflow:hidden}
+
+/* Section header */
+.sec-head{padding:20px 24px 0;border-bottom:0.5px solid var(--border);padding-bottom:16px;display:flex;align-items:center;justify-content:space-between}
+.sec-title{font-family:'DM Serif Display',serif;font-size:18px;color:var(--ink);font-weight:400}
+.count-badge{font-size:12px;background:var(--accent2);color:var(--accent);border-radius:20px;padding:3px 10px;font-weight:500}
+
+/* Test list */
+.test-list{padding:8px 0;max-height:320px;overflow-y:auto}
+.test-list::-webkit-scrollbar{width:4px}
+.test-list::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
+.test-row{display:flex;align-items:center;justify-content:space-between;padding:11px 24px;cursor:pointer;transition:background .12s;border-bottom:0.5px solid var(--border);gap:12px}
+.test-row:last-child{border-bottom:none}
+.test-row:hover{background:var(--surf2)}
+.test-row.selected{background:var(--accent2)}
+.test-left{display:flex;align-items:center;gap:12px;flex:1;min-width:0}
+.check-box{width:18px;height:18px;border-radius:5px;border:1.5px solid var(--border2);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .12s}
+.test-row.selected .check-box{background:var(--accent);border-color:var(--accent)}
+.check-icon{width:10px;height:10px;fill:none;stroke:#fff;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;opacity:0;transition:opacity .12s}
+.test-row.selected .check-icon{opacity:1}
+.test-name{font-size:14px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.test-price{font-size:13px;color:var(--ink3);font-weight:500;flex-shrink:0;white-space:nowrap}
+
+/* Prep strip */
+.prep-strip{padding:12px 24px;background:var(--surf3);border-top:0.5px solid var(--border);font-size:12.5px;color:var(--ink2);display:flex;align-items:flex-start;gap:8px;min-height:40px}
+.prep-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);flex-shrink:0;margin-top:4px}
+
+/* Details card */
+.details-body{padding:20px 24px;display:flex;flex-direction:column;gap:20px}
+.label{font-size:12px;font-weight:500;letter-spacing:.04em;text-transform:uppercase;color:var(--ink3);margin-bottom:8px;display:block}
+
+/* Date */
+.date-wrap{position:relative}
+.date-input{width:100%;height:42px;border:1.5px solid var(--border2);border-radius:var(--r2);padding:0 14px;font-size:14px;font-family:'DM Sans',sans-serif;color:var(--ink);background:var(--surf);outline:none;cursor:pointer}
+.date-input:focus{border-color:var(--accent)}
+
+/* Slots */
+.slot-group{margin-bottom:12px}
+.slot-period{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink3);margin-bottom:8px;font-weight:500}
+.slot-rail{display:flex;flex-wrap:wrap;gap:6px}
+.slot-btn{height:34px;padding:0 12px;border-radius:var(--r2);border:1.5px solid var(--border2);background:var(--surf);font-size:13px;font-family:'DM Sans',sans-serif;color:var(--ink);cursor:pointer;transition:all .12s;white-space:nowrap}
+.slot-btn:hover:not(:disabled){border-color:var(--ink);background:var(--surf2)}
+.slot-btn.active{background:var(--accent);border-color:var(--accent);color:#fff}
+.slot-btn:disabled{opacity:.35;cursor:not-allowed}
+
+/* Home collection */
+.home-box{border:1.5px solid var(--border2);border-radius:var(--r2);overflow:hidden}
+.home-toggle{display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:pointer}
+.toggle-switch{width:36px;height:20px;border-radius:10px;background:var(--surf3);border:1.5px solid var(--border2);position:relative;flex-shrink:0;transition:background .15s}
+.toggle-switch.on{background:var(--accent);border-color:var(--accent)}
+.toggle-knob{width:14px;height:14px;border-radius:50%;background:#fff;position:absolute;top:2px;left:2px;transition:left .15s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.toggle-switch.on .toggle-knob{left:18px}
+.home-label{font-size:14px;color:var(--ink)}
+.home-sub{font-size:12px;color:var(--ink3)}
+.home-address{padding:0 14px 14px;border-top:0.5px solid var(--border)}
+.addr-input{width:100%;height:38px;border:1.5px solid var(--border2);border-radius:var(--r2);padding:0 12px;font-size:13px;font-family:'DM Sans',sans-serif;color:var(--ink);background:var(--surf);outline:none;margin-top:10px}
+.addr-input:focus{border-color:var(--accent)}
+.addr-input::placeholder{color:var(--ink3)}
+
+/* Summary sidebar */
+.summary{padding:0;position:sticky;top:24px}
+.sum-head{padding:20px 24px;border-bottom:0.5px solid var(--border)}
+.sum-eyebrow{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink3);font-weight:500;margin-bottom:4px}
+.sum-title{font-family:'DM Serif Display',serif;font-size:22px;font-weight:400;color:var(--ink)}
+.sum-body{padding:16px 24px;display:flex;flex-direction:column;gap:0}
+.kv{display:flex;justify-content:space-between;align-items:flex-start;padding:9px 0;border-bottom:0.5px solid var(--border);gap:8px}
+.kv:last-of-type{border-bottom:none}
+.kk{font-size:12.5px;color:var(--ink3)}
+.vv{font-size:13px;color:var(--ink);font-weight:500;text-align:right;max-width:60%}
+.sum-tests{padding:0 24px 8px;display:flex;flex-direction:column;gap:4px}
+.sum-item{display:flex;justify-content:space-between;padding:7px 10px;background:var(--surf2);border-radius:var(--r2);font-size:12.5px}
+.sum-item-name{color:var(--ink2)}
+.sum-item-price{color:var(--ink);font-weight:500}
+.sum-total{padding:12px 24px;border-top:0.5px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+.sum-total-label{font-size:13px;color:var(--ink2)}
+.sum-total-val{font-family:'DM Serif Display',serif;font-size:22px;color:var(--ink)}
+.sum-actions{padding:16px 24px;border-top:0.5px solid var(--border);display:flex;flex-direction:column;gap:10px}
+.btn-confirm{height:44px;background:var(--accent);border:none;border-radius:var(--r2);color:#fff;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:500;cursor:pointer;transition:background .12s;letter-spacing:.01em}
+.btn-confirm:hover{background:#155944}
+.btn-confirm:disabled{background:var(--ink3);cursor:not-allowed}
+.btn-back{height:38px;background:none;border:1.5px solid var(--border2);border-radius:var(--r2);color:var(--ink2);font-family:'DM Sans',sans-serif;font-size:14px;cursor:pointer;transition:all .12s}
+.btn-back:hover{border-color:var(--ink);color:var(--ink)}
+.sum-note{padding:10px 24px 16px;font-size:12px;color:var(--ink3);line-height:1.5}
+
+/* Status dot */
+.status-row{display:flex;align-items:center;gap:6px}
+.status-dot{width:7px;height:7px;border-radius:50%;background:var(--ink3);flex-shrink:0}
+.status-dot.ready{background:#1a9c5b}
+.status-dot.wait{background:#d18f10}
+
+/* Float bar (mobile) */
+.float-bar{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--surf);border-top:0.5px solid var(--border2);padding:12px 20px;justify-content:space-between;align-items:center;z-index:100}
+
+/* Anim */
+.sum-item{animation:fadeIn .18s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+</style>
+
+<div class="page">
+
+  <div class="steps-bar">
+    <div class="step-item done">
+      <div class="step-num">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><polyline points="2,6 5,9 10,3" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <span class="step-txt">Test</span>
+    </div>
+    <div class="step-sep done"></div>
+    <div class="step-item active">
+      <div class="step-num">2</div>
+      <span class="step-txt">Date &amp; time</span>
+    </div>
+    <div class="step-sep"></div>
+    <div class="step-item">
+      <div class="step-num">3</div>
+      <span class="step-txt">Confirm</span>
+    </div>
+  </div>
+
+  <div style="display:flex;flex-direction:column;gap:16px;min-width:0">
+
+    <div class="card">
+      <div class="sec-head">
+        <div class="sec-title">Select tests</div>
+        <div class="count-badge" id="countBadge">0 selected</div>
+      </div>
+      <div class="test-list" id="testList">
+      </div>
+      <div class="prep-strip">
+        <div class="prep-dot"></div>
+        <span id="prepText">Select a test to see preparation notes.</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="sec-head">
+        <div class="sec-title">Appointment details</div>
+      </div>
+      <div class="details-body">
+        <div>
+          <label class="label">Date</label>
+          <div class="date-wrap">
+            <input class="date-input" type="date" id="dateInput" />
+          </div>
+        </div>
+        <div>
+          <label class="label">Time slot</label>
+          <div class="slot-group">
+            <div class="slot-period">Morning</div>
+            <div class="slot-rail" id="slotMorning"></div>
+          </div>
+          <div class="slot-group">
+            <div class="slot-period">Afternoon</div>
+            <div class="slot-rail" id="slotAfternoon"></div>
+          </div>
+        </div>
+        <div>
+          <label class="label">Home collection</label>
+          <div class="home-box">
+            <div class="home-toggle" id="homeToggle" onclick="toggleHome()">
+              <div class="toggle-switch" id="toggleSwitch">
+                <div class="toggle-knob"></div>
+              </div>
+              <div>
+                <div class="home-label">Home sample collection</div>
+                <div class="home-sub">We come to your home to collect samples</div>
+              </div>
+            </div>
+            <div class="home-address" id="homeAddress" style="display:none">
+              <input class="addr-input" type="text" id="addrInput" placeholder="Enter your full collection address" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="card summary">
+    <div class="sum-head">
+      <div class="sum-eyebrow">Booking summary</div>
+      <div class="sum-title">Review &amp; confirm</div>
+    </div>
+    <div class="sum-body">
+      <div class="kv">
+        <span class="kk">Tests</span>
+        <span class="vv" id="sumTests">—</span>
+      </div>
+      <div class="kv">
+        <span class="kk">Date</span>
+        <span class="vv" id="sumDate">—</span>
+      </div>
+      <div class="kv">
+        <span class="kk">Time</span>
+        <span class="vv" id="sumTime">—</span>
+      </div>
+      <div class="kv" style="border-bottom:none">
+        <span class="kk">Status</span>
+        <span class="vv">
+          <span class="status-row">
+            <span class="status-dot" id="statusDot"></span>
+            <span id="statusTxt">Waiting for details</span>
+          </span>
+        </span>
+      </div>
+    </div>
+    <div class="sum-tests" id="sumItems"></div>
+    <div class="sum-total">
+      <span class="sum-total-label">Total</span>
+      <span class="sum-total-val" id="sumTotal">LKR 0.00</span>
+    </div>
+    <div class="sum-actions">
+      <button class="btn-confirm" id="btnConfirm" disabled onclick="confirmBooking()">Confirm booking</button>
+      <button class="btn-back" onclick="history.back()">Back</button>
+    </div>
+    <div class="sum-note">You can reschedule or cancel anytime from your dashboard. Please arrive 10 minutes early.</div>
+  </div>
+
+</div>
+
+<script>
+const TESTS = [
+  {id:1,name:'Complete Blood Count (CBC)',price:100,prep:'No special preparation required.'},
+  {id:2,name:'Liver Function Test (LFT)',price:2500,prep:'Avoid alcohol for 24 hours prior to the test.'},
+  {id:3,name:'Thyroid Function Test (TFT)',price:3000,prep:'Avoid biotin supplements 48 hours before sampling.'},
+  {id:4,name:'Blood Sugar Test',price:1200,prep:'8–12 hour fasting preferred. Water is allowed.'},
+  {id:5,name:'Cholesterol Test',price:1800,prep:'12-hour fasting required. Water is allowed.'},
+  {id:6,name:'COVID-19 PCR Test',price:6000,prep:'No special preparation required.'},
+  {id:7,name:'Urine Routine Test',price:1000,prep:'Clean midstream sample required. Avoid high-vitamin C foods.'},
+  {id:8,name:'Kidney Function Test (KFT)',price:2200,prep:'Stay well hydrated unless your doctor advises otherwise.'},
+];
+const MORNING=['08:00','08:30','09:00','09:30','10:00','10:30','11:00'];
+const AFTERNOON=['13:00','13:30','14:00','14:30','15:00','15:30'];
+
+let selected=new Set();
+let selDate='';
+let selTime='';
+let homeOn=false;
+
+function fmt(n){return'LKR '+n.toLocaleString('en-LK',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function fmtDate(d){if(!d)return'—';const p=d.split('-');return p[2]+'/'+p[1]+'/'+p[0];}
+
+function renderTests(){
+  const list=document.getElementById('testList');
+  list.innerHTML='';
+  TESTS.forEach(t=>{
+    const row=document.createElement('div');
+    row.className='test-row'+(selected.has(t.id)?' selected':'');
+    row.innerHTML=`
+      <div class="test-left">
+        <div class="check-box">
+          <svg class="check-icon" viewBox="0 0 10 8"><polyline points="1,4 3.5,7 9,1"/></svg>
+        </div>
+        <span class="test-name">${t.name}</span>
+      </div>
+      <span class="test-price">${fmt(t.price)}</span>
+    `;
+    row.onclick=()=>{
+      if(selected.has(t.id)){selected.delete(t.id);}else{selected.add(t.id);}
+      renderTests();update();
+    };
+    list.appendChild(row);
+  });
+  const cnt=selected.size;
+  document.getElementById('countBadge').textContent=cnt+' selected';
+  const arr=TESTS.filter(t=>selected.has(t.id));
+  let prep='Select a test to see preparation notes.';
+  if(arr.length===1){prep=arr[0].prep;}
+  else if(arr.length>1){prep='Multiple tests selected. Follow fasting requirements if any test requires fasting.';}
+  document.getElementById('prepText').textContent=prep;
+}
+
+function renderSlots(){
+  ['slotMorning','slotAfternoon'].forEach((id,i)=>{
+    const rail=document.getElementById(id);
+    rail.innerHTML='';
+    const times=i===0?MORNING:AFTERNOON;
+    times.forEach(t=>{
+      const b=document.createElement('button');
+      b.className='slot-btn'+(selTime===t?' active':'');
+      b.type='button';
+      b.textContent=t;
+      b.disabled=!selDate;
+      b.onclick=()=>{selTime=t;renderSlots();update();};
+      rail.appendChild(b);
+    });
+  });
+}
+
+function update(){
+  const arr=TESTS.filter(t=>selected.has(t.id));
+  const total=arr.reduce((s,t)=>s+t.price,0);
+  document.getElementById('sumTests').textContent=arr.length?arr.length+' test'+(arr.length>1?'s':''):'—';
+  document.getElementById('sumDate').textContent=fmtDate(selDate);
+  document.getElementById('sumTime').textContent=selTime||'—';
+  document.getElementById('sumTotal').textContent=fmt(total);
+  const items=document.getElementById('sumItems');
+  items.innerHTML=arr.map(t=>`<div class="sum-item"><span class="sum-item-name">${t.name}</span><span class="sum-item-price">${fmt(t.price)}</span></div>`).join('');
+  const ready=arr.length>0&&selDate&&selTime;
+  document.getElementById('btnConfirm').disabled=!ready;
+  const dot=document.getElementById('statusDot');
+  const txt=document.getElementById('statusTxt');
+  if(ready){dot.className='status-dot ready';txt.textContent='Ready to confirm';}
+  else{dot.className='status-dot wait';txt.textContent='Waiting for details';}
+}
+
+function toggleHome(){
+  homeOn=!homeOn;
+  document.getElementById('toggleSwitch').className='toggle-switch'+(homeOn?' on':'');
+  document.getElementById('homeAddress').style.display=homeOn?'block':'none';
+}
+
+function confirmBooking(){
+  if(!document.getElementById('btnConfirm').disabled){
+    alert('Booking confirmed! You will receive a confirmation shortly.');
+  }
+}
+
+document.getElementById('dateInput').addEventListener('change',function(){
+  selDate=this.value;selTime='';renderSlots();update();
+});
+
+const today=new Date().toISOString().split('T')[0];
+document.getElementById('dateInput').setAttribute('min',today);
+
+renderTests();renderSlots();update();
+</script>

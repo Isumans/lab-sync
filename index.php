@@ -8,6 +8,42 @@ ini_set('display_errors', 1);
 require_once __DIR__ . '/app/bootstrap.php'; // <--- keep this
 // require_once __DIR__ . '/config/paths.php'; // <--- remove this line
 
+// Check if user is logged in - redirect to login if not (except for auth actions)
+$controllerName = $_GET['controller'] ?? 'home';
+$action = $_GET['action'] ?? 'index';
+
+// Allow these pages without login
+$allowedWithoutLogin = [
+    'Auth' => ['login', 'index', 'patient_signup', 'logout'],
+    'home' => ['about', 'how'],
+];
+
+$isAllowed = isset($allowedWithoutLogin[$controllerName]) && 
+             in_array($action, $allowedWithoutLogin[$controllerName]);
+
+if (!$isAllowed && !isset($_SESSION['user_id'])) {
+    header('Location: ' . BASE_URL . '/index.php?controller=Auth&action=index&loginRequired=true');
+    exit();
+}
+
+// Check if user is logged in - redirect to login if not (except for auth actions)
+$controllerName = $_GET['controller'] ?? 'home';
+$action = $_GET['action'] ?? 'index';
+
+// Allow these pages without login
+$allowedWithoutLogin = [
+    'Auth' => ['login', 'index', 'patient_signup', 'logout'],
+    'home' => ['about', 'how'],
+];
+
+$isAllowed = isset($allowedWithoutLogin[$controllerName]) && 
+             in_array($action, $allowedWithoutLogin[$controllerName]);
+
+if (!$isAllowed && !isset($_SESSION['user_id'])) {
+    header('Location: ' . BASE_URL . '/index.php?controller=Auth&action=index&loginRequired=true');
+    exit();
+}
+
 require_once CONTROLLER_PATH . '/TestCatalog_Control.php';
 require_once CONTROLLER_PATH . '/authController.php';
 require_once CONTROLLER_PATH . '/administratorController.php';
@@ -122,6 +158,17 @@ elseif ($controllerName === 'appointmentsController') {
         $appointmentController->index($role);
     } elseif ($action === 'test_catalog') {
         include VIEW_PATH . '/receptionist/test_catalog.php';
+    }elseif($action==='createAppointment'){
+        $appointmentController->createAppointment();
+    }elseif($action==='prescriptionQueue'){
+        $appointmentController->prescriptionQueue();
+    }elseif($action==='prescriptionDecisionReport'){
+        $appointmentController->prescriptionDecisionReport();
+    }elseif($action==='prescriptionRequestDetails'){
+        $appointmentController->prescriptionRequestDetails();
+    }elseif($action==='processPrescriptionDecision'){
+        $appointmentController->processPrescriptionDecision();
+    }elseif($action==='storeAppointment'){
     } elseif ($action === 'createAppointment') {
         $appointmentController->createAppointment($role);
     } elseif ($action === 'storeAppointment') {
@@ -271,6 +318,8 @@ elseif($controllerName === 'inventoryController'){
     $action = $_GET['action'] ?? 'index'; // or your desired default
     if($action==='index'){
         include VIEW_PATH . '/patient/patientIndex.php';
+    }elseif($action==='appointment_options'){
+    $homeController->appointmentOptions();
     }elseif($action==='explore'){
         $homeController->getTests();
     }elseif($action==='dashboard'){
@@ -287,6 +336,10 @@ elseif($controllerName === 'inventoryController'){
         $homeController->bookTest();
 }elseif($action==="bookAppointment"){
         $homeController->bookAppointment();
+}elseif($action==="get_help"){
+    $homeController->getHelp();
+}elseif($action==="submit_prescription_help"){
+    $homeController->submitPrescriptionHelp();
 }elseif($action==="edit_appointment"){
         $homeController->edit_appointment();
 }elseif($action==="about"){
@@ -299,6 +352,8 @@ elseif($controllerName === 'inventoryController'){
         $profileController->viewProfile();
     }elseif($action==='update'){
         $profileController->updateProfile();
+    }elseif($action==='changePassword'){
+        $profileController->changePassword();
     }
 }elseif($controllerName==='partnerLabController'){
     $partnerLabController = new partnerLabController();

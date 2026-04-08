@@ -5,6 +5,7 @@ if (!defined('ROOT_PATH')) {
 
 require_once MODEL_PATH . '/appointmentModel.php';
 require_once MODEL_PATH . '/patientModel.php';
+require_once APP_PATH . '/services/EmailService.php';
 require_once 'C:\xampp\htdocs\lab_sync\config\db.php';
 class appointmentsController {
     public function index($role = '') {
@@ -13,6 +14,132 @@ class appointmentsController {
         $appointmentsOnline = $appointmentsModel->getAllAppointmentsbyMethod("online");
         $appointmentsPhysical = $appointmentsModel->getAllAppointmentsbyMethod("physical");
         include VIEW_PATH . '/receptionist/appointments.php';
+    }
+
+    public function createAppointment() {
+        $appointmentsModel = new AppointmentModel(connect());
+        $tests = $appointmentsModel->getAllTests();
+
+        $prefillRequestId = (int)($_GET['request_id'] ?? 0);
+        $prefillRequest = null;
+        if ($prefillRequestId > 0) {
+            $prefillRequest = $appointmentsModel->getPrescriptionRequestById($prefillRequestId);
+            if (!$prefillRequest) {
+                if (session_status() === PHP_SESSION_NONE) {
+                    session_start();
+                }
+                $_SESSION['error'] = 'Prescription request not found.';
+                header('Location: /lab_sync/index.php?controller=appointmentsController&action=prescriptionQueue');
+                exit;
+            }
+        }
+
+        include VIEW_PATH . '/receptionist/create_Appointment.php';
+    }
+
+    public function prescriptionQueue() {
+        $appointmentsModel = new AppointmentModel(connect());
+        $statusFilter = trim((string)($_GET['status'] ?? 'pending'));
+
+        if ($statusFilter === 'all') {
+            $requests = $appointmentsModel->getPrescriptionRequests('all');
+        } elseif ($statusFilter === 'processed') {
+            $requests = array_values(array_filter(
+                $appointmentsModel->getPrescriptionRequests('all'),
+                function ($row) {
+                    return strtolower((string)($row['status'] ?? '')) !== 'pending';
+                }
+            ));
+        } else {
+            $statusFilter = 'pending';
+            $requests = $appointmentsModel->getPrescriptionRequests('Pending');
+        }
+
+        include VIEW_PATH . '/receptionist/prescription_queue.php';
+    }
+
+    public function prescriptionDecisionReport() {
+        $appointmentsModel = new AppointmentModel(connect());
+
+        $filters = [
+            'status' => trim((string)($_GET['status'] ?? '')),
+            'decision_action' => trim((string)($_GET['decision_action'] ?? '')),
+            'date_from' => trim((string)($_GET['date_from'] ?? '')),
+            'date_to' => trim((string)($_GET['date_to'] ?? '')),
+            'decision_by_user_id' => (int)($_GET['decision_by_user_id'] ?? 0),
+        ];
+
+        $reportRows = $appointmentsModel->getPrescriptionDecisionReport($filters);
+
+        if (isset($_GET['format']) && strtolower((string)$_GET['format']) === 'csv') {
+            $filename = 'prescription_decisions_' . date('Ymd_His') . '.csv';
+            header('Content-Type: text/csv; charset=utf-8');
+            header('Content-Disposition: attachment; filename=' . $filename);
+
+            $out = fopen('php://output', 'w');
+            if ($out) {
+                fputcsv($out, [
+                    'Request ID',
+                    'Patient',
+                    'Status',
+                    'Decision Action',
+                    'Decision By User ID',
+                    'Decision By Username',
+                    'Linked Appointment ID',
+                    'Decision At',
+                    'Requested At',
+                    'Notes'
+                ]);
+
+                foreach ($reportRows as $row) {
+                    fputcsv($out, [
+                        (int)($row['request_id'] ?? 0),
+                        (string)($row['patient_name'] ?? ('Patient #' . (int)($row['patient_id'] ?? 0))),
+                        (string)($row['status'] ?? ''),
+                        (string)($row['decision_action'] ?? ''),
+                        (int)($row['decision_by_user_id'] ?? 0),
+                        (string)($row['decision_by_username'] ?? ''),
+                        (string)($row['linked_appointment_id'] ?? ''),
+                        (string)($row['decision_at'] ?? ''),
+                        (string)($row['created_at'] ?? ''),
+                        (string)($row['notes'] ?? ''),
+                    ]);
+                }
+
+                fclose($out);
+            }
+
+            exit;
+        }
+
+        $summary = $appointmentsModel->getPrescriptionDecisionSummary();
+        include VIEW_PATH . '/receptionist/prescription_decisions.php';
+    }
+
+    public function prescriptionRequestDetails() {
+        $requestId = (int)($_GET['request_id'] ?? 0);
+        if ($requestId <= 0) {
+            if (session_status() === PHP_SESSION_NONE) {
+                session_start();
+            }
+            $_SESSION['error'] = 'Invalid prescription request id.';
+            header('Location: /lab_sync/index.php?controller=appointmentsController&action=prescriptionQueue');
+            exit;
+        }
+
+        $appointmentsModel = new AppointmentModel(connect());
+        $request = $appointmentsModel->getPrescriptionRequestById($requestId);
+        if (!$request) {
+            if (session_status() === PHP_SESSION_NONE) {
+                session_start();
+            }
+            $_SESSION['error'] = 'Prescription request not found.';
+            header('Location: /lab_sync/index.php?controller=appointmentsController&action=prescriptionQueue');
+            exit;
+        }
+
+        $events = $appointmentsModel->getPrescriptionRequestEvents($requestId);
+        include VIEW_PATH . '/receptionist/prescription_request_details.php';
     }
 
     public function storeAppointment($role = '') {
