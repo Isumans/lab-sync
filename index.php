@@ -2,6 +2,24 @@
 require_once __DIR__ . '/app/bootstrap.php'; // <--- keep this
 // require_once __DIR__ . '/config/paths.php'; // <--- remove this line
 
+// Check if user is logged in - redirect to login if not (except for auth actions)
+$controllerName = $_GET['controller'] ?? 'home';
+$action = $_GET['action'] ?? 'index';
+
+// Allow these pages without login
+$allowedWithoutLogin = [
+    'Auth' => ['login', 'index', 'patient_signup', 'logout'],
+    'home' => ['about', 'how'],
+];
+
+$isAllowed = isset($allowedWithoutLogin[$controllerName]) && 
+             in_array($action, $allowedWithoutLogin[$controllerName]);
+
+if (!$isAllowed && !isset($_SESSION['user_id'])) {
+    header('Location: ' . BASE_URL . '/index.php?controller=Auth&action=index&loginRequired=true');
+    exit();
+}
+
 require_once CONTROLLER_PATH . '/TestCatalog_control.php';
 require_once CONTROLLER_PATH . '/authController.php';
 require_once CONTROLLER_PATH . '/administratorController.php';
@@ -13,7 +31,6 @@ require_once CONTROLLER_PATH . '/profileController.php';
 require_once CONTROLLER_PATH . '/blogController.php';
 // require_once 'C:\xampp\htdocs\lab_sync\app\controllers\appointmentsController.php';
 require_once 'C:\xampp\htdocs\lab_sync\config\db.php';
-$controllerName = $_GET['controller'] ?? 'home'; // Default to 'home' controller
 // $controllerName = 'TestCatalog'; 
 // This should be set based 
 // on your routing logic
@@ -99,9 +116,19 @@ elseif ($controllerName === 'appointmentsController') {
     }elseif($action ==='test_catalog'){
         include VIEW_PATH . '/receptionist/test_catalog.php';
     }elseif($action==='createAppointment'){
-        include VIEW_PATH . '/receptionist/create_Appointment.php';
+        $appointmentController->createAppointment();
+    }elseif($action==='prescriptionQueue'){
+        $appointmentController->prescriptionQueue();
+    }elseif($action==='prescriptionDecisionReport'){
+        $appointmentController->prescriptionDecisionReport();
+    }elseif($action==='prescriptionRequestDetails'){
+        $appointmentController->prescriptionRequestDetails();
+    }elseif($action==='processPrescriptionDecision'){
+        $appointmentController->processPrescriptionDecision();
     }elseif($action==='storeAppointment'){
         $appointmentController->storeAppointment($role);
+    }elseif($action==='searchPatients'){
+        $appointmentController->searchPatients();
     }
     // ...other receptionist actions...
 }elseif($controllerName === 'reportsController'){
@@ -156,6 +183,8 @@ elseif ($controllerName === 'appointmentsController') {
     $action = $_GET['action'] ?? 'index'; // or your desired default
     if($action==='index'){
         include VIEW_PATH . '/patient/patientIndex.php';
+    }elseif($action==='appointment_options'){
+    $homeController->appointmentOptions();
     }elseif($action==='explore'){
         $homeController->getTests();
     }elseif($action==='dashboard'){
@@ -172,6 +201,10 @@ elseif ($controllerName === 'appointmentsController') {
         $homeController->bookTest();
 }elseif($action==="bookAppointment"){
         $homeController->bookAppointment();
+}elseif($action==="get_help"){
+    $homeController->getHelp();
+}elseif($action==="submit_prescription_help"){
+    $homeController->submitPrescriptionHelp();
 }elseif($action==="edit_appointment"){
         $homeController->edit_appointment();
 }elseif($action==="about"){
@@ -184,6 +217,8 @@ elseif ($controllerName === 'appointmentsController') {
         $profileController->viewProfile();
     }elseif($action==='update'){
         $profileController->updateProfile();
+    }elseif($action==='changePassword'){
+        $profileController->changePassword();
     }
 }elseif($controllerName==='blog'){
     $blogController = new blogController();

@@ -10,8 +10,25 @@ class ProfileModel {
         $this->db = $db;
     }
 
-    public function getPatientById($id) {
-        $stmt = $this->db->prepare("SELECT * FROM users WHERE user_id = ?");
+    public function getProfileByUserId($id) {
+        $stmt = $this->db->prepare(
+            "SELECT 
+                u.user_id,
+                u.username,
+                u.email AS user_email,
+                u.contact_number AS user_contact,
+                u.role,
+                p.patient_id,
+                p.patient_name,
+                p.email AS patient_email,
+                p.contact_number,
+                p.gender,
+                p.address
+             FROM users u
+             LEFT JOIN patients p ON p.email = u.email
+             WHERE u.user_id = ?
+             LIMIT 1"
+        );
         if (!$stmt) {
             error_log("Prepare failed: " . $this->db->error);
             return null;
@@ -74,5 +91,36 @@ class ProfileModel {
         }
         $stmt->bind_param("sssi", $name, $email, $contact_number, $id);
         return $stmt->execute();
+    }
+
+    public function getUserAuthById($id) {
+        $stmt = $this->db->prepare("SELECT user_id, password FROM users WHERE user_id = ? LIMIT 1");
+        if (!$stmt) {
+            return null;
+        }
+
+        $stmt->bind_param("i", $id);
+        if (!$stmt->execute()) {
+            $stmt->close();
+            return null;
+        }
+
+        $result = $stmt->get_result();
+        $row = $result ? $result->fetch_assoc() : null;
+        $stmt->close();
+
+        return $row ?: null;
+    }
+
+    public function updateUserPassword($id, $hashedPassword) {
+        $stmt = $this->db->prepare("UPDATE users SET password = ? WHERE user_id = ?");
+        if (!$stmt) {
+            return false;
+        }
+
+        $stmt->bind_param("si", $hashedPassword, $id);
+        $ok = $stmt->execute();
+        $stmt->close();
+        return $ok;
     }
 }

@@ -26,13 +26,13 @@ $user_role = $_SESSION['user_role'] ?? null;
       </nav>
 
       <div class="nav-actions">
+        <a href="/lab_sync/index.php?controller=home&action=appointment_options" class="appointment-cta">Test Appointment</a>
         <?php if (isset($user_id) && isset($user_role)): ?>
           <?php if (in_array($user_role, ['admin','receptionist','technician'])): ?>
             <a href="/lab_sync/index.php?controller=dashboard&action=index" class="login">
               <span class="user-role"><?= htmlspecialchars($user_role) ?> panel</span>
             </a>
           <?php endif; ?>
-          <a href="/lab_sync/index.php?controller=Auth&action=logout" class="login">Logout</a>
           <?php if ($user_role === 'patient'): ?>
             <a href="/lab_sync/index.php?controller=profile&action=view">
               <img id="user-icon" class="profile-logo" src="/lab_sync/public/assests/user.png" alt="Profile">

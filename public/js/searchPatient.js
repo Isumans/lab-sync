@@ -1,9 +1,16 @@
 const searchInput = document.getElementById('patient-search');
 const suggestionsBox = document.getElementById('patient-suggestions');
 const searchBy = document.getElementById('patient-search-by');
+const patientIdInput = document.getElementById('patient-id');
+
+if (searchInput && patientIdInput) {
+    searchInput.addEventListener('input', () => {
+        patientIdInput.value = '';
+    });
+}
 
 // Trigger search when typing
-searchInput.addEventListener('input', async () => {
+searchInput?.addEventListener('input', async () => {
     const query = searchInput.value.trim();
     const type = searchBy.value;
 
@@ -40,7 +47,10 @@ searchInput.addEventListener('input', async () => {
 // Handle click on suggestion
 suggestionsBox.addEventListener('click', (e) => {
     if (e.target.classList.contains('suggestion-item')) {
-        searchInput.value = e.target.dataset.name;
+        searchInput.value = `${e.target.dataset.name} (${e.target.dataset.email})`;
+        if (patientIdInput) {
+            patientIdInput.value = e.target.dataset.id || '';
+        }
         suggestionsBox.style.display = 'none';
     }
 });
