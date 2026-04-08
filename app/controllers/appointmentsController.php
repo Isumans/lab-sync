@@ -8,206 +8,62 @@ require_once MODEL_PATH . '/patientModel.php';
 require_once APP_PATH . '/services/EmailService.php';
 require_once 'C:\xampp\htdocs\lab_sync\config\db.php';
 class appointmentsController {
-    public function index() {
+    public function index($role = '') {
+        // Logic to fetch and display appointments can be added here
         $appointmentsModel = new AppointmentModel(connect());
-        $appointmentsOnline = $appointmentsModel->getAllAppointmentsByMethod("online");
-        $appointmentsPhysical = $appointmentsModel->getAllAppointmentsExceptMethod("online");
+        $appointmentsOnline = $appointmentsModel->getAllAppointmentsbyMethod("online");
+        $appointmentsPhysical = $appointmentsModel->getAllAppointmentsbyMethod("physical");
         include VIEW_PATH . '/receptionist/appointments.php';
     }
 
-    public function createAppointment() {
-        $appointmentsModel = new AppointmentModel(connect());
-        $tests = $appointmentsModel->getAllTests();
-
-        $prefillRequestId = (int)($_GET['request_id'] ?? 0);
-        $prefillRequest = null;
-        if ($prefillRequestId > 0) {
-            $prefillRequest = $appointmentsModel->getPrescriptionRequestById($prefillRequestId);
-            if (!$prefillRequest) {
-                if (session_status() === PHP_SESSION_NONE) {
-                    session_start();
-                }
-                $_SESSION['error'] = 'Prescription request not found.';
-                header('Location: /lab_sync/index.php?controller=appointmentsController&action=prescriptionQueue');
-                exit;
-            }
-        }
-
-        include VIEW_PATH . '/receptionist/create_Appointment.php';
-    }
-
-    public function prescriptionQueue() {
-        $appointmentsModel = new AppointmentModel(connect());
-        $statusFilter = trim((string)($_GET['status'] ?? 'pending'));
-
-        if ($statusFilter === 'all') {
-            $requests = $appointmentsModel->getPrescriptionRequests('all');
-        } elseif ($statusFilter === 'processed') {
-            $requests = array_values(array_filter(
-                $appointmentsModel->getPrescriptionRequests('all'),
-                function ($row) {
-                    return strtolower((string)($row['status'] ?? '')) !== 'pending';
-                }
-            ));
-        } else {
-            $statusFilter = 'pending';
-            $requests = $appointmentsModel->getPrescriptionRequests('Pending');
-        }
-
-        include VIEW_PATH . '/receptionist/prescription_queue.php';
-    }
-
-    public function prescriptionDecisionReport() {
-        $appointmentsModel = new AppointmentModel(connect());
-
-        $filters = [
-            'status' => trim((string)($_GET['status'] ?? '')),
-            'decision_action' => trim((string)($_GET['decision_action'] ?? '')),
-            'date_from' => trim((string)($_GET['date_from'] ?? '')),
-            'date_to' => trim((string)($_GET['date_to'] ?? '')),
-            'decision_by_user_id' => (int)($_GET['decision_by_user_id'] ?? 0),
-        ];
-
-        $reportRows = $appointmentsModel->getPrescriptionDecisionReport($filters);
-
-        if (isset($_GET['format']) && strtolower((string)$_GET['format']) === 'csv') {
-            $filename = 'prescription_decisions_' . date('Ymd_His') . '.csv';
-            header('Content-Type: text/csv; charset=utf-8');
-            header('Content-Disposition: attachment; filename=' . $filename);
-
-            $out = fopen('php://output', 'w');
-            if ($out) {
-                fputcsv($out, [
-                    'Request ID',
-                    'Patient',
-                    'Status',
-                    'Decision Action',
-                    'Decision By User ID',
-                    'Decision By Username',
-                    'Linked Appointment ID',
-                    'Decision At',
-                    'Requested At',
-                    'Notes'
-                ]);
-
-                foreach ($reportRows as $row) {
-                    fputcsv($out, [
-                        (int)($row['request_id'] ?? 0),
-                        (string)($row['patient_name'] ?? ('Patient #' . (int)($row['patient_id'] ?? 0))),
-                        (string)($row['status'] ?? ''),
-                        (string)($row['decision_action'] ?? ''),
-                        (int)($row['decision_by_user_id'] ?? 0),
-                        (string)($row['decision_by_username'] ?? ''),
-                        (string)($row['linked_appointment_id'] ?? ''),
-                        (string)($row['decision_at'] ?? ''),
-                        (string)($row['created_at'] ?? ''),
-                        (string)($row['notes'] ?? ''),
-                    ]);
-                }
-
-                fclose($out);
-            }
-
-            exit;
-        }
-
-        $summary = $appointmentsModel->getPrescriptionDecisionSummary();
-        include VIEW_PATH . '/receptionist/prescription_decisions.php';
-    }
-
-    public function prescriptionRequestDetails() {
-        $requestId = (int)($_GET['request_id'] ?? 0);
-        if ($requestId <= 0) {
-            if (session_status() === PHP_SESSION_NONE) {
-                session_start();
-            }
-            $_SESSION['error'] = 'Invalid prescription request id.';
-            header('Location: /lab_sync/index.php?controller=appointmentsController&action=prescriptionQueue');
-            exit;
-        }
-
-        $appointmentsModel = new AppointmentModel(connect());
-        $request = $appointmentsModel->getPrescriptionRequestById($requestId);
-        if (!$request) {
-            if (session_status() === PHP_SESSION_NONE) {
-                session_start();
-            }
-            $_SESSION['error'] = 'Prescription request not found.';
-            header('Location: /lab_sync/index.php?controller=appointmentsController&action=prescriptionQueue');
-            exit;
-        }
-
-        $events = $appointmentsModel->getPrescriptionRequestEvents($requestId);
-        include VIEW_PATH . '/receptionist/prescription_request_details.php';
-    }
-
-    public function storeAppointment() {
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
-
+    public function storeAppointment($role = '') {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $patientId = (int)($_POST['patient_id'] ?? 0);
-            $testId = (int)($_POST['test_id'] ?? 0);
-            $appointmentDate = trim($_POST['appointment_date'] ?? '');
-            $appointmentTime = trim($_POST['appointment_time'] ?? '');
-            $method = trim($_POST['booking_method'] ?? 'Physical');
-            $prescriptionRequestId = (int)($_POST['prescription_request_id'] ?? 0);
-            $homeCollection = !empty($_POST['home_collection']) ? 1 : 0;
-            $collectionAddress = trim($_POST['collection_address'] ?? '');
+            $patientId = isset($_POST['patient_id']) ? intval($_POST['patient_id']) : 0;
+            $appointmentDate = $_POST['appointment_date'] ?? '';
+            $appointmentTime = $_POST['appointment_time'] ?? '';
+            $reason = $_POST['reason'] ?? '';
+            $method = $_POST['method'] ?? 'physical';
+            $selectedTestIds = $this->parseSelectedTestIds($_POST['selected_test_ids'] ?? '');
 
-            if ($patientId <= 0 || $testId <= 0 || $appointmentDate === '' || $appointmentTime === '') {
-                $_SESSION['error'] = 'Please select a patient, test, date and time.';
-                header('Location: /lab_sync/index.php?controller=appointmentsController&action=createAppointment');
-                exit;
+            if ($patientId <= 0) {
+                echo "Error: patient_id is missing or invalid.";
+                return;
             }
 
-            if ($homeCollection && $collectionAddress === '') {
-                $_SESSION['error'] = 'Please provide a collection address for home sample collection.';
-                header('Location: /lab_sync/index.php?controller=appointmentsController&action=createAppointment');
-                exit;
+            if ($appointmentDate === '' || $appointmentTime === '') {
+                echo "Error: appointment_date and appointment_time are required.";
+                return;
+            }
+
+            if (empty($selectedTestIds)) {
+                echo "Error: Please select at least one test.";
+                return;
             }
 
             $conn = connect();
             $model = new AppointmentModel($conn);
-
-            $hasConflict = $model->hasTimeSlotConflict($appointmentDate, $appointmentTime);
-            if ($hasConflict) {
-                $_SESSION['error'] = 'Selected slot is already taken. Please choose a different date or time.';
-                header('Location: /lab_sync/index.php?controller=appointmentsController&action=createAppointment');
-                exit;
-            }
-
-            $success = $model->createReceptionistAppointment($patientId, $testId, $appointmentDate, $appointmentTime, $method, 'Pending', $homeCollection, $collectionAddress);
+            $success = $model->createAppointmentWithTests(
+                $patientId,
+                $appointmentDate,
+                $appointmentTime,
+                $reason,
+                $method,
+                $selectedTestIds
+            );
             if ($success) {
-                $appointmentId = (int)$conn->insert_id;
-
-                if ($prescriptionRequestId > 0) {
-                    $decisionBy = (int)($_SESSION['user_id'] ?? 0);
-                    $model->markPrescriptionRequestBooked($prescriptionRequestId, $appointmentId, $decisionBy);
-                }
-
-                $patientModel = new patientModel($conn);
-                $patient = $patientModel->getPatientById($patientId);
-                if ($patient && !empty($patient['email'])) {
-                    $payload = $model->getAppointmentEmailPayload($appointmentId);
-                    if ($payload) {
-                        $mailer = new EmailService();
-                        $mailer->sendAppointmentBookedEmail(
-                            $patient['email'],
-                            $patient['patient_name'] ?? 'Patient',
-                            $payload
-                        );
-                    }
-                }
-
-                $_SESSION['success'] = 'Appointment created successfully.';
+                // Redirect back to appointments page to show saved appointment
                 header('Location: /lab_sync/index.php?controller=appointmentsController&action=index');
-                exit;
+                exit();
             } else {
-                $_SESSION['error'] = 'Error creating appointment.';
-                header('Location: /lab_sync/index.php?controller=appointmentsController&action=createAppointment');
-                exit;
+                $err = $model->getLastError();
+                echo "Error creating appointment.";
+                if ($err) {
+                    echo " Details: " . htmlspecialchars($err);
+                } elseif ($conn && $conn->error) {
+                    echo " DB error: " . htmlspecialchars($conn->error);
+                } else {
+                    echo " (no DB error available).";
+                }
             }
         }
 
@@ -282,6 +138,24 @@ class appointmentsController {
         $_SESSION['error'] = 'Unknown decision action.';
         header('Location: /lab_sync/index.php?controller=appointmentsController&action=prescriptionQueue');
         exit;
+    private function parseSelectedTestIds($rawValue) {
+        $parts = [];
+        if (is_array($rawValue)) {
+            $parts = $rawValue;
+        } else {
+            $parts = explode(',', (string) $rawValue);
+        }
+        $ids = [];
+
+        foreach ($parts as $part) {
+            $trimmed = trim($part);
+            if ($trimmed === '' || !ctype_digit($trimmed)) {
+                continue;
+            }
+            $ids[] = intval($trimmed);
+        }
+
+        return array_values(array_unique($ids));
     }
 
     public function searchPatients() {
@@ -296,6 +170,342 @@ class appointmentsController {
     $results = $model1->searchPatients($type, $query);
     echo json_encode($results);
 }
+
+public function createAppointment($role) {
+    
+    include VIEW_PATH . '/receptionist/create_appointment.php';
+}
+
+public function filterAppointments() {
+    header('Content-Type: application/json');
+    
+    $filter = $_GET['filter'] ?? 'all';
+    $appointmentsModel = new AppointmentModel(connect());
+    
+    $appointments = [];
+    
+    if ($filter === 'online') {
+        $appointments = $appointmentsModel->getAllAppointmentsbyMethod("online");
+    } elseif ($filter === 'physical') {
+        $appointments = $appointmentsModel->getAllAppointmentsbyMethod("physical");
+    } else { // 'all'
+        $online = $appointmentsModel->getAllAppointmentsbyMethod("online");
+        $physical = $appointmentsModel->getAllAppointmentsbyMethod("physical");
+        $appointments = array_merge($online, $physical);
+    }
+    
+    echo json_encode($appointments);
+}
+
+public function getAppointmentDetails() {
+    header('Content-Type: text/html; charset=UTF-8');
+
+    if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
+        http_response_code(405);
+        echo '<div class="appointment-details-error">Invalid request method.</div>';
+        return;
+    }
+
+    $appointmentId = isset($_GET['appointment_id']) ? intval($_GET['appointment_id']) : 0;
+    if ($appointmentId <= 0) {
+        http_response_code(400);
+        echo '<div class="appointment-details-error">Invalid appointment ID.</div>';
+        return;
+    }
+
+    $model = new AppointmentModel(connect());
+    $payload = $model->getAppointmentDetailsPayload($appointmentId);
+
+    if ($payload === null) {
+        http_response_code(404);
+        echo '<div class="appointment-details-error">Appointment details not found.</div>';
+        return;
+    }
+
+    $appointment = $payload['appointment'];
+    $tests = $payload['tests'];
+    $billing = $payload['billing'];
+    include VIEW_PATH . '/receptionist/get_appointment_details.php';
+}
+
+public function getAppointmentEditData() {
+    header('Content-Type: application/json; charset=UTF-8');
+
+    if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
+        http_response_code(405);
+        echo json_encode([
+            'status' => 'error',
+            'message' => 'Invalid request method.'
+        ]);
+        return;
+    }
+
+    $appointmentId = isset($_GET['appointment_id']) ? intval($_GET['appointment_id']) : 0;
+    if ($appointmentId <= 0) {
+        http_response_code(400);
+        echo json_encode([
+            'status' => 'error',
+            'message' => 'Invalid appointment ID.'
+        ]);
+        return;
+    }
+
+    $model = new AppointmentModel(connect());
+    $payload = $model->getAppointmentEditPayload($appointmentId);
+
+    if ($payload === null) {
+        http_response_code(404);
+        echo json_encode([
+            'status' => 'error',
+            'message' => 'Appointment not found.'
+        ]);
+        return;
+    }
+
+    echo json_encode([
+        'status' => 'success',
+        'data' => $payload
+    ]);
+}
+
+public function searchTests() {
+    header('Content-Type: application/json; charset=UTF-8');
+
+    if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
+        http_response_code(405);
+        echo json_encode([
+            'status' => 'error',
+            'message' => 'Invalid request method.'
+        ]);
+        return;
+    }
+
+    $query = isset($_GET['q']) ? trim((string) $_GET['q']) : '';
+    $model = new AppointmentModel(connect());
+    $tests = $model->searchTestsCatalog($query, 20);
+
+    echo json_encode([
+        'status' => 'success',
+        'data' => $tests
+    ]);
+}
+
+public function updateAppointment() {
+    header('Content-Type: application/json; charset=UTF-8');
+
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        http_response_code(405);
+        echo json_encode([
+            'status' => 'error',
+            'message' => 'Invalid request method.'
+        ]);
+        return;
+    }
+
+    $input = $_POST;
+    if (empty($input)) {
+        $raw = file_get_contents('php://input');
+        $decoded = json_decode($raw, true);
+        if (is_array($decoded)) {
+            $input = $decoded;
+        }
+    }
+
+    $appointmentId = isset($input['appointment_id']) ? intval($input['appointment_id']) : 0;
+    $appointmentDate = isset($input['appointment_date']) ? trim((string) $input['appointment_date']) : '';
+    $appointmentTime = isset($input['appointment_time']) ? trim((string) $input['appointment_time']) : '';
+    $reason = isset($input['reason']) ? trim((string) $input['reason']) : '';
+    $testIds = $this->parseSelectedTestIds($input['tests'] ?? []);
+
+    if ($appointmentId <= 0) {
+        http_response_code(400);
+        echo json_encode([
+            'status' => 'error',
+            'message' => 'Invalid appointment ID.'
+        ]);
+        return;
+    }
+
+    if ($appointmentDate === '' || $appointmentTime === '') {
+        http_response_code(400);
+        echo json_encode([
+            'status' => 'error',
+            'message' => 'Appointment date and time are required.'
+        ]);
+        return;
+    }
+
+    if (empty($testIds)) {
+        http_response_code(400);
+        echo json_encode([
+            'status' => 'error',
+            'message' => 'Please select at least one test.'
+        ]);
+        return;
+    }
+
+    $model = new AppointmentModel(connect());
+    $success = $model->updateAppointmentWithTests(
+        $appointmentId,
+        $appointmentDate,
+        $appointmentTime,
+        $reason,
+        $testIds
+    );
+
+    if (!$success) {
+        $errorMessage = $model->getLastError() ?: 'Failed to update appointment.';
+        $statusCode = 500;
+
+        if (
+            stripos($errorMessage, 'can only be modified') !== false ||
+            stripos($errorMessage, 'required') !== false ||
+            stripos($errorMessage, 'invalid') !== false ||
+            stripos($errorMessage, 'not found') !== false
+        ) {
+            $statusCode = 400;
+        }
+
+        http_response_code($statusCode);
+        echo json_encode([
+            'status' => 'error',
+            'message' => $errorMessage
+        ]);
+        return;
+    }
+
+    echo json_encode([
+        'status' => 'success',
+        'message' => 'Appointment updated successfully.'
+    ]);
+}
+public function deleteAppointment() {
+    header('Content-Type: application/json; charset=UTF-8');
+
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        http_response_code(405);
+        echo json_encode([
+            'status' => 'error',
+            'message' => 'Invalid request method.'
+        ]);
+        return;
+    }
+
+    $input = $_POST;
+    if (empty($input)) {
+        $raw = file_get_contents('php://input');
+        $decoded = json_decode($raw, true);
+        if (is_array($decoded)) {
+            $input = $decoded;
+        }
+    }
+
+    $appointmentId = isset($input['appointment_id']) ? intval($input['appointment_id']) : 0;
+
+    if ($appointmentId <= 0) {
+        http_response_code(400);
+        echo json_encode([
+            'status' => 'error',
+            'message' => 'Invalid appointment ID.'
+        ]);
+        return;
+    }
+
+    $actorUserId = isset($_SESSION['user_id']) ? intval($_SESSION['user_id']) : null;
+
+    $model = new AppointmentModel(connect());
+    $success = $model->deleteAppointment($appointmentId, $actorUserId);
+
+    if (!$success) {
+        $errorMessage = $model->getLastError() ?: 'Failed to delete appointment.';
+        $statusCode = 500;
+
+        if (
+            stripos($errorMessage, 'can only be modified') !== false ||
+            stripos($errorMessage, 'not found') !== false ||
+            stripos($errorMessage, 'already deleted') !== false ||
+            stripos($errorMessage, 'authenticated user') !== false
+        ) {
+            $statusCode = 400;
+        }
+
+        http_response_code($statusCode);
+        echo json_encode([
+            'status' => 'error',
+            'message' => $errorMessage
+        ]);
+        return;
+    }
+
+    echo json_encode([
+        'status' => 'success',
+        'message' => 'Appointment deleted successfully.'
+    ]);
+}
+
+public function updateTestStatus() {
+    header('Content-Type: application/json; charset=UTF-8');
+
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        http_response_code(405);
+        echo json_encode([
+            'status' => 'error',
+            'message' => 'Invalid request method.'
+        ]);
+        return;
+    }
+
+    $input = $_POST;
+    if (empty($input)) {
+        $raw = file_get_contents('php://input');
+        $decoded = json_decode($raw, true);
+        if (is_array($decoded)) {
+            $input = $decoded;
+        }
+    }
+
+    $appointmentId = isset($input['appointment_id']) ? intval($input['appointment_id']) : 0;
+    $testId = isset($input['test_id']) ? intval($input['test_id']) : 0;
+    $actorUserId = isset($_SESSION['user_id']) ? intval($_SESSION['user_id']) : null;
+
+    if ($appointmentId <= 0 || $testId <= 0) {
+        http_response_code(400);
+        echo json_encode([
+            'status' => 'error',
+            'message' => 'Invalid appointment_id or test_id.'
+        ]);
+        return;
+    }
+
+    $model = new AppointmentModel(connect());
+    $result = $model->startTestInProgress($appointmentId, $testId, $actorUserId);
+    if ($result === false) {
+        $errorMessage = $model->getLastError() ?: 'Failed to update test status.';
+        $statusCode = 500;
+
+        if (
+            stripos($errorMessage, 'invalid') !== false ||
+            stripos($errorMessage, 'pending') !== false ||
+            stripos($errorMessage, 'not found') !== false
+        ) {
+            $statusCode = 400;
+        }
+
+        http_response_code($statusCode);
+        echo json_encode([
+            'status' => 'error',
+            'message' => $errorMessage
+        ]);
+        return;
+    }
+
+    echo json_encode([
+        'status' => 'success',
+        'message' => 'Test status updated to IN_PROGRESS.',
+        'data' => $result
+    ]);
+}
+
 
 }
 

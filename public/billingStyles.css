@@ -1,26 +1,237 @@
-:root {
-    --primary-color: #3DBDEC;
-    --secondary-color: #ffffff;
-    --font-color: #000000;
-    --background-color: #F5F6FA;
-    --boder:#4F7A96;
+.billing-wrapper {
+    padding: 30px;
+    background: white;
 }
 
-.billingArea{
-    margin-top: 20px;
+.billing-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
 }
-.payment-status{
-    border: none;
-    padding: 5px;
-    border-radius: 10px;
-    background-color: var(--primary-color);
-    font-weight: bold;
+
+.billing-top h1 {
+    font-size: 26px;
+    margin: 0 0 5px 0;
+    color: #2c3e50;
 }
-.view-button{
-    background-color: var(--primary-color);
-    color: var(--secondary-color);
+
+.breadcrumb {
+    color: #999;
+    font-size: 14px;
+    margin: 0;
+}
+
+.create-btn {
+    background: #3DBDEC;
+    color: white;
     border: none;
-    padding: 8px 12px;
-    border-radius: 5px;
+    padding: 12px 24px;
+    border-radius: 8px;
     cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.create-btn:hover {
+    background: #0394c9;
+}
+
+.filters {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 25px;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 10px;
+}
+
+.filter-input {
+    flex: 1;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 14px;
+}
+
+.billing-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.billing-table thead {
+    background-color: #f9fafb;
+    border-bottom: 2px solid #e5e7eb;
+}
+
+.billing-table th {
+    padding: 12px 20px;
+    text-align: left;
+    font-size: 12px;
+    font-weight: 600;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.billing-table tbody tr {
+    border-bottom: 1px solid #f3f4f6;
+    transition: background-color 0.2s ease;
+}
+
+.billing-table tbody tr:hover {
+    background-color: #f9fafb;
+}
+
+.billing-table tbody tr:last-child {
+    border-bottom: none;
+}
+
+.billing-table th,
+.billing-table td {
+    padding: 16px 20px;
+    vertical-align: middle;
+}
+
+/* ensure patient info stacks are vertically centered inside the cell */
+.patient-info-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    justify-content: center;
+}
+
+/* Bill ID Cell */
+.bill-id-cell {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.bill-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #17a2b8, #22b8d1);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 14px;
+    flex-shrink: 0;
+}
+
+.bill-number {
+    font-weight: 600;
+    color: #1f2937;
+    font-size: 14px;
+}
+
+/* Patient Info Cell */
+.patient-info-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    justify-content: center;
+    align-items: flex-start;
+}
+
+.patient-name {
+    font-weight: 600;
+    color: #1f2937;
+    font-size: 14px;
+}
+
+.patient-email {
+    color: #6b7280;
+    font-size: 13px;
+}
+
+/* Table Data */
+.bill-date,
+.bill-amount {
+    color: #374151;
+    font-size: 14px;
+    text-align: center;
+}
+
+/* Status Badge */
+.bill-status {
+    text-align: center;
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    min-width: 65px;
+    text-align: center;
+}
+
+.status-paid {
+    background-color: #d1fae5;
+    color: #065f46;
+}
+
+.status-pending {
+    background-color: #fed7aa;
+    color: #92400e;
+}
+
+/* Actions */
+.bill-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    justify-content: center;
+}
+
+.action-btn-edit,
+.action-btn-delete {
+    width: 36px;
+    height: 36px;
+    border: none;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.action-btn-edit {
+    background-color: #17a2b8;
+    color: white;
+}
+
+.action-btn-edit:hover {
+    background-color: #0f8fa5;
+    transform: translateY(-2px);
+    box-shadow: 0 2px 8px rgba(23, 162, 184, 0.3);
+}
+
+.action-btn-delete {
+    background-color: #fecaca;
+    color: #991b1b;
+}
+
+.action-btn-delete:hover {
+    background-color: #fca5a5;
+    transform: translateY(-2px);
+    box-shadow: 0 2px 8px rgba(252, 165, 165, 0.3);
+}
+
+.action-btn-edit svg,
+.action-btn-delete svg {
+    width: 16px;
+    height: 16px;
 }

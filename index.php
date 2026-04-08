@@ -29,6 +29,8 @@ require_once CONTROLLER_PATH . '/homeController.php';
 require_once CONTROLLER_PATH . '/inventoryController.php';
 require_once CONTROLLER_PATH . '/profileController.php';
 require_once CONTROLLER_PATH . '/blogController.php';
+require_once CONTROLLER_PATH . '/partnerLabController.php';
+require_once CONTROLLER_PATH . '/supplierController.php';
 // require_once 'C:\xampp\htdocs\lab_sync\app\controllers\appointmentsController.php';
 require_once 'C:\xampp\htdocs\lab_sync\config\db.php';
 // $controllerName = 'TestCatalog'; 
@@ -49,6 +51,10 @@ if ($controllerName === 'TestCatalog') {
     $role= $_GET['role'] ?? '';
     if ($action === 'index') {
         $Testcontroller->index($role);
+    } elseif ($action === 'getTestsForAppointment') {
+        $Testcontroller->getTestsForAppointment();
+    } elseif ($action === 'getLatestTestsForAppointment') {
+        $Testcontroller->getLatestTestsForAppointment();
     } elseif ($action === 'add_test') {
         $Testcontroller->add_test($role);
     } elseif ($action === 'store') {
@@ -105,16 +111,29 @@ if ($controllerName === 'TestCatalog') {
         // $password = $_POST['password'];
         // $role = $_POST['role'];
         $adminController->manageUser($role);
+    }elseif($action==='usersByRole'){
+        $adminController->usersByRole($role);
+    }elseif($action==='getLabConfigurationSection'){
+        $adminController->getLabConfigurationSection();
+    }elseif($action==='getGeneralSettingsSection'){
+        $adminController->getGeneralSettingsSection();
+    }elseif($action==='saveLabConfiguration'){
+        $adminController->saveLabConfiguration();
+    }elseif($action==='saveGeneralSettings'){
+        $adminController->saveGeneralSettings();
     }
 }
 elseif ($controllerName === 'appointmentsController') {
     $appointmentController = new appointmentsController();
-    $action = $_GET['action'] ?? 'index'; // or your desired default
+    $action = $_GET['action'] ?? 'index';
     $role = $_GET['role'] ?? '';
     if ($action === 'index') {
         $appointmentController->index($role);
-    }elseif($action ==='test_catalog'){
+    } elseif ($action === 'test_catalog') {
         include VIEW_PATH . '/receptionist/test_catalog.php';
+    } elseif ($action === 'createAppointment') {
+        $appointmentController->createAppointment($role);
+    } elseif ($action === 'storeAppointment') {
     }elseif($action==='createAppointment'){
         $appointmentController->createAppointment();
     }elseif($action==='prescriptionQueue'){
@@ -129,8 +148,23 @@ elseif ($controllerName === 'appointmentsController') {
         $appointmentController->storeAppointment($role);
     }elseif($action==='searchPatients'){
         $appointmentController->searchPatients();
+    } elseif ($action === 'searchPatients') {
+        $appointmentController->searchPatients();
+    } elseif ($action === 'filterAppointments') {
+        $appointmentController->filterAppointments();
+    } elseif ($action === 'getAppointmentDetails') {
+        $appointmentController->getAppointmentDetails();
+    } elseif ($action === 'getAppointmentEditData') {
+        $appointmentController->getAppointmentEditData();
+    } elseif ($action === 'searchTests') {
+        $appointmentController->searchTests();
+    } elseif ($action === 'updateAppointment') {
+        $appointmentController->updateAppointment();
+    } elseif ($action === 'updateTestStatus') {
+        $appointmentController->updateTestStatus();
+    }elseif ($action === 'deleteAppointment') {
+        $appointmentController->deleteAppointment();
     }
-    // ...other receptionist actions...
 }elseif($controllerName === 'reportsController'){
     $action = $_GET['action'] ?? 'index'; // or your desired default
     if ($action === 'index') {
@@ -138,17 +172,30 @@ elseif ($controllerName === 'appointmentsController') {
 
 }
 }elseif($controllerName === 'supplierController'){
-    $action = $_GET['action'] ?? 'index'; // or your desired default
-    if($action ==='index'){
-        include VIEW_PATH . '/administrator/suppliers.php';
-    }elseif($action==="Register_supplier"){
-        include VIEW_PATH . '/administrator/regSupplier.php';
+    $supplierController = new supplierController();
+    $action = $_GET['action'] ?? 'index';
+    $role = $_GET['role'] ?? '';
+
+    if($action === 'index'){
+        $supplierController->index($role);
+    }elseif($action === 'Register_supplier' || $action === 'register'){
+        $supplierController->register($role);
+    }elseif($action === 'store'){
+        $supplierController->store($role);
+    }elseif($action === 'update'){
+        $supplierController->update($role);
+    }elseif($action === 'delete'){
+        $supplierController->delete($role);
+    }else{
+        echo "404 Not Found";
     }
 }elseif($controllerName === 'billingController'){
     $action = $_GET['action'] ?? 'index'; // or your desired default
     if($action ==='index'){
         include VIEW_PATH . '/receptionist/billing.php';
     }elseif($action ==='Register_billing'){
+        include VIEW_PATH . '/receptionist/createBill.php';
+    }elseif($action ==='create_bill'){
         include VIEW_PATH . '/receptionist/createBill.php';
     }
 }elseif($controllerName === 'inventoryController'){
@@ -158,7 +205,7 @@ elseif ($controllerName === 'appointmentsController') {
     if($action ==='index'){
         $inventoryController->index($role);
     }elseif($action ==='add_inventory'){
-        include VIEW_PATH . '/technicians/addInventory.php';
+        $inventoryController->add_inventory();
     }elseif($action ==='store'){
         $inventoryController->store();
         // Logic to store inventory item
@@ -246,8 +293,21 @@ elseif ($controllerName === 'appointmentsController') {
     }elseif($action==='archive'){
         $blogController->archive($role);
     }
-}
-else {
+}elseif($controllerName==='partnerLabController'){
+    $partnerLabController = new partnerLabController();
+    $action = $_GET['action'] ?? 'index'; 
+    $role = $_GET['role'] ?? '';
+    // $partnerLabController = new partnerLabController();
+    if($action === 'index'){
+        $partnerLabController->index();
+    }elseif($action === 'RegisterLab'){
+        $partnerLabController->index($role);
+    }elseif($action === 'storeLab'){
+        $partnerLabController->storeLab();
+    }elseif($action === 'getPartnerLabsSection'){
+        $partnerLabController->getPartnerLabsSection();
+    }
+}else {
         echo "404 Not Found";
     }
 

@@ -9,6 +9,36 @@
     margin-top: 10px;
     width: fit-content;
 }
+
+.billing-action-btn {
+    display: inline-block !important;
+    padding: 6px 12px !important;
+    border-radius: 4px !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    min-width: 100px !important;
+    text-align: center !important;
+    background-color: #dbeafe !important;
+    color: #1e40af !important;
+    border: none !important;
+    cursor: pointer !important;
+    transition: background-color 0.3s ease !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    appearance: none !important;
+    box-shadow: none !important;
+    outline: none !important;
+}
+
+.billing-action-btn:hover {
+    background-color: #bfdbfe !important;
+}
+
+.billing-action-btn:focus {
+    outline: none !important;
+    box-shadow: none !important;
+}
+
 .suggestion-box {
       border: 1px solid #ccc;
       background: #fff;

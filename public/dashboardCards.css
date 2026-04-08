@@ -1,0 +1,150 @@
+
+
+h1 {
+    margin: 0 0 8px 0;
+    font-size: 2rem;
+    font-weight: 700;
+}
+
+h3 {
+    margin: 0 0 16px 0;
+    font-size: 1rem;
+    font-weight: 500;
+}
+
+.metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 24px;
+    margin-bottom: 32px;
+}
+
+.metric-card {
+    background: var(--secondary-color);
+    border-radius: 15px;
+    padding: 24px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    transition: all 0.3s ease;
+}
+
+.metric-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+    transform: translateY(-4px);
+}
+
+.metric-icon {
+    font-size: 32px;
+    min-width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.metric-icon.user-icon {
+    background-color: rgba(155, 89, 182, 0.1);
+}
+
+.metric-icon.order-icon {
+    background-color: rgba(241, 196, 15, 0.1);
+}
+
+.metric-icon.sales-icon {
+    background-color: rgba(46, 213, 115, 0.1);
+}
+
+.metric-icon.pending-icon {
+    background-color: rgba(230, 126, 34, 0.1);
+}
+
+.metric-content h3 {
+    font-size: 0.9rem;
+    color: #7c8ba3;
+    font-weight: 500;
+    margin: 0 0 8px 0;
+    text-transform: none;
+}
+
+.metric-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin: 0 0 8px 0;
+    color: var(--font-color);
+}
+
+.metric-change {
+    font-size: 0.85rem;
+    font-weight: 500;
+    display: block;
+}
+
+.metric-change.up {
+    color: #2ed573;
+}
+
+.metric-change.down {
+    color: #ff4757;
+}
+
+/* Sales Section Styling */
+.sales-section {
+    background: var(--secondary-color);
+    border-radius: 15px;
+    padding: 24px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.section-header h2 {
+    margin: 0;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--font-color);
+}
+
+.month-selector {
+    padding: 8px 16px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    background: var(--background-color);
+    color: var(--font-color);
+    cursor: pointer;
+    font-size: 0.9rem;
+}
+
+.month-selector:hover {
+    border-color: var(--primary-color);
+}
+
+.chart-container {
+    position: relative;
+    height: 350px;
+    margin-top: 16px;
+}
+
+/* Responsive Design */
+@media (max-width: 1400px) {
+    .metrics-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .metrics-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .metric-card {
+        flex-direction: row;
+    }
+}
