@@ -1,9 +1,21 @@
 <?php
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 if (!isset($_SESSION['user_id'])) {
     header('Location: /lab_sync/index.php?controller=Auth&action=index');
     exit();
 }
+
+$appointmentsOnline = $appointmentsOnline ?? [];
+$appointmentsPhysical = $appointmentsPhysical ?? [];
+$allAppointments = array_merge($appointmentsOnline, $appointmentsPhysical);
+usort($allAppointments, function ($left, $right) {
+    $leftTs = strtotime(($left['appointment_date'] ?? '') . ' ' . ($left['appointment_time'] ?? '')) ?: 0;
+    $rightTs = strtotime(($right['appointment_date'] ?? '') . ' ' . ($right['appointment_time'] ?? '')) ?: 0;
+    return $rightTs <=> $leftTs;
+});
+$role = $role ?? '';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -308,7 +320,6 @@ if (!isset($_SESSION['user_id'])) {
                 </section>
             </main>
             <script src="/lab_sync/public/js/appointmentPopup.js"></script>
-            <script src="/lab_sync/public/js/appointmentFilter.js"></script>
             <script src="/lab_sync/public/js/addTest.js"></script>
             <script src="/lab_sync/public/js/searchPatient.js"></script>
             <script src="/lab_sync/public/js/appointmentForm.js"></script>

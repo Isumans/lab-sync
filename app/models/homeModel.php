@@ -294,9 +294,8 @@ class HomeModel {
 
     public function getPatientContactByUserId($userId) {
         $stmt = $this->db->prepare(
-            "SELECT p.patient_id, p.patient_name, p.email FROM patients p JOIN users u ON p.email = u.email WHERE u.user_id = ? LIMIT 1"
+            "SELECT p.patient_id, p.patient_name, p.email, p.contact_number FROM patients p JOIN users u ON p.email = u.email WHERE u.user_id = ? LIMIT 1"
         );
-
         if (!$stmt) {
             $this->setLastError('Prepare failed: ' . $this->db->error);
             return null;
@@ -663,6 +662,60 @@ class HomeModel {
         }
 
         return true;
+    }
+
+    private function insertAppointmentHeader($patientId, $appointmentTime, $appointmentDate, $method, $reason) {
+        $sqlWithReason = "INSERT INTO appointment (patient_id, appointment_time, appointment_date, method, reason) VALUES (?, ?, ?, ?, ?)";
+        $stmt = $this->db->prepare($sqlWithReason);
+        if ($stmt) {
+            $stmt->bind_param('issss', $patientId, $appointmentTime, $appointmentDate, $method, $reason);
+            if ($stmt->execute()) {
+                return intval($this->db->insert_id);
+            }
+        }
+
+        $sqlNoReason = "INSERT INTO appointment (patient_id, appointment_time, appointment_date, method) VALUES (?, ?, ?, ?)";
+        $stmtNoReason = $this->db->prepare($sqlNoReason);
+        if (!$stmtNoReason) {
+            error_log('Prepare failed in insertAppointmentHeader: ' . $this->db->error);
+            return 0;
+        }
+
+        $stmtNoReason->bind_param('isss', $patientId, $appointmentTime, $appointmentDate, $method);
+        if (!$stmtNoReason->execute()) {
+            error_log('Execute failed in insertAppointmentHeader: ' . $stmtNoReason->error);
+            return 0;
+        }
+
+        return intval($this->db->insert_id);
+    }
+
+    private function appointmentTestsTableExists() {
+        $result = $this->db->query("SHOW TABLES LIKE 'appointment_tests'");
+        return $result && $result->num_rows > 0;
+    }
+
+    private function normalizeTestIds($testIds) {
+        if (!is_array($testIds)) {
+            $testIds = [$testIds];
+        }
+
+        $cleanIds = [];
+        foreach ($testIds as $id) {
+            if (is_string($id)) {
+                $id = trim($id);
+                if ($id !== '' && ctype_digit($id)) {
+                    $cleanIds[] = intval($id);
+                }
+                continue;
+            }
+
+            if (is_int($id) && $id > 0) {
+                $cleanIds[] = $id;
+            }
+        }
+
+        return array_values(array_unique($cleanIds));
     }
 }
 

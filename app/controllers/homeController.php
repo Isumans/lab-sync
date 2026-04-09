@@ -5,6 +5,7 @@ if (!defined('ROOT_PATH')) {
 
 require_once MODEL_PATH . '/homeModel.php';
 require_once APP_PATH . '/services/EmailService.php';
+require_once APP_PATH . '/services/SmsService.php';
 require_once 'C:\xampp\htdocs\lab_sync\config\db.php';
 
 class HomeController {
@@ -270,15 +271,26 @@ class HomeController {
 
         if ($result) {
             $contact = $this->model->getPatientContactByUserId($_SESSION['user_id']);
-            if ($contact && !empty($contact['email'])) {
+            if ($contact) {
                 $payload = $this->model->getAppointmentEmailPayload((int)$result);
                 if ($payload) {
-                    $mailer = new EmailService();
-                    $mailer->sendAppointmentBookedEmail(
-                        $contact['email'],
-                        $contact['patient_name'] ?? 'Patient',
-                        $payload
-                    );
+                    if (!empty($contact['email'])) {
+                        $mailer = new EmailService();
+                        $mailer->sendAppointmentBookedEmail(
+                            $contact['email'],
+                            $contact['patient_name'] ?? 'Patient',
+                            $payload
+                        );
+                    }
+
+                    if (!empty($contact['contact_number'])) {
+                        $smsService = new SmsService();
+                        $smsService->sendAppointmentBookedSms(
+                            $contact['contact_number'],
+                            $contact['patient_name'] ?? 'Patient',
+                            $payload
+                        );
+                    }
                 }
             }
 
