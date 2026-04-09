@@ -4,9 +4,6 @@
     var cancelBtn = document.getElementById('cancelSupplierEdit');
     var editForm = document.getElementById('editSupplierForm');
     var editButtons = document.querySelectorAll('.edit-supplier-btn');
-    var deleteButtons = document.querySelectorAll('.action-btn-delete');
-    var deleteForm = document.getElementById('deleteSupplierForm');
-    var deleteSupplierIdInput = document.getElementById('delete_supplier_id');
 
     if (!modal || !editForm || !editButtons.length) {
         return;
@@ -156,29 +153,6 @@
         });
     }
 
-    deleteButtons.forEach(function (btn) {
-        btn.addEventListener('click', function () {
-            if (!deleteForm || !deleteSupplierIdInput) {
-                return;
-            }
-
-            var supplierName = btn.getAttribute('data-supplier-name') || 'this supplier';
-            var supplierId = btn.getAttribute('data-supplier-id') || '';
-
-            if (!supplierId) {
-                return;
-            }
-
-            var shouldDelete = window.confirm('Delete ' + supplierName + '?');
-            if (!shouldDelete) {
-                return;
-            }
-
-            deleteSupplierIdInput.value = supplierId;
-            deleteForm.submit();
-        });
-    });
-
     if (closeBtn) {
         closeBtn.addEventListener('click', closeModal);
     }
@@ -189,6 +163,12 @@
 
     modal.addEventListener('click', function (event) {
         if (event.target === modal) {
+            closeModal();
+        }
+    });
+
+    document.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape' && modal.classList.contains('show')) {
             closeModal();
         }
     });

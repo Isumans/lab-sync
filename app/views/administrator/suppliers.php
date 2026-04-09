@@ -14,6 +14,9 @@ if (!isset($_SESSION['user_id'])) {
     <link rel="stylesheet" href="/lab_sync/public/settingStyles.css">
     <link rel="stylesheet" href="/lab_sync/public/teamStyles.css">
     <link rel="stylesheet" href="/lab_sync/public/suppliers.css">
+    <link rel="stylesheet" href="/lab_sync/public/supplierEditModal.css">
+    <link rel="stylesheet" href="/lab_sync/public/supplierDeleteModal.css">
+    <link rel="stylesheet" href="/lab_sync/public/supplierViewModal.css">
 </head>
     <body>
         <?php
@@ -101,12 +104,12 @@ if (!isset($_SESSION['user_id'])) {
                         <table class="team-users-table" aria-label="All suppliers table">
                             <thead>
                                 <tr>
-                                    <th style="width: 8%;">SUPPLIER ID</th>
-                                    <th style="width: 22%;">NAME</th>
-                                    <th style="width: 18%;">EMAIL</th>
-                                    <th style="width: 14%;">CONTACT NUMBER</th>
-                                    <th style="width: 23%;">SUPPLYING ITEMS</th>
-                                    <th style="width: 15%; text-align: center;">ACTIONS</th>
+                                    <th class="supplier-col-id">SUPPLIER ID</th>
+                                    <th class="supplier-col-name">NAME</th>
+                                    <th class="supplier-col-email">EMAIL</th>
+                                    <th class="supplier-col-contact">CONTACT NUMBER</th>
+                                    <th class="supplier-col-items">SUPPLYING ITEMS</th>
+                                    <th class="supplier-col-actions">ACTIONS</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -140,7 +143,21 @@ if (!isset($_SESSION['user_id'])) {
                                             <td><?php echo htmlspecialchars($email); ?></td>
                                             <td><?php echo htmlspecialchars($contact); ?></td>
                                             <td><?php echo htmlspecialchars($supplierItems !== '' ? $supplierItems : 'No items listed'); ?></td>
-                                            <td class="user-actions" style="justify-content:center;">
+                                            <td class="user-actions supplier-actions-cell">
+                                                <button
+                                                    type="button"
+                                                    class="action-btn-view"
+                                                    title="View"
+                                                    aria-label="View supplier"
+                                                    data-supplier-id="<?php echo $supplierId; ?>"
+                                                    data-supplier-name="<?php echo htmlspecialchars($name, ENT_QUOTES); ?>"
+                                                    data-supplier-items="<?php echo htmlspecialchars($supplierItems, ENT_QUOTES); ?>"
+                                                >
+                                                    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                                        <path d="M1.5 12s3.8-6 10.5-6 10.5 6 10.5 6-3.8 6-10.5 6S1.5 12 1.5 12z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                                        <circle cx="12" cy="12" r="3.2" stroke="currentColor" stroke-width="2"/>
+                                                    </svg>
+                                                </button>
                                                 <button
                                                     type="button"
                                                     class="action-btn-edit edit-supplier-btn"
@@ -151,7 +168,10 @@ if (!isset($_SESSION['user_id'])) {
                                                     data-supplier-contact="<?php echo htmlspecialchars($contact, ENT_QUOTES); ?>"
                                                     data-supplier-items="<?php echo htmlspecialchars($supplierItems, ENT_QUOTES); ?>"
                                                 >
-                                                    <img src="/lab_sync/public/assests/edit.png" alt="Edit">
+                                                    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                                        <path d="M12 20h9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                                        <path d="M16.5 3.5a2.1 2.1 0 113 3L7 19l-4 1 1-4 12.5-12.5z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                                    </svg>
                                                 </button>
                                                 <button
                                                     type="button"
@@ -160,81 +180,38 @@ if (!isset($_SESSION['user_id'])) {
                                                     data-supplier-id="<?php echo $supplierId; ?>"
                                                     data-supplier-name="<?php echo htmlspecialchars($name, ENT_QUOTES); ?>"
                                                 >
-                                                    <img src="/lab_sync/public/assests/delete.png" alt="Delete">
+                                                    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                                        <path d="M3 6h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                                        <path d="M8 6V4h8v2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                                        <path d="M19 6l-1 14H6L5 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                                        <path d="M10 11v6M14 11v6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                                    </svg>
                                                 </button>
                                             </td>
                                         </tr>
                                     <?php endforeach; ?>
                                 <?php else: ?>
                                     <tr>
-                                        <td colspan="6" style="text-align:center;">No suppliers available. Add your first supplier.</td>
+                                        <td colspan="6" class="supplier-empty-row">No suppliers available. Add your first supplier.</td>
                                     </tr>
                                 <?php endif; ?>
                             </tbody>
                         </table>
                     </div>
 
-                    <div id="editSupplierModal" class="supplier-modal-overlay" aria-hidden="true">
-                        <div class="supplier-modal" role="dialog" aria-modal="true" aria-labelledby="editSupplierTitle">
-                            <div class="supplier-modal-header">
-                                <h3 id="editSupplierTitle">Edit Supplier</h3>
-                                <button type="button" id="closeSupplierModal" class="supplier-modal-close" aria-label="Close">&times;</button>
-                            </div>
+                    <?php require 'C:\xampp\htdocs\lab_sync\app\views\administrator\supplier_edit_modal.php'; ?>
 
-                            <form id="editSupplierForm" class="supplier-modal-form" method="POST" action="/lab_sync/index.php?controller=supplierController&action=update<?php echo $roleParam; ?>">
-                                <div class="supplier-modal-field">
-                                    <label for="edit_supplier_id">Supplier ID</label>
-                                    <input id="edit_supplier_id" name="edit_supplier_id" type="text" readonly>
-                                </div>
+                    <?php require 'C:\xampp\htdocs\lab_sync\app\views\administrator\supplier_delete_modal.php'; ?>
 
-                                <div class="supplier-modal-field">
-                                    <label for="edit_supplier_name">Name</label>
-                                    <input id="edit_supplier_name" name="edit_supplier_name" type="text" required>
-                                </div>
-
-                                <div class="supplier-modal-field">
-                                    <label for="edit_supplier_email">Email</label>
-                                    <input id="edit_supplier_email" name="edit_supplier_email" type="email" required>
-                                </div>
-
-                                <div class="supplier-modal-field">
-                                    <label for="edit_supplier_contact">Contact Number</label>
-                                    <input id="edit_supplier_contact" name="edit_supplier_contact" type="text" required>
-                                </div>
-
-                                <div class="supplier-modal-field">
-                                    <label for="edit_supplier_items">Supplying Items</label>
-                                    <textarea id="edit_supplier_items" name="edit_supplier_items" rows="3" required></textarea>
-                                </div>
-
-                                <div class="supplier-modal-field">
-                                    <label for="edit_supplier_item_search">Add New Item</label>
-                                    <input
-                                        id="edit_supplier_item_search"
-                                        type="text"
-                                        placeholder="Add new item..."
-                                        autocomplete="off"
-                                    >
-                                    <div id="edit_supplier_item_results" class="supplier-item-results" role="listbox" aria-label="Edit supplier item results"></div>
-                                </div>
-
-                                <div class="supplier-modal-actions">
-                                    <button type="button" id="cancelSupplierEdit" class="supplier-modal-cancel">Cancel</button>
-                                    <button type="submit" class="supplier-modal-save">Save Changes</button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-
-                    <form id="deleteSupplierForm" method="POST" action="/lab_sync/index.php?controller=supplierController&action=delete<?php echo $roleParam; ?>" style="display:none;">
-                        <input type="hidden" id="delete_supplier_id" name="supplier_id" value="">
-                    </form>
+                    <?php require 'C:\xampp\htdocs\lab_sync\app\views\administrator\supplier_view_modal.php'; ?>
                 </section>
             </main>
 
         </div>
         <script src="/lab_sync/public/js/showSection.js"></script>
+        <script src="/lab_sync/public/js/suppliersViewModal.js"></script>
         <script src="/lab_sync/public/js/suppliersEditModal.js"></script>
+        <script src="/lab_sync/public/js/suppliersDeleteModal.js"></script>
     </body>
 
 
