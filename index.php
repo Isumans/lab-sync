@@ -180,6 +180,20 @@ elseif ($controllerName === 'appointmentsController') {
         // Logic to store inventory item
     }elseif($action ==='edit_item'){
         $inventoryController->edit_item();
+    }elseif($action ==='soft_delete_item'){
+        $inventoryController->soft_delete_item();
+    }elseif($action ==='add_category'){
+        $inventoryController->add_category();
+    }elseif($action ==='edit_category'){
+        $inventoryController->edit_category();
+    }elseif($action ==='soft_delete_category'){
+        $inventoryController->soft_delete_category();
+    }elseif($action ==='add_item_to_category'){
+        $inventoryController->add_item_to_category();
+    }elseif($action ==='soft_delete_purchase'){
+        $inventoryController->soft_delete_purchase();
+    }elseif($action ==='get_item_name'){
+        $inventoryController->get_item_name();
     }
 }elseif($controllerName==='patientController'){
     $patientsController = new patientController();

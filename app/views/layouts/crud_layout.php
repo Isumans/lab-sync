@@ -9,6 +9,7 @@ if (!isset($_SESSION['user_id'])) {
 <!DOCTYPE html>
 <html>
 <head>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
     <title><?php echo $pageTitle ?? 'LabSync'; ?></title>
     <link rel="stylesheet" href="/lab_sync/public/styles.css">
     <link rel="stylesheet" href="/lab_sync/public/table.css">
@@ -16,7 +17,7 @@ if (!isset($_SESSION['user_id'])) {
 </head>
 <body>
     <?php require PUBLIC_PATH . '/navbar.php'; ?>
-    <div class="container">
+    <div class="page-wrapper">
         <?php require PUBLIC_PATH . '/sidebar.php'; ?>
         <main class="main-content">
             <?php echo $content ?? ''; ?>
@@ -24,3 +25,4 @@ if (!isset($_SESSION['user_id'])) {
     </div>
 </body>
 </html>
+

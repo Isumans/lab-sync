@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 session_start();
 if (!isset($_SESSION['user_id'])) {
     header('Location: /lab_sync/index.php?controller=Auth&action=index');
@@ -8,6 +8,7 @@ if (!isset($_SESSION['user_id'])) {
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Create Appointment</title>
@@ -21,7 +22,7 @@ if (!isset($_SESSION['user_id'])) {
 </head>
 <body>
     <?php require 'C:\xampp\htdocs\lab_sync\public\navbar.php'; ?>
-    <div class="container">
+    <div class="page-wrapper">
         <?php require 'C:\xampp\htdocs\lab_sync\public\sidebar.php'; ?>
 
         <main class="main-content">
@@ -45,3 +46,4 @@ if (!isset($_SESSION['user_id'])) {
     <script src="/lab_sync/public/js/searchPatient.js"></script>
 </body>
 </html>
+

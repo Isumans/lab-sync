@@ -18,9 +18,10 @@ class inventoryController {
         }
     }
     public function index() {
-        $inventoryModel = new inventoryModel();
+        $inventoryModel = new inventoryModel($this->db);
         $items = $inventoryModel->getAllItems();
         $stockHistory = $inventoryModel->getStockHistoryDetails();
+        $stockPurchases = $inventoryModel->getAllPurchases();
         $categories = $inventoryModel->getAllCategories();
         $stats = $inventoryModel->getDashboardStats();
         
@@ -34,7 +35,7 @@ class inventoryController {
     }
 
     public function add_inventory() {
-        $inventoryModel = new inventoryModel();
+        $inventoryModel = new inventoryModel($this->db);
         $categories = $inventoryModel->getAllCategories();
         $suppliers = $inventoryModel->getAllSuppliers();
         $errors = isset($_SESSION['form_errors']) ? $_SESSION['form_errors'] : [];
@@ -56,6 +57,7 @@ class inventoryController {
         $category_id = $_POST['category_id'] ?? null;
         $unit_cost = $_POST['unit_cost'] ?? 0;
         $unit_of_measure = $_POST['unit_of_measure'] ?? 'Units';
+        $expiry_date = $_POST['expiry_date'] ?? null;
 
         $errors = [];
 
@@ -78,7 +80,7 @@ class inventoryController {
                 $errors['supplier_id'] = 'Supplier ID must be a number.';
             } else {
                 // Validation: Supplier must exist in database
-                $inventoryModel = new inventoryModel();
+                $inventoryModel = new inventoryModel($this->db);
                 $supplier = $inventoryModel->getSupplierById($supplier_id);
                 if (!$supplier) {
                     $errors['supplier_id'] = 'Supplier ID does not exist. Please enter a valid supplier ID.';
@@ -116,8 +118,8 @@ class inventoryController {
         }
 
         // All validations passed, add item to database
-        $inventoryModel = new inventoryModel();
-        $success = $inventoryModel->addItem($item_name, $quantity, $reorder_level, $supplier_id, $category_id, $unit_cost, $unit_of_measure);
+        $inventoryModel = new inventoryModel($this->db);
+        $success = $inventoryModel->addItem($item_name, $quantity, $reorder_level, $supplier_id, $category_id, $unit_cost, $unit_of_measure, $expiry_date);
 
         if ($success) {
             unset($_SESSION['form_data']);
@@ -129,7 +131,7 @@ class inventoryController {
     }
     
     public function edit_item() {
-        $inventoryModel = new inventoryModel();
+        $inventoryModel = new inventoryModel($this->db);
         
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $itemId = $_POST['inventory_id'] ?? null;
@@ -140,9 +142,19 @@ class inventoryController {
             $categoryId = $_POST['category_id'] ?? null;
             $unitCost = $_POST['unit_cost'] ?? 0;
             $unitOfMeasure = $_POST['unit_of_measure'] ?? 'Units';
+            $expiryDate = $_POST['expiry_date'] ?? null;
             
             if (isset($_POST['delete'])) {
-                $success = $inventoryModel->deleteItem($itemId);
+                // Authorize user - check if user is logged in
+                if (!isset($_SESSION['user_id'])) {
+                    echo json_encode(['success' => false, 'error' => 'User not authorized']);
+                    exit();
+                }
+                
+                $userId = $_SESSION['user_id'];
+                
+                // Perform soft delete
+                $success = $inventoryModel->softDeleteItem($itemId, $userId);
                 if ($success) {
                     header('Location: /lab_sync/index.php?controller=inventoryController&action=index');
                 } else {
@@ -153,7 +165,7 @@ class inventoryController {
                     echo "Item name is required.";
                     return;
                 }
-                $success = $inventoryModel->updateItem($itemId, $itemName, $quantity, $reorderLevel, $supplierId, $categoryId, $unitCost, $unitOfMeasure);
+                $success = $inventoryModel->updateItem($itemId, $itemName, $quantity, $reorderLevel, $supplierId, $categoryId, $unitCost, $unitOfMeasure, $expiryDate);
                 if ($success) {
                     header('Location: /lab_sync/index.php?controller=inventoryController&action=index');
                 } else {
@@ -161,6 +173,49 @@ class inventoryController {
                 }
             }
         }
+    }
+
+    public function soft_delete_item() {
+        // AJAX endpoint for soft delete with authorization
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && $this->isAjax()) {
+            header('Content-Type: application/json');
+            
+            // Verify user is logged in
+            if (!isset($_SESSION['user_id'])) {
+                echo json_encode(['success' => false, 'error' => 'User not authorized']);
+                exit();
+            }
+            
+            $itemId = $_POST['inventory_id'] ?? null;
+            if (!$itemId || !is_numeric($itemId)) {
+                echo json_encode(['success' => false, 'error' => 'Invalid inventory ID']);
+                exit();
+            }
+            
+            $userId = $_SESSION['user_id'];
+            $inventoryModel = new inventoryModel($this->db);
+            
+            // Perform soft delete
+            $success = $inventoryModel->softDeleteItem($itemId, $userId);
+            
+            if ($success) {
+                echo json_encode([
+                    'success' => true,
+                    'message' => 'Item deleted successfully',
+                    'inventory_id' => $itemId
+                ]);
+            } else {
+                echo json_encode(['success' => false, 'error' => 'Failed to delete item']);
+            }
+            exit();
+        }
+        
+        echo json_encode(['success' => false, 'error' => 'Invalid request method']);
+        exit();
+    }
+
+    private function isAjax() {
+        return !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
     }
 
     public function add_category() {
@@ -173,7 +228,7 @@ class inventoryController {
                 return;
             }
 
-            $inventoryModel = new inventoryModel();
+            $inventoryModel = new inventoryModel($this->db);
             $success = $inventoryModel->addCategory($category_name, $description);
 
             if ($success) {
@@ -185,13 +240,20 @@ class inventoryController {
     }
 
     public function edit_category() {
-        $inventoryModel = new inventoryModel();
+        $inventoryModel = new inventoryModel($this->db);
         
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (isset($_POST['delete_btn'])) {
                 $category_id = $_POST['category_id'] ?? null;
                 if ($category_id) {
-                    $success = $inventoryModel->deleteCategory($category_id);
+                    // Authorize user
+                    if (!isset($_SESSION['user_id'])) {
+                        echo json_encode(['success' => false, 'error' => 'User not authorized']);
+                        exit();
+                    }
+                    
+                    $userId = $_SESSION['user_id'];
+                    $success = $inventoryModel->softDeleteCategory($category_id, $userId);
                     if ($success) {
                         header('Location: /lab_sync/index.php?controller=inventoryController&action=index');
                     } else {
@@ -215,13 +277,91 @@ class inventoryController {
         }
     }
 
+    public function soft_delete_category() {
+        // AJAX endpoint for soft delete category with authorization
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && $this->isAjax()) {
+            header('Content-Type: application/json');
+            
+            // Verify user is logged in
+            if (!isset($_SESSION['user_id'])) {
+                echo json_encode(['success' => false, 'error' => 'User not authorized']);
+                exit();
+            }
+            
+            $categoryId = $_POST['category_id'] ?? null;
+            if (!$categoryId || !is_numeric($categoryId)) {
+                echo json_encode(['success' => false, 'error' => 'Invalid category ID']);
+                exit();
+            }
+            
+            $userId = $_SESSION['user_id'];
+            $inventoryModel = new inventoryModel($this->db);
+            
+            // Perform soft delete
+            $success = $inventoryModel->softDeleteCategory($categoryId, $userId);
+            
+            if ($success) {
+                echo json_encode([
+                    'success' => true,
+                    'message' => 'Category deleted successfully',
+                    'category_id' => $categoryId
+                ]);
+            } else {
+                echo json_encode(['success' => false, 'error' => 'Failed to delete category']);
+            }
+            exit();
+        }
+        
+        echo json_encode(['success' => false, 'error' => 'Invalid request method']);
+        exit();
+    }
+
+    public function soft_delete_purchase() {
+        // AJAX endpoint for soft delete stock purchase with authorization
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && $this->isAjax()) {
+            header('Content-Type: application/json');
+            
+            // Verify user is logged in
+            if (!isset($_SESSION['user_id'])) {
+                echo json_encode(['success' => false, 'error' => 'User not authorized']);
+                exit();
+            }
+            
+            $purchaseId = $_POST['purchase_id'] ?? null;
+            if (!$purchaseId || !is_numeric($purchaseId)) {
+                echo json_encode(['success' => false, 'error' => 'Invalid purchase ID']);
+                exit();
+            }
+            
+            $userId = $_SESSION['user_id'];
+            $inventoryModel = new inventoryModel($this->db);
+            
+            // Perform soft delete
+            $success = $inventoryModel->softDeletePurchase($purchaseId, $userId);
+            
+            if ($success) {
+                echo json_encode([
+                    'success' => true,
+                    'message' => 'Purchase deleted successfully',
+                    'purchase_id' => $purchaseId
+                ]);
+            } else {
+                echo json_encode(['success' => false, 'error' => 'Failed to delete purchase']);
+            }
+            exit();
+        }
+        
+        echo json_encode(['success' => false, 'error' => 'Invalid request method']);
+        exit();
+    }
+
     public function add_item_to_category() {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $inventory_id = $_POST['inventory_id'] ?? null;
             $category_id = $_POST['category_id'] ?? null;
 
             if ($inventory_id && $category_id) {
-                $inventoryModel = new inventoryModel();
+                $inventoryModel = new inventoryModel($this->db);
                 $success = $inventoryModel->addItemToCategory($inventory_id, $category_id);
                 
                 if ($success) {
@@ -240,7 +380,7 @@ class inventoryController {
             $inventory_id = $_GET['inventory_id'] ?? null;
 
             if ($inventory_id) {
-                $inventoryModel = new inventoryModel();
+                $inventoryModel = new inventoryModel($this->db);
                 $item = $inventoryModel->getItemById($inventory_id);
                 
                 header('Content-Type: application/json');

@@ -2,7 +2,8 @@
 require_once 'config/db.php';
 require_once 'app/models/inventoryModel.php';
 
-$model = new inventoryModel();
+$db = connect();
+$model = new inventoryModel($db);
 $categories = $model->getAllCategories();
 
 echo "<pre>";

@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 session_start();
 if (!isset($_SESSION['user_id'])) {
     // User is not logged in, redirect to login page
@@ -9,6 +9,7 @@ if (!isset($_SESSION['user_id'])) {
 <html>
 
 <head>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 
     <title>Billing</title>
     <link rel="stylesheet" href="/lab_sync/public/styles.css">
@@ -20,7 +21,7 @@ if (!isset($_SESSION['user_id'])) {
 <body>
     <!-- Navigation Bar -->
     <?php require 'C:\xampp\htdocs\lab_sync\public\navbar.php'; ?>
-    <div class="container">
+    <div class="page-wrapper">
         <?php require 'C:\xampp\htdocs\lab_sync\public\sidebar.php'; ?>
 
         <main class="main-content">

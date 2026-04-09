@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 session_start();
 if (!isset($_SESSION['user_id'])) {
     // User is not logged in, redirect to login page
@@ -12,6 +12,7 @@ $role = $_GET['user_role'] ?? '';
 
 <html>
     <head>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
         <title>Settings</title>
         <link rel="stylesheet" href="/lab_sync/public/styles.css">
         <link rel="stylesheet" href="/lab_sync/public/settingStyles.css">
@@ -23,7 +24,7 @@ $role = $_GET['user_role'] ?? '';
     <body>
         <!-- Navigation Bar -->
         <?php require 'C:\xampp\htdocs\lab_sync\public\navbar.php'; ?>
-        <div class="container">
+        <div class="page-wrapper">
             <!-- Sidebar -->
             <?php require 'C:\xampp\htdocs\lab_sync\public\sidebar.php'; ?>
 

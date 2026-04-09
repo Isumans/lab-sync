@@ -2,7 +2,8 @@
 require_once 'config/db.php';
 require_once 'app/models/inventoryModel.php';
 
-$model = new inventoryModel();
+$db = connect();
+$model = new inventoryModel($db);
 
 echo "<h2>Verification of Database Data</h2>";
 echo "<hr>";
@@ -30,7 +31,7 @@ if (count($categories) > 0) {
     echo "<p><strong>Category Icons:</strong></p>";
     echo "<ul>";
     foreach ($categories as $cat) {
-        $icon = $model->getCategoryIcon($cat['category_name']);
+        $icon = inventoryModel::getCategoryIcon($cat['category_name']);
         echo "<li>" . $icon . " " . htmlspecialchars($cat['category_name']) . "</li>";
     }
     echo "</ul>";
