@@ -21,11 +21,16 @@ if (!isset($_SESSION['user_id'])) {
             <div class="Tmain-content">
                 <div class="test-catalog-header">
                     <h1>Prescription Decisions</h1>
-                    <button class="add-test-button"><a href="/lab_sync/index.php?controller=appointmentsController&action=prescriptionQueue">Back to Queue</a></button>
+                    <button class="add-test-button"><a href="/lab_sync/index.php?controller=appointmentsController&action=index">Back to Appointments</a></button>
                 </div>
 
                 <div>
                     <p class="MC-p">Appointments -> Prescription Decisions Report</p>
+                </div>
+
+                <div style="display:flex; gap:8px; flex-wrap:wrap; margin: 8px 0 12px;">
+                    <a href="/lab_sync/index.php?controller=appointmentsController&action=index" style="padding:6px 10px; border:1px solid #d0d5dd; border-radius:6px; text-decoration:none; color:#344054; background:#fff;">Back to Appointments</a>
+                    <a href="/lab_sync/index.php?controller=appointmentsController&action=prescriptionQueue" style="padding:6px 10px; border:1px solid #174ea6; border-radius:6px; text-decoration:none; color:#fff; background:#174ea6;">Prescription Queue</a>
                 </div>
 
                 <?php

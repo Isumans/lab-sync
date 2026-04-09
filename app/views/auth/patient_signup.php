@@ -133,7 +133,7 @@
                 }
                 </script>
                 
-                <a href="#" class="login-with-code">
+                <a href="/lab_sync/index.php?controller=Auth&action=index" class="login-with-code">
                     <sub>Already, Have Account!</sub><br/>Login
                 </a>
             </main>

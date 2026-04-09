@@ -364,49 +364,8 @@ class HomeModel {
 
     public function getPatientContactByUserId($userId) {
         $stmt = $this->db->prepare(
-            "SELECT p.patient_id, p.patient_name, p.email FROM patients p JOIN users u ON p.email = u.email WHERE u.user_id = ? LIMIT 1"
+            "SELECT p.patient_id, p.patient_name, p.email, p.contact_number FROM patients p JOIN users u ON p.email = u.email WHERE u.user_id = ? LIMIT 1"
         );
-    }
-    
-    public function getAllAppointments($patientId) {
-        if ($this->appointmentTestsTableExists()) {
-            $sql = "
-                SELECT
-                    a.*,
-                    GROUP_CONCAT(at.test_id ORDER BY at.test_id SEPARATOR ', ') AS test_id
-                FROM appointment a
-                LEFT JOIN appointment_tests at ON at.appointment_id = a.appointment_id
-                WHERE a.patient_id = ?
-                GROUP BY a.appointment_id
-                ORDER BY a.appointment_date ASC, a.appointment_time ASC
-            ";
-            $stmt = $this->db->prepare($sql);
-            if (!$stmt) {
-                error_log('Prepare failed in getAllAppointments: ' . $this->db->error);
-                return [];
-            }
-
-            $pid = intval($patientId);
-            $stmt->bind_param('i', $pid);
-            if (!$stmt->execute()) {
-                error_log('Execute failed in getAllAppointments: ' . $stmt->error);
-                return [];
-            }
-
-            $result = $stmt->get_result();
-            return $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
-        }
-
-        $result = $this->db->query("SELECT * FROM appointment WHERE patient_id = " . intval($patientId));
-        return $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
-    }
-    public function updateAppointment($appointment_id, $appointment_time, $appointment_date) {
-        $stmt = $this->db->prepare("
-            UPDATE appointment 
-            SET appointment_time = ?, appointment_date = ? 
-            WHERE appointment_id = ?
-        ");
-
         if (!$stmt) {
             $this->setLastError('Prepare failed: ' . $this->db->error);
             return null;
@@ -773,6 +732,8 @@ class HomeModel {
         }
 
         return true;
+    }
+
     private function insertAppointmentHeader($patientId, $appointmentTime, $appointmentDate, $method, $reason) {
         $sqlWithReason = "INSERT INTO appointment (patient_id, appointment_time, appointment_date, method, reason) VALUES (?, ?, ?, ?, ?)";
         $stmt = $this->db->prepare($sqlWithReason);

@@ -68,7 +68,7 @@
                     <button type="submit" class="login-button">Login</button>
                 </form>
                 
-                <a href="#" class="login-with-code">
+                <a href="/lab_sync/index.php?controller=Auth&action=patient_signup" class="login-with-code">
                     <sub>Don't have an account?</sub><br/>Sign Up
                 </a>
                 

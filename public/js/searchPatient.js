@@ -1,19 +1,3 @@
-const searchInput = document.getElementById('patient-search');
-const suggestionsBox = document.getElementById('patient-suggestions');
-const searchBy = document.getElementById('patient-search-by');
-const patientIdInput = document.getElementById('patient-id');
-
-if (searchInput && patientIdInput) {
-    searchInput.addEventListener('input', () => {
-        patientIdInput.value = '';
-    });
-}
-
-// Trigger search when typing
-searchInput?.addEventListener('input', async () => {
-    const query = searchInput.value.trim();
-    const type = searchBy.value;
-// ── Patient Search with Debounce ──────────────────────────────────────────────
 (function () {
     const searchInput = document.getElementById('patient-search');
     const suggestionsBox = document.getElementById('patient-suggestions');
@@ -21,9 +5,10 @@ searchInput?.addEventListener('input', async () => {
     const patientIdInput = document.getElementById('patient_id');
     const createAppointmentForm = document.getElementById('createAppointmentForm');
 
-    if (!searchInput || !suggestionsBox) return; // Guard: elements must exist
+    if (!searchInput || !suggestionsBox) {
+        return;
+    }
 
-    // Validation error element (injected once, reused)
     let validationMsg = document.getElementById('patient-search-validation');
     if (!validationMsg) {
         validationMsg = document.createElement('p');
@@ -32,7 +17,6 @@ searchInput?.addEventListener('input', async () => {
         searchInput.parentNode.insertBefore(validationMsg, searchInput.nextSibling);
     }
 
-    // Selected-patient card (shown after a patient is chosen)
     let selectedCard = document.getElementById('selected-patient-card');
     if (!selectedCard) {
         selectedCard = document.createElement('div');
@@ -42,61 +26,7 @@ searchInput?.addEventListener('input', async () => {
         suggestionsBox.parentNode.insertBefore(selectedCard, suggestionsBox.nextSibling);
     }
 
-    // ── Helpers ────────────────────────────────────────────────────────────────
-    function showValidationError(msg) {
-        validationMsg.textContent = msg;
-        validationMsg.style.display = 'block';
-        searchInput.classList.add('input-error');
-    }
-
-    function clearValidationError() {
-        validationMsg.style.display = 'none';
-        validationMsg.textContent = '';
-        searchInput.classList.remove('input-error');
-        searchInput.classList.remove('input-success');
-    }
-
-    function clearSelection() {
-        if (patientIdInput) patientIdInput.value = '';
-        selectedCard.style.display = 'none';
-        selectedCard.innerHTML = '';
-        searchInput.classList.remove('input-success');
-    }
-
-    function selectPatient(id, name, email) {
-        searchInput.value = name;
-        if (patientIdInput) patientIdInput.value = id;
-        suggestionsBox.innerHTML = '';
-        suggestionsBox.style.display = 'none';
-        clearValidationError();
-
-        // Render the selected-patient confirmation card
-        selectedCard.innerHTML = `
-            <div class="selected-patient-inner">
-                <span class="selected-patient-icon">✓</span>
-                <div class="selected-patient-info">
-                    <span class="selected-patient-name">${escapeHtml(name)}</span>
-                    <span class="selected-patient-email">${escapeHtml(email)}</span>
-                </div>
-                <button type="button" class="clear-patient-btn" title="Clear selection">✕</button>
-            </div>`;
-        selectedCard.style.display = 'block';
-        searchInput.classList.add('input-success');
-
-// Handle click on suggestion
-suggestionsBox.addEventListener('click', (e) => {
-    if (e.target.classList.contains('suggestion-item')) {
-        searchInput.value = `${e.target.dataset.name} (${e.target.dataset.email})`;
-        if (patientIdInput) {
-            patientIdInput.value = e.target.dataset.id || '';
-        }
-        suggestionsBox.style.display = 'none';
-        selectedCard.querySelector('.clear-patient-btn').addEventListener('click', () => {
-            clearSelection();
-            searchInput.value = '';
-            searchInput.focus();
-        });
-    }
+    let debounceTimer = null;
 
     function escapeHtml(str) {
         return String(str)
@@ -106,56 +36,87 @@ suggestionsBox.addEventListener('click', (e) => {
             .replace(/"/g, '&quot;');
     }
 
-    function renderSuggestions(patients) {
-        if (patients.length === 0) {
-            suggestionsBox.innerHTML = `
-                <div class="patient-suggestion-no-result">
-                    <span class="no-result-icon">🔍</span>
-                    No patients found matching your search.
-                </div>`;
-        } else {
-            suggestionsBox.innerHTML = patients.map(p => `
-                <div class="patient-suggestion-item"
-                     data-id="${escapeHtml(String(p.id))}"
-                     data-name="${escapeHtml(p.name)}"
-                     data-email="${escapeHtml(p.email)}">
-                    <div class="suggestion-info">
-                        <span class="suggestion-name">${escapeHtml(p.name)}</span>
-                        <span class="suggestion-id">${escapeHtml(p.email)}</span>
-                    </div>
-                    <span class="suggestion-select-hint">Select →</span>
-                </div>`).join('');
-        }
-        suggestionsBox.style.display = 'block';
+    function showValidationError(message) {
+        validationMsg.textContent = message;
+        validationMsg.style.display = 'block';
+        searchInput.classList.add('input-error');
     }
 
-    // ── Debounce ───────────────────────────────────────────────────────────────
-    let debounceTimer = null;
+    function clearValidationError() {
+        validationMsg.textContent = '';
+        validationMsg.style.display = 'none';
+        searchInput.classList.remove('input-error');
+    }
 
-    searchInput.addEventListener('input', () => {
-        clearDebounce();
-        const query = searchInput.value.trim();
+    function clearSelection() {
+        if (patientIdInput) {
+            patientIdInput.value = '';
+        }
+        selectedCard.innerHTML = '';
+        selectedCard.style.display = 'none';
+        searchInput.classList.remove('input-success');
+    }
 
-        // Clear selection when user types again
-        clearSelection();
+    function selectPatient(id, name, email) {
+        if (patientIdInput) {
+            patientIdInput.value = id;
+        }
+
+        searchInput.value = name;
+        suggestionsBox.innerHTML = '';
+        suggestionsBox.style.display = 'none';
         clearValidationError();
+        searchInput.classList.add('input-success');
 
-        // Hide suggestions if below 3 chars
-        if (query.length < 3) {
-            suggestionsBox.style.display = 'none';
-            suggestionsBox.innerHTML = '';
-            if (query.length > 0) {
-                showValidationError('Type at least 3 characters to search for a patient.');
-            }
+        selectedCard.innerHTML =
+            '<div class="selected-patient-inner">' +
+                '<span class="selected-patient-icon">OK</span>' +
+                '<div class="selected-patient-info">' +
+                    '<span class="selected-patient-name">' + escapeHtml(name) + '</span>' +
+                    '<span class="selected-patient-email">' + escapeHtml(email) + '</span>' +
+                '</div>' +
+                '<button type="button" class="clear-patient-btn" title="Clear selection">x</button>' +
+            '</div>';
+
+        selectedCard.style.display = 'block';
+
+        const clearBtn = selectedCard.querySelector('.clear-patient-btn');
+        if (clearBtn) {
+            clearBtn.addEventListener('click', () => {
+                clearSelection();
+                searchInput.value = '';
+                searchInput.focus();
+            });
+        }
+    }
+
+    function renderSuggestions(patients) {
+        if (!Array.isArray(patients) || patients.length === 0) {
+            suggestionsBox.innerHTML =
+                '<div class="patient-suggestion-no-result">No patients found matching your search.</div>';
+            suggestionsBox.style.display = 'block';
             return;
         }
 
-        // Show loading state
-        suggestionsBox.innerHTML = `<div class="patient-suggestion-loading">Searching…</div>`;
-        suggestionsBox.style.display = 'block';
+        suggestionsBox.innerHTML = patients
+            .map((p) => {
+                const id = escapeHtml(String(p.id ?? ''));
+                const name = escapeHtml(String(p.name ?? ''));
+                const email = escapeHtml(String(p.email ?? ''));
+                return (
+                    '<div class="patient-suggestion-item" data-id="' + id + '" data-name="' + name + '" data-email="' + email + '">' +
+                        '<div class="suggestion-info">' +
+                            '<span class="suggestion-name">' + name + '</span>' +
+                            '<span class="suggestion-id">' + email + '</span>' +
+                        '</div>' +
+                        '<span class="suggestion-select-hint">Select</span>' +
+                    '</div>'
+                );
+            })
+            .join('');
 
-        debounceTimer = setTimeout(() => fetchPatients(query), 300);
-    });
+        suggestionsBox.style.display = 'block';
+    }
 
     function clearDebounce() {
         if (debounceTimer) {
@@ -166,47 +127,76 @@ suggestionsBox.addEventListener('click', (e) => {
 
     async function fetchPatients(query) {
         const type = searchBy ? searchBy.value : 'patient_name';
-        try {
-            const url = `/lab_sync/index.php?controller=appointmentsController&action=searchPatients` +
-                `&type=${encodeURIComponent(type)}&query=${encodeURIComponent(query)}`;
-            const response = await fetch(url);
-            if (!response.ok) throw new Error('Network error: ' + response.status);
-            const patients = await response.json();
 
-            // Sort alphabetically by name (LIKE result already filtered server-side)
-            patients.sort((a, b) => a.name.localeCompare(b.name));
+        try {
+            const url = '/lab_sync/index.php?controller=appointmentsController&action=searchPatients' +
+                '&type=' + encodeURIComponent(type) +
+                '&query=' + encodeURIComponent(query);
+
+            const response = await fetch(url);
+            if (!response.ok) {
+                throw new Error('Network error: ' + response.status);
+            }
+
+            const patients = await response.json();
+            patients.sort((a, b) => String(a.name ?? '').localeCompare(String(b.name ?? '')));
             renderSuggestions(patients);
-        } catch (err) {
-            console.error('Error fetching patient data:', err);
-            suggestionsBox.innerHTML = `<div class="patient-suggestion-no-result">⚠ Could not load results. Please try again.</div>`;
+        } catch (error) {
+            console.error('Error fetching patient data:', error);
+            suggestionsBox.innerHTML =
+                '<div class="patient-suggestion-no-result">Could not load results. Please try again.</div>';
+            suggestionsBox.style.display = 'block';
         }
     }
 
-    // ── Click: select a suggestion ─────────────────────────────────────────────
-    suggestionsBox.addEventListener('click', (e) => {
-        const item = e.target.closest('.patient-suggestion-item');
-        if (item && item.dataset.id) {
-            selectPatient(item.dataset.id, item.dataset.name, item.dataset.email);
+    searchInput.addEventListener('input', () => {
+        clearDebounce();
+        clearSelection();
+        clearValidationError();
+
+        const query = searchInput.value.trim();
+        if (query.length < 3) {
+            suggestionsBox.innerHTML = '';
+            suggestionsBox.style.display = 'none';
+            if (query.length > 0) {
+                showValidationError('Type at least 3 characters to search for a patient.');
+            }
+            return;
         }
+
+        suggestionsBox.innerHTML = '<div class="patient-suggestion-loading">Searching...</div>';
+        suggestionsBox.style.display = 'block';
+        debounceTimer = setTimeout(() => fetchPatients(query), 300);
     });
 
-    // ── Close suggestions on outside click ────────────────────────────────────
-    document.addEventListener('click', (e) => {
-        if (!searchInput.contains(e.target) && !suggestionsBox.contains(e.target)) {
+    suggestionsBox.addEventListener('click', (event) => {
+        const item = event.target.closest('.patient-suggestion-item');
+        if (!item || !item.dataset.id) {
+            return;
+        }
+
+        selectPatient(
+            item.dataset.id,
+            item.dataset.name ?? '',
+            item.dataset.email ?? ''
+        );
+    });
+
+    document.addEventListener('click', (event) => {
+        if (!searchInput.contains(event.target) && !suggestionsBox.contains(event.target)) {
             suggestionsBox.style.display = 'none';
         }
     });
 
-    // ── Form Submission Validation ─────────────────────────────────────────────
     if (createAppointmentForm) {
-        createAppointmentForm.addEventListener('submit', (e) => {
+        createAppointmentForm.addEventListener('submit', (event) => {
             if (!patientIdInput || !patientIdInput.value) {
-                e.preventDefault();
-                showValidationError('⚠ Please search for and select a patient before scheduling an appointment.');
+                event.preventDefault();
+                showValidationError('Please search for and select a patient before scheduling an appointment.');
                 searchInput.focus();
-                return false;
+            } else {
+                clearValidationError();
             }
-            clearValidationError();
         });
     }
 })();

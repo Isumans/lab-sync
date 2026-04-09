@@ -6,6 +6,7 @@ if (!defined('ROOT_PATH')) {
 require_once MODEL_PATH . '/appointmentModel.php';
 require_once MODEL_PATH . '/patientModel.php';
 require_once APP_PATH . '/services/EmailService.php';
+require_once APP_PATH . '/services/SmsService.php';
 require_once __DIR__ . '/../../config/db.php';
 class appointmentsController {
     private function ensureSessionStarted() {
@@ -109,11 +110,10 @@ class appointmentsController {
                 $_SESSION['success'] = 'Request marked as Self Booking Requested.';
 
                 $request = $appointmentsModel->getPrescriptionRequestById($requestId);
-                if ($request && !empty($request['email'])) {
-                    $mailer = new EmailService();
+                if ($request) {
                     $patientName = $request['patient_name'] ?? 'Patient';
-                    $subject = 'Update on your prescription request - LabSync';
                     $selfBookLink = (defined('BASE_URL') ? BASE_URL : '/lab_sync') . '/index.php?controller=home&action=appointment_options';
+                    $subject = 'Update on your prescription request - LabSync';
                     $noteBlock = $decisionNote !== ''
                         ? '<p><strong>Receptionist note:</strong> ' . htmlspecialchars($decisionNote) . '</p>'
                         : '';
@@ -129,7 +129,17 @@ class appointmentsController {
                         </body>
                         </html>
                     ';
-                    $mailer->sendEmail($request['email'], $patientName, $subject, $html);
+
+                    if (!empty($request['email'])) {
+                        $mailer = new EmailService();
+                        $mailer->sendEmail($request['email'], $patientName, $subject, $html);
+                    }
+
+                    if (!empty($request['contact_number'])) {
+                        $smsMessage = 'LabSync: Your prescription request was reviewed. Please self-book your tests here: ' . $selfBookLink;
+                        $smsService = new SmsService();
+                        $smsService->sendSms($request['contact_number'], $smsMessage);
+                    }
                 }
             } else {
                 $_SESSION['error'] = 'Unable to update request status. It may already be processed.';

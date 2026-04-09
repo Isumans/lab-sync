@@ -242,6 +242,7 @@ class AppointmentModel {
 
         $hasStatus = $this->hasAppointmentColumn('status');
         $hasItems = $this->hasTable('appointment_items');
+        $patientProjection = $this->buildPatientProjectionSql('p');
 
         $statusField = $hasStatus
             ? "COALESCE(NULLIF(a.status, ''), 'Pending')"
@@ -261,6 +262,7 @@ class AppointmentModel {
         $query = "
             SELECT
                 a.*,
+                {$patientProjection},
                 t.test_name,
                 t.price AS test_price,
                 COALESCE(a.home_collection, 0) AS home_collection,
@@ -270,12 +272,33 @@ class AppointmentModel {
                 " . $totalPriceField . " AS total_price,
                 " . $itemCountField . " AS item_count
             FROM appointment a
+            LEFT JOIN patients p ON p.patient_id = a.patient_id
             LEFT JOIN tests t ON t.test_id = a.test_id
             WHERE LOWER(a.method) " . $operator . " LOWER(?)
             ORDER BY a.appointment_date DESC, a.appointment_time DESC
         ";
 
         $stmt = $this->db->prepare($query);
+        if ($stmt === false) {
+            $this->lastError = 'Prepare failed in fetchAppointmentsByMethodFilter: ' . $this->db->error;
+            error_log($this->lastError);
+            return [];
+        }
+
+        $stmt->bind_param('s', $method);
+        if (!$stmt->execute()) {
+            $this->lastError = 'Execute failed in fetchAppointmentsByMethodFilter: ' . $stmt->error;
+            error_log($this->lastError);
+            $stmt->close();
+            return [];
+        }
+
+        $result = $stmt->get_result();
+        $rows = $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
+        $stmt->close();
+        return $rows;
+    }
+
     public function createAppointment($patientId, $appointmentDate, $appointmentTime, $reason = '', $method = 'online') {
         // Insert including method column. Try with reason first.
         $sqlWithReason = "INSERT INTO appointment (patient_id, appointment_date, appointment_time, reason, method) VALUES (?, ?, ?, ?, ?)";
@@ -328,6 +351,19 @@ class AppointmentModel {
             $appointmentId = $this->insertAppointmentHeader($patientId, $appointmentDate, $appointmentTime, $reason, $method);
             if ($appointmentId <= 0) {
                 throw new Exception($this->lastError ?: 'Could not resolve appointment_id after insert.');
+            }
+
+            if ($this->columnExists('appointment', 'test_id')) {
+                $legacyCsv = implode(',', $cleanTestIds);
+                $legacyStmt = $this->db->prepare('UPDATE appointment SET test_id = ? WHERE appointment_id = ?');
+                if ($legacyStmt === false) {
+                    throw new Exception('Prepare failed in createAppointmentWithTests (legacy test_id): ' . $this->db->error);
+                }
+
+                $legacyStmt->bind_param('si', $legacyCsv, $appointmentId);
+                if (!$legacyStmt->execute()) {
+                    throw new Exception('Execute failed in createAppointmentWithTests (legacy test_id): ' . $legacyStmt->error);
+                }
             }
 
             $lineSql = "INSERT INTO appointment_tests (appointment_id, test_id, status) VALUES (?, ?, 'PENDING')";
@@ -403,30 +439,6 @@ class AppointmentModel {
 
         return array_values(array_unique($clean));
     }
-
-    public function getAllAppointmentsbyMethod($method) {
-        $patientProjection = $this->buildPatientProjectionSql('p');
-        $notDeletedClause = $this->buildNotDeletedClause('a');
-        $sql = "
-            SELECT a.*, {$patientProjection}
-            FROM appointment a
-            LEFT JOIN patients p ON p.patient_id = a.patient_id
-            WHERE a.method = ? AND {$notDeletedClause}
-            ORDER BY a.appointment_date DESC, a.appointment_time DESC
-        ";
-
-        $stmt = $this->db->prepare($sql);
-        if ($stmt === false) {
-            $this->lastError = 'Prepare failed in getAllAppointmentsbyMethod: ' . $this->db->error;
-            error_log($this->lastError);
-            return [];
-        }
-        $stmt->bind_param("s", $method);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        return $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
-    }
-    
 
     public function getAppointmentDetailsPayload($appointmentId) {
         $appointmentId = intval($appointmentId);
@@ -634,6 +646,27 @@ class AppointmentModel {
             FROM prescription_requests pr
             LEFT JOIN patients p ON p.patient_id = pr.patient_id
             WHERE pr.request_id = ?
+            LIMIT 1
+        ";
+
+        $stmt = $this->db->prepare($sql);
+        if (!$stmt) {
+            return null;
+        }
+
+        $stmt->bind_param('i', $requestId);
+        if (!$stmt->execute()) {
+            $stmt->close();
+            return null;
+        }
+
+        $result = $stmt->get_result();
+        $row = $result ? $result->fetch_assoc() : null;
+        $stmt->close();
+
+        return $row ?: null;
+    }
+
     public function getAppointmentEditPayload($appointmentId) {
         $appointmentId = intval($appointmentId);
         if ($appointmentId <= 0) {
@@ -672,7 +705,21 @@ class AppointmentModel {
         $row = $result ? $result->fetch_assoc() : null;
         $stmt->close();
 
-        return $row ?: null;
+        if (!$row) {
+            return null;
+        }
+
+        $tests = $this->getAppointmentTestsWithStatus($appointmentId);
+        $canEditScheduleTests = $this->areAllTestsPending($tests);
+        $nonPendingStatuses = $this->collectNonPendingStatuses($tests);
+
+        return [
+            'appointment' => $row,
+            'tests' => $tests,
+            'available_tests' => $this->searchTestsCatalog('', 20),
+            'can_edit_schedule_tests' => $canEditScheduleTests,
+            'non_pending_statuses' => $nonPendingStatuses,
+        ];
     }
 
     public function getPrescriptionDecisionReport($filters = []) {
@@ -932,6 +979,11 @@ class AppointmentModel {
     }
 
     public function getAppointmentEmailPayload($appointmentId) {
+        $appointmentId = intval($appointmentId);
+        if ($appointmentId <= 0) {
+            return null;
+        }
+
         $hasStatus = $this->hasAppointmentColumn('status');
         $hasChannel = $this->hasAppointmentColumn('booking_channel');
         $hasHomeCollection = $this->hasAppointmentColumn('home_collection');
@@ -969,10 +1021,23 @@ class AppointmentModel {
         ";
 
         $stmt = $this->db->prepare($sql);
+        if ($stmt === false) {
+            $this->lastError = 'Prepare failed in getAppointmentEmailPayload: ' . $this->db->error;
+            error_log($this->lastError);
+            return null;
+        }
+
         $stmt->bind_param("i", $appointmentId);
         if (!$stmt->execute()) {
+            $this->lastError = 'Execute failed in getAppointmentEmailPayload: ' . $stmt->error;
+            error_log($this->lastError);
             $stmt->close();
+            return null;
+        }
+
+        $result = $stmt->get_result();
         $appointment = $result ? $result->fetch_assoc() : null;
+        $stmt->close();
         if (!$appointment) {
             return null;
         }
@@ -1125,6 +1190,19 @@ class AppointmentModel {
                     $insertStmt->bind_param('ii', $appointmentId, $testId);
                     if (!$insertStmt->execute()) {
                         throw new Exception('Execute failed while inserting appointment tests: ' . $insertStmt->error);
+                    }
+                }
+
+                if ($this->columnExists('appointment', 'test_id')) {
+                    $legacyCsv = implode(',', $cleanTestIds);
+                    $legacyStmt = $this->db->prepare('UPDATE appointment SET test_id = ? WHERE appointment_id = ?');
+                    if ($legacyStmt === false) {
+                        throw new Exception('Prepare failed while updating legacy tests: ' . $this->db->error);
+                    }
+
+                    $legacyStmt->bind_param('si', $legacyCsv, $appointmentId);
+                    if (!$legacyStmt->execute()) {
+                        throw new Exception('Execute failed while updating legacy tests: ' . $legacyStmt->error);
                     }
                 }
             } elseif ($canEditScheduleTests && $this->columnExists('appointment', 'test_id')) {
