@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 session_start();
 echo $_SESSION['user_role'];
 if (!isset($_SESSION['user_id'])) {
@@ -9,6 +9,7 @@ if (!isset($_SESSION['user_id'])) {
 ?>
 <html>
 <head>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 
     <title>Patients</title>
         <link rel="stylesheet" href="/lab_sync/public/styles.css">
@@ -20,7 +21,7 @@ if (!isset($_SESSION['user_id'])) {
     <body>
         <!-- Navigation Bar -->
         <?php require 'C:\xampp\htdocs\lab_sync\public\navbar.php'; ?>
-        <div class="container">
+        <div class="page-wrapper">
             <!-- Sidebar -->
             <?php require 'C:\xampp\htdocs\lab_sync\public\sidebar.php'; ?>
 
@@ -418,3 +419,4 @@ if (!isset($_SESSION['user_id'])) {
 
 
 </html>
+

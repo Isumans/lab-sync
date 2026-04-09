@@ -2,21 +2,24 @@
 class inventoryModel {
     private $db;
 
-    public function __construct() {
-        $this->db = connect();
-        if (!$this->db) {
-            die("Database connection failed: " . mysqli_connect_error());
-        }
+    public function __construct($db) {
+        $this->db = $db;
+    }
+
+    /* ========== SOFT DELETE HELPER ========== */
+    private function getSoftDeleteFilter() {
+        return "i.deleted_date IS NULL AND i.deleted_time IS NULL";
     }
 
     /* ========== ALL ITEMS ========== */
     public function getAllItems() {
         $query = "SELECT i.inventory_id, i.supplier_id, s.supplier_name, i.item_name, 
                          i.quantity, i.reorder_level, ic.category_name, i.status,
-                         i.unit_cost, i.unit_of_measure, ic.category_id
+                         i.unit_cost, i.unit_of_measure, ic.category_id, i.expiry_date
                   FROM inventory i
                   LEFT JOIN suppliers s ON i.supplier_id = s.supplier_id
                   LEFT JOIN inventory_categories ic ON i.category_id = ic.category_id
+                  WHERE " . $this->getSoftDeleteFilter() . "
                   ORDER BY i.inventory_id ASC";
         $result = mysqli_query($this->db, $query);
         if (!$result) {
@@ -29,11 +32,11 @@ class inventoryModel {
         return $items;
     }
 
-    public function addItem($item_name, $quantity, $reorder_level, $supplier_id, $category_id = null, $unit_cost = 0, $unit_of_measure = 'Units') {
-        $query = "INSERT INTO inventory (item_name, quantity, reorder_level, supplier_id, category_id, unit_cost, unit_of_measure, status) 
-                  VALUES (?, ?, ?, ?, ?, ?, ?, 'In Stock')";
+    public function addItem($item_name, $quantity, $reorder_level, $supplier_id, $category_id = null, $unit_cost = 0, $unit_of_measure = 'Units', $expiry_date = null) {
+        $query = "INSERT INTO inventory (item_name, quantity, reorder_level, supplier_id, category_id, unit_cost, unit_of_measure, expiry_date, status) 
+                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'In Stock')";
         $stmt = mysqli_prepare($this->db, $query);
-        mysqli_stmt_bind_param($stmt, 'siiidss', $item_name, $quantity, $reorder_level, $supplier_id, $category_id, $unit_cost, $unit_of_measure);
+        mysqli_stmt_bind_param($stmt, 'siiidsss', $item_name, $quantity, $reorder_level, $supplier_id, $category_id, $unit_cost, $unit_of_measure, $expiry_date);
         $result = mysqli_stmt_execute($stmt);
         
         if ($result) {
@@ -44,14 +47,46 @@ class inventoryModel {
     }
 
     public function deleteItem($itemId) {
-        $query = "DELETE FROM inventory WHERE inventory_id = ?";
-        $stmt = mysqli_prepare($this->db, $query);
-        mysqli_stmt_bind_param($stmt, 'i', $itemId);
-        return mysqli_stmt_execute($stmt);
+        // Soft delete - no longer performs hard delete
+        // This method is kept for backward compatibility but uses soft delete
+        return $this->softDeleteItem($itemId, null);
     }
 
-    public function updateItem($itemId, $itemName, $quantity, $reorderLevel, $supplierId, $category_id = null, $unit_cost = 0, $unit_of_measure = 'Units') {
-        $getQuery = "SELECT quantity FROM inventory WHERE inventory_id = ?";
+    public function softDeleteItem($itemId, $deletedByUserId) {
+        $currentDate = date('Y-m-d');
+        $currentTime = date('H:i:s');
+        
+        $query = "UPDATE inventory 
+                  SET deleted_date = ?, 
+                      deleted_time = ?, 
+                      deleted_by = ?
+                  WHERE inventory_id = ? AND deleted_date IS NULL";
+        $stmt = mysqli_prepare($this->db, $query);
+        
+        if (!$stmt) {
+            error_log("Prepare failed: " . mysqli_error($this->db));
+            return false;
+        }
+        
+        // If no user ID provided, use 0 (system delete)
+        if ($deletedByUserId === null) {
+            $deletedByUserId = 0;
+        }
+        
+        mysqli_stmt_bind_param($stmt, 'ssii', $currentDate, $currentTime, $deletedByUserId, $itemId);
+        $result = mysqli_stmt_execute($stmt);
+        
+        if (!$result) {
+            error_log("Execute failed: " . mysqli_error($this->db));
+            return false;
+        }
+        
+        // Check if the update was successful (at least one row was affected)
+        return mysqli_stmt_affected_rows($stmt) > 0;
+    }
+
+    public function updateItem($itemId, $itemName, $quantity, $reorderLevel, $supplierId, $category_id = null, $unit_cost = 0, $unit_of_measure = 'Units', $expiry_date = null) {
+        $getQuery = "SELECT quantity FROM inventory WHERE inventory_id = ? AND " . $this->getSoftDeleteFilter();
         $getStmt = mysqli_prepare($this->db, $getQuery);
         mysqli_stmt_bind_param($getStmt, 'i', $itemId);
         mysqli_stmt_execute($getStmt);
@@ -59,9 +94,9 @@ class inventoryModel {
         $oldItem = mysqli_fetch_assoc($result);
         $oldQuantity = $oldItem['quantity'] ?? 0;
 
-        $query = "UPDATE inventory SET item_name = ?, quantity = ?, reorder_level = ?, supplier_id = ?, category_id = ?, unit_cost = ?, unit_of_measure = ? WHERE inventory_id = ?";
+        $query = "UPDATE inventory SET item_name = ?, quantity = ?, reorder_level = ?, supplier_id = ?, category_id = ?, unit_cost = ?, unit_of_measure = ?, expiry_date = ? WHERE inventory_id = ? AND " . $this->getSoftDeleteFilter();
         $stmt = mysqli_prepare($this->db, $query);
-        mysqli_stmt_bind_param($stmt, 'siiiidsi', $itemName, $quantity, $reorderLevel, $supplierId, $category_id, $unit_cost, $unit_of_measure, $itemId);
+        mysqli_stmt_bind_param($stmt, 'siiiidssi', $itemName, $quantity, $reorderLevel, $supplierId, $category_id, $unit_cost, $unit_of_measure, $expiry_date, $itemId);
         $updateResult = mysqli_stmt_execute($stmt);
 
         if ($updateResult && $quantity != $oldQuantity) {
@@ -74,7 +109,7 @@ class inventoryModel {
     }
 
     public function updateItemStatus($itemId) {
-        $query = "SELECT quantity, reorder_level FROM inventory WHERE inventory_id = ?";
+        $query = "SELECT quantity, reorder_level FROM inventory WHERE inventory_id = ? AND " . $this->getSoftDeleteFilter();
         $stmt = mysqli_prepare($this->db, $query);
         mysqli_stmt_bind_param($stmt, 'i', $itemId);
         mysqli_stmt_execute($stmt);
@@ -89,7 +124,7 @@ class inventoryModel {
                 $status = 'Low Stock';
             }
             
-            $updateQuery = "UPDATE inventory SET status = ? WHERE inventory_id = ?";
+            $updateQuery = "UPDATE inventory SET status = ? WHERE inventory_id = ? AND " . $this->getSoftDeleteFilter();
             $updateStmt = mysqli_prepare($this->db, $updateQuery);
             mysqli_stmt_bind_param($updateStmt, 'si', $status, $itemId);
             mysqli_stmt_execute($updateStmt);
@@ -100,6 +135,8 @@ class inventoryModel {
     public function getStockHistory() {
         $query = "SELECT sh.*, i.item_name FROM stock_history sh 
                   JOIN inventory i ON sh.inventory_id = i.inventory_id
+                  WHERE i.deleted_date IS NULL AND i.deleted_time IS NULL
+                  AND sh.deleted_date IS NULL AND sh.deleted_time IS NULL
                   ORDER BY sh.created_at DESC";
         $result = mysqli_query($this->db, $query);
         if (!$result) {
@@ -127,6 +164,8 @@ class inventoryModel {
                   FROM stock_history sh
                   LEFT JOIN inventory i ON sh.inventory_id = i.inventory_id
                   LEFT JOIN suppliers s ON sh.supplier_id = s.supplier_id
+                  WHERE i.deleted_date IS NULL AND i.deleted_time IS NULL
+                  AND sh.deleted_date IS NULL AND sh.deleted_time IS NULL
                   ORDER BY sh.created_at DESC";
         $result = mysqli_query($this->db, $query);
         if (!$result) {
@@ -146,6 +185,8 @@ class inventoryModel {
                   FROM stock_purchases sp
                   JOIN inventory i ON sp.inventory_id = i.inventory_id
                   JOIN suppliers s ON sp.supplier_id = s.supplier_id
+                  WHERE sp.deleted_date IS NULL AND sp.deleted_time IS NULL
+                  AND i.deleted_date IS NULL AND i.deleted_time IS NULL
                   ORDER BY sp.purchase_date DESC";
         $result = mysqli_query($this->db, $query);
         if (!$result) {
@@ -158,6 +199,37 @@ class inventoryModel {
         return $purchases;
     }
 
+    public function softDeletePurchase($purchaseId, $deletedByUserId) {
+        $currentDate = date('Y-m-d');
+        $currentTime = date('H:i:s');
+        
+        $query = "UPDATE stock_purchases 
+                  SET deleted_date = ?, 
+                      deleted_time = ?, 
+                      deleted_by = ?
+                  WHERE purchase_id = ? AND deleted_date IS NULL";
+        $stmt = mysqli_prepare($this->db, $query);
+        
+        if (!$stmt) {
+            error_log("Prepare failed: " . mysqli_error($this->db));
+            return false;
+        }
+        
+        if ($deletedByUserId === null) {
+            $deletedByUserId = 0;
+        }
+        
+        mysqli_stmt_bind_param($stmt, 'ssii', $currentDate, $currentTime, $deletedByUserId, $purchaseId);
+        $result = mysqli_stmt_execute($stmt);
+        
+        if (!$result) {
+            error_log("Execute failed: " . mysqli_error($this->db));
+            return false;
+        }
+        
+        return mysqli_stmt_affected_rows($stmt) > 0;
+    }
+
     public function addPurchase($inventory_id, $supplier_id, $quantity_purchased, $unit_cost, $total_cost, $purchase_date, $notes = '') {
         $query = "INSERT INTO stock_purchases (inventory_id, supplier_id, quantity_purchased, unit_cost, total_cost, purchase_date, notes) 
                   VALUES (?, ?, ?, ?, ?, ?, ?)";
@@ -168,7 +240,7 @@ class inventoryModel {
 
     /* Category Methods */
     public function getAllCategories() {
-        $query = "SELECT * FROM inventory_categories ORDER BY category_name ASC";
+        $query = "SELECT * FROM inventory_categories WHERE deleted_date IS NULL AND deleted_time IS NULL ORDER BY category_name ASC";
         $result = mysqli_query($this->db, $query);
         if (!$result) {
             die("Query failed: " . mysqli_error($this->db));
@@ -189,7 +261,7 @@ class inventoryModel {
         $category = mysqli_fetch_assoc($categoryResult);
 
         if ($category) {
-            $itemsQuery = "SELECT inventory_id, item_name FROM inventory WHERE category_id = ? ORDER BY item_name ASC";
+            $itemsQuery = "SELECT inventory_id, item_name FROM inventory WHERE category_id = ? AND deleted_date IS NULL AND deleted_time IS NULL ORDER BY item_name ASC";
             $itemsStmt = mysqli_prepare($this->db, $itemsQuery);
             mysqli_stmt_bind_param($itemsStmt, 'i', $category_id);
             mysqli_stmt_execute($itemsStmt);
@@ -219,14 +291,43 @@ class inventoryModel {
     }
 
     public function deleteCategory($category_id) {
-        $query = "DELETE FROM inventory_categories WHERE category_id = ?";
+        // Soft delete - no longer performs hard delete
+        return $this->softDeleteCategory($category_id, null);
+    }
+
+    public function softDeleteCategory($category_id, $deletedByUserId) {
+        $currentDate = date('Y-m-d');
+        $currentTime = date('H:i:s');
+        
+        $query = "UPDATE inventory_categories 
+                  SET deleted_date = ?, 
+                      deleted_time = ?, 
+                      deleted_by = ?
+                  WHERE category_id = ? AND deleted_date IS NULL";
         $stmt = mysqli_prepare($this->db, $query);
-        mysqli_stmt_bind_param($stmt, 'i', $category_id);
-        return mysqli_stmt_execute($stmt);
+        
+        if (!$stmt) {
+            error_log("Prepare failed: " . mysqli_error($this->db));
+            return false;
+        }
+        
+        if ($deletedByUserId === null) {
+            $deletedByUserId = 0;
+        }
+        
+        mysqli_stmt_bind_param($stmt, 'ssii', $currentDate, $currentTime, $deletedByUserId, $category_id);
+        $result = mysqli_stmt_execute($stmt);
+        
+        if (!$result) {
+            error_log("Execute failed: " . mysqli_error($this->db));
+            return false;
+        }
+        
+        return mysqli_stmt_affected_rows($stmt) > 0;
     }
 
     public function getCategoryCount() {
-        $query = "SELECT COUNT(*) as count FROM inventory_categories";
+        $query = "SELECT COUNT(*) as count FROM inventory_categories WHERE deleted_date IS NULL AND deleted_time IS NULL";
         $result = mysqli_query($this->db, $query);
         if (!$result) {
             return 0;
@@ -259,7 +360,7 @@ class inventoryModel {
     }
 
     /* ========== CATEGORY ICONS & MANAGEMENT ========== */
-    public function getCategoryIcon($category_name) {
+    public static function getCategoryIcon($category_name) {
         $icons = [
             'Blood Tests' => '🩸',
             'Reagents' => '⚗️',
@@ -292,7 +393,7 @@ class inventoryModel {
 
     public function getItemById($inventory_id) {
         $query = "SELECT inventory_id, item_name, supplier_id, quantity, reorder_level, category_id, status, unit_cost, unit_of_measure  
-                  FROM inventory WHERE inventory_id = ?";
+                  FROM inventory WHERE inventory_id = ? AND deleted_date IS NULL AND deleted_time IS NULL";
         $stmt = mysqli_prepare($this->db, $query);
         mysqli_stmt_bind_param($stmt, 'i', $inventory_id);
         mysqli_stmt_execute($stmt);
@@ -301,7 +402,7 @@ class inventoryModel {
     }
 
     public function getAllItems_ForSelection() {
-        $query = "SELECT inventory_id, item_name FROM inventory ORDER BY item_name ASC";
+        $query = "SELECT inventory_id, item_name FROM inventory WHERE deleted_date IS NULL AND deleted_time IS NULL ORDER BY item_name ASC";
         $result = mysqli_query($this->db, $query);
         if (!$result) {
             die("Query failed: " . mysqli_error($this->db));
@@ -316,16 +417,17 @@ class inventoryModel {
     /* ========== DASHBOARD STATS ========== */
     public function getDashboardStats() {
         $stats = [];
+        $softDeleteFilter = "deleted_date IS NULL AND deleted_time IS NULL";
         
-        $query = "SELECT COUNT(*) as count FROM inventory";
+        $query = "SELECT COUNT(*) as count FROM inventory WHERE " . $softDeleteFilter;
         $result = mysqli_query($this->db, $query);
         $stats['total_items'] = mysqli_fetch_assoc($result)['count'];
         
-        $query = "SELECT COUNT(*) as count FROM inventory WHERE quantity <= reorder_level AND quantity > 0";
+        $query = "SELECT COUNT(*) as count FROM inventory WHERE quantity <= reorder_level AND quantity > 0 AND " . $softDeleteFilter;
         $result = mysqli_query($this->db, $query);
         $stats['low_stock'] = mysqli_fetch_assoc($result)['count'];
         
-        $query = "SELECT COUNT(*) as count FROM inventory WHERE quantity = 0";
+        $query = "SELECT COUNT(*) as count FROM inventory WHERE quantity = 0 AND " . $softDeleteFilter;
         $result = mysqli_query($this->db, $query);
         $stats['out_of_stock'] = mysqli_fetch_assoc($result)['count'];
         

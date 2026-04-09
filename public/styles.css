@@ -166,15 +166,16 @@ body {
 
 .main-content {
     margin-left: 256px;
-    margin-top: 16px; 
+    margin-top: 32px;
     flex: 1;
-    padding: 8px 16px 16px 16px;
+    padding: 24px 16px 16px 16px;
     background: var(--background-color);
     min-height: calc(100vh - 56px);
     box-shadow: 0 0;
-    width: calc(100% - 256px);
 }
 
+.main-content-header {
+    padding-top: 18px;
 .logo-color {
     color: var(--primary-color);
 }

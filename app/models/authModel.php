@@ -4,11 +4,13 @@ class AuthModel {
     public function __construct($db) { $this->db = $db; }
 
     public function getUserByUsername($username) {
-        $result = $this->db->query("SELECT * FROM users WHERE username = '$username'");
+        $stmt = $this->db->prepare("SELECT * FROM users WHERE username = ?");
+        $stmt->bind_param("s", $username);
+        $stmt->execute();
+        $result = $stmt->get_result();
         if ($result && $result->num_rows > 0) {
             return $result->fetch_assoc();
-
-        }else{
+        } else {
             return false;
         }
     }
