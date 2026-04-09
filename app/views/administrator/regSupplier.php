@@ -14,7 +14,8 @@ if (!isset($_SESSION['user_id'])) {
     <link rel="stylesheet" href="/lab_sync/public/styles.css">
     <link rel="stylesheet" href="/lab_sync/public/settingStyles.css">
     <link rel="stylesheet" href="/lab_sync/public/teamStyles.css">
-    <link rel="stylesheet" href="/lab_sync/public/suppliers.css">
+    <link rel="stylesheet" href="/lab_sync/public/regSupplier.css">
+    <link rel="stylesheet" href="/lab_sync/public/regSupplierModal.css">
 </head>
 
 <body>
@@ -53,7 +54,7 @@ if (!isset($_SESSION['user_id'])) {
                     action="/lab_sync/index.php?controller=supplierController&action=store<?php echo $roleParam; ?>"
                     method="POST">
                     <div class="supplier-register-block">
-                        <h2 class="supplier-register-form-title">Supplier Information</h2>
+                         <h2 class="supplier-information-title">Supplier Details</h2>
 
                         <div class="supplier-register-fields">
                             <div class="supplier-register-field">
@@ -83,7 +84,10 @@ if (!isset($_SESSION['user_id'])) {
                     </div>
 
                     <div class="supplier-register-items">
-                        <h2>Supplying Items</h2>
+                        <div class="supplier-items-head">
+                            <h2>Supplying Items</h2>
+                            <button type="button" id="supplier-new-item-btn" class="supplier-new-item-btn">Add new item</button>
+                        </div>
 
                         <div class="supplier-item-search-wrap">
                             <label for="supplier-item-search" class="supplier-item-search-label">Search Items</label>
@@ -94,11 +98,17 @@ if (!isset($_SESSION['user_id'])) {
                                 aria-label="Search results"></div>
                         </div>
 
-                        <div class="supplier-register-divider"></div>
-
-                        <div id="supplier-selected-items" class="supplier-register-items-list"></div>
                         <p id="supplier-item-empty" class="supplier-item-empty">Start typing to search for more items.
                         </p>
+                        <div class="supplier-selected-table" aria-label="Selected supplier items">
+                            <div class="supplier-selected-head">
+                                <span>Item ID</span>
+                                <span>Item Name</span>
+                                <span>Category</span>
+                                <span>Action</span>
+                            </div>
+                            <div id="supplier-selected-items" class="supplier-selected-body"></div>
+                        </div>
                         <div id="supplier-item-hidden-inputs"></div>
                     </div>
 
@@ -109,6 +119,8 @@ if (!isset($_SESSION['user_id'])) {
                     </div>
                 </form>
             </section>
+
+            <?php require 'C:\xampp\htdocs\lab_sync\app\views\administrator\supplier_item_modal.php'; ?>
         </main>
     </div>
     <script src="/lab_sync/public/js/supplierItemPicker.js"></script>
