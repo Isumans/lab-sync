@@ -43,6 +43,13 @@
                 <?php if (!empty($error)): ?>
                     <div class="error-message"><?php echo htmlspecialchars($error); ?></div>
                 <?php endif; ?>
+
+                <?php if (isset($_GET['loginRequired']) && $_GET['loginRequired'] === 'true'): ?>
+                    <div class="info-banner" style="background-color: #e3f2fd; border-left: 4px solid #2196F3; padding: 12px; margin-bottom: 20px; border-radius: 4px; color: #1976D2;">
+                        <strong>🔐 Login Required</strong>
+                        <p style="margin: 5px 0 0 0; font-size: 0.9rem;">You must log in to access this feature. Please enter your credentials below.</p>
+                    </div>
+                <?php endif; ?>
                 
                 <form action="/lab_sync/index.php?controller=Auth&action=login" method="POST" onsubmit="return validateForm()">
                     <div class="input-group">
@@ -61,7 +68,7 @@
                     <button type="submit" class="login-button">Login</button>
                 </form>
                 
-                <a href="#" class="login-with-code">
+                <a href="/lab_sync/index.php?controller=Auth&action=patient_signup" class="login-with-code">
                     <sub>Don't have an account?</sub><br/>Sign Up
                 </a>
                 

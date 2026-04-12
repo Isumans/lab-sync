@@ -99,6 +99,16 @@ $currentAction = $_GET['action'] ?? '';
             </li>
         ");
 
+        // Blog Posts
+        showMenuItem(['admin'], "
+            <li>
+                <a href='index.php?controller=blog&action=manage&role=" . $role . "'
+                   class='" . (($currentController === 'blog' && $currentAction === 'manage') ? 'active' : '') . "'>
+                    <img class='sidebar-icon' src='/lab_sync/public/assests/blog.png' alt='Blog Icon'>Blog Posts
+                </a>
+            </li>
+        ");
+
         // Settings
         showMenuItem(['admin'], "
             <li>

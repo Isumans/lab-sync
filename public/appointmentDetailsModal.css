@@ -93,6 +93,17 @@
 
 .appointment-details-header {
     margin-bottom: 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.appointment-details-header-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
 }
 
 .appointment-details-header h2 {
@@ -276,6 +287,9 @@
 }
 
 .view-details-btn {
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
     border: 1px solid #9fdcf5;
     background: #ebf9ff;
     color: #0d78a6;
@@ -284,6 +298,10 @@
     font-size: 12px;
     font-weight: 700;
     cursor: pointer;
+}
+
+.info-grid strong {
+    word-break: break-word;
 }
 
 .view-details-btn:hover {
@@ -317,6 +335,14 @@
 
     .appointment-details-header h2 {
         font-size: 18px;
+    }
+
+    .appointment-details-header {
+        flex-direction: column;
+    }
+
+    .appointment-details-header-actions {
+        justify-content: flex-start;
     }
 
     .workflow {

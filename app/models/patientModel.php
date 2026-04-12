@@ -12,6 +12,20 @@ class patientModel {
         return $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
     }
 
+    public function getPatientById($patient_id) {
+        $stmt = $this->db->prepare("SELECT patient_id, patient_name, email, contact_number FROM patients WHERE patient_id = ? LIMIT 1");
+        $stmt->bind_param("i", $patient_id);
+        if (!$stmt->execute()) {
+            $stmt->close();
+            return null;
+        }
+
+        $result = $stmt->get_result();
+        $patient = $result ? $result->fetch_assoc() : null;
+        $stmt->close();
+        return $patient ?: null;
+    }
+
     public function registerPatient($patient_name, $dob, $gender, $contact_no, $email) {
         $stmt = $this->db->prepare("INSERT INTO patients (patient_name, date_of_birth, gender, contact_number, email) VALUES (?, ?, ?, ?, ?)");
         $stmt->bind_param("sssss", $patient_name, $dob, $gender, $contact_no, $email);

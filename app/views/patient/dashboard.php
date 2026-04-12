@@ -27,6 +27,15 @@
       </div>
     </div>
 
+    <div class="card">
+      <h3>Blogs</h3>
+      <p class="muted">Read new test updates, preparation instructions, and health articles.</p>
+      <div class="list" style="margin-top:12px">
+        <a class="btn-primary" href="/lab_sync/index.php?controller=blog&action=index">Browse Blogs</a>
+        <a class="btn-outline" href="/lab_sync/index.php?controller=blog&action=index&cat=patient-instructions">Patient Instructions</a>
+      </div>
+    </div>
+
     <!-- <aside class="card">
       <h3>Quick Actions</h3>
       <div class="list">
@@ -44,7 +53,11 @@
         <thead>
           <tr>
             <th>Appointment ID</th>
-            <th>Test Id</th>
+            <th>Test</th>
+            <th>Price (LKR)</th>
+            <th>Home Collection</th>
+            <th>Status</th>
+            <th>Method</th>
             <th>Time</th>
             <th>Date</th>
             <th>Actions</th>
@@ -57,7 +70,17 @@
               <input type="hidden" name="appointment_id" value="<?php echo htmlspecialchars($appointment['appointment_id']); ?>">
               <tr>
                 <td><?php echo htmlspecialchars($appointment['appointment_id']); ?></td>
-                <td><?php echo htmlspecialchars($appointment['test_id']); ?></td>
+                <td><?php echo htmlspecialchars($appointment['test_name'] ?? ('Test #' . $appointment['test_id'])); ?></td>
+                <td><?php echo htmlspecialchars(number_format((float)($appointment['total_price'] ?? $appointment['test_price'] ?? 0), 2)); ?></td>
+                <td>
+                  <?php if (!empty($appointment['home_collection'])): ?>
+                    Yes<?php if (!empty($appointment['collection_address'])): ?> - <?php echo htmlspecialchars($appointment['collection_address']); ?><?php endif; ?>
+                  <?php else: ?>
+                    No
+                  <?php endif; ?>
+                </td>
+                <td><?php echo htmlspecialchars($appointment['appointment_status'] ?? 'Pending'); ?></td>
+                <td><?php echo htmlspecialchars($appointment['method'] ?? 'Online'); ?></td>
                 <td><input class="form1" name="time" type="time" value="<?php echo htmlspecialchars($appointment['appointment_time']); ?>"></td>
                 <td><input class="form1" name="date" type="date" value="<?php echo htmlspecialchars($appointment['appointment_date']); ?>"></td>
 
@@ -73,7 +96,7 @@
             </form>
             <?php endforeach; ?>
           <?php else: ?>
-        <tr><td colspan="5">No tests found or database error.</td></tr>
+        <tr><td colspan="9">No tests found or database error.</td></tr>
       <?php endif; ?>
                         
       </tbody>
@@ -117,9 +140,12 @@ function renderAppointments() {
     const nextStatus = document.getElementById('nextStatus');
     
     if (nextAppointment) {
-        nextInfo.textContent = `Test ID: ${nextAppointment.test_id} — ${nextAppointment.appointment_date} at ${nextAppointment.appointment_time}`;
-        nextStatus.textContent = nextAppointment.status || 'Pending';
-        nextStatus.className = 'pill ' + (nextAppointment.status === 'Confirmed' ? 'pill-ok' : 'pill-pending');
+        const displayName = nextAppointment.test_name || `Test #${nextAppointment.test_id}`;
+        const nextPrice = Number(nextAppointment.total_price || nextAppointment.test_price || 0);
+        const collectionText = nextAppointment.home_collection ? 'Home collection' : 'Lab visit';
+        nextInfo.textContent = `${displayName} — LKR ${nextPrice.toFixed(2)} — ${nextAppointment.appointment_date} at ${nextAppointment.appointment_time} — ${collectionText}`;
+        nextStatus.textContent = nextAppointment.appointment_status || 'Pending';
+        nextStatus.className = 'pill ' + (nextAppointment.appointment_status === 'Confirmed' ? 'pill-ok' : 'pill-pending');
     } else {
         nextInfo.textContent = 'No appointment yet.';
         nextStatus.textContent = 'Pending';

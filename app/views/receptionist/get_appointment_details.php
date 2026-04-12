@@ -29,7 +29,13 @@ if (!function_exists('normalizeAppointmentWorkflowStatus')) {
     }
 }
 
-$patientName = $appointment['patient_name'] ?? 'Unknown Patient';
+$patientName = trim((string) ($appointment['patient_name'] ?? ''));
+if ($patientName === '' || ctype_digit($patientName)) {
+    $patientName = trim((string) ($appointment['patient_display_name'] ?? ''));
+}
+if ($patientName === '') {
+    $patientName = 'Unknown Patient';
+}
 $patientId = $appointment['patient_id'] ?? 'N/A';
 $gender = $appointment['gender'] ?? 'N/A';
 $contact = $appointment['contact_number'] ?? 'N/A';
@@ -68,6 +74,20 @@ if (!empty($appointment['date_of_birth'])) {
 $paymentStatus = strtoupper((string) ($billing['payment_status'] ?? 'PENDING'));
 $totalFee = isset($billing['total_fee']) && is_numeric($billing['total_fee']) ? number_format((float) $billing['total_fee'], 2) : '0.00';
 $billingRef = $billing['reference'] ?? 'N/A';
+$appointmentStatus = strtoupper(trim((string) ($appointment['status'] ?? ($appointment['appointment_status'] ?? 'PENDING'))));
+$homeCollection = !empty($appointment['home_collection']);
+$collectionAddress = trim((string) ($appointment['collection_address'] ?? ''));
+$bookingChannel = trim((string) ($appointment['booking_channel'] ?? 'receptionist_walkin'));
+$reason = trim((string) ($appointment['reason'] ?? ($appointment['clinical_notes'] ?? ($appointment['notes'] ?? ''))));
+$testNames = [];
+foreach ($tests as $test) {
+    $name = trim((string) ($test['test_name'] ?? ''));
+    if ($name !== '') {
+        $testNames[] = $name;
+    }
+}
+$testsSummary = !empty($testNames) ? implode(', ', $testNames) : 'No tests linked';
+$itemCount = count($tests);
 ?>
 <div class="appointment-details-shell">
     <div class="appointment-details-header">
@@ -153,7 +173,41 @@ $billingRef = $billing['reference'] ?? 'N/A';
                 </div>
                 <div>
                     <span class="label">Status</span>
+                    <strong><?php echo appointmentDetailsEscape($appointmentStatus); ?></strong>
+                </div>
+                <div>
+                    <span class="label">Type</span>
                     <strong><?php echo appointmentDetailsEscape(ucfirst(strtolower((string) $appointmentMethod))); ?></strong>
+                </div>
+            </div>
+        </section>
+
+        <section class="appointment-card appointment-info">
+            <h3>Booking Snapshot</h3>
+            <div class="appointment-card-body info-grid">
+                <div>
+                    <span class="label">Tests</span>
+                    <strong><?php echo appointmentDetailsEscape($testsSummary); ?></strong>
+                </div>
+                <div>
+                    <span class="label">Items</span>
+                    <strong><?php echo appointmentDetailsEscape($itemCount); ?></strong>
+                </div>
+                <div>
+                    <span class="label">Home Collection</span>
+                    <strong><?php echo $homeCollection ? 'Yes' : 'No'; ?></strong>
+                </div>
+                <div>
+                    <span class="label">Collection Address</span>
+                    <strong><?php echo appointmentDetailsEscape($collectionAddress !== '' ? $collectionAddress : 'N/A'); ?></strong>
+                </div>
+                <div>
+                    <span class="label">Booking Channel</span>
+                    <strong><?php echo appointmentDetailsEscape($bookingChannel); ?></strong>
+                </div>
+                <div>
+                    <span class="label">Clinical Notes</span>
+                    <strong><?php echo appointmentDetailsEscape($reason !== '' ? $reason : 'N/A'); ?></strong>
                 </div>
             </div>
         </section>

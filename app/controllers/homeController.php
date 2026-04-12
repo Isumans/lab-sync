@@ -4,6 +4,8 @@ if (!defined('ROOT_PATH')) {
 }
 
 require_once MODEL_PATH . '/homeModel.php';
+require_once APP_PATH . '/services/EmailService.php';
+require_once APP_PATH . '/services/SmsService.php';
 require_once 'C:\xampp\htdocs\lab_sync\config\db.php';
 
 class HomeController {
@@ -77,8 +79,127 @@ class HomeController {
         $tests = $this->model->getAllTests();
         include VIEW_PATH . '/patient/explore.php';
     }
+
+    public function appointmentOptions() {
+        include VIEW_PATH . '/patient/appointment_options.php';
+    }
+
+    public function getHelp() {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+
+        $requests = [];
+        if (isset($_SESSION['user_id'])) {
+            $patientId = (int)$this->model->getPatientIdByUserId($_SESSION['user_id']);
+            if ($patientId > 0) {
+                $requests = $this->model->getPrescriptionRequestsByPatient($patientId, 10);
+            }
+        }
+
+        include VIEW_PATH . '/patient/get_help.php';
+    }
+
+    public function submitPrescriptionHelp() {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+
+        if (!isset($_SESSION['user_id'])) {
+            header('Location: /lab_sync/index.php?controller=Auth&action=index');
+            exit;
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: /lab_sync/index.php?controller=home&action=get_help');
+            exit;
+        }
+
+        $patientId = (int)$this->model->getPatientIdByUserId($_SESSION['user_id']);
+        if ($patientId <= 0) {
+            $_SESSION['error'] = 'Unable to identify patient profile.';
+            header('Location: /lab_sync/index.php?controller=home&action=get_help');
+            exit;
+        }
+
+        if (!isset($_FILES['prescription_file']) || $_FILES['prescription_file']['error'] !== UPLOAD_ERR_OK) {
+            $_SESSION['error'] = 'Please upload a valid prescription file.';
+            header('Location: /lab_sync/index.php?controller=home&action=get_help');
+            exit;
+        }
+
+        $allowedExtensions = ['pdf', 'jpg', 'jpeg', 'png'];
+        $originalName = $_FILES['prescription_file']['name'] ?? '';
+        $tmpFile = $_FILES['prescription_file']['tmp_name'] ?? '';
+        $extension = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
+
+        if (!in_array($extension, $allowedExtensions, true)) {
+            $_SESSION['error'] = 'Allowed file types: PDF, JPG, JPEG, PNG.';
+            header('Location: /lab_sync/index.php?controller=home&action=get_help');
+            exit;
+        }
+
+        if ((int)$_FILES['prescription_file']['size'] > 5 * 1024 * 1024) {
+            $_SESSION['error'] = 'File is too large. Maximum size is 5MB.';
+            header('Location: /lab_sync/index.php?controller=home&action=get_help');
+            exit;
+        }
+
+        $uploadDir = ROOT_PATH . DIRECTORY_SEPARATOR . 'public' . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . 'prescriptions';
+        if (!is_dir($uploadDir) && !mkdir($uploadDir, 0755, true)) {
+            $_SESSION['error'] = 'Failed to create upload directory.';
+            header('Location: /lab_sync/index.php?controller=home&action=get_help');
+            exit;
+        }
+
+        $safeName = 'rx_' . $patientId . '_' . time() . '_' . bin2hex(random_bytes(4)) . '.' . $extension;
+        $fullPath = $uploadDir . DIRECTORY_SEPARATOR . $safeName;
+        $relativePath = 'public/uploads/prescriptions/' . $safeName;
+
+        if (!move_uploaded_file($tmpFile, $fullPath)) {
+            $_SESSION['error'] = 'Failed to upload prescription. Please try again.';
+            header('Location: /lab_sync/index.php?controller=home&action=get_help');
+            exit;
+        }
+
+        $notes = trim($_POST['notes'] ?? '');
+        $preferredDate = trim($_POST['preferred_date'] ?? '');
+        $preferredTime = trim($_POST['preferred_time'] ?? '');
+        $homeCollection = !empty($_POST['home_collection']) ? 1 : 0;
+        $collectionAddress = trim($_POST['collection_address'] ?? '');
+
+        if ($homeCollection && $collectionAddress === '') {
+            $_SESSION['error'] = 'Please provide a collection address for home sample collection.';
+            header('Location: /lab_sync/index.php?controller=home&action=get_help');
+            exit;
+        }
+
+        $saved = $this->model->createPrescriptionHelpRequest(
+            $patientId,
+            $relativePath,
+            $notes,
+            $preferredDate,
+            $preferredTime,
+            $homeCollection,
+            $collectionAddress
+        );
+
+        if (!$saved) {
+            if (file_exists($fullPath)) {
+                unlink($fullPath);
+            }
+            $_SESSION['error'] = $this->model->getLastError() ?: 'Failed to submit prescription request.';
+            header('Location: /lab_sync/index.php?controller=home&action=get_help');
+            exit;
+        }
+
+        $_SESSION['success'] = 'Prescription submitted. Receptionist will contact you soon.';
+        header('Location: /lab_sync/index.php?controller=home&action=get_help');
+        exit;
+    }
+
     public function bookTest(){
-        $testName = $_GET['test'] ?? '';
+        $selectedTestId = (int)($_GET['test'] ?? 0);
         $tests = $this->model->getAllTests();
         include VIEW_PATH . '/patient/book.php';
     }
@@ -100,37 +221,83 @@ class HomeController {
         error_log("Booking appointment - POST data: " . print_r($_POST, true));
 
         // Get and validate inputs
-        $testId = $_POST['test_id'] ?? '';
+        $testIds = $_POST['test_ids'] ?? [];
+        if (!is_array($testIds)) {
+            $testIds = [];
+        }
+
+        // Backward compatibility with older single-test forms
+        $singleTestId = (int)($_POST['test_id'] ?? 0);
+        if ($singleTestId > 0 && !in_array($singleTestId, array_map('intval', $testIds), true)) {
+            $testIds[] = $singleTestId;
+        }
+
         $date = $_POST['appointment_date'] ?? '';
         $time = $_POST['appointment_time'] ?? '';
+        $homeCollection = !empty($_POST['home_collection']) ? 1 : 0;
+        $collectionAddress = trim($_POST['collection_address'] ?? '');
         $patientId = $this->model->getPatientIdByUserId($_SESSION['user_id']);
         $method = 'Online';
 
-        // Debug log the values
-        error_log("testId: $testId, date: $date, time: $time, patientId: $patientId");
-
-        if (!$testId || !$date || !$time || !$patientId) {
-            $_SESSION['error'] = 'Please fill all required fields';
-            error_log("Missing required fields - testId: $testId, date: $date, time: $time, patientId: $patientId");
+        if ($homeCollection && $collectionAddress === '') {
+            $_SESSION['error'] = 'Please provide a collection address for home sample collection.';
             header('Location: /lab_sync/index.php?controller=home&action=book');
             exit;
         }
 
-        // Book appointment with error checking
-        $result = $this->model->createAppointment([
-            'test_id' => $testId,
+        if (count($testIds) === 0 || !$date || !$time || !$patientId) {
+            $_SESSION['error'] = 'Please fill all required fields';
+            header('Location: /lab_sync/index.php?controller=home&action=book');
+            exit;
+        }
+
+        $hasConflict = $this->model->hasTimeSlotConflict($date, $time);
+        if ($hasConflict) {
+            $_SESSION['error'] = 'Selected slot is already taken. Please choose a different date or time.';
+            header('Location: /lab_sync/index.php?controller=home&action=book');
+            exit;
+        }
+
+        $result = $this->model->createOnlineAppointmentWithItems([
             'patient_id' => $patientId,
             'appointment_date' => $date,
             'appointment_time' => $time,
-            'method' => $method
-        ]);
+            'method' => $method,
+            'status' => 'Pending',
+            'booking_channel' => 'online_self',
+            'home_collection' => $homeCollection,
+            'collection_address' => $collectionAddress
+        ], $testIds);
 
         if ($result) {
+            $contact = $this->model->getPatientContactByUserId($_SESSION['user_id']);
+            if ($contact) {
+                $payload = $this->model->getAppointmentEmailPayload((int)$result);
+                if ($payload) {
+                    if (!empty($contact['email'])) {
+                        $mailer = new EmailService();
+                        $mailer->sendAppointmentBookedEmail(
+                            $contact['email'],
+                            $contact['patient_name'] ?? 'Patient',
+                            $payload
+                        );
+                    }
+
+                    if (!empty($contact['contact_number'])) {
+                        $smsService = new SmsService();
+                        $smsService->sendAppointmentBookedSms(
+                            $contact['contact_number'],
+                            $contact['patient_name'] ?? 'Patient',
+                            $payload
+                        );
+                    }
+                }
+            }
+
             $_SESSION['success'] = 'Appointment booked successfully';
             header('Location: /lab_sync/index.php?controller=home&action=dashboard');
         } else {
-            error_log("Failed to create appointment - DB Error: " . $this->db->error);
-            $_SESSION['error'] = 'Failed to book appointment';
+            $_SESSION['error'] = $this->model->getLastError() ?: 'Failed to book appointment';
             header('Location: /lab_sync/index.php?controller=home&action=book');
         }
         exit;

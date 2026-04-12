@@ -5,8 +5,16 @@ if (!defined('ROOT_PATH')) {
 
 require_once MODEL_PATH . '/appointmentModel.php';
 require_once MODEL_PATH . '/patientModel.php';
-require_once 'C:\xampp\htdocs\lab_sync\config\db.php';
+require_once APP_PATH . '/services/EmailService.php';
+require_once APP_PATH . '/services/SmsService.php';
+require_once __DIR__ . '/../../config/db.php';
 class appointmentsController {
+    private function ensureSessionStarted() {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+    }
+
     public function index($role = '') {
         // Logic to fetch and display appointments can be added here
         $appointmentsModel = new AppointmentModel(connect());
@@ -65,6 +73,188 @@ class appointmentsController {
                 }
             }
         }
+
+        header('Location: /lab_sync/index.php?controller=appointmentsController&action=createAppointment');
+        exit;
+    }
+
+    public function processPrescriptionDecision() {
+        $this->ensureSessionStarted();
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: /lab_sync/index.php?controller=appointmentsController&action=prescriptionQueue');
+            exit;
+        }
+
+        $requestId = (int)($_POST['request_id'] ?? 0);
+        $decision = trim($_POST['decision'] ?? '');
+        $decisionNote = trim($_POST['decision_note'] ?? '');
+
+        if ($requestId <= 0 || $decision === '') {
+            $_SESSION['error'] = 'Invalid decision request.';
+            header('Location: /lab_sync/index.php?controller=appointmentsController&action=prescriptionQueue');
+            exit;
+        }
+
+        $appointmentsModel = new AppointmentModel(connect());
+
+        if ($decision === 'book_for_patient') {
+            header('Location: /lab_sync/index.php?controller=appointmentsController&action=createAppointment&request_id=' . $requestId);
+            exit;
+        }
+
+        if ($decision === 'self_book') {
+            $decisionBy = (int)($_SESSION['user_id'] ?? 0);
+            $ok = $appointmentsModel->markPrescriptionRequestSelfBooking($requestId, $decisionNote, $decisionBy);
+            if ($ok) {
+                $_SESSION['success'] = 'Request marked as Self Booking Requested.';
+
+                $request = $appointmentsModel->getPrescriptionRequestById($requestId);
+                if ($request) {
+                    $patientName = $request['patient_name'] ?? 'Patient';
+                    $selfBookLink = (defined('BASE_URL') ? BASE_URL : '/lab_sync') . '/index.php?controller=home&action=appointment_options';
+                    $subject = 'Update on your prescription request - LabSync';
+                    $noteBlock = $decisionNote !== ''
+                        ? '<p><strong>Receptionist note:</strong> ' . htmlspecialchars($decisionNote) . '</p>'
+                        : '';
+                    $html = '
+                        <html>
+                        <body style="font-family: Arial, sans-serif; color: #243046; line-height:1.6;">
+                            <h3 style="margin-bottom: 8px;">LabSync Prescription Request Update</h3>
+                            <p>Dear ' . htmlspecialchars((string)$patientName) . ',</p>
+                            <p>Your prescription request has been reviewed. Please proceed with self-booking your tests using the Test Appointment option in your dashboard.</p>
+                            ' . $noteBlock . '
+                            <p>You can continue here: <a href="' . htmlspecialchars($selfBookLink) . '">Test Appointment</a></p>
+                            <p>Thank you,<br>LabSync Team</p>
+                        </body>
+                        </html>
+                    ';
+
+                    if (!empty($request['email'])) {
+                        $mailer = new EmailService();
+                        $mailer->sendEmail($request['email'], $patientName, $subject, $html);
+                    }
+
+                    if (!empty($request['contact_number'])) {
+                        $smsMessage = 'LabSync: Your prescription request was reviewed. Please self-book your tests here: ' . $selfBookLink;
+                        $smsService = new SmsService();
+                        $smsService->sendSms($request['contact_number'], $smsMessage);
+                    }
+                }
+            } else {
+                $_SESSION['error'] = 'Unable to update request status. It may already be processed.';
+            }
+
+            header('Location: /lab_sync/index.php?controller=appointmentsController&action=prescriptionQueue');
+            exit;
+        }
+
+        $_SESSION['error'] = 'Unknown decision action.';
+        header('Location: /lab_sync/index.php?controller=appointmentsController&action=prescriptionQueue');
+        exit;
+
+    }
+
+    public function prescriptionQueue() {
+        $this->ensureSessionStarted();
+
+        $status = strtolower(trim((string)($_GET['status'] ?? 'pending')));
+        if (!in_array($status, ['pending', 'processed', 'all'], true)) {
+            $status = 'pending';
+        }
+
+        $model = new AppointmentModel(connect());
+        if ($status === 'pending') {
+            $requests = $model->getPrescriptionRequests('Pending');
+        } elseif ($status === 'all') {
+            $requests = $model->getPrescriptionRequests('all');
+        } else {
+            $allRequests = $model->getPrescriptionRequests('all');
+            $requests = array_values(array_filter($allRequests, function ($row) {
+                return strtolower((string)($row['status'] ?? 'pending')) !== 'pending';
+            }));
+        }
+
+        include VIEW_PATH . '/receptionist/prescription_queue.php';
+    }
+
+    public function prescriptionDecisionReport() {
+        $this->ensureSessionStarted();
+
+        $filters = [
+            'status' => trim((string)($_GET['status'] ?? '')),
+            'decision_action' => trim((string)($_GET['decision_action'] ?? '')),
+            'date_from' => trim((string)($_GET['date_from'] ?? '')),
+            'date_to' => trim((string)($_GET['date_to'] ?? '')),
+            'decision_by_user_id' => (int)($_GET['decision_by_user_id'] ?? 0),
+        ];
+
+        $model = new AppointmentModel(connect());
+        $reportRows = $model->getPrescriptionDecisionReport($filters);
+        $summary = $model->getPrescriptionDecisionSummary();
+
+        if (strtolower((string)($_GET['format'] ?? '')) === 'csv') {
+            header('Content-Type: text/csv; charset=UTF-8');
+            header('Content-Disposition: attachment; filename="prescription_decisions_' . date('Ymd_His') . '.csv"');
+
+            $output = fopen('php://output', 'w');
+            fputcsv($output, [
+                'request_id',
+                'patient_id',
+                'patient_name',
+                'status',
+                'decision_action',
+                'decision_by_user_id',
+                'decision_by_username',
+                'linked_appointment_id',
+                'decision_at',
+                'created_at',
+                'notes',
+            ]);
+
+            foreach ($reportRows as $row) {
+                fputcsv($output, [
+                    $row['request_id'] ?? '',
+                    $row['patient_id'] ?? '',
+                    $row['patient_name'] ?? '',
+                    $row['status'] ?? '',
+                    $row['decision_action'] ?? '',
+                    $row['decision_by_user_id'] ?? '',
+                    $row['decision_by_username'] ?? '',
+                    $row['linked_appointment_id'] ?? '',
+                    $row['decision_at'] ?? '',
+                    $row['created_at'] ?? '',
+                    preg_replace('/\s+/', ' ', (string)($row['notes'] ?? '')),
+                ]);
+            }
+
+            fclose($output);
+            exit;
+        }
+
+        include VIEW_PATH . '/receptionist/prescription_decisions.php';
+    }
+
+    public function prescriptionRequestDetails() {
+        $this->ensureSessionStarted();
+
+        $requestId = (int)($_GET['request_id'] ?? 0);
+        if ($requestId <= 0) {
+            $_SESSION['error'] = 'Invalid prescription request ID.';
+            header('Location: /lab_sync/index.php?controller=appointmentsController&action=prescriptionQueue');
+            exit;
+        }
+
+        $model = new AppointmentModel(connect());
+        $request = $model->getPrescriptionRequestById($requestId);
+        if (!$request) {
+            $_SESSION['error'] = 'Prescription request not found.';
+            header('Location: /lab_sync/index.php?controller=appointmentsController&action=prescriptionQueue');
+            exit;
+        }
+
+        $events = $model->getPrescriptionRequestEvents($requestId);
+        include VIEW_PATH . '/receptionist/prescription_request_details.php';
     }
 
     private function parseSelectedTestIds($rawValue) {
@@ -100,9 +290,8 @@ class appointmentsController {
     echo json_encode($results);
 }
 
-public function createAppointment($role) {
-    
-    include VIEW_PATH . '/receptionist/create_appointment.php';
+public function createAppointment($role = '') {
+    $this->index($role);
 }
 
 public function filterAppointments() {
@@ -309,6 +498,7 @@ public function updateAppointment() {
     ]);
 }
 public function deleteAppointment() {
+    $this->ensureSessionStarted();
     header('Content-Type: application/json; charset=UTF-8');
 
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -373,6 +563,7 @@ public function deleteAppointment() {
 }
 
 public function updateTestStatus() {
+    $this->ensureSessionStarted();
     header('Content-Type: application/json; charset=UTF-8');
 
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
