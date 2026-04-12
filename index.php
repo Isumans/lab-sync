@@ -11,6 +11,7 @@ require_once CONTROLLER_PATH . '/homeController.php';
 require_once CONTROLLER_PATH . '/inventoryController.php';
 require_once CONTROLLER_PATH . '/profileController.php';
 require_once CONTROLLER_PATH . '/partnerLabController.php';
+require_once CONTROLLER_PATH . '/reportsController.php';
 // require_once 'C:\xampp\htdocs\lab_sync\app\controllers\appointmentsController.php';
 require_once 'C:\xampp\htdocs\lab_sync\config\db.php';
 $controllerName = $_GET['controller'] ?? 'home'; // Default to 'home' controller
@@ -134,11 +135,29 @@ elseif ($controllerName === 'appointmentsController') {
         $appointmentController->deleteAppointment();
     }
 }elseif($controllerName === 'reportsController'){
+    $reportsController = new reportsController();
     $action = $_GET['action'] ?? 'index'; // or your desired default
+    $role = $_GET['role'] ?? '';
+    $appointmentID= $_GET['id'] ?? '';
     if ($action === 'index') {
-        include VIEW_PATH . '/technicians/reports.php';
-
-}
+        $reportsController->index($role);
+    } elseif ($action === 'listReports') {
+        $reportsController->listReports();
+    } elseif ($action === 'getReportDetails') {
+        $reportsController->getReportDetails();
+    } elseif ($action === 'getEnterValuesContext') {
+        $reportsController->getEnterValuesContext();
+    } elseif ($action === 'saveEnterValues') {
+        $reportsController->saveEnterValues();
+    } elseif ($action === 'details') {
+        $reportsController->details($role);
+    }elseif($action === 'viewReport') {
+        $reportsController->viewReport($appointmentID);
+    }elseif($action === 'CreateReport') {
+        $reportsController->CreateReport();
+    } else {
+        echo "404 Not Found";
+    }
 }elseif($controllerName === 'supplierController'){
     $action = $_GET['action'] ?? 'index'; // or your desired default
     if($action ==='index'){

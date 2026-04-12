@@ -8,149 +8,102 @@ if (!isset($_SESSION['user_id'])) {
 ?>
 <html>
 <head>
-
-    <title>Reports</title>
-        <link rel="stylesheet" href="/lab_sync/public/styles.css">
-        <link rel="stylesheet" href="/lab_sync/public/settingStyles.css">
-        <link rel="stylesheet" href="/lab_sync/public/table.css">
-        <link rel="stylesheet" href="/lab_sync/public/patientStyles.css">
+    <title>Reports Dashboard</title>
+    <link rel="stylesheet" href="/lab_sync/public/styles.css">
+    <link rel="stylesheet" href="/lab_sync/public/reportsDashboard.css">
 </head>
-    <body>
-        <!-- Navigation Bar -->
-        <?php require 'C:\xampp\htdocs\lab_sync\public\navbar.php'; ?>
-        <div class="container">
-            <!-- Sidebar -->
-            <?php require 'C:\xampp\htdocs\lab_sync\public\sidebar.php'; ?>
+<body>
+    <?php require 'C:\xampp\htdocs\lab_sync\public\navbar.php'; ?>
+    <div class="container">
+        <?php require 'C:\xampp\htdocs\lab_sync\public\sidebar.php'; ?>
 
-            <!-- Main Body Section -->
-            <main class="main-content">
-                 <div class="Tmain-content">
-                    <div class="test-catalog-header">
-                        <h1>Reports</h1>
+        <main class="main-content">
+            <section class="reports-dashboard" aria-label="Reports Dashboard">
+                
+            <div class="main-content-header">
+                    <h1>Reports</h1>
+                    <p class="MC-p">Reports-></p>
+            </div>
+
+                <!-- <div class="rd-header-row">
+                    <h1 class="rd-title">Reports</h1>
+                    <p class="MC-p">Appointments-></p>
+                    <div class="rd-header-actions">
+                        <button type="button" class="rd-btn rd-btn-muted" id="rdExportBtn">Export CSV</button>
+                        <button type="button" class="rd-btn rd-btn-primary" id="rdGenerateBtn">Generate Report</button>
                     </div>
-                    <div>
-                        <p class="MC-p">Reports-></p>
-                    </div>
-                    <div class="container-cards">
-                        <div class="card, c-card">
-                                <h3>Completed Reports (This Week)</h3>
-                                <h1>10</h1>
-                                <p>+2%</p>
-                                <!-- <img src="assests/chart1.png" alt="Chart 1" style="width:100%; height:auto;"> -->
-                        </div>
-                        <div class="card, c-card">
-                            <h3>Pending Reports</h3>
-                            <h1>40</h1>
-                            <p>+5%</p>
-                            <!-- <img src="assests/chart2.png" alt="Chart 2" style="width:100%; height:auto;"> -->
-                        </div>
-                        <div class="card c-card">
-                            <h3>Samples Processing</h3>
-                            <h1>5</h1>
-                            <p>-1%</p>
-                            <!-- <img src="assests/chart3.png" alt="Chart 3" style="width:100%; height:auto;"> -->
-                        </div>
-                        <div class="card c-card">
-                            <h3>Samples Processed (This Week)</h3>
-                            <h1>2</h1>
-                            <p>0%</p>
-                            <!-- <img src="assests/chart4.png" alt="Chart 4" style="width:100%; height:auto;"> -->
+                </div> -->
+
+                <section class="rd-filter-card" aria-label="Search and Filters">
+                    <div class="rd-filter-grid">
+                        <div class="rd-filter-field rd-filter-field-search">
+                            <label for="rdSearch">Search Records</label>
+                            <input id="rdSearch" type="text" placeholder="Search by Patient Name, Report ID, or Appointment ID..." />
                         </div>
 
-                    </div>
-                     <div class="nav-bar-container">
-                        <div class="nav-bar-line">
-                            <a class="navItem active" onclick="showSection('finalReports', event)" href="#">Final Reports</a>
+                        <div class="rd-filter-field">
+                            <label for="rdStatus">Status</label>
+                            <select id="rdStatus">
+                                <option value="all">All Statuses</option>
+                                <option value="complete">Complete</option>
+                                <option value="in progress">In Progress</option>
+                                <option value="pending">Pending</option>
+                            </select>
+                        </div>
 
-
-                            <a class="navItem" onclick="showSection('testSamples', event)" href="#">Test Samples</a>
-
-                            <a class="navItem" onclick="showSection('createReports', event)" href="#">Create Reports</a>
-
-
+                        <div class="rd-filter-field">
+                            <label for="rdTestType">Test Type</label>
+                            <select id="rdTestType">
+                                <option value="all">All Tests</option>
+                                <option value="blood test">Blood Test</option>
+                                <option value="urinalysis">Urinalysis</option>
+                                <option value="xray">X-Ray</option>
+                                <option value="chemistry">Chemistry</option>
+                            </select>
                         </div>
                     </div>
-                    <div id="content-area" class="content-area">
-                       <div id="finalReports" class="section">
-                           <h2>Final Reports</h2>
-                           <p>View and manage final reports here.</p>
-                           <table class="test-catalog-table">
-        <thead>
-            <tr>
-                <th>Appointment ID</th>
-                <th>Test Request ID</th>
-                <th>Test Type</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td>RPT001</td>
-                <td>req001</td>
-                <td>Blood Test</td>
-                <td>
-                    <button class="status">View Report</button>
-                </td>
-            </tr>
-            <tr>
-                <td>RPT002</td>
-                <td>req002</td>
-                <td>Urine Test</td>
-                <td>
-                    <button class="status">View Report</button>
-                </td>
-            </tr>
-        </tbody>
 
-    </table>
-                       </div>
-                       <div id="testSamples" class="section" style="display:none;">
-                           <h2>Test Samples</h2>
-                           <p>View and manage test samples here.</p>
-                           <table class="test-catalog-table">
-        <thead>
-            <tr>
-                <th>Appointment ID</th>
-                <th>Sample ID</th>
-                <th>Sample Type</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td>RPT001</td>
-                <td>sam001</td>
-                <td>Blood Test</td>
-                <td>
-                    <button class="status">Create Report</button>
-                </td>
-            </tr>
-            <tr>
-                <td>RPT002</td>
-                <td>req002</td>
-                <td>Urine Test</td>
-                <td>
-                    <button class="status">Create Report</button>
-                </td>
-            </tr>
+                    <div class="rd-filter-bottom-row">
+                        <div class="rd-filter-date-range">
+                            <div class="rd-filter-field">
+                                <label for="rdDateFrom">Date Range</label>
+                                <input id="rdDateFrom" type="date" />
+                            </div>
+                            <div class="rd-filter-field rd-filter-field-to">
+                                <label for="rdDateTo" class="rd-hidden-label">End Date</label>
+                                <input id="rdDateTo" type="date" />
+                            </div>
+                        </div>
 
-    </table>
-            
-                       </div>
-                       <div id="createReports" class="section" style="display:none;">
-                           <h2>Create Reports</h2>
-                           <p>Create new reports here.</p>
-                           <?php require 'C:\xampp\htdocs\lab_sync\app\views\technicians\createReport.php'; ?>
-                       </div>
+                        <button type="button" class="rd-clear-btn" id="rdClearBtn">Clear All Filters</button>
                     </div>
-                </div>
-            </main>
+                </section>
 
-        </div>
-        <script src="/lab_sync/public/js/showSection.js"></script>
-    </body>
+                <section class="rd-table-card" aria-label="Reports Table">
+                    <div class="rd-table-wrap">
+                        <table class="rd-table">
+                            <thead>
+                                <tr>
+                                    <th>Appointment ID</th>
+                                    <th>Patient Name</th>
+                                    <th>Date</th>
+                                    <th>Overall Progress</th>
+                                    <th class="rd-th-right">View Details</th>
+                                </tr>
+                            </thead>
+                            <tbody id="rdTableBody"></tbody>
+                        </table>
+                    </div>
 
+                    <div class="rd-table-footer">
+                        <p id="rdShowingText">Showing 0-0 of 0 reports</p>
+                        <div class="rd-pagination" id="rdPagination"></div>
+                    </div>
+                </section>
+            </section>
+        </main>
+    </div>
 
+    <script src="/lab_sync/public/js/reportsDashboard.js?v=20260411"></script>
+</body>
 </html>
-
-            

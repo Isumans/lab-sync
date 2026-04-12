@@ -13,6 +13,126 @@ document.addEventListener('DOMContentLoaded', function() {
 function initializeForm() {
     // Set step 1 as active by default
     showStep(1);
+    initializeUnitArraySystem();
+}
+
+function initializeUnitArraySystem() {
+    normalizeExistingUnitBlocks();
+    reindexUnitBlocks();
+    updateEmptyState();
+}
+
+function normalizeExistingUnitBlocks() {
+    const container = document.getElementById('units-container');
+    if (!container) return;
+
+    const directChildren = Array.from(container.children);
+    directChildren.forEach(child => {
+        if (!child.classList.contains('unit-row') || child.closest('.unit-config-block')) {
+            return;
+        }
+
+        const block = document.createElement('div');
+        block.className = 'unit-config-block';
+        container.insertBefore(block, child);
+        block.appendChild(child);
+
+        const sibling = block.nextElementSibling;
+        if (sibling && sibling.classList.contains('reference-ranges-section')) {
+            block.appendChild(sibling);
+        } else {
+            const section = document.createElement('div');
+            section.className = 'reference-ranges-section';
+            section.innerHTML = `
+                <div class="section-subtitle">+ RANGE PARAMETERS</div>
+                <div class="reference-ranges-container">
+                    <div class="range-table">
+                        <div class="range-header">
+                            <div>GENDER</div>
+                            <div>AGE RANGE</div>
+                            <div>REF. RANGE (MIN-MAX)</div>
+                            <div>RANGE LABEL</div>
+                            <div></div>
+                        </div>
+                        ${createRangeRowMarkup()}
+                    </div>
+                </div>
+                <button type="button" class="btn-add-range" onclick="addNewRange(this)">+ Add Reference Range</button>
+            `;
+            block.appendChild(section);
+        }
+    });
+}
+
+function createRangeRowMarkup() {
+    return `
+        <div class="range-row">
+            <div class="range-cell">
+                <select>
+                    <option value="">All</option>
+                    <option value="M">Male</option>
+                    <option value="F">Female</option>
+                </select>
+            </div>
+            <div class="range-cell">
+                <div class="age-inputs">
+                    <input type="number" placeholder="0">
+                    <span>-</span>
+                    <input type="number" placeholder="99">
+                </div>
+            </div>
+            <div class="range-cell">
+                <div class="ref-inputs">
+                    <input type="number" placeholder="70" step="0.01">
+                    <span>-</span>
+                    <input type="number" placeholder="110" step="0.01">
+                </div>
+            </div>
+            <div class="range-cell">
+                <input type="text" placeholder="Range Label">
+            </div>
+            <button type="button" class="btn-remove-range" onclick="removeRange(this)">×</button>
+        </div>
+    `;
+}
+
+function reindexUnitBlocks() {
+    const blocks = document.querySelectorAll('#units-container .unit-config-block');
+
+    blocks.forEach((block, unitIndex) => {
+        block.dataset.unitIndex = String(unitIndex);
+
+        const valueInput = block.querySelector('.unit-row .form-group:nth-child(1) input');
+        const unitInput = block.querySelector('.unit-row .form-group:nth-child(2) input');
+
+        if (valueInput) valueInput.name = `units[${unitIndex}][value_name]`;
+        if (unitInput) unitInput.name = `units[${unitIndex}][unit_name]`;
+
+        const rangeRows = block.querySelectorAll('.range-row');
+        rangeRows.forEach((row, rangeIndex) => {
+            const gender = row.querySelector('.range-cell:nth-child(1) select');
+            const ageMin = row.querySelector('.range-cell:nth-child(2) input:nth-of-type(1)');
+            const ageMax = row.querySelector('.range-cell:nth-child(2) input:nth-of-type(2)');
+            const refMin = row.querySelector('.range-cell:nth-child(3) input:nth-of-type(1)');
+            const refMax = row.querySelector('.range-cell:nth-child(3) input:nth-of-type(2)');
+            const label = row.querySelector('.range-cell:nth-child(4) input');
+
+            if (gender) gender.name = `units[${unitIndex}][ranges][${rangeIndex}][gender]`;
+            if (ageMin) ageMin.name = `units[${unitIndex}][ranges][${rangeIndex}][age_min]`;
+            if (ageMax) ageMax.name = `units[${unitIndex}][ranges][${rangeIndex}][age_max]`;
+            if (refMin) refMin.name = `units[${unitIndex}][ranges][${rangeIndex}][min]`;
+            if (refMax) refMax.name = `units[${unitIndex}][ranges][${rangeIndex}][max]`;
+            if (label) label.name = `units[${unitIndex}][ranges][${rangeIndex}][label]`;
+        });
+    });
+}
+
+function updateEmptyState() {
+    const emptyState = document.getElementById('empty-ranges');
+    const blockCount = document.querySelectorAll('#units-container .unit-config-block').length;
+    if (!emptyState) return;
+
+    emptyState.style.display = blockCount === 0 ? 'block' : 'none';
 }
 
 // Load saved data from localStorage if available
@@ -166,68 +286,79 @@ function discardDraft() {
 // Add new unit field
 function addNewUnit() {
     const container = document.getElementById('units-container');
-    const unitRow = document.createElement('div');
-    unitRow.className = 'unit-row';
-    unitRow.innerHTML = `
-        <div class="form-group">
-            <label>UNIT NAME</label>
-            <input type="text" name="unit_names[]" placeholder="e.g., mg/dL">
+    if (!container) return;
+
+    const block = document.createElement('div');
+    block.className = 'unit-config-block';
+    block.innerHTML = `
+        <div class="unit-row">
+            <div class="form-group">
+                <label>VALUE NAME</label>
+                <input type="text" placeholder="FBS" required>
+            </div>
+            <div class="form-group">
+                <label>UNIT NAME</label>
+                <input type="text" placeholder="e.g., mg/dL" required>
+            </div>
+            <button type="button" class="btn-remove-unit" onclick="removeUnit(this)">×</button>
         </div>
-        <div class="form-group">
-            <label>CONVERSION FACTOR</label>
-            <input type="number" name="conversion_factors[]" placeholder="Optional" step="0.01">
+        <div class="reference-ranges-section">
+            <div class="section-subtitle">+ RANGE PARAMETERS</div>
+            <div class="reference-ranges-container">
+                <div class="range-table">
+                    <div class="range-header">
+                        <div>GENDER</div>
+                        <div>AGE RANGE</div>
+                        <div>REF. RANGE (MIN-MAX)</div>
+                        <div>RANGE LABEL</div>
+                        <div></div>
+                    </div>
+                    ${createRangeRowMarkup()}
+                </div>
+            </div>
+            <button type="button" class="btn-add-range" onclick="addNewRange(this)">+ Add Reference Range</button><br>
         </div>
-        <button type="button" class="btn-remove-unit" onclick="removeUnit(this)">×</button>
     `;
-    container.appendChild(unitRow);
+
+    container.appendChild(block);
+    reindexUnitBlocks();
+    updateEmptyState();
 }
 
 // Remove unit field
 function removeUnit(button) {
-    button.parentElement.remove();
+    const block = button.closest('.unit-config-block');
+    if (!block) return;
+
+    block.remove();
+    reindexUnitBlocks();
+    updateEmptyState();
 }
 
 // Add new reference range
-function addNewRange() {
-    const container = document.getElementById('reference-ranges-container');
-    const rangeTable = container.querySelector('.range-table');
+function addNewRange(triggerButton) {
+    const trigger = triggerButton || document.activeElement;
+    const block = trigger ? trigger.closest('.unit-config-block') : null;
+    if (!block) return;
+
+    const rangeTable = block.querySelector('.range-table');
+    if (!rangeTable) return;
 
     const rangeRow = document.createElement('div');
     rangeRow.className = 'range-row';
-    rangeRow.innerHTML = `
-        <div class="range-cell">
-            <select name="range_gender[]">
-                <option value="">All</option>
-                <option value="M">Male</option>
-                <option value="F">Female</option>
-            </select>
-        </div>
-        <div class="range-cell">
-            <div class="age-inputs">
-                <input type="number" name="range_age_min[]" placeholder="0">
-                <span>-</span>
-                <input type="number" name="range_age_max[]" placeholder="99">
-            </div>
-        </div>
-        <div class="range-cell">
-            <div class="ref-inputs">
-                <input type="number" name="range_min[]" placeholder="70" step="0.01">
-                <span>-</span>
-                <input type="number" name="range_max[]" placeholder="110" step="0.01">
-            </div>
-        </div>
-        <div class="range-cell">
-            <input type="number" name="critical_range[]" placeholder="50" step="0.01">
-        </div>
-        <button type="button" class="btn-remove-range" onclick="removeRange(this)">×</button>
-    `;
+    rangeRow.innerHTML = createRangeRowMarkup();
 
-    rangeTable.appendChild(rangeRow);
+    rangeTable.appendChild(rangeRow.firstElementChild);
+    reindexUnitBlocks();
 }
 
 // Remove reference range
 function removeRange(button) {
-    button.parentElement.remove();
+    const row = button.closest('.range-row');
+    if (!row) return;
+
+    row.remove();
+    reindexUnitBlocks();
 }
 
 // Show success alert

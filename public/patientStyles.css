@@ -1,3 +1,11 @@
+:root {
+--primary-color: #3DBDEC;
+--secondary-color: #ffffff;
+--font-color: #000000;
+--background-color: #F5F6FA;
+--boder: #4F7A96;
+}
+
 .patient-search {
     display: flex;
     flex-direction: row;

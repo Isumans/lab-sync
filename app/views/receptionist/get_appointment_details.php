@@ -108,10 +108,11 @@ $billingRef = $billing['reference'] ?? 'N/A';
                         <?php $status = normalizeAppointmentWorkflowStatus($test['status'] ?? 'PENDING'); ?>
                         <?php $testId = isset($test['test_id']) ? intval($test['test_id']) : 0; ?>
                         <?php $appointmentId = isset($appointment['appointment_id']) ? intval($appointment['appointment_id']) : 0; ?>
+                        <?php $testCategory = $test['category'] ?? ($test['department'] ?? 'General'); ?>
                         <div class="test-row">
                             <div class="test-main">
                                 <div class="test-name"><?php echo appointmentDetailsEscape($test['test_name'] ?? 'Unknown Test'); ?></div>
-                                <div class="test-category"><?php echo appointmentDetailsEscape($test['category'] ?? 'General'); ?></div>
+                                <div class="test-category"><?php echo appointmentDetailsEscape($testCategory); ?></div>
                             </div>
                             <div class="workflow">
                                 <span class="stage <?php echo $status === 'PENDING' ? 'is-active' : ''; ?>">Pending</span>

@@ -5,6 +5,9 @@ if (!isset($_SESSION['user_id'])) {
     header('Location: /lab_sync/index.php?controller=Auth&action=index&role=' . urlencode($_GET['role'] ?? ''));
     exit();
 }
+
+$workflowScriptPath = __DIR__ . '/../../../public/js/testCatalogWorkflow.js';
+$workflowScriptVersion = file_exists($workflowScriptPath) ? (string)filemtime($workflowScriptPath) : '1';
 ?>
 
 <html>
@@ -25,6 +28,29 @@ if (!isset($_SESSION['user_id'])) {
                 <div class="add-test-container">
                     <h1>Add New Test</h1>
                     <p class="MC-p" ><a href="javascript:history.back()" style="color: var(--primary-color); text-decoration: none;">Test-Catalog-></a>Add-New-Test</p>
+                    <?php if (isset($_SESSION['flash'])): ?>
+                        <?php
+                            $flash = $_SESSION['flash'];
+                            $flashType = $flash['type'] ?? 'info';
+                            $flashMessage = $flash['message'] ?? '';
+                            $flashBg = '#e9f7ff';
+                            $flashColor = '#145374';
+                            $flashBorder = '#b8e2f2';
+                            if ($flashType === 'success') {
+                                $flashBg = '#eaf9f1';
+                                $flashColor = '#1f7a44';
+                                $flashBorder = '#b8e5c8';
+                            } elseif ($flashType === 'error') {
+                                $flashBg = '#fdecec';
+                                $flashColor = '#9b1c1c';
+                                $flashBorder = '#f4b7b7';
+                            }
+                            unset($_SESSION['flash']);
+                        ?>
+                        <div style="margin: 14px 0; padding: 12px 14px; border-radius: 8px; border: 1px solid <?php echo htmlspecialchars($flashBorder); ?>; background: <?php echo htmlspecialchars($flashBg); ?>; color: <?php echo htmlspecialchars($flashColor); ?>; font-size: 14px;">
+                            <?php echo htmlspecialchars($flashMessage); ?>
+                        </div>
+                    <?php endif; ?>
 
                     <!-- Progress Indicator -->
                     <div class="workflow-progress">
@@ -168,18 +194,16 @@ if (!isset($_SESSION['user_id'])) {
                                         <div id="units-container">
                                             <div class="unit-row">
                                                 <div class="form-group">
-                                                    <label>UNIT NAME</label>
-                                                    <input type="text" name="unit_names[]" placeholder="e.g., mg/dL" required>
+                                                    <label>VALUE NAME</label>
+                                                    <input type="text" name="unit_names[]" placeholder="FBS" required>
                                                 </div>
                                                 <div class="form-group">
-                                                    <label>CONVERSION FACTOR</label>
-                                                    <input type="number" name="conversion_factors[]" placeholder="Optional" step="0.01">
+                                                    <label>UNIT NAME</label>
+                                                    <input type="text" name="conversion_factors[]" placeholder="e.g., mg/dL" required>
                                                 </div>
                                                 <button type="button" class="btn-remove-unit" onclick="removeUnit(this)">×</button>
                                             </div>
-                                        </div>
-
-                                        <div class="reference-ranges-section">
+                                            <div class="reference-ranges-section">
                                             <div class="section-subtitle">+ RANGE PARAMETERS</div>
                                             <div id="reference-ranges-container">
                                                 <div class="range-table">
@@ -187,7 +211,7 @@ if (!isset($_SESSION['user_id'])) {
                                                         <div>GENDER</div>
                                                         <div>AGE RANGE</div>
                                                         <div>REF. RANGE (MIN-MAX)</div>
-                                                        <div>CRITICAL RANGE</div>
+                                                        <div>RANGE LABEL</div>
                                                         <div></div>
                                                     </div>
                                                     <div class="range-row">
@@ -213,14 +237,18 @@ if (!isset($_SESSION['user_id'])) {
                                                             </div>
                                                         </div>
                                                         <div class="range-cell">
-                                                            <input type="number" name="critical_range[]" placeholder="50" step="0.01">
+                                                            <input type="text" name="range_label[]" placeholder="Range Label">
                                                         </div>
                                                         <button type="button" class="btn-remove-range" onclick="removeRange(this)">×</button>
                                                     </div>
                                                 </div>
                                             </div>
-                                            <button type="button" class="btn-add-range" onclick="addNewRange()">+ Add Reference Range</button>
+                                            <button type="button" class="btn-add-range" onclick="addNewRange(this)">+ Add Reference Range</button>
                                         </div>
+
+                                        </div>
+
+
 
                                         <div class="empty-state" id="empty-ranges">
                                             <p>Dynamic unit blocks will appear here as you add them.</p>
@@ -245,7 +273,7 @@ if (!isset($_SESSION['user_id'])) {
                                 <!-- External Hospital Charges -->
                                 <div class="section-box">
                                     <div class="section-title">
-                                        <span class="icon">🏥</span> External Hospital Charges
+                                        <span class="icon"></span> External Hospital Charges
                                     </div>
 
                                     <div class="form-row">
@@ -257,9 +285,13 @@ if (!isset($_SESSION['user_id'])) {
                                             <label for="partner-hospital">PARTNER HOSPITAL</label>
                                             <select id="partner-hospital" name="partner_hospital">
                                                 <option value="">Select Hospital</option>
-                                                <option value="hospital-1">Hospital A</option>
-                                                <option value="hospital-2">Hospital B</option>
-                                                <option value="hospital-3">Hospital C</option>
+                                                <?php if (!empty($partnerLabs) && is_array($partnerLabs)): ?>
+                                                    <?php foreach ($partnerLabs as $lab): ?>
+                                                        <option value="<?php echo htmlspecialchars($lab['id'] ?? ''); ?>">
+                                                            <?php echo htmlspecialchars($lab['lab_name'] ?? ''); ?>
+                                                        </option>
+                                                    <?php endforeach; ?>
+                                                <?php endif; ?>
                                             </select>
                                         </div>
                                         <div class="form-group">
@@ -275,7 +307,7 @@ if (!isset($_SESSION['user_id'])) {
                                 <!-- Report Comments & Interpretation -->
                                 <div class="section-box">
                                     <div class="section-title">
-                                        <span class="icon">📝</span> Report Comments & Interpretation
+                                        <span class="icon"></span> Report Comments & Interpretation
                                     </div>
 
                                     <div class="form-group">
@@ -305,6 +337,6 @@ if (!isset($_SESSION['user_id'])) {
             </main>
         </div>
 
-        <script src="/lab_sync/public/js/testCatalogWorkflow.js"></script>
+        <script src="/lab_sync/public/js/testCatalogWorkflow.js?v=<?php echo urlencode($workflowScriptVersion); ?>"></script>
     </body>
 </html>

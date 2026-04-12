@@ -30,7 +30,7 @@ $role=$_GET['user_role'] ?? '';
                         <h1>Patient</h1>
                     </div>
                     <div>
-                        <p class="MC-p">Patients->Register-Walk-In-Patient</p>
+                        <p class="MC-p"><a href="javascript:history.back()" style="color: var(--primary-color); text-decoration: none;">Patients-></a>Register-Walk-In-Patient</p>
                     </div>
                     <div>
                         <form class="formStyle" action="/lab_sync/index.php?controller=patientController&action=register&role=<?php echo htmlspecialchars($role); ?>" method="POST">

@@ -263,13 +263,21 @@ class AppointmentModel {
     public function searchTestsCatalog($query = '', $limit = 20) {
         $limit = max(1, min(60, intval($limit)));
         $query = trim((string) $query);
+        $testCategoryColumn = $this->resolveFirstExistingColumn('tests', ['category', 'department']);
+        $categorySelect = $testCategoryColumn !== null
+            ? "COALESCE({$testCategoryColumn}, '') AS category"
+            : "'' AS category";
 
         if ($query !== '') {
+            $categoryWhere = $testCategoryColumn !== null
+                ? " OR {$testCategoryColumn} LIKE CONCAT('%', ?, '%')"
+                : '';
+
             $sql = "
-                SELECT test_id, test_name, category, price
+                SELECT test_id, test_name, {$categorySelect}, price
                 FROM tests
                 WHERE test_name LIKE CONCAT('%', ?, '%')
-                   OR category LIKE CONCAT('%', ?, '%')
+                   {$categoryWhere}
                 ORDER BY test_name ASC
                 LIMIT {$limit}
             ";
@@ -278,7 +286,11 @@ class AppointmentModel {
                 return [];
             }
 
-            $stmt->bind_param('ss', $query, $query);
+            if ($testCategoryColumn !== null) {
+                $stmt->bind_param('ss', $query, $query);
+            } else {
+                $stmt->bind_param('s', $query);
+            }
             if (!$stmt->execute()) {
                 return [];
             }
@@ -288,7 +300,7 @@ class AppointmentModel {
         }
 
         $sql = "
-            SELECT test_id, test_name, category, price
+            SELECT test_id, test_name, {$categorySelect}, price
             FROM tests
             ORDER BY test_name ASC
             LIMIT {$limit}
@@ -539,6 +551,10 @@ class AppointmentModel {
     private function getAppointmentTestsWithStatus($appointmentId) {
         $appointmentId = intval($appointmentId);
         $tests = [];
+        $testCategoryColumn = $this->resolveFirstExistingColumn('tests', ['category', 'department']);
+        $categorySelect = $testCategoryColumn !== null
+            ? "COALESCE(t.{$testCategoryColumn}, '') AS category"
+            : "'' AS category";
 
         if ($this->tableExists('appointment_tests')) {
             $statusColumn = $this->resolveFirstExistingColumn('appointment_tests', ['status', 'workflow_status', 'progress_status']);
@@ -551,7 +567,7 @@ class AppointmentModel {
                 SELECT
                     at.test_id,
                     t.test_name,
-                    t.category,
+                    {$categorySelect},
                     t.price,
                     {$statusSelect}
                 FROM appointment_tests at
@@ -588,6 +604,11 @@ class AppointmentModel {
             return [];
         }
 
+        $testCategoryColumn = $this->resolveFirstExistingColumn('tests', ['category', 'department']);
+        $categorySelect = $testCategoryColumn !== null
+            ? "COALESCE(t.{$testCategoryColumn}, '') AS category"
+            : "'' AS category";
+
         $legacyIdSql = 'SELECT test_id FROM appointment WHERE appointment_id = ? LIMIT 1';
         $legacyIdStmt = $this->db->prepare($legacyIdSql);
         if ($legacyIdStmt === false) {
@@ -620,7 +641,7 @@ class AppointmentModel {
             SELECT
                 t.test_id,
                 t.test_name,
-                t.category,
+                {$categorySelect},
                 t.price,
                 'PENDING' AS status
             FROM tests t

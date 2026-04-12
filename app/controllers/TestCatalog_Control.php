@@ -70,40 +70,190 @@ class TestCatalogController {
         
     public function add_test($role) {
         $role=$_GET['role'] ?? '';
+        $partnerLabs = $this->getPartnerLabs();
         include VIEW_PATH . '/receptionist/add_test.php';
     }
 
     public function store($role) {
         $role=$_GET['role'] ?? '';
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $testName = trim($_POST['test-name'] ?? '');
-            $category = trim($_POST['test-category'] ?? '');
-            $price = trim($_POST['test-price'] ?? '');
-            $description = trim($_POST['test-description'] ?? '');
-            // $code = $_POST['test-code'];
+            try {
+                $costPrice = trim((string)($_POST['cost_price'] ?? ''));
+                $discount = trim((string)($_POST['discount'] ?? ''));
+                $printOrder = trim((string)($_POST['print_order'] ?? ''));
+                $decimals = trim((string)($_POST['decimals'] ?? '2'));
+                $partnerHospital = trim((string)($_POST['partner_hospital'] ?? ''));
+                $chargeCost = trim((string)($_POST['charge_cost'] ?? ''));
 
-            $errors = [];
-            if ($testName === '') $errors[] = 'Test name is required.';
-            if ($price === '' || !is_numeric($price)) $errors[] = 'Price is required and must be numeric.';
-            if (count($errors) > 0) {
-                $_SESSION['flash'] = ['type' => 'error', 'message' => implode(' ', $errors)];
+                $units = isset($_POST['units']) && is_array($_POST['units'])
+                    ? $_POST['units']
+                    : $this->buildUnitsFromLegacyPost($_POST);
+
+                $payload = [
+                    'department' => trim((string)($_POST['department'] ?? '')),
+                    'test_code' => trim((string)($_POST['test_code'] ?? '')),
+                    'lab_id' => trim((string)($_POST['lab_id'] ?? '')),
+                    'test_name' => trim((string)($_POST['test_name'] ?? '')),
+                    'default_unit' => trim((string)($_POST['default_unit'] ?? '')),
+                    'print_name' => trim((string)($_POST['print_name'] ?? '')),
+                    'description' => trim((string)($_POST['description'] ?? '')),
+                    'cost_price' => ($costPrice !== '' && is_numeric($costPrice)) ? (float)$costPrice : null,
+                    'discount' => ($discount !== '' && is_numeric($discount)) ? (float)$discount : 0.0,
+                    'print_order' => ($printOrder !== '' && is_numeric($printOrder)) ? (int)$printOrder : 0,
+                    'decimals' => ($decimals !== '' && is_numeric($decimals)) ? (int)$decimals : 2,
+                    'is_active' => isset($_POST['is_active']) ? 1 : 0,
+                    'validation_required' => isset($_POST['validation_required']) ? 1 : 0,
+                    'external_test_code' => trim((string)($_POST['external_test_code'] ?? '')),
+                    'partner_lab_id' => ($partnerHospital !== '' && ctype_digit($partnerHospital)) ? (int)$partnerHospital : null,
+                    'charge_cost' => ($chargeCost !== '' && is_numeric($chargeCost)) ? (float)$chargeCost : null,
+                    'report_comments' => trim((string)($_POST['report_comments'] ?? '')),
+                    'units' => $units,
+                ];
+
+                $errors = [];
+                if ($payload['department'] === '') $errors[] = 'Department is required.';
+                if ($payload['test_code'] === '') $errors[] = 'Test code is required.';
+                if ($payload['test_name'] === '') $errors[] = 'Test name is required.';
+                if ($payload['default_unit'] === '') $errors[] = 'Default unit is required.';
+                if ($payload['print_name'] === '') $errors[] = 'Print name is required.';
+                if ($payload['cost_price'] === null) $errors[] = 'Cost price is required and must be numeric.';
+                if (!is_array($payload['units']) || count($payload['units']) === 0) {
+                    $errors[] = 'At least one unit is required.';
+                }
+
+                foreach ($payload['units'] as $unitIndex => $unit) {
+                    $valueName = trim((string)($unit['value_name'] ?? ''));
+                    $unitName = trim((string)($unit['unit_name'] ?? ''));
+                    if ($valueName === '' || $unitName === '') {
+                        $errors[] = 'Each unit must include value name and unit name.';
+                        break;
+                    }
+
+                    $ranges = isset($unit['ranges']) && is_array($unit['ranges']) ? $unit['ranges'] : [];
+                    if (count($ranges) === 0) {
+                        $errors[] = 'Each unit must have at least one reference range.';
+                        break;
+                    }
+
+                    foreach ($ranges as $rangeIndex => $range) {
+                        $min = trim((string)($range['min'] ?? ''));
+                        $max = trim((string)($range['max'] ?? ''));
+                        if ($min !== '' && !is_numeric($min)) {
+                            $errors[] = 'Reference range minimum must be numeric.';
+                            break 2;
+                        }
+                        if ($max !== '' && !is_numeric($max)) {
+                            $errors[] = 'Reference range maximum must be numeric.';
+                            break 2;
+                        }
+                    }
+                }
+
+                if ($partnerHospital !== '' && !ctype_digit($partnerHospital)) {
+                    $errors[] = 'Invalid partner hospital selection.';
+                }
+
+                if ($chargeCost !== '' && !is_numeric($chargeCost)) {
+                    $errors[] = 'Charge cost must be numeric.';
+                }
+
+                if (count($errors) > 0) {
+                    $_SESSION['flash'] = ['type' => 'error', 'message' => implode(' ', $errors)];
+                    header("Location: /lab_sync/index.php?controller=TestCatalog&action=add_test&role=" . urlencode($role));
+                    exit;
+                }
+
+                $model = new TestCatalog($this->db);
+                $success = $model->createTestWithRelations($payload);
+                if ($success) {
+                    $_SESSION['flash'] = ['type' => 'success', 'message' => 'Test added successfully.'];
+                    header("Location: /lab_sync/index.php?controller=TestCatalog&action=index&role=" . urlencode($role));
+                    exit;
+                }
+
+                $errorMessage = $model->getLastError() ?: 'Error adding test.';
+                $_SESSION['flash'] = ['type' => 'error', 'message' => $errorMessage];
                 header("Location: /lab_sync/index.php?controller=TestCatalog&action=add_test&role=" . urlencode($role));
                 exit;
-            }
-
-            $conn1 = connect();
-            $model2 = new TestCatalog($conn1);
-            $success = $model2->addTest($testName, $category, (float)$price, $description);
-            if ($success) {
-                $_SESSION['flash'] = ['type' => 'success', 'message' => 'Test added successfully.'];
-                header("Location: /lab_sync/index.php?controller=TestCatalog&action=index&role=" . urlencode($role));
-                exit;
-            } else {
-                $_SESSION['flash'] = ['type' => 'error', 'message' => 'Error adding test.'];
+            } catch (Throwable $e) {
+                error_log('TestCatalog store failed: ' . $e->getMessage());
+                $_SESSION['flash'] = ['type' => 'error', 'message' => 'Unexpected error while saving test. Please try again.'];
                 header("Location: /lab_sync/index.php?controller=TestCatalog&action=add_test&role=" . urlencode($role));
                 exit;
             }
         }
+    }
+
+    private function buildUnitsFromLegacyPost(array $post) {
+        $unitNames = isset($post['unit_names']) && is_array($post['unit_names']) ? $post['unit_names'] : [];
+        $conversionFactors = isset($post['conversion_factors']) && is_array($post['conversion_factors']) ? $post['conversion_factors'] : [];
+
+        if (count($unitNames) === 0 && count($conversionFactors) === 0) {
+            return [];
+        }
+
+        $genders = isset($post['range_gender']) && is_array($post['range_gender']) ? $post['range_gender'] : [];
+        $ageMins = isset($post['range_age_min']) && is_array($post['range_age_min']) ? $post['range_age_min'] : [];
+        $ageMaxs = isset($post['range_age_max']) && is_array($post['range_age_max']) ? $post['range_age_max'] : [];
+        $mins = isset($post['range_min']) && is_array($post['range_min']) ? $post['range_min'] : [];
+        $maxs = isset($post['range_max']) && is_array($post['range_max']) ? $post['range_max'] : [];
+        $labels = isset($post['range_label']) && is_array($post['range_label']) ? $post['range_label'] : [];
+        $criticalValues = isset($post['critical_value']) && is_array($post['critical_value']) ? $post['critical_value'] : [];
+
+        $rangeCount = max(count($genders), count($ageMins), count($ageMaxs), count($mins), count($maxs), count($labels), count($criticalValues));
+        $ranges = [];
+
+        for ($i = 0; $i < $rangeCount; $i++) {
+            $gender = trim((string)($genders[$i] ?? ''));
+            $ageMin = trim((string)($ageMins[$i] ?? ''));
+            $ageMax = trim((string)($ageMaxs[$i] ?? ''));
+            $min = trim((string)($mins[$i] ?? ''));
+            $max = trim((string)($maxs[$i] ?? ''));
+            $label = trim((string)($labels[$i] ?? ($criticalValues[$i] ?? '')));
+
+            if ($gender === '' && $ageMin === '' && $ageMax === '' && $min === '' && $max === '' && $label === '') {
+                continue;
+            }
+
+            $ranges[] = [
+                'gender' => $gender,
+                'age_min' => $ageMin,
+                'age_max' => $ageMax,
+                'min' => $min,
+                'max' => $max,
+                'label' => $label,
+            ];
+        }
+
+        $units = [];
+        $unitCount = max(count($unitNames), count($conversionFactors));
+        for ($i = 0; $i < $unitCount; $i++) {
+            $valueName = trim((string)($unitNames[$i] ?? ''));
+            $unitName = trim((string)($conversionFactors[$i] ?? ''));
+
+            if ($valueName === '' && $unitName === '') {
+                continue;
+            }
+
+            $units[] = [
+                'value_name' => $valueName,
+                'unit_name' => $unitName,
+                'ranges' => $ranges,
+            ];
+        }
+
+        return $units;
+    }
+
+    private function getPartnerLabs() {
+        $partnerLabs = [];
+        $sql = "SELECT id, lab_name FROM partner_labs ORDER BY lab_name ASC";
+        $result = $this->db->query($sql);
+        if ($result) {
+            $partnerLabs = $result->fetch_all(MYSQLI_ASSOC);
+        }
+
+        return $partnerLabs;
     }
     public function edit_test($role) {
         $role = $_GET['role'] ?? '';
