@@ -8,82 +8,104 @@ if (!isset($_SESSION['user_id'])) {
 ?>
 <html>
 <head>
-
-    <title>Billing</title>
-        <link rel="stylesheet" href="/lab_sync/public/styles.css">
-        <link rel="stylesheet" href="/lab_sync/public/settingStyles.css">
-        <link rel="stylesheet" href="/lab_sync/public/table.css">
-        <link rel="stylesheet" href="/lab_sync/public/billingStyles.css">
+    <title>Billing Dashboard</title>
+    <link rel="stylesheet" href="/lab_sync/public/styles.css">
+    <link rel="stylesheet" href="/lab_sync/public/reportsDashboard.css">
 </head>
-    <body>
-        <!-- Navigation Bar -->
-        <?php require 'C:\xampp\htdocs\lab_sync\public\navbar.php'; ?>
-        <div class="container">
-            <!-- Sidebar -->
-            <?php require 'C:\xampp\htdocs\lab_sync\public\sidebar.php'; ?>
+<body>
+    <?php require 'C:\xampp\htdocs\lab_sync\public\navbar.php'; ?>
+    <div class="container">
+        <?php require 'C:\xampp\htdocs\lab_sync\public\sidebar.php'; ?>
 
-            <!-- Main Body Section -->
-            <main class="main-content">
-                 <div class="Tmain-content">
-                    <div class="main-content-header">
-                        <div class="main-topic">
-                            <h1>Billing</h1>
-                            <a class="add-user-button" href="/lab_sync/index.php?controller=billingController&action=Register_billing">Create New Bill</a>
+        <main class="main-content">
+            <section class="reports-dashboard" aria-label="Reports Dashboard">
+                
+            <div class="main-content-header">
+                    <div class="main-topic">
+                    <h1>Billing</h1>
+                    </div>
+                    <p class="MC-p">Billing-&gt;</p>
+            </div>
+
+                <!-- <div class="rd-header-row">
+                    <h1 class="rd-title">Reports</h1>
+                    <p class="MC-p">Appointments-></p>
+                    <div class="rd-header-actions">
+                        <button type="button" class="rd-btn rd-btn-muted" id="rdExportBtn">Export CSV</button>
+                        <button type="button" class="rd-btn rd-btn-primary" id="rdGenerateBtn">Generate Report</button>
+                    </div>
+                </div> -->
+
+                <section class="rd-filter-card" aria-label="Search and Filters">
+                    <div class="rd-filter-grid">
+                        <div class="rd-filter-field rd-filter-field-search">
+                            <label for="rdSearch">Search Invoices</label>
+                            <input id="rdSearch" type="text" placeholder="Search by Patient Name, Report ID, or Appointment ID..." />
                         </div>
-                        <p class="MC-p">Billing-&gt;</p>
+
+                        <div class="rd-filter-field">
+                            <label for="rdStatus">Status</label>
+                            <select id="rdStatus">
+                                <option value="all">All Statuses</option>
+                                <option value="complete">Paid</option>
+                                <option value="in progress">Unpaid</option>
+                                <option value="pending">Partial</option>
+                            </select>
+                        </div>
+
+                        <div class="rd-filter-field">
+                            <label for="rdTestType">Type</label>
+                            <select id="rdTestType">
+                                <option value="all">All </option>
+                                <option value="blood test">Physical</option>
+                                <option value="urinalysis">Online</option>
+                                <option value="xray">Home-Visit</option>
+                            </select>
+                        </div>
                     </div>
-                    <div class="billingArea">
-                        <h2>Billing Details(Last Month)</h2>
-                        <table class="test-catalog-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Bill ID</th>
-                                            <th>PatientId</th>
-                                            <th>Test</th>
-                                            <th>Date</th>
-                                            <th>Amount</th> 
-                                            <th>Payment Status</th>
-                                            <th>Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr>
-                                            <td>1</td>
-                                            <td>John Doe</td>
-                                            <td>Blood Test</td>
-                                            <td>2023-09-15</td>
-                                            <td>$100</td>
-                                            <td><select class="payment-status">
-                                                <option value="Paid">Paid</option>
-                                                <option value="Pending">Pending</option>
-                                                <option value="Overdue">Overdue</option>
-                                            </select></td>
-                                            <td>
-                                                <button class="view-button">View</button>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td>2</td>
-                                            <td>Jane Smith  </td>
-                                            <td>Blood Test</td>
-                                            <td>2023-09-15</td>
-                                            <td>$100</td>
-                                            <td><select class="payment-status">
-                                                <option value="Paid">Paid</option>
-                                                <option value="Pending">Pending</option>
-                                                <option value="Overdue">Overdue</option>
-                                            </select></td>
-                                            <td>
-                                                <button class="view-button">View</button>
-                                            </td>
-                                        </tr>
-                                       
-                                    </tbody>
-                                </table>
-                       
+
+                    <div class="rd-filter-bottom-row">
+                        <div class="rd-filter-date-range">
+                            <div class="rd-filter-field">
+                                <label for="rdDateFrom">Date Range</label>
+                                <input id="rdDateFrom" type="date" />
+                            </div>
+                            <div class="rd-filter-field rd-filter-field-to">
+                                <label for="rdDateTo" class="rd-hidden-label">End Date</label>
+                                <input id="rdDateTo" type="date" />
+                            </div>
+                        </div>
+
+                        <button type="button" class="rd-clear-btn" id="rdClearBtn">Clear All Filters</button>
                     </div>
-                </div>
-            </main>
-        </div>
-    </body>
+                </section>
+
+                <section class="rd-table-card" aria-label="Reports Table">
+                    <div class="rd-table-wrap">
+                        <table class="rd-table">
+                            <thead>
+                                <tr>
+                                    <th>Appointment ID</th>
+                                    <th>Patient Name</th>
+                                    <th>Date</th>
+                                    <th>Amount</th>
+                                    <th>Status</th>
+                                    <th class="rd-th-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="billingTableBody"></tbody>
+                        </table>
+                    </div>
+
+                    <div class="rd-table-footer">
+                        <p id="rdShowingText">Showing 0-0 of 0 invoices</p>
+                        <div class="rd-pagination" id="rdPagination"></div>
+                    </div>
+                </section>
+            </section>
+        </main>
+    </div>
+
+    <script src="/lab_sync/public/js/billingDashboard.js?v=20260411"></script>
+</body>
 </html>
