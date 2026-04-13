@@ -14,6 +14,7 @@ function showMenuItem($rolesAllowed, $content) {
 
 $currentController = $_GET['controller'] ?? '';
 $currentAction = $_GET['action'] ?? '';
+$reportsAction = ($role === 'receptionist') ? 'receptionistDashboard' : 'index';
 ?>
 
 <aside class="sidebar">
@@ -62,8 +63,8 @@ $currentAction = $_GET['action'] ?? '';
         // Reports
         showMenuItem(['admin', 'receptionist', 'technician'], "
             <li>
-                <a href='index.php?controller=reportsController&action=index&role=" . $role . "'
-                   class='" . (($currentController === 'reportsController' && $currentAction === 'index') ? 'active' : '') . "'>
+                <a href='index.php?controller=reportsController&action=" . $reportsAction . "&role=" . $role . "'
+                   class='" . (($currentController === 'reportsController' && ($currentAction === $reportsAction || ($role === 'receptionist' && $currentAction === 'listAuthorizedReports'))) ? 'active' : '') . "'>
                     <img class='sidebar-icon' src='/lab_sync/public/assests/results.png' alt='Reports Icon'>Reports
                 </a>
             </li>

@@ -30,8 +30,10 @@ $role = $_GET['user_role'] ?? '';
             <!-- Main Body Section -->
             <main class="main-content">
                 <div class="main-content-header">
-                    <h1>Settings</h1>
-                    <p class="MC-p">Settings-></p>
+                    <div class="main-topic">
+                        <h1>Settings</h1>
+                    </div>
+                    <p class="MC-p">Settings-&gt;</p>
                 </div>
                 <div class="nav-bar-container">
                     <div class="nav-bar-line">

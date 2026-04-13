@@ -1,0 +1,10 @@
+{
+    "name": "labsync/lab-sync",
+    "description": "Clinical Laboratory Management System",
+    "require": {
+        "mpdf/mpdf": "^8.2"
+    },
+    "config": {
+        "vendor-dir": "vendor"
+    }
+}

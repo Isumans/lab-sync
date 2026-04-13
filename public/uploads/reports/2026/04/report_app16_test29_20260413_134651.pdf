@@ -1,0 +1,53 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Count 1 /Kids [3 0 R] >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>
+endobj
+4 0 obj
+<< /Length 551 >>
+stream
+BT
+/F1 11 Tf
+44 800 Td
+14 TL
+(CONFIDENTIAL LABORATORY REPORT) Tj
+T* (Reference No: REF-16-29-20260413134651) Tj
+T* (Generated At: 2026-04-13 13:46:51) Tj
+T* (Appointment ID: APP-0016) Tj
+T* (Test ID: 29) Tj
+T* (Test Name: Renal Function) Tj
+T* () Tj
+T* (TECHNICIAN NOTES / RESULTS) Tj
+T* (Patient: saman) Tj
+T* (PID: 9) Tj
+T* (Test: Renal Function) Tj
+T* (Generated From Saved Test Values) Tj
+T* ( ) Tj
+T* (RESULTS) Tj
+T* (- SERUM CREATININE \(ENZYMATIC\): 0.8 mg/dl | Flag: N | Ref: 0.6 - 0.9) Tj
+T* ( ) Tj
+T* (Remarks: no abnormal conditions) Tj
+ET
+endstream
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+xref
+0 6
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000241 00000 n 
+0000000842 00000 n 
+trailer
+<< /Size 6 /Root 1 0 R >>
+startxref
+912
+%%EOF

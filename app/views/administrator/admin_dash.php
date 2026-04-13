@@ -29,8 +29,12 @@ if (!isset($_SESSION['user_id'])) {
             <?php require 'C:\xampp\htdocs\lab_sync\public\sidebar.php'; ?>
             <!-- Main Body Section -->
             <main class="main-content">
-                <h1>Dashboard</h1>
-                <br />
+                <div class="main-content-header">
+                    <div class="main-topic">
+                        <h1>Dashboard</h1>
+                    </div>
+                    <p class="MC-p">Dashboard-&gt;</p>
+                </div>
                 <h3>Quick Overview</h3>
                 <br />
                 

@@ -27,17 +27,15 @@ if (!isset($_SESSION['user_id'])) {
             <!-- Main Body Section -->
             <main class="main-content">
                 <div class="main-content-header">
-                    <h1>Patients</h1>
+                    <div class="main-topic">
+                        <h1>Patients</h1>
+                        <a class="add-user-button" href="/lab_sync/index.php?controller=patientController&action=register_patient&role=<?php echo htmlspecialchars($role); ?>">+ Register Walk-in Patient</a>
+                    </div>
                     <p class="MC-p">Patients-></p>
                 </div>
 
                 <!-- Patient Header with Stats -->
                 <div class="team-header-container">
-                    <div class="team-header">
-                        <h2>Patient Management</h2>
-                        <button class="add-user-button"><a href="/lab_sync/index.php?controller=patientController&action=register_patient&role=<?php echo htmlspecialchars($role); ?>">+ Register Walk-in Patient</a></button>
-                    </div>
-
                     <!-- Stats Cards -->
                     <div class="team-stats-grid" style="grid-template-columns: repeat(2, 1fr);">
                         <div class="stat-card-team">

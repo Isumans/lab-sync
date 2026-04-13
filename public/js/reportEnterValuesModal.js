@@ -24,6 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let activeUnits = [];
 
   const setModalOpen = (open) => {
+    modal.hidden = !open;
     modal.classList.toggle('is-open', open);
     modal.setAttribute('aria-hidden', open ? 'false' : 'true');
     document.body.style.overflow = open ? 'hidden' : '';

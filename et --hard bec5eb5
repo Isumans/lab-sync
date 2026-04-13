@@ -1,0 +1,65 @@
+[33m5e90aad[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32misum[m[33m)[m HEAD@{0}: reset: moving to HEAD~1
+[33mbec5eb5[m HEAD@{1}: commit (merge): Merge remote-tracking branch 'origin/yashen' into isum
+[33m5e90aad[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32misum[m[33m)[m HEAD@{2}: checkout: moving from final-clean to isum
+[33md5933db[m[33m ([m[1;32mfinal-clean[m[33m)[m HEAD@{3}: commit: trying to fix a bug
+[33mc12b209[m HEAD@{4}: checkout: moving from isum to final-clean
+[33m5e90aad[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32misum[m[33m)[m HEAD@{5}: checkout: moving from final-clean to isum
+[33mc12b209[m HEAD@{6}: commit (merge): Merge branch 'clean-master' into final-clean
+[33m4c0723d[m HEAD@{7}: commit (merge): Merge remote-tracking branch 'origin/yasindu' into final-clean
+[33m5e90aad[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32misum[m[33m)[m HEAD@{8}: checkout: moving from isum to final-clean
+[33m5e90aad[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32misum[m[33m)[m HEAD@{9}: checkout: moving from clean-master to isum
+[33m76b589e[m[33m ([m[1;32mclean-master[m[33m)[m HEAD@{10}: commit (merge): Merge branch 'isum' into clean-master
+[33m7d0f67a[m[33m ([m[1;31morigin/master[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;32mmaster[m[33m)[m HEAD@{11}: checkout: moving from master to clean-master
+[33m7d0f67a[m[33m ([m[1;31morigin/master[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;32mmaster[m[33m)[m HEAD@{12}: checkout: moving from isum to master
+[33m5e90aad[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32misum[m[33m)[m HEAD@{13}: checkout: moving from master to isum
+[33m7d0f67a[m[33m ([m[1;31morigin/master[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;32mmaster[m[33m)[m HEAD@{14}: pull --rebase origin master: Fast-forward
+[33m3f9c02e[m HEAD@{15}: checkout: moving from isum to master
+[33m5e90aad[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32misum[m[33m)[m HEAD@{16}: commit: report section updates
+[33mcd5bac0[m[33m ([m[1;31morigin/isum[m[33m)[m HEAD@{17}: checkout: moving from isum to isum
+[33mcd5bac0[m[33m ([m[1;31morigin/isum[m[33m)[m HEAD@{18}: checkout: moving from yashen to isum
+[33m5ac4f6f[m HEAD@{19}: rebase (abort): returning to refs/heads/yashen
+[33mba73bc5[m HEAD@{20}: pull --rebase origin yashen (pick): Redesigning the Inventory Section
+[33m572c713[m HEAD@{21}: pull --rebase origin yashen (pick): Create Bill Section in Appointments
+[33m03242f6[m HEAD@{22}: pull --rebase origin yashen (start): checkout 03242f68e68ec1aeae6d97c9053b37c244098183
+[33m5ac4f6f[m HEAD@{23}: merge master: Fast-forward
+[33mc742e95[m HEAD@{24}: checkout: moving from yashen to yashen
+[33mc742e95[m HEAD@{25}: checkout: moving from master to yashen
+[33m5ac4f6f[m HEAD@{26}: checkout: moving from yashen to master
+[33mc742e95[m HEAD@{27}: checkout: moving from isum to yashen
+[33mcd5bac0[m[33m ([m[1;31morigin/isum[m[33m)[m HEAD@{28}: reset: moving to HEAD
+[33mcd5bac0[m[33m ([m[1;31morigin/isum[m[33m)[m HEAD@{29}: commit: appointment section done
+[33m2490cd1[m HEAD@{30}: commit (merge): Merge branch 'isum' of https://github.com/Isumans/lab-sync into isum
+[33m72b0eb2[m HEAD@{31}: commit: test catalog section functional update
+[33mfa935f1[m HEAD@{32}: commit (merge): error fixed
+[33m7de7e9e[m HEAD@{33}: commit: implement backend of general & lab configuration
+[33m8259998[m HEAD@{34}: commit: Updates in the settings section including validations
+[33m1881c0c[m HEAD@{35}: commit: Add partner Lab & add user section(done)
+[33m1e14e5b[m HEAD@{36}: revert: Revert "Merge pull request #10 from Isumans/yashen"
+[33mf490da6[m HEAD@{37}: pull origin master: Fast-forward
+[33m2ba7b15[m HEAD@{38}: pull origin isum: Merge made by the 'ort' strategy.
+[33m7f3bfb3[m HEAD@{39}: commit (merge): Merge branch 'master' of https://github.com/Isumans/lab-sync into isum
+[33m431be1d[m HEAD@{40}: commit: Settings section UI upgraded
+[33md66cc72[m HEAD@{41}: pull origin master: Merge made by the 'ort' strategy.
+[33m439509d[m HEAD@{42}: pull origin master: Merge made by the 'ort' strategy.
+[33m5171844[m HEAD@{43}: commit (merge): Merge branch 'master' of https://github.com/Isumans/lab-sync into isum
+[33mf227643[m HEAD@{44}: commit: UI updated on the Settings section
+[33m99b0344[m HEAD@{45}: pull origin master: Fast-forward
+[33m8396d7c[m HEAD@{46}: pull origin master: Fast-forward
+[33me32c664[m HEAD@{47}: pull origin master: Fast-forward
+[33mc742e95[m HEAD@{48}: checkout: moving from master to isum
+[33mc742e95[m HEAD@{49}: commit: patient edit change
+[33m2b08865[m HEAD@{50}: commit: All Functionality
+[33m41634e6[m HEAD@{51}: commit: sign-up stage1
+[33m7732f2c[m HEAD@{52}: commit: added path.php + replace absolute paths
+[33m3ec345f[m HEAD@{53}: commit: technician crud
+[33ma966226[m HEAD@{54}: commit: admin Crud
+[33m1a33365[m HEAD@{55}: commit: connect patient sector
+[33m248ec8a[m HEAD@{56}: checkout: moving from master to master
+[33m248ec8a[m HEAD@{57}: commit: new Crud + UI changes
+[33m92f1c4c[m HEAD@{58}: commit: supplier+reports+billing UI stage 1 & TestCatalog CRUD
+[33m1103230[m HEAD@{59}: commit: setting+patient stage 1
+[33m3e43c50[m HEAD@{60}: commit: Auth stage 1
+[33m4eba96f[m HEAD@{61}: commit: MVC structure
+[33m12620a2[m HEAD@{62}: commit: 2 commit
+[33m6b8adf6[m HEAD@{63}: Branch: renamed refs/heads/master to refs/heads/master
+[33m6b8adf6[m HEAD@{65}: commit (initial): first commit

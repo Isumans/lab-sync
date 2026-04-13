@@ -9,7 +9,7 @@ if (!isset($_SESSION['user_id'])) {
 <head>
     <title>Report Details</title>
     <link rel="stylesheet" href="/lab_sync/public/styles.css">
-    <link rel="stylesheet" href="/lab_sync/public/reportsDashboard.css">
+    <link rel="stylesheet" href="/lab_sync/public/reportsDashboard.css?v=20260413">
 </head>
 <body>
     <?php require 'C:\xampp\htdocs\lab_sync\public\navbar.php'; ?>
@@ -76,22 +76,48 @@ if (!isset($_SESSION['user_id'])) {
                                             <td><?php echo htmlspecialchars((string) ($test['status'] ?? 'PENDING')); ?></td>
                                             <td><?php echo htmlspecialchars((string) ($test['completed_at'] ?? '-')); ?></td>
                                             <td><?php echo htmlspecialchars((string) ($test['authorized_at'] ?? '-')); ?></td>
-                                            <td>
+                                            <td class="rd-actions-cell">
                                                 <?php if (($test['status'] ?? '') === 'IN_PROGRESS'): ?>
-                                                    <button
-                                                        type="button"
-                                                        class="rd-btn rd-btn-primary js-enter-values-btn"
-                                                        data-appointment-id="<?php echo intval($appointment['appointment_id'] ?? 0); ?>"
-                                                        data-test-id="<?php echo intval($test['test_id'] ?? 0); ?>"
-                                                        data-test-name="<?php echo htmlspecialchars((string) ($test['test_name'] ?? ''), ENT_QUOTES); ?>"
-                                                        data-patient-name="<?php echo htmlspecialchars((string) ($appointment['patient_name'] ?? 'Unknown Patient'), ENT_QUOTES); ?>"
-                                                        data-patient-pid="<?php echo htmlspecialchars((string) ($appointment['pid'] ?? ''), ENT_QUOTES); ?>"
-                                                    >
-                                                        Enter Values
-                                                    </button>
+                                                    <div class="rd-actions-group">
+                                                        <button
+                                                            type="button"
+                                                            class="rd-btn rd-btn-primary rd-btn-table js-enter-values-btn"
+                                                            data-appointment-id="<?php echo intval($appointment['appointment_id'] ?? 0); ?>"
+                                                            data-test-id="<?php echo intval($test['test_id'] ?? 0); ?>"
+                                                            data-test-name="<?php echo htmlspecialchars((string) ($test['test_name'] ?? ''), ENT_QUOTES); ?>"
+                                                            data-patient-name="<?php echo htmlspecialchars((string) ($appointment['patient_name'] ?? 'Unknown Patient'), ENT_QUOTES); ?>"
+                                                            data-patient-pid="<?php echo htmlspecialchars((string) ($appointment['pid'] ?? ''), ENT_QUOTES); ?>"
+                                                        >
+                                                            Enter Values
+                                                        </button>
+                                                    </div>
                                                 <?php elseif (($test['status'] ?? '') === 'COMPLETED'): ?>
-                                                    <a href="/lab_sync/index.php?controller=reportsController&action=viewTestDetails&test_id=<?php echo urlencode((string) ($test['test_id'] ?? '')); ?>" class="rd-btn rd-btn-secondary" style="text-decoration: none;">View Report</a>
-                                                    <a href="/lab_sync/index.php?controller=reportsController&action=viewTestDetails&test_id=<?php echo urlencode((string) ($test['test_id'] ?? '')); ?>&download=1" class="rd-btn rd-btn-muted" style="text-decoration: none;">Authorize</a>
+                                                    <div class="rd-actions-group">
+                                                        <button
+                                                            type="button"
+                                                            class="rd-btn rd-btn-muted rd-btn-table js-authorize-report-btn"
+                                                            data-appointment-id="<?php echo intval($appointment['appointment_id'] ?? 0); ?>"
+                                                            data-test-id="<?php echo intval($test['test_id'] ?? 0); ?>"
+                                                            data-test-name="<?php echo htmlspecialchars((string) ($test['test_name'] ?? ''), ENT_QUOTES); ?>"
+                                                            data-patient-name="<?php echo htmlspecialchars((string) ($appointment['patient_name'] ?? 'Unknown Patient'), ENT_QUOTES); ?>"
+                                                            data-patient-pid="<?php echo htmlspecialchars((string) ($appointment['pid'] ?? ''), ENT_QUOTES); ?>"
+                                                        >
+                                                            View & Authorize
+                                                        </button>
+                                                    </div>
+                                                <?php elseif (($test['status'] ?? '') === 'AUTHORIZED'): ?>
+                                                    <div class="rd-actions-group rd-actions-group-stack">
+                                                        <button
+                                                            type="button"
+                                                            class="rd-btn rd-btn-table rd-btn-action-primary js-view-pdf-btn"
+                                                            data-appointment-id="<?php echo intval($appointment['appointment_id'] ?? 0); ?>"
+                                                            data-test-id="<?php echo intval($test['test_id'] ?? 0); ?>"
+                                                        >
+                                                            View PDF
+                                                        </button>
+                                                        
+                                                    </div>
+
                                                 <?php else: ?>
                                                     <span style="color: var(--text-muted);">No actions available</span>
                                                 <?php endif; ?>
@@ -112,7 +138,7 @@ if (!isset($_SESSION['user_id'])) {
                     </div>
                 </section>
 
-                <div id="rdEnterValuesModal" class="rd-enter-modal" aria-hidden="true">
+                <div id="rdEnterValuesModal" class="rd-enter-modal" aria-hidden="true" hidden>
                     <div class="rd-enter-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="rdEnterValuesTitle">
                         <div class="rd-enter-modal__header">
                             <div>
@@ -141,10 +167,102 @@ if (!isset($_SESSION['user_id'])) {
                         </form>
                     </div>
                 </div>
+
+                <div id="rdAuthorizeModal" class="rd-authorize-modal" aria-hidden="true" hidden>
+                    <div class="rd-authorize-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="rdAuthorizeTitle">
+                        <div class="rd-authorize-modal__header">
+                            <div>
+                                <p class="rd-authorize-modal__eyebrow">Authorization Request</p>
+                                <h2 id="rdAuthorizeTitle">Verify &amp; Authorize Report</h2>
+                                <p id="rdAuthorizePatientLine" class="rd-authorize-modal__meta">Patient details</p>
+                            </div>
+                            <button type="button" class="rd-authorize-modal__close" id="rdAuthorizeClose" aria-label="Close modal">&times;</button>
+                        </div>
+
+                        <p id="rdAuthorizeHint" class="rd-authorize-modal__hint">Please review measured values and clinical status before final authorization.</p>
+
+                        <div class="rd-authorize-modal__body">
+                            <div id="rdAuthorizeAlert" class="rd-authorize-modal__alert" hidden></div>
+                            <div id="rdAuthorizeFields" class="rd-authorize-modal__fields"></div>
+
+                            <label for="rdAuthorizeRemarks" class="rd-authorize-modal__remarks-label">General Remarks</label>
+                            <textarea id="rdAuthorizeRemarks" rows="4" readonly></textarea>
+                        </div>
+
+                        <div class="rd-authorize-modal__footer">
+                            <button type="button" class="rd-btn rd-btn-muted" id="rdFlagForRecheckBtn">Flag for Recheck</button>
+                            <button type="button" class="rd-btn rd-btn-primary" id="rdAuthorizeSignBtn">Authorize &amp; Sign Report</button>
+                        </div>
+                    </div>
+                </div>
             </section>
         </main>
     </div>
 
-    <script src="/lab_sync/public/js/reportEnterValuesModal.js"></script>
+    <script src="/lab_sync/public/js/reportEnterValuesModal.js?v=20260413"></script>
+    <script src="/lab_sync/public/js/reportAuthorizeModal.js?v=20260413"></script>
+    <script>
+    (function () {
+        function buildViewUrl(appointmentId, testId) {
+            return '/lab_sync/index.php?controller=reportsController&action=viewPdf&appointment_id=' +
+                encodeURIComponent(appointmentId) + '&test_id=' + encodeURIComponent(testId);
+        }
+
+        function regeneratePdf(appointmentId, testId, button) {
+            var originalLabel = button.textContent;
+            button.disabled = true;
+            button.textContent = 'Generating...';
+
+            fetch('/lab_sync/index.php?controller=reportsController&action=generatePdf', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({
+                    appointment_id: Number(appointmentId),
+                    test_id: Number(testId)
+                })
+            })
+                .then(function (response) { return response.json(); })
+                .then(function (payload) {
+                    if (!payload || payload.status !== 'success') {
+                        throw new Error((payload && payload.message) || 'Failed to generate PDF.');
+                    }
+                    window.open(buildViewUrl(appointmentId, testId), '_blank', 'noopener');
+                })
+                .catch(function (error) {
+                    window.alert(error.message || 'Failed to generate PDF.');
+                })
+                .finally(function () {
+                    button.disabled = false;
+                    button.textContent = originalLabel;
+                });
+        }
+
+        document.addEventListener('click', function (event) {
+            var viewBtn = event.target.closest('.js-view-pdf-btn');
+            if (viewBtn) {
+                event.preventDefault();
+                var appointmentId = viewBtn.getAttribute('data-appointment-id');
+                var testId = viewBtn.getAttribute('data-test-id');
+                if (appointmentId && testId) {
+                    window.open(buildViewUrl(appointmentId, testId), '_blank', 'noopener');
+                }
+                return;
+            }
+
+            var regenBtn = event.target.closest('.js-regenerate-pdf-btn');
+            if (regenBtn) {
+                event.preventDefault();
+                var regenAppointmentId = regenBtn.getAttribute('data-appointment-id');
+                var regenTestId = regenBtn.getAttribute('data-test-id');
+                if (regenAppointmentId && regenTestId) {
+                    regeneratePdf(regenAppointmentId, regenTestId, regenBtn);
+                }
+            }
+        });
+    })();
+    </script>
 </body>
 </html>

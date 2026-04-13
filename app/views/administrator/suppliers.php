@@ -25,12 +25,12 @@ if (!isset($_SESSION['user_id'])) {
             <!-- Main Body Section -->
             <main class="main-content">
                  <div class="Tmain-content">
-                    <div class="test-catalog-header">
-                        <h1>Suppliers</h1>
-                        <button class="add-test-button" ><a href="/lab_sync/index.php?controller=supplierController&action=Register_supplier">Register New Supplier</a></button>
-                    </div>
-                    <div>
-                        <p class="MC-p">Suppliers-></p>
+                    <div class="main-content-header">
+                        <div class="main-topic">
+                            <h1>Suppliers</h1>
+                            <a class="add-user-button" href="/lab_sync/index.php?controller=supplierController&action=Register_supplier">Register New Supplier</a>
+                        </div>
+                        <p class="MC-p">Suppliers-&gt;</p>
                     </div>
                     <div class="container-cards">
                         <div class="card, c-card">

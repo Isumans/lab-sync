@@ -132,6 +132,36 @@ class reportsController {
             'message' => 'Report created successfully.'
         ]);
     }
+    public function printReport($role=''){
+        if (!isset($_SESSION['user_id'])) {
+            // User is not logged in, redirect to login page
+            header('Location: /lab_sync/index.php?controller=Auth&action=index');
+            exit();
+        }
+
+        $appointmentId = isset($_GET['appointment_id']) ? intval($_GET['appointment_id']) : 0;
+        if ($appointmentId <= 0) {
+            http_response_code(400);
+            echo 'Invalid appointment ID.';
+            return;
+        }
+
+        $model = new ReportModel(connect());
+        $payload = $model->getReportDetailsPayload($appointmentId);
+
+        if ($payload === null) {
+            http_response_code(404);
+            echo 'Report details not found.';
+            return;
+        }
+
+        $appointment = $payload['appointment'];
+        $tests = $payload['tests'];
+        $billing = $payload['billing'];
+        $summary = $payload['summary'];
+
+        include VIEW_PATH . '/technicians/report_print.php';
+    }
 
     public function getReportDetails() {
         header('Content-Type: application/json; charset=UTF-8');
@@ -285,6 +315,125 @@ class reportsController {
         ]);
     }
 
+    public function getAuthorizeContext() {
+        header('Content-Type: application/json; charset=UTF-8');
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
+            http_response_code(405);
+            echo json_encode([
+                'status' => 'error',
+                'message' => 'Invalid request method.'
+            ]);
+            return;
+        }
+
+        $appointmentId = isset($_GET['appointment_id']) ? intval($_GET['appointment_id']) : 0;
+        $testId = isset($_GET['test_id']) ? intval($_GET['test_id']) : 0;
+        if ($appointmentId <= 0 || $testId <= 0) {
+            http_response_code(400);
+            echo json_encode([
+                'status' => 'error',
+                'message' => 'Invalid appointment or test ID.'
+            ]);
+            return;
+        }
+
+        $model = new ReportModel(connect());
+        $context = $model->getAuthorizeContext($appointmentId, $testId);
+        $contextError = $model->getLastError();
+
+        if ($context === null) {
+            http_response_code(404);
+            echo json_encode([
+                'status' => 'error',
+                'message' => $contextError !== '' ? $contextError : 'Authorization context not found.'
+            ]);
+            return;
+        }
+
+        echo json_encode([
+            'status' => 'success',
+            'data' => $context
+        ]);
+    }
+
+    public function submitAuthorizationDecision() {
+        header('Content-Type: application/json; charset=UTF-8');
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            echo json_encode([
+                'status' => 'error',
+                'message' => 'Invalid request method.'
+            ]);
+            return;
+        }
+
+        $userRole = strtolower(trim((string) ($_SESSION['user_role'] ?? '')));
+        if ($userRole !== 'technician') {
+            http_response_code(403);
+            echo json_encode([
+                'status' => 'error',
+                'message' => 'Only technicians are allowed to authorize reports.'
+            ]);
+            return;
+        }
+
+        $rawInput = file_get_contents('php://input');
+        $input = json_decode($rawInput, true);
+        if (!is_array($input)) {
+            http_response_code(400);
+            echo json_encode([
+                'status' => 'error',
+                'message' => 'Invalid request payload.'
+            ]);
+            return;
+        }
+
+        $appointmentId = isset($input['appointment_id']) ? intval($input['appointment_id']) : 0;
+        $testId = isset($input['test_id']) ? intval($input['test_id']) : 0;
+        $decision = isset($input['decision']) ? strtolower(trim((string) $input['decision'])) : '';
+        $note = isset($input['note']) ? trim((string) $input['note']) : '';
+        $actedBy = isset($_SESSION['user_id']) ? intval($_SESSION['user_id']) : 0;
+
+        if ($appointmentId <= 0 || $testId <= 0) {
+            http_response_code(400);
+            echo json_encode([
+                'status' => 'error',
+                'message' => 'Invalid appointment or test ID.'
+            ]);
+            return;
+        }
+
+        if ($decision !== 'recheck' && $decision !== 'authorize') {
+            http_response_code(400);
+            echo json_encode([
+                'status' => 'error',
+                'message' => 'Invalid authorization decision.'
+            ]);
+            return;
+        }
+
+        $model = new ReportModel(connect());
+        $outcome = $model->submitAuthorizationDecision($appointmentId, $testId, $decision, $actedBy, $note);
+        $saveError = $model->getLastError();
+
+        if ($outcome === false) {
+            http_response_code(500);
+            echo json_encode([
+                'status' => 'error',
+                'message' => $saveError !== '' ? $saveError : 'Failed to update report authorization status.'
+            ]);
+            return;
+        }
+
+        echo json_encode([
+            'status' => 'success',
+            'message' => $decision === 'recheck' ? 'Report flagged for recheck.' : 'Report authorized and signed successfully.',
+            'data' => $outcome
+        ]);
+    }
+
     public function viewReport($appointmentId = 0) {
         if ($appointmentId <= 0) {
             http_response_code(400);
@@ -332,5 +481,192 @@ class reportsController {
         $summary = $payload['summary'];
 
         include VIEW_PATH . '/technicians/report_details.php';
+    }
+
+    /* ====================================================================
+     * PDF GENERATION & VIEWING
+     * ==================================================================== */
+
+    /**
+     * POST — Generate a PDF for a specific appointment + test.
+     * Called automatically after the authorize modal succeeds.
+     */
+    public function generatePdf() {
+        header('Content-Type: application/json; charset=UTF-8');
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            echo json_encode(['status' => 'error', 'message' => 'Invalid request method.']);
+            return;
+        }
+
+        $input = json_decode(file_get_contents('php://input'), true);
+        $appointmentId = isset($input['appointment_id']) ? intval($input['appointment_id']) : 0;
+        $testId        = isset($input['test_id'])        ? intval($input['test_id'])        : 0;
+        $generatedBy   = isset($_SESSION['user_id'])      ? intval($_SESSION['user_id'])     : 0;
+
+        if ($appointmentId <= 0 || $testId <= 0) {
+            http_response_code(400);
+            echo json_encode(['status' => 'error', 'message' => 'Invalid appointment or test ID.']);
+            return;
+        }
+
+        require_once __DIR__ . '/../core/pdfGenerator.php';
+
+        $generator = new PdfGenerator(connect());
+        $result = $generator->generateReport($appointmentId, $testId, $generatedBy);
+
+        if ($result === false) {
+            http_response_code(500);
+            echo json_encode([
+                'status'  => 'error',
+                'message' => $generator->getLastError() ?: 'PDF generation failed.'
+            ]);
+            return;
+        }
+
+        echo json_encode([
+            'status'  => 'success',
+            'message' => 'PDF generated successfully.',
+            'data'    => $result
+        ]);
+    }
+
+    /**
+     * GET — Stream the PDF inline (Content-Disposition: inline) so Chrome opens its native PDF viewer.
+     * Accepts ?report_id=X or ?appointment_id=X&test_id=Y
+     */
+    public function viewPdf() {
+        if (!isset($_SESSION['user_id'])) {
+            header('Location: /lab_sync/index.php?controller=Auth&action=index');
+            exit();
+        }
+
+        $model = new ReportModel(connect());
+        $pdfPath = $this->resolvePdfPath($model);
+
+        if ($pdfPath === null) {
+            http_response_code(404);
+            echo 'PDF not found.';
+            return;
+        }
+
+        header('Content-Type: application/pdf');
+        header('Content-Disposition: inline; filename="' . basename($pdfPath) . '"');
+        header('Content-Length: ' . filesize($pdfPath));
+        header('Cache-Control: private, max-age=0, must-revalidate');
+        readfile($pdfPath);
+        exit();
+    }
+
+    /**
+     * GET — Force download of the PDF (Content-Disposition: attachment).
+     */
+    public function downloadPdf() {
+        if (!isset($_SESSION['user_id'])) {
+            header('Location: /lab_sync/index.php?controller=Auth&action=index');
+            exit();
+        }
+
+        $model = new ReportModel(connect());
+        $pdfPath = $this->resolvePdfPath($model);
+
+        if ($pdfPath === null) {
+            http_response_code(404);
+            echo 'PDF not found.';
+            return;
+        }
+
+        header('Content-Type: application/pdf');
+        header('Content-Disposition: attachment; filename="' . basename($pdfPath) . '"');
+        header('Content-Length: ' . filesize($pdfPath));
+        header('Cache-Control: private, max-age=0, must-revalidate');
+        readfile($pdfPath);
+        exit();
+    }
+
+    /**
+     * Receptionist report dashboard view.
+     */
+    public function receptionistDashboard($role = '') {
+        if (!isset($_SESSION['user_id'])) {
+            header('Location: /lab_sync/index.php?controller=Auth&action=index');
+            exit();
+        }
+        include VIEW_PATH . '/receptionist/receptionist_reports.php';
+    }
+
+    /**
+     * JSON API — paginated list of authorized reports (for receptionist dashboard).
+     */
+    public function listAuthorizedReports() {
+        header('Content-Type: application/json; charset=UTF-8');
+
+        $page    = isset($_GET['page'])     ? max(1, intval($_GET['page']))               : 1;
+        $perPage = isset($_GET['per_page']) ? max(1, min(50, intval($_GET['per_page'])))  : 10;
+        $filters = [
+            'search' => isset($_GET['search']) ? trim((string) $_GET['search']) : '',
+        ];
+
+        $model = new ReportModel(connect());
+        $rows  = $model->getAuthorizedReportsList($filters, $page, $perPage);
+        $total = $model->countAuthorizedReports($filters);
+
+        $formatted = array_map(function ($row) {
+            return [
+                'reportId'       => intval($row['report_id']),
+                'appointmentId'  => intval($row['appointment_id']),
+                'testId'         => intval($row['test_id']),
+                'referenceNo'    => $row['reference_number'] ?? '',
+                'patientName'    => $row['patient_name'] ?? 'Unknown',
+                'uhid'           => $row['uhid'] ?? '',
+                'testName'       => $row['print_name'] ?: ($row['test_name'] ?? ''),
+                'date'           => $row['appointment_date'] ?? '',
+                'generatedAt'    => $row['pdf_generated_at'] ?? '',
+                'status'         => $row['status'] ?? 'AUTHORIZED',
+                'viewUrl'        => '/lab_sync/index.php?controller=reportsController&action=viewPdf&appointment_id='
+                                    . intval($row['appointment_id']) . '&test_id=' . intval($row['test_id']),
+                'downloadUrl'    => '/lab_sync/index.php?controller=reportsController&action=downloadPdf&appointment_id='
+                                    . intval($row['appointment_id']) . '&test_id=' . intval($row['test_id']),
+            ];
+        }, $rows);
+
+        echo json_encode([
+            'status' => 'success',
+            'data'   => $formatted,
+            'pagination' => [
+                'current_page' => $page,
+                'per_page'     => $perPage,
+                'total'        => $total,
+                'total_pages'  => max(1, (int) ceil($total / $perPage)),
+            ],
+        ]);
+    }
+
+    /* ====================================================================
+     * PRIVATE HELPERS
+     * ==================================================================== */
+
+    /**
+     * Resolve the PDF file path from request parameters.
+     * Accepts ?report_id=X or ?appointment_id=X&test_id=Y
+     */
+    private function resolvePdfPath($model) {
+        $reportId      = isset($_GET['report_id'])      ? intval($_GET['report_id'])      : 0;
+        $appointmentId = isset($_GET['appointment_id']) ? intval($_GET['appointment_id']) : 0;
+        $testId        = isset($_GET['test_id'])        ? intval($_GET['test_id'])        : 0;
+
+        if ($reportId > 0) {
+            return $model->getReportPdfPath($reportId);
+        }
+
+        if ($appointmentId > 0 && $testId > 0) {
+            $report = $model->getReportByAppointmentTest($appointmentId, $testId);
+            if ($report && !empty($report['report_id'])) {
+                return $model->getReportPdfPath(intval($report['report_id']));
+            }
+        }
+
+        return null;
     }
 }

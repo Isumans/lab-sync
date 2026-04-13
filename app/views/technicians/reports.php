@@ -21,8 +21,10 @@ if (!isset($_SESSION['user_id'])) {
             <section class="reports-dashboard" aria-label="Reports Dashboard">
                 
             <div class="main-content-header">
+                    <div class="main-topic">
                     <h1>Reports</h1>
-                    <p class="MC-p">Reports-></p>
+                    </div>
+                    <p class="MC-p">Reports-&gt;</p>
             </div>
 
                 <!-- <div class="rd-header-row">

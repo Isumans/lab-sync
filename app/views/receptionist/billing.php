@@ -25,12 +25,12 @@ if (!isset($_SESSION['user_id'])) {
             <!-- Main Body Section -->
             <main class="main-content">
                  <div class="Tmain-content">
-                    <div class="test-catalog-header">
-                        <h1>Billing</h1>
-                        <button class="add-test-button" ><a href="/lab_sync/index.php?controller=billingController&action=Register_billing">Create New Bill</a></button>
-                    </div>
-                    <div>
-                        <p class="MC-p">Billing-></p>
+                    <div class="main-content-header">
+                        <div class="main-topic">
+                            <h1>Billing</h1>
+                            <a class="add-user-button" href="/lab_sync/index.php?controller=billingController&action=Register_billing">Create New Bill</a>
+                        </div>
+                        <p class="MC-p">Billing-&gt;</p>
                     </div>
                     <div class="billingArea">
                         <h2>Billing Details(Last Month)</h2>

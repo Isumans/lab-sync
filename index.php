@@ -149,13 +149,30 @@ elseif ($controllerName === 'appointmentsController') {
         $reportsController->getEnterValuesContext();
     } elseif ($action === 'saveEnterValues') {
         $reportsController->saveEnterValues();
+    } elseif ($action === 'getAuthorizeContext') {
+        $reportsController->getAuthorizeContext();
+    } elseif ($action === 'submitAuthorizationDecision') {
+        $reportsController->submitAuthorizationDecision();
+    } elseif ($action === 'generatePdf') {
+        $reportsController->generatePdf();
+    } elseif ($action === 'viewPdf') {
+        $reportsController->viewPdf();
+    } elseif ($action === 'downloadPdf') {
+        $reportsController->downloadPdf();
+    } elseif ($action === 'receptionistDashboard') {
+        $reportsController->receptionistDashboard($role);
+    } elseif ($action === 'listAuthorizedReports') {
+        $reportsController->listAuthorizedReports();
     } elseif ($action === 'details') {
         $reportsController->details($role);
     }elseif($action === 'viewReport') {
         $reportsController->viewReport($appointmentID);
     }elseif($action === 'CreateReport') {
         $reportsController->CreateReport();
-    } else {
+    }elseif($action === 'printReport'){
+       $reportsController->printReport($role); 
+    }
+     else {
         echo "404 Not Found";
     }
 }elseif($controllerName === 'supplierController'){
@@ -177,7 +194,7 @@ elseif ($controllerName === 'appointmentsController') {
     $role = $_GET['role'] ?? '';
     $action = $_GET['action'] ?? 'index'; // or your desired default
     if($action ==='index'){
-        $inventoryController->index($role);
+        $inventoryController->index();
     }elseif($action ==='add_inventory'){
         include VIEW_PATH . '/technicians/addInventory.php';
     }elseif($action ==='store'){
@@ -239,7 +256,7 @@ elseif ($controllerName === 'appointmentsController') {
     $role = $_GET['role'] ?? '';
     // $partnerLabController = new partnerLabController();
     if($action === 'index'){
-        $partnerLabController->index();
+        $partnerLabController->index($role);
     }elseif($action === 'RegisterLab'){
         $partnerLabController->index($role);
     }elseif($action === 'storeLab'){

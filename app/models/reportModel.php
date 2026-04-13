@@ -339,6 +339,234 @@ class ReportModel {
         }
     }
 
+    public function getAuthorizeContext($appointmentId, $testId) {
+        $this->lastError = '';
+        $appointmentId = intval($appointmentId);
+        $testId = intval($testId);
+
+        if ($appointmentId <= 0 || $testId <= 0) {
+            $this->lastError = 'Invalid appointment or test ID.';
+            return null;
+        }
+
+        $payload = $this->getReportDetailsPayload($appointmentId);
+        if ($payload === null) {
+            $this->lastError = 'Report details not found.';
+            return null;
+        }
+
+        $selectedTest = null;
+        foreach ($payload['tests'] as $testRow) {
+            if (intval($testRow['test_id'] ?? 0) === $testId) {
+                $selectedTest = $testRow;
+                break;
+            }
+        }
+
+        if ($selectedTest === null) {
+            $this->lastError = 'Selected test not found for this appointment.';
+            return null;
+        }
+
+        $testStatus = strtoupper(trim((string) ($selectedTest['status'] ?? '')));
+        if ($testStatus !== 'COMPLETED' && $testStatus !== 'AUTHORIZED') {
+            $this->lastError = 'Only completed reports can be opened for authorization.';
+            return null;
+        }
+
+        $units = $this->getTestUnitsForEntry($testId);
+        $existingValues = $this->getExistingResultValues($appointmentId, $testId);
+
+        foreach ($units as &$unitRow) {
+            $unitId = intval($unitRow['unit_id'] ?? 0);
+            if ($unitId > 0 && isset($existingValues[$unitId])) {
+                $unitRow['measured_value'] = $existingValues[$unitId]['measured_value'];
+                $unitRow['flag'] = (string) $existingValues[$unitId]['flag'];
+            } else {
+                $unitRow['measured_value'] = null;
+                $unitRow['flag'] = 'N';
+            }
+        }
+        unset($unitRow);
+
+        return [
+            'appointment' => $payload['appointment'],
+            'test' => $selectedTest,
+            'units' => $units,
+            'remarks' => $this->getExistingRemarks($appointmentId, $testId)
+        ];
+    }
+
+    public function submitAuthorizationDecision($appointmentId, $testId, $decision, $actedBy, $note = '') {
+        $this->lastError = '';
+        $appointmentId = intval($appointmentId);
+        $testId = intval($testId);
+        $actedBy = intval($actedBy);
+        $decision = strtolower(trim((string) $decision));
+        $note = trim((string) $note);
+
+        if ($appointmentId <= 0 || $testId <= 0) {
+            $this->lastError = 'Invalid appointment or test ID.';
+            return false;
+        }
+
+        if ($decision !== 'recheck' && $decision !== 'authorize') {
+            $this->lastError = 'Invalid decision value.';
+            return false;
+        }
+
+        if (!$this->tableExists('appointment_tests')) {
+            $this->lastError = 'Table appointment_tests does not exist.';
+            return false;
+        }
+
+        $statusCol = $this->resolveFirstExistingColumn('appointment_tests', ['status', 'test_status']);
+        if ($statusCol === null) {
+            $this->lastError = 'Unable to resolve appointment test status column.';
+            return false;
+        }
+
+        $completedAtCol = $this->resolveFirstExistingColumn('appointment_tests', ['completed_at']);
+        $authorizedAtCol = $this->resolveFirstExistingColumn('appointment_tests', ['authorized_at']);
+        $authorizedByCol = $this->resolveFirstExistingColumn('appointment_tests', ['authorized_by']);
+
+        $currentRowSql = "
+            SELECT {$statusCol} AS status
+            FROM appointment_tests
+            WHERE appointment_id = ? AND test_id = ?
+            LIMIT 1
+        ";
+        $currentRowStmt = $this->db->prepare($currentRowSql);
+        if ($currentRowStmt === false) {
+            $this->lastError = 'Prepare failed in submitAuthorizationDecision(fetch current): ' . $this->db->error;
+            error_log($this->lastError);
+            return false;
+        }
+
+        $currentRowStmt->bind_param('ii', $appointmentId, $testId);
+        if (!$currentRowStmt->execute()) {
+            $this->lastError = 'Execute failed in submitAuthorizationDecision(fetch current): ' . $currentRowStmt->error;
+            error_log($this->lastError);
+            return false;
+        }
+
+        $currentRowResult = $currentRowStmt->get_result();
+        $currentRow = $currentRowResult ? $currentRowResult->fetch_assoc() : null;
+        if (!$currentRow) {
+            $this->lastError = 'Appointment test record not found.';
+            return false;
+        }
+
+        $currentStatus = strtoupper(trim((string) ($currentRow['status'] ?? 'PENDING')));
+        if ($decision === 'authorize' && $currentStatus !== 'COMPLETED') {
+            $this->lastError = 'Only completed tests can be authorized.';
+            return false;
+        }
+
+        if ($decision === 'recheck' && $currentStatus !== 'COMPLETED' && $currentStatus !== 'AUTHORIZED') {
+            $this->lastError = 'Only completed or authorized tests can be flagged for recheck.';
+            return false;
+        }
+
+        try {
+            $this->db->begin_transaction();
+
+            if ($decision === 'authorize') {
+                if ($actedBy <= 0) {
+                    throw new Exception('Invalid authorizing user ID.');
+                }
+
+                $setParts = ["{$statusCol} = ?"];
+                $types = 's';
+                $bindValues = ['AUTHORIZED'];
+
+                if ($authorizedByCol !== null) {
+                    $setParts[] = "{$authorizedByCol} = ?";
+                    $types .= 'i';
+                    $bindValues[] = $actedBy;
+                }
+
+                if ($authorizedAtCol !== null) {
+                    $setParts[] = "{$authorizedAtCol} = NOW()";
+                }
+
+                $updateSql = 'UPDATE appointment_tests SET ' . implode(', ', $setParts) . ' WHERE appointment_id = ? AND test_id = ?';
+                $types .= 'ii';
+                $bindValues[] = $appointmentId;
+                $bindValues[] = $testId;
+
+                $updateStmt = $this->db->prepare($updateSql);
+                if ($updateStmt === false) {
+                    throw new Exception('Prepare failed in submitAuthorizationDecision(authorize): ' . $this->db->error);
+                }
+
+                $bindParams = [$types];
+                foreach ($bindValues as $idx => $value) {
+                    $bindParams[] = &$bindValues[$idx];
+                }
+                call_user_func_array([$updateStmt, 'bind_param'], $bindParams);
+
+                if (!$updateStmt->execute()) {
+                    throw new Exception('Execute failed in submitAuthorizationDecision(authorize): ' . $updateStmt->error);
+                }
+            }
+
+            if ($decision === 'recheck') {
+                $setParts = ["{$statusCol} = ?"];
+                $types = 's';
+                $bindValues = ['IN_PROGRESS'];
+
+                if ($completedAtCol !== null) {
+                    $setParts[] = "{$completedAtCol} = NULL";
+                }
+
+                if ($authorizedByCol !== null) {
+                    $setParts[] = "{$authorizedByCol} = NULL";
+                }
+
+                if ($authorizedAtCol !== null) {
+                    $setParts[] = "{$authorizedAtCol} = NULL";
+                }
+
+                $updateSql = 'UPDATE appointment_tests SET ' . implode(', ', $setParts) . ' WHERE appointment_id = ? AND test_id = ?';
+                $types .= 'ii';
+                $bindValues[] = $appointmentId;
+                $bindValues[] = $testId;
+
+                $updateStmt = $this->db->prepare($updateSql);
+                if ($updateStmt === false) {
+                    throw new Exception('Prepare failed in submitAuthorizationDecision(recheck): ' . $this->db->error);
+                }
+
+                $bindParams = [$types];
+                foreach ($bindValues as $idx => $value) {
+                    $bindParams[] = &$bindValues[$idx];
+                }
+                call_user_func_array([$updateStmt, 'bind_param'], $bindParams);
+
+                if (!$updateStmt->execute()) {
+                    throw new Exception('Execute failed in submitAuthorizationDecision(recheck): ' . $updateStmt->error);
+                }
+            }
+
+            if ($note !== '') {
+                $this->appendDecisionNote($appointmentId, $testId, $note);
+            }
+
+            $this->db->commit();
+
+            return [
+                'decision' => $decision,
+                'status' => $decision === 'authorize' ? 'AUTHORIZED' : 'IN_PROGRESS'
+            ];
+        } catch (Exception $ex) {
+            $this->db->rollback();
+            $this->lastError = $ex->getMessage();
+            error_log($this->lastError);
+            return false;
+        }
+    }
+
     public function getLastError() {
         return $this->lastError;
     }
@@ -1012,6 +1240,54 @@ class ReportModel {
         return trim((string) $row['comment_text']);
     }
 
+    private function appendDecisionNote($appointmentId, $testId, $note) {
+        if (!$this->tableExists('test_results') || !$this->tableExists('test_comments')) {
+            return;
+        }
+
+        $resultId = $this->findFirstResultId($appointmentId, $testId);
+        if ($resultId <= 0) {
+            return;
+        }
+
+        $insertSql = 'INSERT INTO test_comments (result_id, comment_text, display_order) VALUES (?, ?, 999)';
+        $insertStmt = $this->db->prepare($insertSql);
+        if ($insertStmt === false) {
+            return;
+        }
+
+        $insertStmt->bind_param('is', $resultId, $note);
+        $insertStmt->execute();
+    }
+
+    private function findFirstResultId($appointmentId, $testId) {
+        if (!$this->tableExists('test_results')) {
+            return 0;
+        }
+
+        $sql = '
+            SELECT result_id
+            FROM test_results
+            WHERE appointment_id = ? AND test_id = ?
+            ORDER BY result_id ASC
+            LIMIT 1
+        ';
+
+        $stmt = $this->db->prepare($sql);
+        if ($stmt === false) {
+            return 0;
+        }
+
+        $stmt->bind_param('ii', $appointmentId, $testId);
+        if (!$stmt->execute()) {
+            return 0;
+        }
+
+        $result = $stmt->get_result();
+        $row = $result ? $result->fetch_assoc() : null;
+        return $row && isset($row['result_id']) ? intval($row['result_id']) : 0;
+    }
+
     private function findResultId($appointmentId, $testId, $unitId) {
         $sql = '
             SELECT result_id
@@ -1079,5 +1355,161 @@ class ReportModel {
         }
 
         return 'N';
+    }
+
+    /* ====================================================================
+     * PDF REPORT MANAGEMENT METHODS
+     * ==================================================================== */
+
+    /**
+     * Find the report row for an appointment + test combination.
+     */
+    public function getReportByAppointmentTest($appointmentId, $testId)
+    {
+        $sql = "
+            SELECT report_id, appointment_id, test_id, reference_number,
+                   pdf_relative_path, pdf_original_name, pdf_generated_at,
+                   pdf_generated_by, status
+            FROM reports
+            WHERE appointment_id = ? AND test_id = ?
+            ORDER BY report_id DESC
+            LIMIT 1
+        ";
+        $stmt = $this->db->prepare($sql);
+        if (!$stmt) return null;
+        $stmt->bind_param('ii', $appointmentId, $testId);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        return $result ? $result->fetch_assoc() : null;
+    }
+
+    /**
+     * Return the absolute file path for a report's PDF.
+     */
+    public function getReportPdfPath($reportId)
+    {
+        $sql = "SELECT pdf_relative_path FROM reports WHERE report_id = ? LIMIT 1";
+        $stmt = $this->db->prepare($sql);
+        if (!$stmt) return null;
+        $stmt->bind_param('i', $reportId);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $row = $result ? $result->fetch_assoc() : null;
+        if (!$row || empty($row['pdf_relative_path'])) return null;
+
+        $basePath = realpath(__DIR__ . '/../../public/reports/pdfs');
+        if (!$basePath) return null;
+        $full = $basePath . '/' . $row['pdf_relative_path'];
+        return file_exists($full) ? $full : null;
+    }
+
+    /**
+     * Paginated list of authorized/printed reports (for receptionist dashboard).
+     */
+    public function getAuthorizedReportsList($filters, $page = 1, $perPage = 10)
+    {
+        $this->lastError = '';
+        $page    = max(1, intval($page));
+        $perPage = max(1, min(50, intval($perPage)));
+        $offset  = ($page - 1) * $perPage;
+
+        $search = isset($filters['search']) ? trim((string) $filters['search']) : '';
+
+        $where = ["r.status IN ('AUTHORIZED','PRINTED')", "r.pdf_relative_path IS NOT NULL", "r.pdf_relative_path != ''"];
+        $types = '';
+        $params = [];
+
+        if ($search !== '') {
+            $where[] = "(
+                LOWER(COALESCE(p.patient_name, '')) LIKE ?
+                OR LOWER(COALESCE(p.uhid, '')) LIKE ?
+                OR LOWER(r.reference_number) LIKE ?
+                OR CAST(r.appointment_id AS CHAR) LIKE ?
+            )";
+            $like = '%' . strtolower($search) . '%';
+            $types .= 'ssss';
+            $params = array_merge($params, [$like, $like, $like, $like]);
+        }
+
+        $whereSql = implode(' AND ', $where);
+
+        $sql = "
+            SELECT
+                r.report_id,
+                r.appointment_id,
+                r.test_id,
+                r.reference_number,
+                r.pdf_relative_path,
+                r.pdf_generated_at,
+                r.status,
+                COALESCE(p.patient_name, 'Unknown') AS patient_name,
+                COALESCE(p.uhid, '') AS uhid,
+                COALESCE(t.test_name, '') AS test_name,
+                COALESCE(t.print_name, '') AS print_name,
+                a.appointment_date
+            FROM reports r
+            LEFT JOIN appointment a ON a.appointment_id = r.appointment_id
+            LEFT JOIN patients p ON p.patient_id = a.patient_id
+            LEFT JOIN tests t ON t.test_id = r.test_id
+            WHERE {$whereSql}
+            ORDER BY r.pdf_generated_at DESC, r.report_id DESC
+            LIMIT ? OFFSET ?
+        ";
+
+        $types .= 'ii';
+        $params[] = $perPage;
+        $params[] = $offset;
+
+        $stmt = $this->prepareAndBind($sql, $types, $params);
+        if (!$stmt) return [];
+        if (!$stmt->execute()) {
+            $this->lastError = 'getAuthorizedReportsList execute: ' . $stmt->error;
+            return [];
+        }
+        $result = $stmt->get_result();
+        return $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
+    }
+
+    /**
+     * Count of authorized reports matching filters.
+     */
+    public function countAuthorizedReports($filters)
+    {
+        $this->lastError = '';
+        $search = isset($filters['search']) ? trim((string) $filters['search']) : '';
+
+        $where = ["r.status IN ('AUTHORIZED','PRINTED')", "r.pdf_relative_path IS NOT NULL", "r.pdf_relative_path != ''"];
+        $types = '';
+        $params = [];
+
+        if ($search !== '') {
+            $where[] = "(
+                LOWER(COALESCE(p.patient_name, '')) LIKE ?
+                OR LOWER(COALESCE(p.uhid, '')) LIKE ?
+                OR LOWER(r.reference_number) LIKE ?
+                OR CAST(r.appointment_id AS CHAR) LIKE ?
+            )";
+            $like = '%' . strtolower($search) . '%';
+            $types .= 'ssss';
+            $params = array_merge($params, [$like, $like, $like, $like]);
+        }
+
+        $whereSql = implode(' AND ', $where);
+
+        $sql = "
+            SELECT COUNT(*) AS total
+            FROM reports r
+            LEFT JOIN appointment a ON a.appointment_id = r.appointment_id
+            LEFT JOIN patients p ON p.patient_id = a.patient_id
+            LEFT JOIN tests t ON t.test_id = r.test_id
+            WHERE {$whereSql}
+        ";
+
+        $stmt = $this->prepareAndBind($sql, $types, $params);
+        if (!$stmt) return 0;
+        if (!$stmt->execute()) return 0;
+        $result = $stmt->get_result();
+        $row = $result ? $result->fetch_assoc() : null;
+        return $row ? intval($row['total']) : 0;
     }
 }

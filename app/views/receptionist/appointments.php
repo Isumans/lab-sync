@@ -32,17 +32,15 @@ if (!isset($_SESSION['user_id'])) {
             <!-- Main Body Section -->
             <main class="main-content">
                 <div class="main-content-header">
-                    <h1>Appointments</h1>
-                    <p class="MC-p">Appointments-></p>
+                    <div class="main-topic">
+                        <h1>Appointments</h1>
+                        <a class="add-user-button" href="/lab_sync/index.php?controller=appointmentsController&action=createAppointment">+ Create Appointment</a>
+                    </div>
+                    <p class="MC-p">Appointments-&gt;</p>
                 </div>
 
                 <!-- Appointment Header with Stats -->
                 <div class="team-header-container">
-                    <div class="team-header">
-                        <h2>Appointment Management</h2>
-                        <button  class="add-user-button"><a href="/lab_sync/index.php?controller=appointmentsController&action=createAppointment">+ Create Appointment</a></button>
-                    </div>
-
                     <!-- Stats Cards -->
                     <div class="team-stats-grid" style="grid-template-columns: repeat(2, 1fr);">
                         <div class="stat-card-team">
