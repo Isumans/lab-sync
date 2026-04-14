@@ -179,9 +179,9 @@ elseif ($controllerName === 'appointmentsController') {
 }elseif($controllerName === 'supplierController'){
     $action = $_GET['action'] ?? 'index'; // or your desired default
     if($action ==='index'){
-        include VIEW_PATH . '/administrator/suppliers.php';
+        include VIEW_PATH . '/technicians/suppliers.php';
     }elseif($action==="Register_supplier"){
-        include VIEW_PATH . '/administrator/regSupplier.php';
+        include VIEW_PATH . '/technicians/regSupplier.php';
     }
 }elseif($controllerName === 'billingController'){
     $billingController = new billingController();
@@ -203,11 +203,19 @@ elseif ($controllerName === 'appointmentsController') {
     $action = $_GET['action'] ?? 'index'; // or your desired default
     if($action ==='index'){
         $inventoryController->index();
+    }elseif($action ==='listInventory'){
+        $inventoryController->listInventory();
+    }elseif($action ==='listSuppliers'){
+        $inventoryController->listSuppliers();
     }elseif($action ==='add_inventory'){
-        include VIEW_PATH . '/technicians/addInventory.php';
+        $inventoryController->add_inventory();
     }elseif($action ==='store'){
         $inventoryController->store();
         // Logic to store inventory item
+    }elseif($action ==='searchSuppliers'){
+        $inventoryController->searchSuppliers();
+    }elseif($action ==='createSupplier'){
+        $inventoryController->createSupplier();
     }elseif($action ==='edit_item'){
         $inventoryController->edit_item();
     }

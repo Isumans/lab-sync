@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Apr 13, 2026 at 02:18 PM
+-- Generation Time: Apr 14, 2026 at 05:27 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.0.30
 
@@ -92,12 +92,80 @@ INSERT INTO `appointment_tests` (`appointment_id`, `test_id`, `status`, `status_
 (12, 20, 'PENDING', '2026-04-04 14:44:53', NULL, NULL, NULL, NULL),
 (13, 17, 'PENDING', '2026-04-07 04:12:51', NULL, NULL, NULL, NULL),
 (14, 3, 'IN_PROGRESS', '2026-04-07 04:31:08', 6, NULL, NULL, NULL),
-(15, 29, 'IN_PROGRESS', '2026-04-12 10:01:43', 6, NULL, NULL, NULL),
+(15, 29, 'AUTHORIZED', '2026-04-13 15:54:11', 6, '2026-04-13 21:24:05', 11, '2026-04-13 21:24:11'),
 (16, 29, 'AUTHORIZED', '2026-04-13 08:51:13', 6, '2026-04-12 21:35:17', 11, '2026-04-13 14:21:13'),
-(16, 30, 'COMPLETED', '2026-04-12 15:40:17', 6, '2026-04-12 21:10:17', NULL, NULL),
-(17, 29, 'IN_PROGRESS', '2026-04-13 05:29:52', 6, NULL, NULL, NULL),
-(17, 30, 'IN_PROGRESS', '2026-04-13 05:29:55', 6, NULL, NULL, NULL),
-(18, 29, 'COMPLETED', '2026-04-13 09:38:40', 6, '2026-04-13 15:08:40', NULL, NULL);
+(16, 30, 'AUTHORIZED', '2026-04-13 14:51:32', 6, '2026-04-12 21:10:17', 11, '2026-04-13 20:21:32'),
+(17, 29, 'AUTHORIZED', '2026-04-13 15:50:27', 6, '2026-04-13 21:20:22', 11, '2026-04-13 21:20:27'),
+(17, 30, 'AUTHORIZED', '2026-04-13 15:52:44', 6, '2026-04-13 21:22:38', 11, '2026-04-13 21:22:44'),
+(18, 29, 'AUTHORIZED', '2026-04-13 15:46:13', 6, '2026-04-13 15:08:40', 11, '2026-04-13 21:16:13');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `bills`
+--
+
+CREATE TABLE `bills` (
+  `bill_id` int(11) NOT NULL,
+  `bill_number` varchar(50) NOT NULL,
+  `appointment_id` int(11) NOT NULL,
+  `patient_id` int(11) NOT NULL,
+  `bill_date` date NOT NULL,
+  `due_date` date DEFAULT NULL,
+  `subtotal` decimal(10,2) NOT NULL DEFAULT 0.00,
+  `discount_amount` decimal(10,2) NOT NULL DEFAULT 0.00,
+  `tax_amount` decimal(10,2) NOT NULL DEFAULT 0.00,
+  `total_amount` decimal(10,2) NOT NULL DEFAULT 0.00,
+  `paid_amount` decimal(10,2) NOT NULL DEFAULT 0.00,
+  `balance_due` decimal(10,2) NOT NULL DEFAULT 0.00,
+  `status` enum('DRAFT','PENDING','PARTIALLY_PAID','PAID','CANCELLED') NOT NULL DEFAULT 'DRAFT',
+  `status_updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `notes` text DEFAULT NULL,
+  `created_by` int(11) DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `bills`
+--
+
+INSERT INTO `bills` (`bill_id`, `bill_number`, `appointment_id`, `patient_id`, `bill_date`, `due_date`, `subtotal`, `discount_amount`, `tax_amount`, `total_amount`, `paid_amount`, `balance_due`, `status`, `status_updated_at`, `notes`, `created_by`, `created_at`, `updated_at`) VALUES
+(1, 'BILL-000001', 17, 1, '2026-04-14', NULL, 250.00, 0.00, 0.00, 250.00, 250.00, 0.00, 'DRAFT', '2026-04-14 05:04:32', NULL, 6, '2026-04-13 20:42:06', '2026-04-14 05:04:32'),
+(2, 'BILL-000002', 18, 1, '2026-04-14', NULL, 120.00, 0.00, 0.00, 120.00, 110.00, 10.00, 'PARTIALLY_PAID', '2026-04-14 04:50:52', NULL, 6, '2026-04-14 04:50:30', '2026-04-14 04:50:52'),
+(3, 'BILL-000003', 16, 9, '2026-04-14', NULL, 250.00, 30.00, 26.40, 246.40, 246.40, 0.00, 'PAID', '2026-04-14 08:53:13', NULL, 6, '2026-04-14 06:16:55', '2026-04-14 08:53:13'),
+(4, 'BILL-000004', 15, 7, '2026-04-14', NULL, 120.00, 0.00, 0.00, 120.00, 120.00, 0.00, 'PAID', '2026-04-14 06:54:20', NULL, 6, '2026-04-14 06:41:22', '2026-04-14 06:54:20');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `bill_items`
+--
+
+CREATE TABLE `bill_items` (
+  `bill_item_id` int(11) NOT NULL,
+  `bill_id` int(11) NOT NULL,
+  `test_id` int(11) DEFAULT NULL,
+  `test_name` varchar(150) NOT NULL,
+  `quantity` int(3) NOT NULL DEFAULT 1,
+  `unit_price` decimal(10,2) NOT NULL DEFAULT 0.00,
+  `discount_amount` decimal(10,2) NOT NULL DEFAULT 0.00,
+  `line_total` decimal(10,2) NOT NULL DEFAULT 0.00,
+  `notes` text DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `bill_items`
+--
+
+INSERT INTO `bill_items` (`bill_item_id`, `bill_id`, `test_id`, `test_name`, `quantity`, `unit_price`, `discount_amount`, `line_total`, `notes`, `created_at`) VALUES
+(11, 2, 29, 'Renal Function', 1, 120.00, 0.00, 120.00, NULL, '2026-04-14 04:50:52'),
+(12, 1, 29, 'Renal Function', 1, 120.00, 0.00, 120.00, NULL, '2026-04-14 05:04:32'),
+(13, 1, 30, 'SERUM LIPID PROFILE', 1, 130.00, 0.00, 130.00, NULL, '2026-04-14 05:04:32'),
+(24, 3, 29, 'Renal Function', 1, 120.00, 0.00, 120.00, NULL, '2026-04-14 06:40:50'),
+(25, 3, 30, 'SERUM LIPID PROFILE', 1, 130.00, 0.00, 130.00, NULL, '2026-04-14 06:40:50'),
+(28, 4, 29, 'Renal Function', 1, 120.00, 0.00, 120.00, NULL, '2026-04-14 06:54:20');
 
 -- --------------------------------------------------------
 
@@ -167,22 +235,26 @@ CREATE TABLE `inventory` (
   `category_id` int(11) DEFAULT NULL,
   `status` varchar(50) DEFAULT 'In Stock',
   `unit_cost` decimal(10,2) DEFAULT NULL,
-  `unit_of_measure` varchar(50) DEFAULT 'Units'
+  `unit_of_measure` varchar(50) DEFAULT 'Units',
+  `expiry_date` date DEFAULT NULL,
+  `deleted_date` date DEFAULT NULL,
+  `deleted_time` time DEFAULT NULL,
+  `deleted_by` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `inventory`
 --
 
-INSERT INTO `inventory` (`inventory_id`, `item_name`, `supplier_id`, `quantity`, `reorder_level`, `last_updated`, `category_id`, `status`, `unit_cost`, `unit_of_measure`) VALUES
-(1, 'Glucose Test Kit', 1, 50, 10, '2025-10-20 22:52:11', NULL, 'In Stock', NULL, 'Units'),
-(2, 'Blood Collection Tubes', 2, 120, 30, '2025-10-20 22:52:11', NULL, 'In Stock', NULL, 'Units'),
-(3, 'Urine Sample Bottles', 1, 80, 20, '2025-10-20 22:52:11', NULL, 'In Stock', NULL, 'Units'),
-(4, 'Microscope Slides', 3, 200, 40, '2025-10-20 22:52:11', NULL, 'In Stock', NULL, 'Units'),
-(5, 'COVID-19 Rapid Test Kit', 2, 60, 15, '2025-10-20 22:52:11', NULL, 'In Stock', NULL, 'Units'),
-(6, 'Latex Gloves', 3, 30, 50, '2025-10-21 08:45:45', NULL, 'In Stock', NULL, 'Units'),
-(9, 'gloves', 2, 1000, 50, '2025-10-22 18:09:48', NULL, 'In Stock', NULL, 'Units'),
-(10, 'uni', 2, 100, 10, '2026-03-29 15:59:31', NULL, 'In Stock', NULL, 'Units');
+INSERT INTO `inventory` (`inventory_id`, `item_name`, `supplier_id`, `quantity`, `reorder_level`, `last_updated`, `category_id`, `status`, `unit_cost`, `unit_of_measure`, `expiry_date`, `deleted_date`, `deleted_time`, `deleted_by`) VALUES
+(1, 'Glucose Test Kit', 1, 50, 10, '2025-10-20 22:52:11', NULL, 'In Stock', NULL, 'Units', NULL, NULL, NULL, NULL),
+(2, 'Blood Collection Tubes', 2, 120, 30, '2025-10-20 22:52:11', NULL, 'In Stock', NULL, 'Units', NULL, NULL, NULL, NULL),
+(3, 'Urine Sample Bottles', 1, 80, 20, '2025-10-20 22:52:11', NULL, 'In Stock', NULL, 'Units', NULL, NULL, NULL, NULL),
+(4, 'Microscope Slides', 3, 200, 40, '2025-10-20 22:52:11', NULL, 'In Stock', NULL, 'Units', NULL, NULL, NULL, NULL),
+(5, 'COVID-19 Rapid Test Kit', 2, 60, 15, '2025-10-20 22:52:11', NULL, 'In Stock', NULL, 'Units', NULL, NULL, NULL, NULL),
+(6, 'Latex Gloves', 3, 30, 50, '2025-10-21 08:45:45', NULL, 'In Stock', NULL, 'Units', NULL, NULL, NULL, NULL),
+(9, 'gloves', 2, 1000, 50, '2025-10-22 18:09:48', NULL, 'In Stock', NULL, 'Units', NULL, NULL, NULL, NULL),
+(10, 'uni', 2, 100, 10, '2026-03-29 15:59:31', NULL, 'In Stock', NULL, 'Units', NULL, NULL, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -195,7 +267,10 @@ CREATE TABLE `inventory_categories` (
   `category_name` varchar(100) NOT NULL,
   `description` text DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
-  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `deleted_date` date DEFAULT NULL,
+  `deleted_time` time DEFAULT NULL,
+  `deleted_by` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -246,7 +321,7 @@ CREATE TABLE `lab_configuration` (
 --
 
 INSERT INTO `lab_configuration` (`id`, `lab_name`, `accreditation`, `address`, `phone`, `email`, `logo_path`, `hours_mon_fri_open`, `hours_mon_fri_close`, `hours_mon_fri_enabled`, `hours_sat_open`, `hours_sat_close`, `hours_sat_enabled`, `hours_sun_open`, `hours_sun_close`, `hours_sun_enabled`, `allow_walkins`, `auto_email_reports`, `updated_at`) VALUES
-(1, 'Green Valley Medical', 'ISO-15189-2023', 'Suite 402, Medical Arts Building, Downtown Metro', '+94 77 123 4567', 'contact@metrodiagnostics.com', '/lab_sync/public/uploads/lab_logo_1772551364.jpg', '08:00:00', '17:00:00', 1, '09:00:00', '14:00:00', 1, '12:00:00', '12:00:00', 0, 1, 0, '2026-03-04 05:16:32');
+(1, 'LabSync', 'ISO-15189-2023', 'NO: 91 Reid avenue, colombo 07', '+94 77 123 4567', 'labsync@gmail.com', '/lab_sync/public/uploads/lab_logo_1776092943.png', '08:00:00', '17:00:00', 1, '09:00:00', '14:00:00', 1, '12:00:00', '12:00:00', 0, 1, 0, '2026-04-13 15:09:03');
 
 -- --------------------------------------------------------
 
@@ -391,12 +466,49 @@ INSERT INTO `patients` (`patient_id`, `uhid`, `patient_name`, `date_of_birth`, `
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `payments`
+--
+
+CREATE TABLE `payments` (
+  `payment_id` int(11) NOT NULL,
+  `bill_id` int(11) NOT NULL,
+  `payment_amount` decimal(10,2) NOT NULL DEFAULT 0.00,
+  `payment_method` enum('CASH','CARD','TRANSFER') NOT NULL,
+  `reference_number` varchar(100) DEFAULT NULL,
+  `payment_date` date NOT NULL,
+  `notes` text DEFAULT NULL,
+  `received_by` int(11) DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `payments`
+--
+
+INSERT INTO `payments` (`payment_id`, `bill_id`, `payment_amount`, `payment_method`, `reference_number`, `payment_date`, `notes`, `received_by`, `created_at`) VALUES
+(1, 1, 250.00, 'CASH', '', '2026-04-14', NULL, 6, '2026-04-13 20:42:06'),
+(2, 1, 150.00, 'CASH', '', '2026-04-14', NULL, 6, '2026-04-13 20:49:12'),
+(3, 1, 250.00, 'CASH', '', '2026-04-14', NULL, 6, '2026-04-14 04:46:38'),
+(4, 2, 110.00, 'CASH', '', '2026-04-14', NULL, 6, '2026-04-14 04:50:52'),
+(5, 3, 200.00, 'CASH', '', '2026-04-14', NULL, 6, '2026-04-14 06:23:48'),
+(6, 3, 200.00, 'CASH', '', '2026-04-14', NULL, 6, '2026-04-14 06:35:04'),
+(7, 3, 200.00, 'CASH', '', '2026-04-14', NULL, 6, '2026-04-14 06:37:03'),
+(8, 3, 200.00, 'CASH', '', '2026-04-14', NULL, 6, '2026-04-14 06:40:50'),
+(9, 4, 120.00, 'CASH', '', '2026-04-14', NULL, 6, '2026-04-14 06:41:22'),
+(10, 4, 120.00, 'CASH', '', '2026-04-14', NULL, 6, '2026-04-14 06:41:36'),
+(11, 4, 120.00, 'CASH', '', '2026-04-14', NULL, 6, '2026-04-14 06:54:20'),
+(12, 3, 46.40, 'CASH', '', '2026-04-14', NULL, 6, '2026-04-14 08:53:13');
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `reports`
 --
 
 CREATE TABLE `reports` (
   `report_id` int(11) NOT NULL,
   `appointment_id` int(11) NOT NULL,
+  `test_id` int(11) DEFAULT NULL,
   `reference_number` varchar(50) NOT NULL,
   `uhid` varchar(50) DEFAULT NULL,
   `referred_by` varchar(100) DEFAULT NULL,
@@ -421,8 +533,14 @@ CREATE TABLE `reports` (
 -- Dumping data for table `reports`
 --
 
-INSERT INTO `reports` (`report_id`, `appointment_id`, `reference_number`, `uhid`, `referred_by`, `sample_type`, `sample_datetime`, `report_datetime`, `page_count`, `general_comments`, `pdf_relative_path`, `pdf_original_name`, `pdf_mime_type`, `pdf_file_size`, `pdf_generated_at`, `pdf_generated_by`, `technician_id`, `pathologist_id`, `status`, `created_at`) VALUES
-(1, 16, 'REF-16-29-20260413134651', NULL, NULL, NULL, NULL, '2026-04-13 13:46:51', 1, NULL, '2026/04/report_app16_test29_20260413_134651.pdf', 'report_app16_test29_20260413_134651.pdf', 'application/pdf', 1094, '2026-04-13 13:46:51', 6, NULL, NULL, 'AUTHORIZED', '2026-04-13 11:46:51');
+INSERT INTO `reports` (`report_id`, `appointment_id`, `test_id`, `reference_number`, `uhid`, `referred_by`, `sample_type`, `sample_datetime`, `report_datetime`, `page_count`, `general_comments`, `pdf_relative_path`, `pdf_original_name`, `pdf_mime_type`, `pdf_file_size`, `pdf_generated_at`, `pdf_generated_by`, `technician_id`, `pathologist_id`, `status`, `created_at`) VALUES
+(1, 16, NULL, 'REF-16-29-20260413134651', NULL, NULL, NULL, NULL, '2026-04-13 13:46:51', 1, NULL, '2026/04/report_app16_test29_20260413_134651.pdf', 'report_app16_test29_20260413_134651.pdf', 'application/pdf', 1094, '2026-04-13 13:46:51', 6, NULL, NULL, 'AUTHORIZED', '2026-04-13 11:46:51'),
+(2, 16, 30, 'REF-16-30-20260413_170914', NULL, NULL, NULL, NULL, '2026-04-13 17:09:14', 1, NULL, '2026/04/report_app16_test30_20260413_170914.pdf', 'report_app16_test30_20260413_170914.pdf', 'application/pdf', 75385, '0000-00-00 00:00:00', 6, NULL, NULL, 'AUTHORIZED', '2026-04-13 15:02:49'),
+(3, 16, 29, 'REF-16-29-20260413_174447', NULL, NULL, NULL, NULL, '2026-04-13 17:44:47', 1, NULL, '2026/04/report_app16_test29_20260413_174447.pdf', 'report_app16_test29_20260413_174447.pdf', 'application/pdf', 74970, '0000-00-00 00:00:00', 6, NULL, NULL, 'AUTHORIZED', '2026-04-13 15:43:53'),
+(4, 18, 29, 'REF-18-29-20260413_174614', NULL, NULL, NULL, NULL, '2026-04-13 17:46:14', 1, NULL, '2026/04/report_app18_test29_20260413_174614.pdf', 'report_app18_test29_20260413_174614.pdf', 'application/pdf', 74985, '2026-04-13 17:46:14', 11, NULL, NULL, 'AUTHORIZED', '2026-04-13 15:46:14'),
+(5, 17, 29, 'REF-17-29-20260413_175028', NULL, NULL, NULL, NULL, '2026-04-13 17:50:28', 1, NULL, '2026/04/report_app17_test29_20260413_175028.pdf', 'report_app17_test29_20260413_175028.pdf', 'application/pdf', 74985, '2026-04-13 17:50:28', 11, NULL, NULL, 'AUTHORIZED', '2026-04-13 15:50:28'),
+(6, 17, 30, 'REF-17-30-20260413_175245', NULL, NULL, NULL, NULL, '2026-04-13 17:52:45', 1, NULL, '2026/04/report_app17_test30_20260413_175245.pdf', 'report_app17_test30_20260413_175245.pdf', 'application/pdf', 75395, '2026-04-13 17:52:45', 11, NULL, NULL, 'AUTHORIZED', '2026-04-13 15:52:45'),
+(7, 15, 29, 'REF-15-29-20260413_175411', NULL, NULL, NULL, NULL, '2026-04-13 17:54:11', 1, NULL, '2026/04/report_app15_test29_20260413_175411.pdf', 'report_app15_test29_20260413_175411.pdf', 'application/pdf', 74981, '2026-04-13 17:54:11', 11, NULL, NULL, 'AUTHORIZED', '2026-04-13 15:54:11');
 
 -- --------------------------------------------------------
 
@@ -440,6 +558,31 @@ CREATE TABLE `stock_history` (
   `supplier_id` int(11) DEFAULT NULL,
   `expiry_date` date DEFAULT NULL,
   `notes` text DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `deleted_date` date DEFAULT NULL,
+  `deleted_time` time DEFAULT NULL,
+  `deleted_by` int(11) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `stock_purchases`
+--
+
+CREATE TABLE `stock_purchases` (
+  `purchase_id` int(11) NOT NULL,
+  `inventory_id` int(11) NOT NULL,
+  `supplier_id` int(11) NOT NULL,
+  `quantity_purchased` int(11) NOT NULL,
+  `unit_cost` decimal(10,2) DEFAULT NULL,
+  `total_cost` decimal(12,2) DEFAULT NULL,
+  `purchase_date` date NOT NULL,
+  `expiry_date` date DEFAULT NULL,
+  `notes` text DEFAULT NULL,
+  `deleted_date` date DEFAULT NULL,
+  `deleted_time` time DEFAULT NULL,
+  `deleted_by` int(11) DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
@@ -542,10 +685,14 @@ INSERT INTO `test_comments` (`comment_id`, `result_id`, `comment_text`, `display
 (3, 3, 'normal conditions for each', 0),
 (4, 4, 'normal conditions for each', 0),
 (6, 1, 'no abnormal conditions', 0),
-(7, 5, 'Everthing normal', 0),
-(8, 6, 'Everthing normal', 0),
-(9, 7, 'Everthing normal', 0),
-(10, 1, 'no abnormal conditions', 999);
+(10, 1, 'no abnormal conditions', 999),
+(11, 2, 'normal conditions for each', 999),
+(12, 5, 'Everthing normal', 0),
+(13, 6, 'Everthing normal', 0),
+(14, 7, 'Everthing normal', 0),
+(15, 5, 'Everthing normal', 999),
+(16, 10, 'nothing speacila', 0),
+(17, 10, 'nothing speacila', 999);
 
 -- --------------------------------------------------------
 
@@ -634,10 +781,12 @@ INSERT INTO `test_results` (`result_id`, `appointment_id`, `test_id`, `unit_id`,
 (2, 16, 30, 4, 123.0000, 'N', 6, '2026-04-12 15:40:17', NULL, NULL),
 (3, 16, 30, 5, 14.0000, 'N', 6, '2026-04-12 15:40:17', NULL, NULL),
 (4, 16, 30, 6, 1.5000, 'N', 6, '2026-04-12 15:40:17', NULL, NULL),
-(5, 17, 30, 4, 100.0000, 'N', 6, '2026-04-13 08:13:49', NULL, NULL),
-(6, 17, 30, 5, 10.2500, 'N', 6, '2026-04-13 08:13:49', NULL, NULL),
-(7, 17, 30, 6, 1.5000, 'N', 6, '2026-04-13 08:13:49', NULL, NULL),
-(8, 18, 29, 3, 0.7000, 'N', 6, '2026-04-13 09:38:40', NULL, NULL);
+(5, 17, 30, 4, 100.0000, 'N', 11, '2026-04-13 15:52:38', NULL, NULL),
+(6, 17, 30, 5, 10.2500, 'N', 11, '2026-04-13 15:52:38', NULL, NULL),
+(7, 17, 30, 6, 1.5000, 'N', 11, '2026-04-13 15:52:38', NULL, NULL),
+(8, 18, 29, 3, 0.7000, 'N', 6, '2026-04-13 09:38:40', NULL, NULL),
+(9, 17, 29, 3, 0.8200, 'N', 11, '2026-04-13 15:50:22', NULL, NULL),
+(10, 15, 29, 3, 0.6200, 'N', 11, '2026-04-13 15:54:05', NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -736,6 +885,26 @@ ALTER TABLE `appointment_tests`
   ADD KEY `test_id` (`test_id`);
 
 --
+-- Indexes for table `bills`
+--
+ALTER TABLE `bills`
+  ADD PRIMARY KEY (`bill_id`),
+  ADD UNIQUE KEY `uk_bills_bill_number` (`bill_number`),
+  ADD UNIQUE KEY `uk_bills_appointment_id` (`appointment_id`),
+  ADD KEY `idx_bills_patient_id` (`patient_id`),
+  ADD KEY `idx_bills_bill_date` (`bill_date`),
+  ADD KEY `idx_bills_status` (`status`),
+  ADD KEY `fk_bills_created_by` (`created_by`);
+
+--
+-- Indexes for table `bill_items`
+--
+ALTER TABLE `bill_items`
+  ADD PRIMARY KEY (`bill_item_id`),
+  ADD KEY `idx_bill_items_bill_id` (`bill_id`),
+  ADD KEY `idx_bill_items_test_id` (`test_id`);
+
+--
 -- Indexes for table `dashboard_users`
 --
 ALTER TABLE `dashboard_users`
@@ -753,7 +922,11 @@ ALTER TABLE `general_settings`
 --
 ALTER TABLE `inventory`
   ADD PRIMARY KEY (`inventory_id`),
-  ADD KEY `fk_suppliers` (`supplier_id`);
+  ADD KEY `fk_suppliers` (`supplier_id`),
+  ADD KEY `idx_deleted_date` (`deleted_date`),
+  ADD KEY `idx_deleted_by` (`deleted_by`),
+  ADD KEY `idx_i_deleted_date` (`deleted_date`),
+  ADD KEY `idx_i_deleted_by` (`deleted_by`);
 
 --
 -- Indexes for table `inventory_categories`
@@ -820,11 +993,22 @@ ALTER TABLE `patients`
   ADD UNIQUE KEY `uhid` (`uhid`);
 
 --
+-- Indexes for table `payments`
+--
+ALTER TABLE `payments`
+  ADD PRIMARY KEY (`payment_id`),
+  ADD KEY `idx_payments_bill_id` (`bill_id`),
+  ADD KEY `idx_payments_payment_date` (`payment_date`),
+  ADD KEY `idx_payments_method` (`payment_method`),
+  ADD KEY `fk_payments_received_by` (`received_by`);
+
+--
 -- Indexes for table `reports`
 --
 ALTER TABLE `reports`
   ADD PRIMARY KEY (`report_id`),
-  ADD KEY `idx_reports_appointment_status` (`appointment_id`,`status`);
+  ADD KEY `idx_reports_appointment_status` (`appointment_id`,`status`),
+  ADD KEY `idx_reports_test` (`test_id`);
 
 --
 -- Indexes for table `stock_history`
@@ -833,7 +1017,19 @@ ALTER TABLE `stock_history`
   ADD PRIMARY KEY (`history_id`),
   ADD KEY `idx_inventory_id` (`inventory_id`),
   ADD KEY `idx_supplier_id` (`supplier_id`),
-  ADD KEY `idx_created_at` (`created_at`);
+  ADD KEY `idx_created_at` (`created_at`),
+  ADD KEY `idx_deleted_date` (`deleted_date`),
+  ADD KEY `idx_sh_deleted_date` (`deleted_date`);
+
+--
+-- Indexes for table `stock_purchases`
+--
+ALTER TABLE `stock_purchases`
+  ADD PRIMARY KEY (`purchase_id`),
+  ADD KEY `idx_purchase_date` (`purchase_date`),
+  ADD KEY `idx_inventory_id` (`inventory_id`),
+  ADD KEY `idx_sp_deleted_date` (`deleted_date`),
+  ADD KEY `fk_sp_supplier` (`supplier_id`);
 
 --
 -- Indexes for table `suppliers`
@@ -910,6 +1106,18 @@ ALTER TABLE `appointment`
   MODIFY `appointment_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
 
 --
+-- AUTO_INCREMENT for table `bills`
+--
+ALTER TABLE `bills`
+  MODIFY `bill_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+
+--
+-- AUTO_INCREMENT for table `bill_items`
+--
+ALTER TABLE `bill_items`
+  MODIFY `bill_item_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=29;
+
+--
 -- AUTO_INCREMENT for table `dashboard_users`
 --
 ALTER TABLE `dashboard_users`
@@ -982,16 +1190,28 @@ ALTER TABLE `patients`
   MODIFY `patient_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
 
 --
+-- AUTO_INCREMENT for table `payments`
+--
+ALTER TABLE `payments`
+  MODIFY `payment_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
+
+--
 -- AUTO_INCREMENT for table `reports`
 --
 ALTER TABLE `reports`
-  MODIFY `report_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `report_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT for table `stock_history`
 --
 ALTER TABLE `stock_history`
   MODIFY `history_id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `stock_purchases`
+--
+ALTER TABLE `stock_purchases`
+  MODIFY `purchase_id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `suppliers`
@@ -1009,7 +1229,7 @@ ALTER TABLE `tests`
 -- AUTO_INCREMENT for table `test_comments`
 --
 ALTER TABLE `test_comments`
-  MODIFY `comment_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+  MODIFY `comment_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
 
 --
 -- AUTO_INCREMENT for table `test_partner_charges`
@@ -1027,7 +1247,7 @@ ALTER TABLE `test_reference_ranges`
 -- AUTO_INCREMENT for table `test_results`
 --
 ALTER TABLE `test_results`
-  MODIFY `result_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+  MODIFY `result_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- AUTO_INCREMENT for table `test_units`
@@ -1060,6 +1280,21 @@ ALTER TABLE `appointment_tests`
   ADD CONSTRAINT `fk_appt_tests_test` FOREIGN KEY (`test_id`) REFERENCES `tests` (`test_id`);
 
 --
+-- Constraints for table `bills`
+--
+ALTER TABLE `bills`
+  ADD CONSTRAINT `fk_bills_appointment` FOREIGN KEY (`appointment_id`) REFERENCES `appointment` (`appointment_id`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_bills_created_by` FOREIGN KEY (`created_by`) REFERENCES `users` (`user_id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_bills_patient` FOREIGN KEY (`patient_id`) REFERENCES `patients` (`patient_id`) ON UPDATE CASCADE;
+
+--
+-- Constraints for table `bill_items`
+--
+ALTER TABLE `bill_items`
+  ADD CONSTRAINT `fk_bill_items_bill` FOREIGN KEY (`bill_id`) REFERENCES `bills` (`bill_id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_bill_items_test` FOREIGN KEY (`test_id`) REFERENCES `tests` (`test_id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+--
 -- Constraints for table `inventory`
 --
 ALTER TABLE `inventory`
@@ -1086,6 +1321,20 @@ ALTER TABLE `order_details`
 ALTER TABLE `partner_lab_tests`
   ADD CONSTRAINT `partner_lab_tests_ibfk_1` FOREIGN KEY (`partner_lab_id`) REFERENCES `partner_labs` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `partner_lab_tests_ibfk_2` FOREIGN KEY (`test_id`) REFERENCES `tests` (`test_id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `payments`
+--
+ALTER TABLE `payments`
+  ADD CONSTRAINT `fk_payments_bill` FOREIGN KEY (`bill_id`) REFERENCES `bills` (`bill_id`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_payments_received_by` FOREIGN KEY (`received_by`) REFERENCES `users` (`user_id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+--
+-- Constraints for table `stock_purchases`
+--
+ALTER TABLE `stock_purchases`
+  ADD CONSTRAINT `fk_sp_inventory` FOREIGN KEY (`inventory_id`) REFERENCES `inventory` (`inventory_id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `fk_sp_supplier` FOREIGN KEY (`supplier_id`) REFERENCES `suppliers` (`supplier_id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `test_partner_charges`

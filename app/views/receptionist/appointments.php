@@ -13,7 +13,6 @@ if (!isset($_SESSION['user_id'])) {
     <title>Appointments</title>
     <link rel="stylesheet" href="/lab_sync/public/styles.css">
     <link rel="stylesheet" href="/lab_sync/public/settingStyles.css">
-    <link rel="stylesheet" href="/lab_sync/public/table.css">
     <link rel="stylesheet" href="/lab_sync/public/reportsDashboard.css">
     <link rel="stylesheet" href="/lab_sync/public/appointmentStyles.css">
     <link rel="stylesheet" href="/lab_sync/public/appointmentFormStyles.css">
