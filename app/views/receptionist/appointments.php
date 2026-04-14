@@ -245,7 +245,7 @@ if (!isset($_SESSION['user_id'])) {
 
                             </div>
                             <div class="appointment-delete-summary">
-                                <div class="summary-label">APPOINTMENT ID</div>
+                                <div class="summary-label">ID</div>
                                 <div id="deleteAppointmentNumber" class="summary-value">#APP-0000</div>
 
                                 <div class="summary-label">PATIENT NAME</div>
@@ -278,13 +278,13 @@ if (!isset($_SESSION['user_id'])) {
                             <table class="team-users-table">
                                 <thead>
                                     <tr>
-                                        <th style="width: 15%;">APPOINTMENT ID</th>
+                                        <th style="width: 7%;">ID</th>
                                         <th style="width: 15%;">PATIENT NAME</th>
                                         <th style="width: 14%;text-align: center;">DATE</th>
                                         <th style="width: 14%;text-align: center;">TIME</th>
                                         <th style="width: 14%;text-align: center;">TYPE</th>
-                                        <th style="width: 14%;text-align: center;">BILLING</th>
-                                        <th style="width: 14%;text-align: center;">ACTIONS</th>
+                                        <th style="width: 18%;text-align: center;">BILLING</th>
+                                        <th style="width: 17%;text-align: center;">ACTIONS</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -405,7 +405,7 @@ if (!isset($_SESSION['user_id'])) {
                             <table class="team-users-table">
                                 <thead>
                                     <tr>
-                                        <th style="width: 17%;">APPOINTMENT ID</th>
+                                        <th style="width: 17%;">ID</th>
                                         <th style="width: 17%;">PATIENT NAME</th>
                                         <th style="width: 17%;text-align: center;">DATE</th>
                                         <th style="width: 17%;text-align: center;">TIME</th>

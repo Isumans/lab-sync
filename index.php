@@ -12,6 +12,7 @@ require_once CONTROLLER_PATH . '/inventoryController.php';
 require_once CONTROLLER_PATH . '/profileController.php';
 require_once CONTROLLER_PATH . '/partnerLabController.php';
 require_once CONTROLLER_PATH . '/reportsController.php';
+require_once CONTROLLER_PATH . '/billingController.php';
 // require_once 'C:\xampp\htdocs\lab_sync\app\controllers\appointmentsController.php';
 require_once 'C:\xampp\htdocs\lab_sync\config\db.php';
 $controllerName = $_GET['controller'] ?? 'home'; // Default to 'home' controller
@@ -183,11 +184,18 @@ elseif ($controllerName === 'appointmentsController') {
         include VIEW_PATH . '/administrator/regSupplier.php';
     }
 }elseif($controllerName === 'billingController'){
+    $billingController = new billingController();
     $action = $_GET['action'] ?? 'index'; // or your desired default
     if($action ==='index'){
-        include VIEW_PATH . '/receptionist/billing.php';
+        $billingController->index();
     }elseif($action ==='Register_billing'){
-        include VIEW_PATH . '/receptionist/createBill.php';
+        $billingController->registerBilling();
+    }elseif($action ==='saveDraft'){
+        $billingController->saveDraft();
+    }elseif($action ==='finalizeBill'){
+        $billingController->finalizeBill();
+    }elseif($action ==='printInvoice'){
+        $billingController->printInvoice();
     }
 }elseif($controllerName === 'inventoryController'){
     $inventoryController = new inventoryController();

@@ -139,10 +139,19 @@ class AppointmentModel {
     public function getAllAppointmentsbyMethod($method) {
         $patientProjection = $this->buildPatientProjectionSql('p');
         $notDeletedClause = $this->buildNotDeletedClause('a');
+
+        $billSelect = 'NULL AS bill_id, NULL AS bill_status';
+        $billJoin = '';
+        if ($this->tableExists('bills')) {
+            $billSelect = 'b.bill_id, b.status AS bill_status';
+            $billJoin = "LEFT JOIN bills b ON b.appointment_id = a.appointment_id AND b.status <> 'CANCELLED'";
+        }
+
         $sql = "
-            SELECT a.*, {$patientProjection}
+            SELECT a.*, {$patientProjection}, {$billSelect}
             FROM appointment a
             LEFT JOIN patients p ON p.patient_id = a.patient_id
+            {$billJoin}
             WHERE a.method = ? AND {$notDeletedClause}
             ORDER BY a.appointment_date DESC, a.appointment_time DESC
         ";

@@ -3,24 +3,323 @@
     --secondary-color: #ffffff;
     --font-color: #000000;
     --background-color: #F5F6FA;
-    --boder:#4F7A96;
+    --boder: #4F7A96;
 }
 
-.billingArea{
-    margin-top: 20px;
+.billingFormArea {
+    margin-top: 22px;
+    display: grid;
+    grid-template-columns: minmax(620px, 1fr) 320px;
+    gap: 22px;
+    align-items: flex-start;
 }
-.payment-status{
-    border: none;
-    padding: 5px;
-    border-radius: 10px;
-    background-color: var(--primary-color);
-    font-weight: bold;
+
+.billing-left-panel {
+    display: grid;
+    gap: 16px;
 }
-.view-button{
-    background-color: var(--primary-color);
-    color: var(--secondary-color);
-    border: none;
+
+.billing-patient-header,
+.billing-card,
+.billing-summary-card {
+    background: #ffffff;
+    border: 1px solid #dde6f0;
+    border-radius: 12px;
+    box-shadow: 0 10px 22px rgba(25, 37, 56, 0.06);
+}
+
+.billing-patient-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+}
+
+.billing-patient-meta h3 {
+    margin: 0;
+    font-size: 20px;
+    color: #14213d;
+}
+
+.billing-patient-meta p {
+    margin: 6px 0 0;
+    color: #5b6b7f;
+    font-size: 13px;
+}
+
+.billing-status-badge {
+    font-size: 12px;
+    font-weight: 700;
     padding: 8px 12px;
-    border-radius: 5px;
+    border-radius: 8px;
+    color: #ffffff;
+    background: #1eb980;
+}
+
+.billing-card {
+    padding: 16px;
+}
+
+.billing-card h4,
+.billing-summary-card h4 {
+    margin: 0;
+    color: #0f2442;
+    font-size: 18px;
+}
+
+.billing-card-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+}
+
+.billing-add-item {
+    border: 0;
+    background: transparent;
+    color: #2a8bd8;
+    font-weight: 700;
     cursor: pointer;
+}
+
+.billing-table-wrap {
+    overflow-x: auto;
+}
+
+.billing-items-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.billing-items-table th,
+.billing-items-table td {
+    border-bottom: 1px solid #edf2f7;
+    padding: 11px 8px;
+    font-size: 13px;
+    color: #233247;
+}
+
+.billing-items-table th {
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-size: 11px;
+    color: #73839a;
+}
+
+.billing-items-table input[type="number"],
+.billing-items-table input[type="text"],
+.billing-field-grid input,
+.billing-summary-card input {
+    width: 100%;
+    border: 1px solid #d4deea;
+    border-radius: 8px;
+    padding: 9px 10px;
+    font-size: 13px;
+    outline: none;
+}
+
+.item-name-text,
+.item-price-text {
+    display: inline-block;
+    padding: 7px 0;
+}
+
+.item-qty-text {
+    display: inline-block;
+    min-width: 24px;
+    font-weight: 700;
+}
+
+.payment-method-grid {
+    margin-top: 14px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+}
+
+.payment-method-card {
+    border: 1px solid #cfdcec;
+    border-radius: 10px;
+    background: #ffffff;
+    padding: 12px 8px;
+    font-weight: 700;
+    color: #374860;
+    cursor: pointer;
+}
+
+.payment-method-card.is-active {
+    border-color: #2fa8de;
+    background: #e9f6fd;
+    color: #0d5f84;
+}
+
+.payment-method-card:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+}
+
+.billing-field-grid {
+    margin-top: 14px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.billing-field-grid label {
+    display: grid;
+    gap: 8px;
+    color: #5a6f87;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.billing-focus-bar {
+    background: linear-gradient(135deg, #0a1f44 0%, #0d2e66 60%, #123e82 100%);
+    color: #ffffff;
+    border-radius: 12px;
+    padding: 15px 18px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+}
+
+.billing-focus-bar span {
+    display: block;
+    font-size: 11px;
+    text-transform: uppercase;
+    color: #98c3ff;
+}
+
+.billing-focus-bar strong {
+    display: block;
+    margin-top: 6px;
+    font-size: 24px;
+    line-height: 1;
+}
+
+.billing-right-panel {
+    position: sticky;
+    top: 18px;
+}
+
+.billing-summary-card {
+    padding: 18px;
+}
+
+.billing-summary-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 14px;
+    font-size: 14px;
+    color: #3a4d66;
+}
+
+.billing-summary-row strong {
+    color: #11243f;
+}
+
+.billing-inline-input input {
+    width: 105px;
+}
+
+.grand-total {
+    margin-top: 20px;
+    padding-top: 14px;
+    border-top: 1px solid #e2e8f0;
+}
+
+.grand-total strong {
+    font-size: 34px;
+    color: #0a2547;
+}
+
+.billing-primary-btn,
+.billing-secondary-btn,
+.billing-link-btn {
+    width: 100%;
+    margin-top: 12px;
+    border-radius: 10px;
+    padding: 11px 14px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.billing-primary-btn:disabled,
+.billing-secondary-btn:disabled,
+.billing-link-btn:disabled,
+.billing-add-item:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+.billing-primary-btn {
+    background: #2fa8de;
+    color: #ffffff;
+    border: 1px solid #238cbe;
+}
+
+.billing-secondary-btn {
+    background: #ffffff;
+    color: #37506d;
+    border: 1px solid #d4deea;
+}
+
+.billing-link-btn {
+    border: 0;
+    background: transparent;
+    color: #6a7f97;
+}
+
+.billing-note {
+    min-height: 20px;
+    margin: 10px 0 0;
+    color: #1e73a8;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.billing-empty-state {
+    background: #ffffff;
+    border: 1px solid #e5edf6;
+    border-radius: 12px;
+    padding: 24px;
+}
+
+.billing-empty-state h3 {
+    margin: 0 0 8px;
+    color: #12345a;
+}
+
+.billing-empty-state p {
+    margin: 0;
+    color: #526780;
+}
+
+@media (max-width: 1120px) {
+    .billingFormArea {
+        grid-template-columns: 1fr;
+    }
+
+    .billing-right-panel {
+        position: static;
+    }
+}
+
+@media (max-width: 760px) {
+    .billing-field-grid,
+    .payment-method-grid,
+    .billing-focus-bar {
+        grid-template-columns: 1fr;
+    }
+
+    .billing-patient-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .grand-total strong {
+        font-size: 28px;
+    }
 }
