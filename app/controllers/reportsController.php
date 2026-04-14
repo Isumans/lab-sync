@@ -29,7 +29,7 @@ class reportsController {
         }
 
         $page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
-        $perPage = isset($_GET['per_page']) ? max(1, min(50, intval($_GET['per_page']))) : 10;
+        $perPage = isset($_GET['per_page']) ? max(1, min(50, intval($_GET['per_page']))) : 7;
 
         $filters = [
             'search' => isset($_GET['search']) ? trim((string) $_GET['search']) : '',
@@ -603,7 +603,7 @@ class reportsController {
         header('Content-Type: application/json; charset=UTF-8');
 
         $page    = isset($_GET['page'])     ? max(1, intval($_GET['page']))               : 1;
-        $perPage = isset($_GET['per_page']) ? max(1, min(50, intval($_GET['per_page'])))  : 10;
+        $perPage = isset($_GET['per_page']) ? max(1, min(50, intval($_GET['per_page'])))  : 7;
         $filters = [
             'search' => isset($_GET['search']) ? trim((string) $_GET['search']) : '',
         ];

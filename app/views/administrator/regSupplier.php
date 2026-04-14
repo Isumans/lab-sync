@@ -26,12 +26,12 @@ if (!isset($_SESSION['user_id'])) {
             <!-- Main Body Section -->
             <main class="main-content">
                 <div class="Tmain-content">
-                    <div class="test-catalog-header">
-                        <h1>Create Supplier</h1>
-                    </div>
-                    <div>
-                        <p class="MC-p">Suppliers->Create Supplier</p>
-                    </div>
+                    <?php
+                        $pageTitle = 'Create Supplier';
+                        $pageBreadcrumbText = 'Suppliers->Create Supplier';
+                        $pageActionHtml = '';
+                        require __DIR__ . '/../../../public/partials/page-header.php';
+                    ?>
                 
                     <div class="heading-row">
                         <h2 class="heading2">

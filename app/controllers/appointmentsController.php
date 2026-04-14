@@ -106,24 +106,147 @@ public function createAppointment($role) {
 }
 
 public function filterAppointments() {
-    header('Content-Type: application/json');
-    
-    $filter = $_GET['filter'] ?? 'all';
-    $appointmentsModel = new AppointmentModel(connect());
-    
-    $appointments = [];
-    
-    if ($filter === 'online') {
-        $appointments = $appointmentsModel->getAllAppointmentsbyMethod("online");
-    } elseif ($filter === 'physical') {
-        $appointments = $appointmentsModel->getAllAppointmentsbyMethod("physical");
-    } else { // 'all'
-        $online = $appointmentsModel->getAllAppointmentsbyMethod("online");
-        $physical = $appointmentsModel->getAllAppointmentsbyMethod("physical");
-        $appointments = array_merge($online, $physical);
+    header('Content-Type: application/json; charset=UTF-8');
+
+    if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
+        http_response_code(405);
+        echo json_encode([
+            'status' => 'error',
+            'message' => 'Invalid request method.'
+        ]);
+        return;
     }
-    
-    echo json_encode($appointments);
+
+    $page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
+    $perPage = isset($_GET['per_page']) ? max(1, min(50, intval($_GET['per_page']))) : 7;
+
+    $method = isset($_GET['method']) ? strtolower(trim((string) $_GET['method'])) : '';
+    if ($method === '' && isset($_GET['filter'])) {
+        $method = strtolower(trim((string) $_GET['filter']));
+    }
+    if (!in_array($method, ['all', 'online', 'physical', 'call'], true)) {
+        $method = 'all';
+    }
+
+    $sortBy = isset($_GET['sort_by']) ? trim((string) $_GET['sort_by']) : 'appointment_date';
+    $sortDir = isset($_GET['sort_dir']) ? trim((string) $_GET['sort_dir']) : 'desc';
+
+    $filters = [
+        'search' => isset($_GET['search']) ? trim((string) $_GET['search']) : '',
+        'method' => $method,
+        'from_date' => isset($_GET['from_date']) ? trim((string) $_GET['from_date']) : '',
+        'to_date' => isset($_GET['to_date']) ? trim((string) $_GET['to_date']) : '',
+    ];
+
+    $appointmentsModel = new AppointmentModel(connect());
+    $appointments = $appointmentsModel->getAppointmentsList($filters, $page, $perPage, $sortBy, $sortDir);
+    $listError = $appointmentsModel->getLastError();
+    $total = 0;
+    $usedFallback = false;
+
+    if ($listError === '') {
+        $total = $appointmentsModel->countAppointments($filters);
+        $countError = $appointmentsModel->getLastError();
+        if ($countError !== '') {
+            $listError = $countError;
+        }
+    }
+
+    if ($listError !== '') {
+        // Fallback: use legacy list methods and apply filtering/sorting/pagination in PHP.
+        $usedFallback = true;
+        $legacyOnline = $appointmentsModel->getAllAppointmentsbyMethod('online');
+        $legacyPhysical = $appointmentsModel->getAllAppointmentsbyMethod('physical');
+        $legacyCall = $appointmentsModel->getAllAppointmentsbyMethod('call');
+
+        $fallbackRows = array_merge($legacyOnline ?: [], $legacyPhysical ?: [], $legacyCall ?: []);
+
+        if (in_array($filters['method'], ['online', 'physical', 'call'], true)) {
+            $targetMethod = $filters['method'];
+            $fallbackRows = array_values(array_filter($fallbackRows, function ($row) use ($targetMethod) {
+                $rowMethod = strtolower(trim((string) ($row['method'] ?? '')));
+                if ($targetMethod === 'physical') {
+                    return in_array($rowMethod, ['physical', 'call'], true);
+                }
+                return $rowMethod === $targetMethod;
+            }));
+        }
+
+        $search = strtolower(trim((string) $filters['search']));
+        if ($search !== '') {
+            $fallbackRows = array_values(array_filter($fallbackRows, function ($row) use ($search) {
+                $patientName = strtolower((string) ($row['patient_name'] ?? ($row['patient_display_name'] ?? '')));
+                $appointmentId = strtolower((string) ($row['appointment_id'] ?? ''));
+                $methodValue = strtolower((string) ($row['method'] ?? ''));
+                return strpos($patientName, $search) !== false
+                    || strpos($appointmentId, $search) !== false
+                    || strpos($methodValue, $search) !== false;
+            }));
+        }
+
+        $fromDate = trim((string) $filters['from_date']);
+        if ($fromDate !== '') {
+            $fallbackRows = array_values(array_filter($fallbackRows, function ($row) use ($fromDate) {
+                $rowDate = (string) ($row['appointment_date'] ?? '');
+                return $rowDate !== '' && $rowDate >= $fromDate;
+            }));
+        }
+
+        $toDate = trim((string) $filters['to_date']);
+        if ($toDate !== '') {
+            $fallbackRows = array_values(array_filter($fallbackRows, function ($row) use ($toDate) {
+                $rowDate = (string) ($row['appointment_date'] ?? '');
+                return $rowDate !== '' && $rowDate <= $toDate;
+            }));
+        }
+
+        $sortAllowlist = [
+            'appointment_id' => 'appointment_id',
+            'patient_name' => 'patient_name',
+            'appointment_date' => 'appointment_date',
+            'appointment_time' => 'appointment_time',
+            'method' => 'method',
+        ];
+
+        $sortKey = $sortAllowlist[strtolower(trim((string) $sortBy))] ?? 'appointment_date';
+        $direction = strtolower(trim((string) $sortDir)) === 'asc' ? 1 : -1;
+
+        usort($fallbackRows, function ($a, $b) use ($sortKey, $direction) {
+            $aValue = $a[$sortKey] ?? '';
+            $bValue = $b[$sortKey] ?? '';
+
+            if (is_numeric($aValue) && is_numeric($bValue)) {
+                $cmp = intval($aValue) <=> intval($bValue);
+            } else {
+                $cmp = strcmp(strtolower((string) $aValue), strtolower((string) $bValue));
+            }
+
+            return $cmp * $direction;
+        });
+
+        $total = count($fallbackRows);
+        $offset = ($page - 1) * $perPage;
+        $appointments = array_slice($fallbackRows, $offset, $perPage);
+    }
+
+    $totalPages = max(1, (int) ceil($total / $perPage));
+
+    $payload = [
+        'status' => 'success',
+        'data' => $appointments,
+        'pagination' => [
+            'current_page' => $page,
+            'per_page' => $perPage,
+            'total' => $total,
+            'total_pages' => $totalPages,
+        ],
+    ];
+
+    if ($usedFallback) {
+        $payload['fallback_used'] = true;
+    }
+
+    echo json_encode($payload);
 }
 
 public function getAppointmentDetails() {

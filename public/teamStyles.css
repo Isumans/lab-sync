@@ -17,26 +17,6 @@
     margin: 0;
 }
 
-.add-user-button {
-    background-color: var(--primary-color);
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 6px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-}
-
-.add-user-button:hover {
-    background-color: #2da5d4;
-}
-
-.add-user-button a {
-    color: white;
-    text-decoration: none;
-}
-
 /* Stats Grid */
 .team-stats-grid {
     display: grid;

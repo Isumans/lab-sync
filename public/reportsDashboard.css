@@ -157,6 +157,54 @@
     text-decoration: underline;
 }
 
+.rd-sort-direction-wrap {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.rd-sort-direction {
+    min-width: 130px;
+    height: 40px;
+    border: 1px solid #dbe6ef;
+    border-radius: 9px;
+    background: #f4f7fc;
+    padding: 0 10px;
+    color: #1c2d3f;
+}
+
+.rd-sortable {
+    cursor: pointer;
+    user-select: none;
+    position: relative;
+    transition: color 0.2s ease;
+}
+
+.rd-sortable:hover {
+    color: var(--primary-color);
+}
+
+.rd-sortable::after {
+    content: '\2195';
+    margin-left: 6px;
+    font-size: 0.8rem;
+    color: #9caec0;
+}
+
+.rd-sortable.is-active {
+    color: #36536a;
+}
+
+.rd-sortable.is-active.is-asc::after {
+    content: '\2191';
+    color: var(--primary-color);
+}
+
+.rd-sortable.is-active.is-desc::after {
+    content: '\2193';
+    color: var(--primary-color);
+}
+
 .rd-table-card {
     padding: 6px 0 0;
 }

@@ -1,234 +1,269 @@
-// Test Catalog Table JavaScript
-
 const itemsPerPage = 7;
-let currentPage = 1;
 
-document.addEventListener('DOMContentLoaded', function() {
-    // Initialize everything in the right order
-    initializeTableControls();
-    initializePagination();
-    // Initial pagination setup
-    applyPagination();
-});
+const tcState = {
+    page: 1,
+    search: '',
+    department: 'all',
+    sortBy: 'test_id',
+    sortDir: 'asc',
+    rows: []
+};
 
-function initializeTableControls() {
-    const searchInput = document.getElementById('test-search');
-    const departmentFilter = document.getElementById('department-filter');
-    const editButtons = document.querySelectorAll('.action-btn-edit');
-    const deleteButtons = document.querySelectorAll('.action-btn-delete');
-
-    // Search functionality
-    if (searchInput) {
-        searchInput.addEventListener('input', function() {
-            currentPage = 1;
-            applyPagination();
-        });
-    }
-
-    // Department filter
-    if (departmentFilter) {
-        departmentFilter.addEventListener('change', function() {
-            currentPage = 1;
-            applyPagination();
-        });
-    }
-
-    // Edit buttons
-    editButtons.forEach(btn => {
-        btn.addEventListener('click', function(e) {
-            e.preventDefault();
-            const row = this.closest('tr');
-            openEditModal(row);
-        });
-    });
-
-    // Delete buttons
-    deleteButtons.forEach(btn => {
-        btn.addEventListener('click', function(e) {
-            e.preventDefault();
-            const row = this.closest('tr');
-            deleteTest(row);
-        });
-    });
+function tcDebounce(fn, delay) {
+    let timer = null;
+    return function debounced(...args) {
+        clearTimeout(timer);
+        timer = setTimeout(() => fn.apply(this, args), delay);
+    };
 }
 
-function initializePagination() {
-    const prevBtn = document.getElementById('pagination-prev');
-    const nextBtn = document.getElementById('pagination-next');
-    const paginationNumbers = document.querySelector('.pagination-numbers');
+function getTcDom() {
+    return {
+        searchInput: document.getElementById('tcSearch'),
+        departmentInput: document.getElementById('tcDepartment'),
+        sortByInput: document.getElementById('tcSortBy'),
+        sortDirInput: document.getElementById('tcSortDir'),
+        clearBtn: document.getElementById('tcClearBtn'),
+        tableBody: document.getElementById('tcTableBody'),
+        showingText: document.getElementById('tcShowingText'),
+        pagination: document.getElementById('tcPagination'),
+        sortableHeaders: Array.from(document.querySelectorAll('.test-catalog-table .rd-sortable'))
+    };
+}
 
-    if (prevBtn) {
-        prevBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            if (currentPage > 1) {
-                currentPage--;
-                applyPagination();
-            }
-        });
+function getRowMeta(row) {
+    return {
+        node: row,
+        test_id: String(row.dataset.id || '').trim(),
+        test_name: String(row.dataset.name || '').trim(),
+        department: String(row.dataset.department || '').trim(),
+        lab_id: String(row.dataset.libId || '').trim(),
+        price: Number(row.dataset.price || 0)
+    };
+}
+
+function tcCompare(left, right, sortBy) {
+    if (sortBy === 'price') {
+        return left.price - right.price;
     }
 
-    if (nextBtn) {
-        nextBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            const totalPages = getTotalPages();
-            if (currentPage < totalPages) {
-                currentPage++;
-                applyPagination();
-            }
-        });
-    }
+    const a = String(left[sortBy] || '').toLowerCase();
+    const b = String(right[sortBy] || '').toLowerCase();
+    return a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
+}
 
-    // Page number buttons delegation
-    if (paginationNumbers) {
-        paginationNumbers.addEventListener('click', function(e) {
-            if (e.target.classList.contains('pagination-num')) {
-                e.preventDefault();
-                currentPage = parseInt(e.target.textContent);
-                applyPagination();
-            }
-        });
+function clearEmptyStateRow(tbody) {
+    const row = tbody.querySelector('.empty-state-row');
+    if (row) {
+        row.remove();
     }
 }
 
-/**
- * Apply pagination: filter rows based on search/department, then show only current page
- */
-function applyPagination() {
-    const searchInput = document.getElementById('test-search');
-    const departmentFilter = document.getElementById('department-filter');
-    const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
-    const departmentTerm = departmentFilter ? departmentFilter.value : '';
-    const allRows = Array.from(document.querySelectorAll('.test-catalog-table tbody .test-row'));
+function renderPagination(totalPages, dom) {
+    const buttons = [];
+    buttons.push(`<button type="button" class="rd-page-btn" data-page="prev" ${tcState.page <= 1 ? 'disabled' : ''}>&lt;</button>`);
 
-    // Step 1: Filter rows based on search and department
-    const filteredRows = allRows.filter(row => {
-        const testId = (row.dataset.id || '').toLowerCase();
-        const testName = (row.dataset.name || '').toLowerCase();
-        const libId = (row.dataset.libId || '').toLowerCase();
-        const department = (row.dataset.department || '').toLowerCase();
-
-        const matchesSearch = !searchTerm || 
-            testId.includes(searchTerm) || 
-            testName.includes(searchTerm) || 
-            libId.includes(searchTerm);
-
-        const matchesDepartment = !departmentTerm || department === departmentTerm.toLowerCase();
-
-        return matchesSearch && matchesDepartment;
-    });
-
-    // Step 2: Calculate total pages
-    const totalPages = Math.max(1, Math.ceil(filteredRows.length / itemsPerPage));
-
-    // Reset current page if it exceeds total pages
-    if (currentPage > totalPages) {
-        currentPage = totalPages;
+    for (let i = 1; i <= totalPages; i += 1) {
+        buttons.push(`<button type="button" class="rd-page-btn ${i === tcState.page ? 'is-active' : ''}" data-page="${i}">${i}</button>`);
     }
 
-    // Step 3: Calculate what to show on current page
-    const startIdx = (currentPage - 1) * itemsPerPage;
-    const endIdx = startIdx + itemsPerPage;
+    buttons.push(`<button type="button" class="rd-page-btn" data-page="next" ${tcState.page >= totalPages ? 'disabled' : ''}>&gt;</button>`);
+    dom.pagination.innerHTML = buttons.join('');
+}
 
-    // Step 4: Hide all rows initially
-    allRows.forEach(row => {
-        row.style.display = 'none';
+function updateSortableHeaderUi(dom) {
+    dom.sortableHeaders.forEach((header) => {
+        const key = String(header.dataset.sort || '');
+        header.classList.remove('is-active', 'is-asc', 'is-desc');
+        if (key === tcState.sortBy) {
+            header.classList.add('is-active');
+            header.classList.add(tcState.sortDir === 'asc' ? 'is-asc' : 'is-desc');
+        }
     });
 
-    // Step 5: Show only the rows for current page
-    filteredRows.slice(startIdx, endIdx).forEach(row => {
-        row.style.display = '';
+    if (dom.sortByInput) {
+        dom.sortByInput.value = tcState.sortBy;
+    }
+    if (dom.sortDirInput) {
+        dom.sortDirInput.value = tcState.sortDir;
+    }
+}
+
+function renderTestCatalogTable(dom) {
+    const tbody = dom.tableBody;
+    if (!tbody) {
+        return;
+    }
+
+    clearEmptyStateRow(tbody);
+
+    const query = tcState.search.toLowerCase();
+    const filtered = tcState.rows.filter((item) => {
+        if (tcState.department !== 'all' && item.department.toLowerCase() !== tcState.department) {
+            return false;
+        }
+
+        if (!query) {
+            return true;
+        }
+
+        const searchText = `${item.test_id} ${item.test_name} ${item.department} ${item.lab_id}`.toLowerCase();
+        return searchText.includes(query);
     });
 
-    // Step 6: Show empty state if no results
-    const tbody = document.querySelector('.test-catalog-table tbody');
-    removeEmptyState();
-    
-    if (filteredRows.length === 0) {
+    filtered.sort((a, b) => {
+        const base = tcCompare(a, b, tcState.sortBy);
+        return tcState.sortDir === 'asc' ? base : -base;
+    });
+
+    const totalRows = filtered.length;
+    const totalPages = Math.max(1, Math.ceil(totalRows / itemsPerPage));
+    tcState.page = Math.min(tcState.page, totalPages);
+
+    const start = (tcState.page - 1) * itemsPerPage;
+    const end = start + itemsPerPage;
+    const visible = filtered.slice(start, end);
+
+    tcState.rows.forEach((item) => {
+        item.node.style.display = 'none';
+    });
+    visible.forEach((item) => {
+        item.node.style.display = '';
+    });
+
+    if (!visible.length) {
         const emptyRow = document.createElement('tr');
-        emptyRow.className = 'empty-state-row';
-        emptyRow.innerHTML = `
-            <td colspan="6" style="text-align: center; padding: 40px; color: #999;">
-                <div style="font-size: 48px; margin-bottom: 10px;">🔍</div>
-                <div>No tests found matching your search</div>
-            </td>
-        `;
+        emptyRow.className = 'rd-empty-row empty-state-row';
+        emptyRow.innerHTML = '<td colspan="6">No tests found matching your current filters.</td>';
         tbody.appendChild(emptyRow);
     }
 
-    // Step 7: Update pagination info
-    const displayStart = filteredRows.length ? startIdx + 1 : 0;
-    const displayEnd = Math.min(endIdx, filteredRows.length);
+    const displayStart = totalRows ? start + 1 : 0;
+    const displayEnd = totalRows ? Math.min(end, totalRows) : 0;
+    dom.showingText.textContent = `Showing ${displayStart}-${displayEnd} of ${totalRows} tests`;
 
-    const paginationStart = document.getElementById('pagination-start');
-    const paginationEnd = document.getElementById('pagination-end');
-    const paginationTotal = document.getElementById('pagination-total');
-
-    if (paginationStart) paginationStart.textContent = displayStart;
-    if (paginationEnd) paginationEnd.textContent = displayEnd;
-    if (paginationTotal) paginationTotal.textContent = filteredRows.length;
-
-    // Step 8: Update pagination buttons
-    updatePaginationButtons(totalPages);
+    renderPagination(totalPages, dom);
+    updateSortableHeaderUi(dom);
 }
 
-function removeEmptyState() {
-    const emptyRow = document.querySelector('.empty-state-row');
-    if (emptyRow) {
-        emptyRow.remove();
+document.addEventListener('DOMContentLoaded', function () {
+    const dom = getTcDom();
+    if (!dom.tableBody || !dom.pagination || !dom.showingText) {
+        return;
     }
-}
 
-function getTotalPages() {
-    const searchInput = document.getElementById('test-search');
-    const departmentFilter = document.getElementById('department-filter');
-    const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
-    const departmentTerm = departmentFilter ? departmentFilter.value : '';
-    const allRows = Array.from(document.querySelectorAll('.test-catalog-table tbody .test-row'));
+    tcState.rows = Array.from(dom.tableBody.querySelectorAll('.test-row')).map(getRowMeta);
 
-    const filteredRows = allRows.filter(row => {
-        const testId = (row.dataset.id || '').toLowerCase();
-        const testName = (row.dataset.name || '').toLowerCase();
-        const libId = (row.dataset.libId || '').toLowerCase();
-        const department = (row.dataset.department || '').toLowerCase();
+    if (dom.searchInput) {
+        dom.searchInput.addEventListener('input', tcDebounce(function (event) {
+            tcState.search = String(event.target.value || '').trim();
+            tcState.page = 1;
+            renderTestCatalogTable(dom);
+        }, 220));
+    }
 
-        const matchesSearch = !searchTerm || 
-            testId.includes(searchTerm) || 
-            testName.includes(searchTerm) || 
-            libId.includes(searchTerm);
+    if (dom.departmentInput) {
+        dom.departmentInput.addEventListener('change', function (event) {
+            tcState.department = String(event.target.value || 'all').toLowerCase();
+            tcState.page = 1;
+            renderTestCatalogTable(dom);
+        });
+    }
 
-        const matchesDepartment = !departmentTerm || department === departmentTerm.toLowerCase();
+    if (dom.sortByInput) {
+        dom.sortByInput.addEventListener('change', function (event) {
+            tcState.sortBy = String(event.target.value || 'test_id');
+            tcState.page = 1;
+            renderTestCatalogTable(dom);
+        });
+    }
 
-        return matchesSearch && matchesDepartment;
+    if (dom.sortDirInput) {
+        dom.sortDirInput.addEventListener('change', function (event) {
+            tcState.sortDir = String(event.target.value || 'asc');
+            tcState.page = 1;
+            renderTestCatalogTable(dom);
+        });
+    }
+
+    if (dom.clearBtn) {
+        dom.clearBtn.addEventListener('click', function () {
+            tcState.search = '';
+            tcState.department = 'all';
+            tcState.sortBy = 'test_id';
+            tcState.sortDir = 'asc';
+            tcState.page = 1;
+
+            if (dom.searchInput) dom.searchInput.value = '';
+            if (dom.departmentInput) dom.departmentInput.value = 'all';
+            if (dom.sortByInput) dom.sortByInput.value = 'test_id';
+            if (dom.sortDirInput) dom.sortDirInput.value = 'asc';
+
+            renderTestCatalogTable(dom);
+        });
+    }
+
+    dom.pagination.addEventListener('click', function (event) {
+        const button = event.target.closest('.rd-page-btn');
+        if (!button || button.disabled) {
+            return;
+        }
+
+        const target = button.dataset.page;
+        const maxPage = Math.max(1, Math.ceil(tcState.rows.length / itemsPerPage));
+        if (target === 'prev') {
+            tcState.page = Math.max(1, tcState.page - 1);
+        } else if (target === 'next') {
+            tcState.page = Math.min(maxPage, tcState.page + 1);
+        } else {
+            tcState.page = Math.max(1, Number(target || 1));
+        }
+
+        renderTestCatalogTable(dom);
     });
 
-    return Math.max(1, Math.ceil(filteredRows.length / itemsPerPage));
-}
+    dom.sortableHeaders.forEach((header) => {
+        header.addEventListener('click', function () {
+            const key = String(header.dataset.sort || 'test_id');
+            if (tcState.sortBy === key) {
+                tcState.sortDir = tcState.sortDir === 'asc' ? 'desc' : 'asc';
+            } else {
+                tcState.sortBy = key;
+                tcState.sortDir = String(header.dataset.direction || 'asc');
+            }
+            tcState.page = 1;
+            renderTestCatalogTable(dom);
+        });
 
-function updatePaginationButtons(totalPages) {
-    const prevBtn = document.getElementById('pagination-prev');
-    const nextBtn = document.getElementById('pagination-next');
-    const paginationContainer = document.querySelector('.pagination-numbers');
+        header.addEventListener('keydown', function (event) {
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                header.click();
+            }
+        });
+    });
 
-    // Update prev/next button states
-    if (prevBtn) prevBtn.disabled = currentPage === 1;
-    if (nextBtn) nextBtn.disabled = currentPage === totalPages;
-
-    if (!paginationContainer) return;
-
-    // Clear existing page buttons
-    paginationContainer.innerHTML = '';
-
-    // Generate new page buttons
-    for (let i = 1; i <= totalPages; i++) {
-        const btn = document.createElement('button');
-        btn.classList.add('pagination-num');
-        if (i === currentPage) {
-            btn.classList.add('active');
+    dom.tableBody.addEventListener('click', function (event) {
+        if (event.target.closest('.action-btn-edit')) {
+            event.preventDefault();
+            const row = event.target.closest('tr');
+            if (row) {
+                openEditModal(row);
+            }
+            return;
         }
-        btn.textContent = i;
-        paginationContainer.appendChild(btn);
-    }
-}
+
+        if (event.target.closest('.action-btn-delete')) {
+            event.preventDefault();
+            const row = event.target.closest('tr');
+            if (row) {
+                deleteTest(row);
+            }
+        }
+    });
+
+    renderTestCatalogTable(dom);
+});
 
 function openEditModal(row) {
     const testId = row.dataset.id;

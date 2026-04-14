@@ -26,12 +26,12 @@ if (!isset($_SESSION['user_id'])) {
 
         <main class="main-content">
             <div class="Tmain-content">
-                <div class="test-catalog-header">
-                    <h1>Create Appointment</h1>
-                </div>
-                <div>
-                    <p class="MC-p"><a href="javascript:history.back()" style="color: var(--primary-color); text-decoration: none;">Appointments-></a>Create-Appointment</p></br>
-                </div>
+                <?php
+                    $pageTitle = 'Create Appointment';
+                    $pageBreadcrumbHtml = '<a href="javascript:history.back()" style="color: var(--primary-color); text-decoration: none;">Appointments-></a>Create-Appointment';
+                    $pageActionHtml = '';
+                    require __DIR__ . '/../../../public/partials/page-header.php';
+                ?>
 
                 <div>
                     <?php include VIEW_PATH . '/receptionist/appointment_form.php'; ?>

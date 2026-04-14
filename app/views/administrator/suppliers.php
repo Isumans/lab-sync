@@ -25,13 +25,12 @@ if (!isset($_SESSION['user_id'])) {
             <!-- Main Body Section -->
             <main class="main-content">
                  <div class="Tmain-content">
-                    <div class="main-content-header">
-                        <div class="main-topic">
-                            <h1>Suppliers</h1>
-                            <a class="add-user-button" href="/lab_sync/index.php?controller=supplierController&action=Register_supplier">Register New Supplier</a>
-                        </div>
-                        <p class="MC-p">Suppliers-&gt;</p>
-                    </div>
+                    <?php
+                        $pageTitle = 'Suppliers';
+                        $pageBreadcrumbText = 'Suppliers->';
+                        $pageActionHtml = '<a class="add-user-button" href="/lab_sync/index.php?controller=supplierController&action=Register_supplier">Register New Supplier</a>';
+                        require __DIR__ . '/../../../public/partials/page-header.php';
+                    ?>
                     <div class="container-cards">
                         <div class="card, c-card">
                                 <h3>Total Suppliers</h3>

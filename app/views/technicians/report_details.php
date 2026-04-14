@@ -19,10 +19,12 @@ if (!isset($_SESSION['user_id'])) {
         <main class="main-content">
             <section class="reports-dashboard" aria-label="Report Details">
 
-                <div class="main-content-header">
-                    <h1>Reports Details</h1>
-                    <p class="MC-p"><a href="javascript:history.back()" style="color: var(--primary-color); text-decoration: none;">Reports-></a>Report Details</p><br>
-                </div>
+                <?php
+                    $pageTitle = 'Reports Details';
+                    $pageBreadcrumbHtml = '<a href="javascript:history.back()" style="color: var(--primary-color); text-decoration: none;">Reports-></a>Report Details';
+                    $pageActionHtml = '';
+                    require __DIR__ . '/../../../public/partials/page-header.php';
+                ?>
                 <!-- <div class="rd-header-row">
                     <h1 class="rd-title">Report Details</h1>
                     

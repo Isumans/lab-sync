@@ -25,13 +25,12 @@ if (!isset($_SESSION['user_id'])) {
             <!-- Main Body Section -->
             <main class="main-content">
                  <div class="Tmain-content">
-                    <div class="test-catalog-header">
-                        <h1>Add Partner Lab</h1>
-                    </div>
-                    <div>
-                        <p class="MC-p">Settings->Add Partner Lab</p>
-                    </div>
-                    <br/>
+                    <?php
+                        $pageTitle = 'Add Partner Lab';
+                        $pageBreadcrumbText = 'Settings->Add Partner Lab';
+                        $pageActionHtml = '';
+                        require __DIR__ . '/../../../../public/partials/page-header.php';
+                    ?>
 
                     <div class="partner-form-container">
                         <form id="partnerLabForm" method="POST" action="/lab_sync/index.php?controller=partnerLabController&action=storeLab">

@@ -167,6 +167,73 @@ class AppointmentModel {
         $result = $stmt->get_result();
         return $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
     }
+
+    public function getAppointmentsList($filters, $page = 1, $perPage = 7, $sortBy = 'appointment_date', $sortDir = 'desc') {
+        $this->lastError = '';
+        $page = max(1, intval($page));
+        $perPage = max(1, min(50, intval($perPage)));
+        $offset = ($page - 1) * $perPage;
+
+        list($sql, $types, $params) = $this->buildAppointmentsListBaseSql($filters, false);
+
+        $sortMap = [
+            'appointment_id' => 'a.appointment_id',
+            'patient_name' => 'patient_name',
+            'appointment_date' => 'a.appointment_date',
+            'appointment_time' => 'a.appointment_time',
+            'method' => 'a.method',
+        ];
+
+        $sortKey = strtolower(trim((string) $sortBy));
+        if (!isset($sortMap[$sortKey])) {
+            $sortKey = 'appointment_date';
+        }
+
+        $direction = strtolower(trim((string) $sortDir)) === 'asc' ? 'ASC' : 'DESC';
+        $orderBy = $sortMap[$sortKey] . ' ' . $direction;
+        if ($sortKey !== 'appointment_id') {
+            $orderBy .= ', a.appointment_id DESC';
+        }
+
+        $sql .= " ORDER BY {$orderBy} LIMIT ? OFFSET ?";
+        $types .= 'ii';
+        $params[] = $perPage;
+        $params[] = $offset;
+
+        $stmt = $this->prepareAndBind($sql, $types, $params);
+        if ($stmt === null) {
+            return [];
+        }
+
+        if (!$stmt->execute()) {
+            $this->lastError = 'Execute failed in getAppointmentsList: ' . $stmt->error;
+            error_log($this->lastError);
+            return [];
+        }
+
+        $result = $stmt->get_result();
+        return $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
+    }
+
+    public function countAppointments($filters) {
+        $this->lastError = '';
+        list($sql, $types, $params) = $this->buildAppointmentsListBaseSql($filters, true);
+
+        $stmt = $this->prepareAndBind($sql, $types, $params);
+        if ($stmt === null) {
+            return 0;
+        }
+
+        if (!$stmt->execute()) {
+            $this->lastError = 'Execute failed in countAppointments: ' . $stmt->error;
+            error_log($this->lastError);
+            return 0;
+        }
+
+        $result = $stmt->get_result();
+        $row = $result ? $result->fetch_assoc() : null;
+        return $row ? intval($row['total_rows'] ?? 0) : 0;
+    }
     
 
     public function getAppointmentDetailsPayload($appointmentId) {
@@ -801,6 +868,119 @@ class AppointmentModel {
         ";
     }
 
+    private function buildAppointmentsListBaseSql($filters, $countOnly = false) {
+        $method = isset($filters['method']) ? strtolower(trim((string) $filters['method'])) : 'all';
+        $search = isset($filters['search']) ? strtolower(trim((string) $filters['search'])) : '';
+        $fromDate = isset($filters['from_date']) ? trim((string) $filters['from_date']) : '';
+        $toDate = isset($filters['to_date']) ? trim((string) $filters['to_date']) : '';
+
+        $notDeletedClause = $this->buildNotDeletedClause('a');
+        $where = [$notDeletedClause];
+        $types = '';
+        $params = [];
+
+        if ($method === 'online') {
+            $where[] = 'a.method = ?';
+            $types .= 's';
+            $params[] = 'online';
+        } elseif ($method === 'physical') {
+            $where[] = "a.method IN ('physical', 'call')";
+        } elseif ($method === 'call') {
+            $where[] = 'a.method = ?';
+            $types .= 's';
+            $params[] = 'call';
+        }
+
+        if ($search !== '') {
+            $patientSearchExpr = $this->buildPatientSearchExpression('p');
+            $where[] = "(
+                CAST(a.appointment_id AS CHAR) LIKE ?
+                OR LOWER({$patientSearchExpr}) LIKE ?
+                OR LOWER(COALESCE(a.method, '')) LIKE ?
+            )";
+            $like = '%' . $search . '%';
+            $types .= 'sss';
+            $params = array_merge($params, [$like, $like, $like]);
+        }
+
+        if ($fromDate !== '' && preg_match('/^\d{4}-\d{2}-\d{2}$/', $fromDate)) {
+            $where[] = 'a.appointment_date >= ?';
+            $types .= 's';
+            $params[] = $fromDate;
+        }
+
+        if ($toDate !== '' && preg_match('/^\d{4}-\d{2}-\d{2}$/', $toDate)) {
+            $where[] = 'a.appointment_date <= ?';
+            $types .= 's';
+            $params[] = $toDate;
+        }
+
+        $whereSql = implode(' AND ', $where);
+
+        if ($countOnly) {
+            $sql = "
+                SELECT COUNT(*) AS total_rows
+                FROM appointment a
+                LEFT JOIN patients p ON p.patient_id = a.patient_id
+                WHERE {$whereSql}
+            ";
+            return [$sql, $types, $params];
+        }
+
+        $patientProjection = $this->buildPatientProjectionSql('p');
+        $billSelect = 'NULL AS bill_id, NULL AS bill_status';
+        $billJoin = '';
+        if ($this->tableExists('bills')) {
+            $billSelect = 'b.bill_id, b.status AS bill_status';
+            $billJoin = "LEFT JOIN bills b ON b.appointment_id = a.appointment_id AND b.status <> 'CANCELLED'";
+        }
+
+        $sql = "
+            SELECT a.*, {$patientProjection}, {$billSelect}
+            FROM appointment a
+            LEFT JOIN patients p ON p.patient_id = a.patient_id
+            {$billJoin}
+            WHERE {$whereSql}
+        ";
+
+        return [$sql, $types, $params];
+    }
+
+    private function buildPatientSearchExpression($alias = 'p') {
+        $firstNameCol = $this->columnExists('patients', 'first_name') ? 'first_name' : null;
+        $lastNameCol = $this->columnExists('patients', 'last_name') ? 'last_name' : null;
+
+        if ($firstNameCol !== null && $lastNameCol !== null) {
+            return "COALESCE(NULLIF(TRIM(CONCAT(COALESCE({$alias}.{$firstNameCol}, ''), ' ', COALESCE({$alias}.{$lastNameCol}, ''))), ''), '')";
+        }
+
+        $nameCol = $this->resolveFirstExistingColumn('patients', ['patient_name', 'full_name', 'name', 'first_name']);
+        if ($nameCol !== null) {
+            return "COALESCE({$alias}.{$nameCol}, '')";
+        }
+
+        return "''";
+    }
+
+    private function prepareAndBind($sql, $types, $params) {
+        $stmt = $this->db->prepare($sql);
+        if ($stmt === false) {
+            $this->lastError = 'Prepare failed: ' . $this->db->error;
+            error_log($this->lastError);
+            return null;
+        }
+
+        if ($types !== '' && !empty($params)) {
+            $bindParams = [$types];
+            foreach ($params as $index => $value) {
+                $bindParams[] = &$params[$index];
+            }
+            call_user_func_array([$stmt, 'bind_param'], $bindParams);
+        }
+
+        return $stmt;
+    }
+
     private function normalizeStatusValue($value) {
         $raw = strtoupper(trim((string) $value));
         if ($raw === '') {
@@ -1041,11 +1221,11 @@ class AppointmentModel {
         $parts = [];
 
         if ($this->columnExists('appointment', 'deleted_at')) {
-            $parts[] = "{$alias}.deleted_at IS NULL";
+            $parts[] = "COALESCE({$alias}.deleted_at, '0000-00-00 00:00:00') = '0000-00-00 00:00:00'";
         }
 
         if ($this->columnExists('appointment', 'deleted_by')) {
-            $parts[] = "{$alias}.deleted_by IS NULL";
+            $parts[] = "COALESCE({$alias}.deleted_by, 0) = 0";
         }
 
         if (empty($parts)) {

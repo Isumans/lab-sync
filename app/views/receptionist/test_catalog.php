@@ -1,6 +1,7 @@
 <?php
 $pageTitle = 'Test Catalog';
 $extraStyles = '<link rel="stylesheet" href="/lab_sync/public/teamStyles.css">'
+    . '<link rel="stylesheet" href="/lab_sync/public/reportsDashboard.css">'
     . '<link rel="stylesheet" href="/lab_sync/public/testCatalogTable.css">';
 $role = $_GET['role'] ?? '';
 // Start output buffering
@@ -9,45 +10,69 @@ ob_start();
                 
     
                 <div class="Tmain-content">
-                    <div class="main-content-header">
-                        <div class="main-topic">
-                            <h1>Test Catalog</h1>
-                            <a class="add-user-button" href="/lab_sync/index.php?controller=TestCatalog&action=add_test">+ Add New Test</a>
-                        </div>
-                        <p class="MC-p">Test-Catalog-&gt;</p>
-                    </div>
+                    <?php
+                        $pageBreadcrumbText = 'Test-Catalog->';
+                        $pageActionHtml = '<a class="add-user-button" href="/lab_sync/index.php?controller=TestCatalog&action=add_test">+ Add New Test</a>';
+                        require __DIR__ . '/../../../public/partials/page-header.php';
+                    ?>
                     
-                    <!-- Search and Filter Section -->
-                    <div class="catalog-controls">
-                        <div class="search-section">
-                            <input type="text" id="test-search" class="search-bar" placeholder="Search by name, ID, or LIB...">
-                            <span class="search-icon">🔍</span>
+                    <section class="rd-filter-card" aria-label="Search and filters">
+                        <div class="rd-filter-grid tc-filter-grid">
+                            <div class="rd-filter-field rd-filter-field-search">
+                                <label for="tcSearch">Search Records</label>
+                                <input type="text" id="tcSearch" placeholder="Search by Test Name, Test ID, or LIB ID...">
+                            </div>
+
+                            <div class="rd-filter-field">
+                                <label for="tcDepartment">Department</label>
+                                <select id="tcDepartment">
+                                    <option value="all">All Departments</option>
+                                    <option value="hematology">Hematology</option>
+                                    <option value="biochemistry">Biochemistry</option>
+                                    <option value="immunology">Immunology</option>
+                                    <option value="microbiology">Microbiology</option>
+                                    <option value="radiology">Radiology</option>
+                                </select>
+                            </div>
+
+                            <div class="rd-filter-field">
+                                <label for="tcSortBy">Sort By</label>
+                                <select id="tcSortBy">
+                                    <option value="test_name">Test Name</option>
+                                    <option value="test_id">Test ID</option>
+                                    <option value="department">Department</option>
+                                    <option value="lab_id">Lab ID</option>
+                                    <option value="price">Price</option>
+                                </select>
+                            </div>
                         </div>
-                        <div class="filter-section">
-                            <select id="department-filter" class="department-filter">
-                                <option value="">All Departments</option>
-                                <option value="Hematology">Hematology</option>
-                                <option value="Biochemistry">Biochemistry</option>
-                                <option value="Immunology">Immunology</option>
-                                <option value="Microbiology">Microbiology</option>
-                                <option value="Radiology">Radiology</option>
-                            </select>
-                            <span class="result-count">Showing <span id="result-count">0</span> of <span id="total-count">0</span> results</span>
+
+                        <div class="rd-filter-bottom-row">
+                            <div></div>
+                            <div class="rd-sort-direction-wrap">
+                                <select id="tcSortDir" class="rd-sort-direction" aria-label="Sort direction">
+                                    <option value="asc">A to Z</option>
+                                    <option value="desc">Z to A</option>
+                                </select>
+                                <button type="button" class="rd-clear-btn" id="tcClearBtn">Clear All Filters</button>
+                            </div>
                         </div>
-                    </div>
-                    <div class="test-catalog-wrapper">
-                    <table class="test-catalog-table">
+                    </section>
+
+                    <section class="rd-table-card" aria-label="Test catalog table">
+                    <div class="rd-table-wrap">
+                    <table class="rd-table test-catalog-table">
                         <thead>
                             <tr>
-                                <th class="col-id">TEST ID</th>
-                                <th class="col-name">TEST NAME</th>
-                                <th class="col-dept">DEPARTMENT</th>
-                                <th class="col-lib">LAB # / LIB ID</th>
-                                <th class="col-price">PRICE</th>
-                                <th class="col-actions">ACTIONS</th>
+                                <th class="rd-sortable is-active is-asc" data-sort="test_id" data-direction="asc">Test ID</th>
+                                <th class="rd-sortable" data-sort="test_name" data-direction="asc">Test Name</th>
+                                <th class="rd-sortable" data-sort="department" data-direction="asc">Department</th>
+                                <th class="rd-sortable" data-sort="lab_id" data-direction="asc">Lab # / LIB ID</th>
+                                <th class="rd-sortable rd-th-right" data-sort="price" data-direction="asc">Price</th>
+                                <th class="rd-th-right">Actions</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody id="tcTableBody">
                             <?php if (is_array($packages) && count($packages) > 0): ?>
                                 <?php foreach ($packages as $package): ?>
                                     <tr class="test-row"
@@ -81,7 +106,7 @@ ob_start();
                                             <span class="price-amount">$<?php echo number_format($package['price'] ?? 0, 2); ?></span>
                                         </td>
                                         
-                                        <td class="actions-cell">
+                                        <td class="actions-cell rd-th-right">
                                             <button type="button" class="action-btn-view" title="View Details" onclick="viewTest(this)">
                                                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                                                     <path d="M1 8C1 8 3.5 2 8 2C12.5 2 15 8 15 8C15 8 12.5 14 8 14C3.5 14 1 8 1 8Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
@@ -102,7 +127,7 @@ ob_start();
                                     </tr>
                                 <?php endforeach; ?>
                             <?php else: ?>
-                                <tr class="empty-state">
+                                <tr class="rd-empty-row">
                                     <td colspan="6" style="text-align: center; padding: 40px; color: #999;">
                                         <div style="font-size: 48px; margin-bottom: 10px;">📋</div>
                                         <div>No tests found in the catalog</div>
@@ -114,17 +139,11 @@ ob_start();
                     </table>
                 </div>
 
-                <!-- Pagination Section -->
-                <div class="test-pagination">
-                    <span class="pagination-info">Showing <span id="pagination-start">1</span> to <span id="pagination-end">7</span> of <span id="pagination-total">0</span> tests</span>
-                    <div class="pagination-buttons">
-                        <button class="pagination-btn" id="pagination-prev">‹</button>
-                        <span class="pagination-numbers">
-                            <!-- Dynamic page numbers generated by JS -->
-                        </span>
-                        <button class="pagination-btn" id="pagination-next">›</button>
-                    </div>
+                <div class="rd-table-footer">
+                    <p id="tcShowingText">Showing 0-0 of 0 tests</p>
+                    <div class="rd-pagination" id="tcPagination"></div>
                 </div>
+                </section>
 
                 <!-- Test Catalog Table -->
                 

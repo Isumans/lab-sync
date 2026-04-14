@@ -177,6 +177,8 @@ body {
 
 .main-content-header {
     margin-bottom: 24px;
+    display: flex;
+    flex-direction: column;
 }
 
 .main-content-header .main-topic {
@@ -185,10 +187,28 @@ body {
     justify-content: space-between;
     gap: 16px;
     width: 100%;
+    flex-wrap: wrap;
 }
 
 .main-content-header .main-topic h1 {
     margin: 0;
+    line-height: 1.25;
+    flex: 1;
+    min-width: 220px;
+}
+
+.main-content-header .page-header-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    flex-shrink: 0;
+}
+
+.main-content-header .empty-action {
+    display: inline-flex;
+    width: 140px;
+    min-height: 40px;
 }
 
 .logo-color {
@@ -252,18 +272,24 @@ body {
 
 .add-test-button {
     background-color: var(--primary-color);
-    color: var(--secondary-color);
+    color: #ffffff;
     border: none;
     padding: 10px 20px;
-    border-radius: 30px;
+    border-radius: 6px;
     cursor: pointer;
-    font-size: 0.9rem;
-    font-weight: 600;
-    margin-bottom: 10px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    margin-bottom: 0;
+    transition: background-color 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    white-space: nowrap;
 }
 
 .add-test-button:hover {
-    background-color: #31a8e0;
+    background-color: #2da5d4;
 }
 
 .add-user-button {
@@ -294,6 +320,23 @@ body {
 .MC-p {
     font-size: 0.85rem;
     color: var(--primary-color);
+    margin: 8px 0 0;
+}
+
+@media (max-width: 640px) {
+    .main-content-header .main-topic {
+        align-items: flex-start;
+    }
+
+    .main-content-header .page-header-actions {
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+    .main-content-header .empty-action {
+        width: 0;
+        min-height: 0;
+    }
 }
 
 .search-bar {
@@ -382,7 +425,7 @@ body {
 
 .add-test-button a {
     text-decoration: none;
-    color: var(--secondary-color);
+    color: #ffffff;
 }
 
 .formStyle {

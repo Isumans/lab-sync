@@ -25,13 +25,12 @@ if (!isset($_SESSION['user_id'])) {
             <!-- Main Body Section -->
             <main class="main-content">
                  <div class="Tmain-content">
-                    <div class="test-catalog-header">
-                        <h1>Inventory</h1>
-                    </div>
-                    <div>
-                        <p class="MC-p">Inventory->Create New Item</p>
-                    </div>
-                    <br/>
+                    <?php
+                        $pageTitle = 'Inventory';
+                        $pageBreadcrumbText = 'Inventory->Create New Item';
+                        $pageActionHtml = '';
+                        require __DIR__ . '/../../../public/partials/page-header.php';
+                    ?>
                      <div>
                         <form class="formStyle" action="/lab_sync/index.php?controller=inventoryController&action=store" method="POST">
                             <!-- Form fields for adding a new inventory item -->

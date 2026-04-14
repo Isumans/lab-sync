@@ -26,12 +26,12 @@ $role=$_GET['user_role'] ?? '';
             <!-- Main Body Section -->
             <main class="main-content">
                  <div class="Tmain-content">
-                    <div class="test-catalog-header">
-                        <h1>Patient</h1>
-                    </div>
-                    <div>
-                        <p class="MC-p"><a href="javascript:history.back()" style="color: var(--primary-color); text-decoration: none;">Patients-></a>Register-Walk-In-Patient</p>
-                    </div>
+                    <?php
+                        $pageTitle = 'Patient';
+                        $pageBreadcrumbHtml = '<a href="javascript:history.back()" style="color: var(--primary-color); text-decoration: none;">Patients-></a>Register-Walk-In-Patient';
+                        $pageActionHtml = '';
+                        require __DIR__ . '/../../../public/partials/page-header.php';
+                    ?>
                     <div>
                         <form class="formStyle" action="/lab_sync/index.php?controller=patientController&action=register&role=<?php echo htmlspecialchars($role); ?>" method="POST">
                             <!-- Form fields for patient registration -->

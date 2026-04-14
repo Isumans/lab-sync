@@ -1,5 +1,5 @@
 (function () {
-    var pageSize = 10;
+    var pageSize = 7;
     var currentPage = 1;
     var totalPages = 1;
     var totalItems = 0;

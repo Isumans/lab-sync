@@ -19,13 +19,12 @@ if (!isset($_SESSION['user_id'])) {
 
         <main class="main-content">
             <section class="reports-dashboard" aria-label="Reports Dashboard">
-                
-            <div class="main-content-header">
-                    <div class="main-topic">
-                    <h1>Billing</h1>
-                    </div>
-                    <p class="MC-p">Billing-&gt;</p>
-            </div>
+                <?php
+                    $pageTitle = 'Billing';
+                    $pageBreadcrumbText = 'Billing->';
+                    $pageActionHtml = '';
+                    require __DIR__ . '/../../../public/partials/page-header.php';
+                ?>
 
                 <!-- <div class="rd-header-row">
                     <h1 class="rd-title">Reports</h1>

@@ -13,7 +13,7 @@ $workflowScriptVersion = file_exists($workflowScriptPath) ? (string)filemtime($w
 <html>
     <head>
         <title>Test Catalog - Add Test</title>
-        <!-- <link rel="stylesheet" href="/lab_sync/public/styles.css"> -->
+        <link rel="stylesheet" href="/lab_sync/public/styles.css">
         <link rel="stylesheet" href="/lab_sync/public/testCatalogWorkflow.css">
     </head>
     <body>
@@ -26,8 +26,12 @@ $workflowScriptVersion = file_exists($workflowScriptPath) ? (string)filemtime($w
             <!-- Main Body Section -->
             <main class="main-content">
                 <div class="add-test-container">
-                    <h1>Add New Test</h1>
-                    <p class="MC-p" ><a href="javascript:history.back()" style="color: var(--primary-color); text-decoration: none;">Test-Catalog-></a>Add-New-Test</p>
+                    <?php
+                        $pageTitle = 'Add New Test';
+                        $pageBreadcrumbHtml = '<a href="javascript:history.back()" style="color: var(--primary-color); text-decoration: none;">Test-Catalog-></a>Add-New-Test';
+                        $pageActionHtml = '';
+                        require __DIR__ . '/../../../public/partials/page-header.php';
+                    ?>
                     <?php if (isset($_SESSION['flash'])): ?>
                         <?php
                             $flash = $_SESSION['flash'];

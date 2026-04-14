@@ -1,303 +1,156 @@
-/* Test Catalog Table Styles */
+/* Test catalog specific styles layered on top of reportsDashboard.css */
 
-/* Controls Section */
-
-
-.catalog-controls {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 20px;
-    margin: 25px 0;
-    padding: 20px;
-    background: #fff;
-    border-radius: 8px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+.tc-filter-grid {
+    grid-template-columns: 2fr 1fr 1fr;
 }
 
-.search-section {
-    flex: 1;
-    position: relative;
-    max-width: 400px;
-}
-
-.search-bar {
-    width: 100%;
-    padding: 10px 38px 10px 16px;
-    border: 1px solid #ddd;
-    border-radius: 6px;
-    font-size: 14px;
-    transition: all 0.3s ease;
-}
-
-.search-bar:focus {
-    outline: none;
-    border-color: #1bc47d;
-    box-shadow: 0 0 0 3px rgba(27, 196, 125, 0.1);
-}
-
-.search-icon {
-    position: absolute;
-    right: 12px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: #999;
-    font-size: 16px;
-    pointer-events: none;
-}
-
-.filter-section {
-    display: flex;
-    align-items: center;
-    gap: 20px;
-}
-
-.department-filter {
-    padding: 10px 14px;
-    border: 1px solid #ddd;
-    border-radius: 6px;
-    font-size: 13px;
-    font-weight: 500;
-    background: white;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    min-width: 180px;
-}
-
-.department-filter:hover {
-    border-color: #1bc47d;
-}
-
-.department-filter:focus {
-    outline: none;
-    border-color: #1bc47d;
-    box-shadow: 0 0 0 3px rgba(27, 196, 125, 0.1);
-}
-
-.result-count {
-    font-size: 12px;
-    color: #999;
-    white-space: nowrap;
-}
-
-#result-count,
-#total-count {
-    font-weight: 600;
-    color: #333;
-}
-
-/* Table Wrapper */
-.test-catalog-wrapper {
-    background: #fff;
-    border-radius: 8px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-    overflow: hidden;
-}
-
-/* Table Styles */
 .test-catalog-table {
-    width: 100%;
-    border-collapse: collapse;
+    min-width: 940px;
 }
 
-.test-catalog-table thead {
-    background: #f8f9fa;
-    border-bottom: 2px solid #e0e0e0;
+.test-catalog-table .rd-th-right,
+.test-catalog-table .price-cell {
+    text-align: right;
 }
 
-.test-catalog-table thead tr {
-    background: linear-gradient(to right, #f8f9fa 0%, #f0f1f3 100%);
-}
-
-.test-catalog-table thead th {
-    padding: 10px 8px;
-    text-align: left;
-    font-size: 11px;
-    font-weight: 700;
-    color: #666;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    border-right: 1px solid #e8e8e8;
-}
-
-.test-catalog-table thead th:last-child {
-    border-right: none;
-}
-
-/* Column Widths */
-.col-id, .col-name, .col-dept, .col-lib, .col-price, .col-actions {
-    text-align: center;
-}
-
-/* Table Body Rows */
-.test-catalog-table tbody tr {
-    border-bottom: 1px solid #e8e8e8;
-    transition: all 0.2s ease;
-}
-
-.test-catalog-table tbody tr:hover {
-    background-color: #f9f9f9;
-    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.02);
-}
-
-.test-catalog-table tbody td {
-    padding: 14px 12px;
-    font-size: 13px;
-    color: #333;
-    vertical-align: middle;
-}
-
-/* Test ID Cell */
 .test-id-cell {
-    text-align: center;
+    text-align: left;
 }
 
 .test-id-badge {
     display: inline-block;
     padding: 6px 10px;
-    background: #f0f0f0;
-    border-radius: 4px;
-    font-size: 12px;
+    background: #f0f4fa;
+    border-radius: 6px;
+    font-size: 0.76rem;
     font-weight: 700;
-    color: #666;
-    letter-spacing: 0.5px;
-    border: 1px solid #e0e0e0;
+    color: #566f86;
+    letter-spacing: 0.02em;
+    border: 1px solid #dbe5ef;
 }
 
-/* Test Name Cell */
 .test-name-cell {
-    padding: 12px;
+    min-width: 230px;
 }
 
 .test-name-title {
-    font-weight: 600;
-    color: #333;
-    margin-bottom: 4px;
+    font-weight: 700;
+    color: #233b50;
+    margin-bottom: 2px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
 .test-description {
-    font-size: 12px;
-    color: #999;
+    font-size: 0.78rem;
+    color: #7b8ea2;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    max-width: 280px;
 }
 
-/* Department Badge */
 .department-cell {
-    text-align: center;
+    white-space: nowrap;
 }
 
 .dept-badge {
     display: inline-block;
-    padding: 6px 12px;
-    border-radius: 20px;
-    font-size: 11px;
-    font-weight: 600;
+    padding: 5px 10px;
+    border-radius: 999px;
+    font-size: 0.68rem;
+    font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
-    white-space: nowrap;
+    letter-spacing: 0.05em;
+    border: 1px solid transparent;
 }
 
-/* Department Colors */
 .dept-badge.dept-hematology {
     background: #e8f0ff;
     color: #2563eb;
-    border: 1px solid #bee3f8;
+    border-color: #bee3f8;
 }
 
 .dept-badge.dept-biochemistry {
     background: #f0e8ff;
     color: #7c3aed;
-    border: 1px solid #ddd6fe;
+    border-color: #ddd6fe;
 }
 
 .dept-badge.dept-immunology {
     background: #f0fdf4;
     color: #16a34a;
-    border: 1px solid #dcfce7;
+    border-color: #dcfce7;
 }
 
 .dept-badge.dept-microbiology {
     background: #fef3c7;
     color: #d97706;
-    border: 1px solid #fde68a;
+    border-color: #fde68a;
 }
 
 .dept-badge.dept-radiology {
     background: #fce7f3;
     color: #db2777;
-    border: 1px solid #fbcfe8;
+    border-color: #fbcfe8;
 }
 
 .dept-badge.dept-other {
     background: #f3f4f6;
     color: #4b5563;
-    border: 1px solid #e5e7eb;
+    border-color: #e5e7eb;
 }
 
-/* Lab ID Cell */
 .lib-id-cell {
-    text-align: center;
     font-family: 'Courier New', monospace;
+    color: #4f6478;
 }
 
 .lib-id {
     display: inline-block;
-    padding: 4px 8px;
-    background: #f9f9f9;
-    border-radius: 3px;
-    font-size: 12px;
-    font-weight: 600;
-    color: #666;
-    letter-spacing: 0.3px;
-}
-
-/* Price Cell */
-.price-cell {
-    text-align: right;
-    font-weight: 600;
+    padding: 3px 8px;
+    background: #f6f9fd;
+    border-radius: 5px;
+    font-size: 0.74rem;
+    font-weight: 700;
+    border: 1px solid #e4ecf4;
 }
 
 .price-amount {
-    color: #1bc47d;
-    font-size: 14px;
+    color: #22a06b;
     font-weight: 700;
+    font-size: 0.88rem;
 }
 
-/* Actions Cell */
 .actions-cell {
     display: flex;
+    justify-content: flex-end;
     gap: 8px;
-    align-items: center;
 }
 
 .action-btn-edit,
 .action-btn-delete,
 .action-btn-view {
-    width: 36px;
-    height: 36px;
+    width: 34px;
+    height: 34px;
     border: none;
-    border-radius: 6px;
-    display: flex;
+    border-radius: 8px;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all 0.2s ease;
     flex-shrink: 0;
 }
 
 .action-btn-edit {
     background-color: var(--primary-color);
-    color: white;
+    color: #fff;
 }
 
 .action-btn-edit:hover {
     background-color: #2da5d4;
-    color: white;
 }
 
 .action-btn-delete {
@@ -307,17 +160,15 @@
 
 .action-btn-delete:hover {
     background-color: #fecaca;
-    color: #7f1d1d;
 }
 
 .action-btn-view {
-    background-color: #f3f4f6;
-    color: #374151;
+    background-color: #eef2f7;
+    color: #3a4f64;
 }
 
 .action-btn-view:hover {
-    background-color: #e5e7eb;
-    color: #1f2937;
+    background-color: #e3eaf2;
 }
 
 .action-btn-edit svg,
@@ -326,275 +177,17 @@
     width: 16px;
     height: 16px;
 }
-/* Empty State */
-.empty-state {
-    text-align: center;
-}
-
-.empty-state td {
-    padding: 60px 20px !important;
-}
-
-.empty-state a {
-    color: #1bc47d;
-    text-decoration: none;
-    font-weight: 600;
-    transition: all 0.2s ease;
-}
-
-.empty-state a:hover {
-    color: #0a9d5f;
-    text-decoration: underline;
-}
-
-/* Responsive Design */
-@media (max-width: 1200px) {
-    .catalog-controls {
-        flex-direction: column;
-        align-items: stretch;
-    }
-
-    .search-section {
-        max-width: 100%;
-    }
-
-    .filter-section {
-        flex-wrap: wrap;
-    }
-
-    .col-name { width: 200px; }
-    .col-dept { width: 120px; }
-}
 
 @media (max-width: 768px) {
-    .catalog-controls {
-        flex-direction: column;
-        gap: 15px;
-        padding: 15px;
+    .tc-filter-grid {
+        grid-template-columns: 1fr;
     }
 
-    .search-section {
-        max-width: 100%;
-    }
-
-    .filter-section {
-        window-width: 100%;
-        justify-content: space-between;
-    }
-
-    .result-count {
-        display: none;
-    }
-
-    /* Stack table columns on mobile */
     .test-catalog-table {
-        font-size: 12px;
-    }
-
-    .col-id { width: 70px; }
-    .col-name { width: 140px; }
-    .col-dept { width: 80px; }
-    .col-lib { width: 80px; }
-    .col-price { width: 70px; }
-    .col-actions { width: 90px; }
-
-    .test-catalog-table thead th {
-        padding: 10px 6px;
-        font-size: 10px;
-    }
-
-    .test-catalog-table tbody td {
-        padding: 10px 6px;
-    }
-
-    .test-name-title,
-    .test-description,
-    .lib-id {
-        font-size: 11px;
-    }
-
-    .dept-badge {
-        font-size: 9px;
-        padding: 4px 8px;
-    }
-
-    .action-btn {
-        width: 28px;
-        height: 28px;
-        margin: 0 2px;
-        font-size: 14px;
-    }
-
-    .test-id-badge {
-        padding: 4px 6px;
-        font-size: 10px;
-    }
-}
-
-@media (max-width: 480px) {
-    .test-catalog-table {
-        font-size: 11px;
-    }
-
-    .col-id, .col-dept, .col-price {
-        width: 60px;
-    }
-
-    .col-name {
-        width: 100px;
-    }
-
-    .col-lib {
-        width: 70px;
+        min-width: 760px;
     }
 
     .test-description {
-        display: none;
-    }
-
-    .action-btn {
-        width: 26px;
-        height: 26px;
-        font-size: 12px;
-    }
-}
-
-/* Pagination Styles */
-.test-pagination {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 20px;
-    background: white;
-    border: 1px solid #e5e7eb;
-    border-top: none;
-    border-radius: 0 0 8px 8px;
-    gap: 20px;
-}
-
-.pagination-info {
-    font-size: 14px;
-    color: #6b7280;
-    font-weight: 500;
-    white-space: nowrap;
-}
-
-.pagination-buttons {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.pagination-btn {
-    padding: 8px 12px;
-    border: 1px solid #e5e7eb;
-    background: white;
-    border-radius: 4px;
-    cursor: pointer;
-    font-weight: 500;
-    color: #374151;
-    transition: all 0.3s ease;
-    min-width: 40px;
-    text-align: center;
-}
-
-.pagination-btn:hover:not(:disabled) {
-    border-color: #1bc47d;
-    color: #1bc47d;
-    background: #f0fdf4;
-}
-
-.pagination-btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-
-.pagination-numbers {
-    display: flex;
-    gap: 5px;
-}
-
-.pagination-num {
-    width: 36px;
-    height: 36px;
-    border: 1px solid #e5e7eb;
-    background: white;
-    border-radius: 4px;
-    cursor: pointer;
-    font-weight: 600;
-    color: #374151;
-    transition: all 0.3s ease;
-    font-size: 13px;
-}
-
-.pagination-num:hover {
-    border-color: #1bc47d;
-    color: #1bc47d;
-    background: #f0fdf4;
-}
-
-.pagination-num.active {
-    background-color: #1bc47d;
-    color: white;
-    border-color: #1bc47d;
-    font-weight: 700;
-}
-
-/* Responsive Pagination */
-@media (max-width: 768px) {
-    .test-pagination {
-        flex-direction: column;
-        gap: 15px;
-        text-align: center;
-    }
-
-    .pagination-info {
-        width: 100%;
-    }
-
-    .pagination-buttons {
-        justify-content: center;
-        width: 100%;
-    }
-
-    .pagination-num {
-        width: 32px;
-        height: 32px;
-        font-size: 12px;
-    }
-
-    .pagination-btn {
-        padding: 6px 10px;
-    }
-}
-
-@media (max-width: 480px) {
-    .pagination-numbers {
-        gap: 3px;
-    }
-
-    .pagination-num {
-        width: 28px;
-        height: 28px;
-        font-size: 11px;
-    }
-}
-
-/* Print Styles */
-@media print {
-    .catalog-controls {
-        display: none;
-    }
-
-    .test-pagination {
-        display: none;
-    }
-
-    .test-catalog-table thead {
-        background: #f0f0f0;
-    }
-
-    .action-btn {
-        display: none;
+        max-width: 180px;
     }
 }

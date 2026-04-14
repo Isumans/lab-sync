@@ -14,6 +14,7 @@ if (!isset($_SESSION['user_id'])) {
     <link rel="stylesheet" href="/lab_sync/public/styles.css">
     <link rel="stylesheet" href="/lab_sync/public/settingStyles.css">
     <link rel="stylesheet" href="/lab_sync/public/table.css">
+    <link rel="stylesheet" href="/lab_sync/public/reportsDashboard.css">
     <link rel="stylesheet" href="/lab_sync/public/appointmentStyles.css">
     <link rel="stylesheet" href="/lab_sync/public/appointmentFormStyles.css">
     <link rel="stylesheet" href="/lab_sync/public/appointmentPopup.css">
@@ -31,46 +32,63 @@ if (!isset($_SESSION['user_id'])) {
 
             <!-- Main Body Section -->
             <main class="main-content">
-                <div class="main-content-header">
-                    <div class="main-topic">
-                        <h1>Appointments</h1>
-                        <a class="add-user-button" href="/lab_sync/index.php?controller=appointmentsController&action=createAppointment">+ Create Appointment</a>
-                    </div>
-                    <p class="MC-p">Appointments-&gt;</p>
-                </div>
+                <?php
+                    $pageTitle = 'Appointments';
+                    $pageBreadcrumbText = 'Appointments->';
+                    $pageActionHtml = '<a class="add-user-button" href="/lab_sync/index.php?controller=appointmentsController&action=createAppointment">+ Create Appointment</a>';
+                    require __DIR__ . '/../../../public/partials/page-header.php';
+                ?>
 
-                <!-- Appointment Header with Stats -->
-                <div class="team-header-container">
-                    <!-- Stats Cards -->
-                    <div class="team-stats-grid" style="grid-template-columns: repeat(2, 1fr);">
-                        <div class="stat-card-team">
-                            <div class="stat-label-team">TOTAL APPOINTMENTS</div>
-                            <div class="stat-value-team countup" data-target="<?php echo count($appointmentsOnline ?? []) + count($appointmentsPhysical ?? []); ?>">0</div>
-                            <div class="stat-change"><span class="countup-percent" data-target="5">0</span>% from last month</div>
+
+                <section class="rd-filter-card" aria-label="Search and Filters">
+                    <div class="rd-filter-grid">
+                        <div class="rd-filter-field rd-filter-field-search">
+                            <label for="aptSearch">Search Appointments</label>
+                            <input id="aptSearch" type="text" placeholder="Search by Patient Name, Appointment ID, or Type..." />
                         </div>
 
-                        <div class="stat-card-team">
-                            <div class="stat-label-team">UPCOMING THIS WEEK</div>
-                            <div class="stat-value-team countup" data-target="<?php echo count($appointmentsPhysical ?? []); ?>">0</div>
-                            <div class="stat-change"><span class="countup-percent" data-target="3">0</span>% increase</div>
+                        <div class="rd-filter-field">
+                            <label for="aptMethod">Appointment Type</label>
+                            <select id="aptMethod">
+                                <option value="all">All Appointments</option>
+                                <option value="online">Online</option>
+                                <option value="physical">Physical/Call</option>
+                            </select>
+                        </div>
+
+                        <div class="rd-filter-field">
+                            <label for="aptSortBy">Sort By</label>
+                            <select id="aptSortBy">
+                                <option value="appointment_date">Date</option>
+                                <option value="appointment_time">Time</option>
+                                <option value="patient_name">Patient Name</option>
+                                <option value="appointment_id">Appointment ID</option>
+                                <option value="method">Type</option>
+                            </select>
                         </div>
                     </div>
-                </div>
 
-                <!-- Search and Controls -->
-                <div class="team-controls">
-                    <input type="text" class="team-search-bar" placeholder="🔍 Search Appointments..." id="appointmentSearchInput">
-                    <button class="team-filter-button">↓ Filter</button>
-                </div>
+                    <div class="rd-filter-bottom-row">
+                        <div class="rd-filter-date-range">
+                            <div class="rd-filter-field">
+                                <label for="aptDateFrom">Date Range</label>
+                                <input id="aptDateFrom" type="date" />
+                            </div>
+                            <div class="rd-filter-field rd-filter-field-to">
+                                <label for="aptDateTo" class="rd-hidden-label">End Date</label>
+                                <input id="aptDateTo" type="date" />
+                            </div>
+                        </div>
 
-                <!-- Appointment Tabs -->
-                <div class="nav-bar-container" style="margin-top: 20px; margin-bottom: 20px;">
-                    <div class="team-tabs">
-                        <button class="team-tab active" data-filter="all" onclick="filterAppointments('all', this, event)">All Appointments</button>
-                        <button class="team-tab" data-filter="online" onclick="filterAppointments('online', this, event)">Online</button>
-                        <button class="team-tab" data-filter="physical" onclick="filterAppointments('physical', this, event)">Physical/Call</button>
+                        <div class="rd-sort-direction-wrap">
+                            <select id="aptSortDir" class="rd-sort-direction" aria-label="Sort direction">
+                                <option value="desc">Newest First</option>
+                                <option value="asc">Oldest First</option>
+                            </select>
+                            <button type="button" class="rd-clear-btn" id="aptClearBtn">Clear All Filters</button>
+                        </div>
                     </div>
-                </div>
+                </section>
 
                 <!-- Create Appointment Modal -->
                 <div id="createAppointmentModal" class="modal" aria-hidden="true">
@@ -264,202 +282,35 @@ if (!isset($_SESSION['user_id'])) {
                     </div>
                         
                     </div>
-
-
-
-
-
                 <div id="appointmentEditToast" class="appointment-edit-toast" aria-live="polite" hidden></div>
 
-                <div id="content-area" class="content-area">
-                    <!-- All Appointments Section -->
-                    <div id="all" class="section">
-                        <div class="team-table-container">
-                            <table class="team-users-table">
-                                <thead>
-                                    <tr>
-                                        <th style="width: 7%;">ID</th>
-                                        <th style="width: 15%;">PATIENT NAME</th>
-                                        <th style="width: 14%;text-align: center;">DATE</th>
-                                        <th style="width: 14%;text-align: center;">TIME</th>
-                                        <th style="width: 14%;text-align: center;">TYPE</th>
-                                        <th style="width: 18%;text-align: center;">BILLING</th>
-                                        <th style="width: 17%;text-align: center;">ACTIONS</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <?php 
-                                    $allAppointments = array_merge(
-                                        $appointmentsOnline ?? [],
-                                        $appointmentsPhysical ?? []
-                                    );
-                                    if (!empty($allAppointments)): ?>
-                                        <?php foreach ($allAppointments as $appointment): ?>
-                                            <?php $patientLabel = $appointment['patient_name'] ?? ($appointment['patient_display_name'] ?? ($appointment['patient_id'] ?? 'N/A')); ?>
-                                            <tr>
-                                                <td><strong><?php echo htmlspecialchars($appointment['appointment_id']); ?></strong></td>
-                                                <td><?php echo htmlspecialchars((string) $patientLabel); ?></td>
-                                                <td style="text-align: center;"><?php echo htmlspecialchars($appointment['appointment_date']); ?></td>
-                                                <td style="text-align: center;"><?php echo htmlspecialchars($appointment['appointment_time']); ?></td>
-                                                <td style="text-align: center;">
-                                                    <span class="status-badge <?php echo isset($appointment['method']) && $appointment['method'] === 'online' ? 'status-active' : 'status-inactive'; ?>">
-                                                        <?php echo isset($appointment['method']) ? ucfirst($appointment['method']) : 'N/A'; ?>
-                                                    </span>
-                                                </td>
-                                                <td style="text-align: center;">
-                                                    <button type="button" class="billing-action-btn" onclick="window.location.href='/lab_sync/index.php?controller=billingController&action=Register_billing&appointment_id=<?php echo htmlspecialchars($appointment['appointment_id']); ?>'" title="<?php echo (isset($appointment['bill_id']) && $appointment['bill_id']) ? 'View Bill' : 'Create Bill'; ?>">
-                                                        <?php echo (isset($appointment['bill_id']) && $appointment['bill_id']) ? 'View Bill' : 'Create Bill'; ?>
-                                                    </button>
-                                                </td>
-                                                <td class="user-actions" style="align-items: center; justify-content: center;">
-                                                    <button type="button" class="action-btn-view view-btn js-view-details-btn" data-appointment-id="<?php echo htmlspecialchars($appointment['appointment_id']); ?>" title="View Details">
-                                                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                                                            <path d="M1 8C1 8 3.5 2 8 2C12.5 2 15 8 15 8C15 8 12.5 14 8 14C3.5 14 1 8 1 8Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                                                            <path d="M8 5C6.34315 5 5 6.34315 5 8C5 9.65685 6.34315 11 8 11C9.65685 11 11 9.65685 11 8C11 6.34315 9.65685 5 8 5Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                                                        </svg>
-                                                    </button>
-                                                    <button type="button" class="action-btn-edit edit-btn js-edit-appointment-btn" data-appointment-id="<?php echo htmlspecialchars($appointment['appointment_id']); ?>" title="Edit">
-                                                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                                                            <path d="M3 13.5H13M2 11L11.5 1.5C11.8 1.2 12.3 1.2 12.6 1.5L14.5 3.4C14.8 3.7 14.8 4.2 14.5 4.5L5 14H2V11Z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
-                                                        </svg>
-                                                    </button>
-                                                    <button type="button" class="action-btn-delete delete-btn js-delete-appointment-btn" data-appointment-id="<?php echo htmlspecialchars($appointment['appointment_id']); ?>" data-patient-name="<?php echo htmlspecialchars((string) $patientLabel); ?>" title="Delete">
-                                                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                                                            <path d="M2 4H14M6.5 7V11M9.5 7V11M3 4L4 13C4 13.5 4.5 14 5 14H11C11.5 14 12 13.5 12 13L13 4M5.5 4V2.5C5.5 2.2 5.7 2 6 2H10C10.3 2 10.5 2.2 10.5 2.5V4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
-                                                        </svg>
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                        <?php endforeach; ?>
-                                    <?php else: ?>
-                                        <tr>
-                                            <td colspan="7" style="text-align: center; padding: 40px;">
-                                                <p>No appointments found. <a href="#" onclick="document.getElementById('openCreateAppointment').click()">Create your first appointment</a></p>
-                                            </td>
-                                        </tr>
-                                    <?php endif; ?>
-                                </tbody>
-                            </table>
-                        </div>
+                <section class="rd-table-card" aria-label="Appointments Table">
+                    <div class="rd-table-wrap">
+                        <table class="rd-table">
+                            <thead>
+                                <tr>
+                                    <th class="rd-sortable is-active" data-sort="appointment_id" data-direction="desc">Appointment ID</th>
+                                    <th class="rd-sortable" data-sort="patient_name" data-direction="asc">Patient Name</th>
+                                    <th class="rd-sortable" data-sort="appointment_date" data-direction="desc">Date</th>
+                                    <th class="rd-sortable" data-sort="appointment_time" data-direction="desc">Time</th>
+                                    <th class="rd-sortable" data-sort="method" data-direction="asc">Type</th>
+                                    <th class="rd-th-right">Billing</th>
+                                    <th class="rd-th-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="aptTableBody"></tbody>
+                        </table>
                     </div>
 
-                    <!-- Online Appointments Section -->
-                    <div id="online" class="section" style="display:none;">
-                        <div class="team-table-container">
-                            <table class="team-users-table">
-                                <thead>
-                                    <tr>
-                                        <th style="width: 17%;">APPOINTMENT ID</th>
-                                        <th style="width: 17%;">PATIENT NAME</th>
-                                        <th style="width: 17%;text-align: center;">DATE</th>
-                                        <th style="width: 17%;text-align: center;">TIME</th>
-                                        <th style="width: 16%;text-align: center;">BILLING</th>
-                                        <th style="width: 16%;text-align: center;">ACTIONS</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <?php if (!empty($appointmentsOnline)): ?>
-                                        <?php foreach ($appointmentsOnline as $appointment): ?>
-                                            <?php $patientLabel = $appointment['patient_name'] ?? ($appointment['patient_display_name'] ?? ($appointment['patient_id'] ?? 'N/A')); ?>
-                                            <tr>
-                                                <td><strong><?php echo htmlspecialchars($appointment['appointment_id']); ?></strong></td>
-                                                <td><?php echo htmlspecialchars((string) $patientLabel); ?></td>
-                                                <td style="text-align: center;"><?php echo htmlspecialchars($appointment['appointment_date']); ?></td>
-                                                <td style="text-align: center;"><?php echo htmlspecialchars($appointment['appointment_time']); ?></td>
-                                                <td style="text-align: center;">
-                                                    <button type="button" class="billing-action-btn" onclick="window.location.href='/lab_sync/index.php?controller=billingController&action=Register_billing&appointment_id=<?php echo htmlspecialchars($appointment['appointment_id']); ?>'" title="<?php echo (isset($appointment['bill_id']) && $appointment['bill_id']) ? 'View Bill' : 'Create Bill'; ?>">
-                                                        <?php echo (isset($appointment['bill_id']) && $appointment['bill_id']) ? 'View Bill' : 'Create Bill'; ?>
-                                                    </button>
-                                                </td>
-                                                <td class="user-actions" style="align-items: center; justify-content: center;">
-                                                    <button type="button" class="action-btn-view view-btn js-view-details-btn" data-appointment-id="<?php echo htmlspecialchars($appointment['appointment_id']); ?>" title="View Details">
-                                                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                                                            <path d="M1 8C1 8 3.5 2 8 2C12.5 2 15 8 15 8C15 8 12.5 14 8 14C3.5 14 1 8 1 8Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                                                            <path d="M8 5C6.34315 5 5 6.34315 5 8C5 9.65685 6.34315 11 8 11C9.65685 11 11 9.65685 11 8C11 6.34315 9.65685 5 8 5Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                                                        </svg>
-                                                    </button>
-                                                    <button type="button" class="action-btn-edit edit-btn js-edit-appointment-btn" data-appointment-id="<?php echo htmlspecialchars($appointment['appointment_id']); ?>" title="Edit">
-                                                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                                                            <path d="M3 13.5H13M2 11L11.5 1.5C11.8 1.2 12.3 1.2 12.6 1.5L14.5 3.4C14.8 3.7 14.8 4.2 14.5 4.5L5 14H2V11Z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
-                                                        </svg>
-                                                    </button>
-                                                    <button type="button" class="action-btn-delete delete-btn js-delete-appointment-btn" data-appointment-id="<?php echo htmlspecialchars($appointment['appointment_id']); ?>" data-patient-name="<?php echo htmlspecialchars((string) $patientLabel); ?>" title="Delete">
-                                                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                                                            <path d="M2 4H14M6.5 7V11M9.5 7V11M3 4L4 13C4 13.5 4.5 14 5 14H11C11.5 14 12 13.5 12 13L13 4M5.5 4V2.5C5.5 2.2 5.7 2 6 2H10C10.3 2 10.5 2.2 10.5 2.5V4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
-                                                        </svg>
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                        <?php endforeach; ?>
-                                    <?php else: ?>
-                                        <tr><td colspan="6" style="text-align: center; padding: 40px;">No online appointments found.</td></tr>
-                                    <?php endif; ?>
-                                </tbody>
-                            </table>
-                        </div>
+                    <div class="rd-table-footer">
+                        <p id="aptShowingText">Showing 0-0 of 0 appointments</p>
+                        <div class="rd-pagination" id="aptPagination"></div>
                     </div>
-
-                    <!-- Physical/Call Appointments Section -->
-                    <div id="physical" class="section" style="display:none;">
-                        <div class="team-table-container">
-                            <table class="team-users-table">
-                                <thead>
-                                    <tr>
-                                        <th style="width: 17%;">ID</th>
-                                        <th style="width: 17%;">PATIENT NAME</th>
-                                        <th style="width: 17%;text-align: center;">DATE</th>
-                                        <th style="width: 17%;text-align: center;">TIME</th>
-                                        <th style="width: 16%;text-align: center;">BILLING</th>
-                                        <th style="width: 16%;text-align: center;">ACTIONS</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <?php if (!empty($appointmentsPhysical)): ?>
-                                        <?php foreach ($appointmentsPhysical as $appointment): ?>
-                                            <?php $patientLabel = $appointment['patient_name'] ?? ($appointment['patient_display_name'] ?? ($appointment['patient_id'] ?? 'N/A')); ?>
-                                            <tr>
-                                                <td><strong><?php echo htmlspecialchars($appointment['appointment_id']); ?></strong></td>
-                                                <td><?php echo htmlspecialchars((string) $patientLabel); ?></td>
-                                                <td style="text-align: center;"><?php echo htmlspecialchars($appointment['appointment_date']); ?></td>
-                                                <td style="text-align: center;"><?php echo htmlspecialchars($appointment['appointment_time']); ?></td>
-                                                <td style="text-align: center;">
-                                                    <button type="button" class="billing-action-btn" onclick="window.location.href='/lab_sync/index.php?controller=billingController&action=Register_billing&appointment_id=<?php echo htmlspecialchars($appointment['appointment_id']); ?>'" title="<?php echo (isset($appointment['bill_id']) && $appointment['bill_id']) ? 'View Bill' : 'Create Bill'; ?>">
-                                                        <?php echo (isset($appointment['bill_id']) && $appointment['bill_id']) ? 'View Bill' : 'Create Bill'; ?>
-                                                    </button>
-                                                </td>
-                                                <td class="user-actions" style="align-items: center; justify-content: center;">
-                                                    <button type="button" class="action-btn-view view-btn js-view-details-btn" data-appointment-id="<?php echo htmlspecialchars($appointment['appointment_id']); ?>" title="View Details">
-                                                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                                                            <path d="M1 8C1 8 3.5 2 8 2C12.5 2 15 8 15 8C15 8 12.5 14 8 14C3.5 14 1 8 1 8Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                                                            <path d="M8 5C6.34315 5 5 6.34315 5 8C5 9.65685 6.34315 11 8 11C9.65685 11 11 9.65685 11 8C11 6.34315 9.65685 5 8 5Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                                                        </svg>
-                                                    </button>
-                                                    <button type="button" class="action-btn-edit edit-btn js-edit-appointment-btn" data-appointment-id="<?php echo htmlspecialchars($appointment['appointment_id']); ?>" title="Edit">
-                                                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                                                            <path d="M3 13.5H13M2 11L11.5 1.5C11.8 1.2 12.3 1.2 12.6 1.5L14.5 3.4C14.8 3.7 14.8 4.2 14.5 4.5L5 14H2V11Z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
-                                                        </svg>
-                                                    </button>
-                                                    <button type="button" class="action-btn-delete delete-btn js-delete-appointment-btn" data-appointment-id="<?php echo htmlspecialchars($appointment['appointment_id']); ?>" data-patient-name="<?php echo htmlspecialchars((string) $patientLabel); ?>" title="Delete" >
-                                                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                                                            <path d="M2 4H14M6.5 7V11M9.5 7V11M3 4L4 13C4 13.5 4.5 14 5 14H11C11.5 14 12 13.5 12 13L13 4M5.5 4V2.5C5.5 2.2 5.7 2 6 2H10C10.3 2 10.5 2.2 10.5 2.5V4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
-                                                        </svg>
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                        <?php endforeach; ?>
-                                    <?php else: ?>
-                                        <tr><td colspan="6" style="text-align: center; padding: 40px;">No physical appointments found.</td></tr>
-                                    <?php endif; ?>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
+                </section>
             </main>
             <script src="/lab_sync/public/js/appointmentPopup.js"></script>
             <script src="/lab_sync/public/js/appointmentFilter.js"></script>
             <script src="/lab_sync/public/js/addTest.js"></script>
-            <script src="/lab_sync/public/js/showSection.js"></script>
             <script src="/lab_sync/public/js/searchPatient.js"></script>
             <script src="/lab_sync/public/js/appointmentForm.js"></script>
             <script src="/lab_sync/public/js/appointmentDetailsModal.js"></script>

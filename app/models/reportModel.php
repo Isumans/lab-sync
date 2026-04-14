@@ -8,7 +8,7 @@ class ReportModel {
         $this->db = $db;
     }
 
-    public function getReportsList($filters, $page = 1, $perPage = 10) {
+    public function getReportsList($filters, $page = 1, $perPage = 7) {
         $this->lastError = '';
         $page = max(1, intval($page));
         $perPage = max(1, min(50, intval($perPage)));
@@ -1406,7 +1406,7 @@ class ReportModel {
     /**
      * Paginated list of authorized/printed reports (for receptionist dashboard).
      */
-    public function getAuthorizedReportsList($filters, $page = 1, $perPage = 10)
+    public function getAuthorizedReportsList($filters, $page = 1, $perPage = 7)
     {
         $this->lastError = '';
         $page    = max(1, intval($page));

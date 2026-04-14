@@ -22,12 +22,12 @@ if (!isset($_SESSION['user_id'])) {
 
         <main class="main-content">
             <section class="reports-dashboard rr-dashboard" aria-label="Receptionist Reports Dashboard">
-                <div class="main-content-header">
-                    <div class="main-topic">
-                        <h1>Authorized Reports</h1>
-                    </div>
-                    <p class="MC-p">Reports-&gt;Authorized Reports</p>
-                </div>
+                <?php
+                    $pageTitle = 'Authorized Reports';
+                    $pageBreadcrumbText = 'Reports->Authorized Reports';
+                    $pageActionHtml = '';
+                    require __DIR__ . '/../../../public/partials/page-header.php';
+                ?>
 
                 <section class="rd-filter-card" aria-label="Search Reports">
                     <div class="rr-filter-row">

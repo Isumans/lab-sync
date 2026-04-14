@@ -25,13 +25,12 @@ if (!isset($_SESSION['user_id'])) {
             <!-- Main Body Section -->
             <main class="main-content">
                  <div class="Tmain-content">
-                    <div class="test-catalog-header">
-                        <h1>Add User</h1>
-                    </div>
-                    <div>
-                        <p class="MC-p">Settings->Add User</p>
-                    </div>
-                    <br/>
+                    <?php
+                        $pageTitle = 'Add User';
+                        $pageBreadcrumbText = 'Settings->Add User';
+                        $pageActionHtml = '';
+                        require __DIR__ . '/../../../public/partials/page-header.php';
+                    ?>
                     <div class="add-user-form-container">
                         <form action="/lab_sync/index.php?controller=administratorController&action=create_user" method="POST">
                             

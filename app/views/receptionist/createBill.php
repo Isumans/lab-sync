@@ -104,13 +104,12 @@ $bootstrap = [
             <!-- Main Body Section -->
             <main class="main-content">
                  <div class="Tmain-content">
-                    <div class="test-catalog-header">
-                        <h1>Appointment Billing</h1>
-                        <a href="/lab_sync/index.php?controller=appointmentsController&action=index&role=receptionist" class="add-user-button">Back to Appointments</a>
-                    </div>
-                    <div>
-                        <p class="MC-p">Appointments->Create Bill</p>
-                    </div>
+                    <?php
+                        $pageTitle = 'Appointment Billing';
+                        $pageBreadcrumbText = 'Appointments->Create Bill';
+                        $pageActionHtml = '<a href="/lab_sync/index.php?controller=appointmentsController&action=index&role=receptionist" class="add-user-button">Back to Appointments</a>';
+                        require __DIR__ . '/../../../public/partials/page-header.php';
+                    ?>
                     <?php if ($appointment === null || $safeAppointmentId <= 0): ?>
                         <div class="billing-empty-state">
                             <h3>Appointment not found</h3>

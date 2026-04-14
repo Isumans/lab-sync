@@ -22,3 +22,62 @@
     margin-top: 10px;
     justify-self: center;
 }
+
+.patient-rd-table {
+    min-width: 760px;
+}
+
+.patient-rd-table .rd-th-right {
+    text-align: right;
+}
+
+.patient-rd-table .rd-patient-cell small {
+    color: #6b7d91;
+    font-size: 0.78rem;
+}
+
+.patient-sort-direction-wrap {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.patient-sort-direction {
+    min-width: 130px;
+    height: 40px;
+    border: 1px solid #dbe6ef;
+    border-radius: 9px;
+    background: #f4f7fc;
+    padding: 0 10px;
+    color: #1c2d3f;
+}
+
+.pt-sortable {
+    cursor: pointer;
+    user-select: none;
+    position: relative;
+    padding-right: 28px;
+}
+
+.pt-sortable::after {
+    content: '\2195';
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.74rem;
+    opacity: 0.45;
+}
+
+.pt-sortable.is-active::after {
+    opacity: 1;
+    color: #2f617f;
+}
+
+.pt-sortable.is-active.is-asc::after {
+    content: '\2191';
+}
+
+.pt-sortable.is-active.is-desc::after {
+    content: '\2193';
+}
