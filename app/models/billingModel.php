@@ -397,8 +397,169 @@ class BillingModel {
         }
     }
 
+    public function getBillsList($filters, $page = 1, $perPage = 10) {
+        $this->lastError = '';
+
+        if (!$this->tableExists('bills')) {
+            return [];
+        }
+
+        $page = max(1, intval($page));
+        $perPage = max(1, min(50, intval($perPage)));
+        $offset = ($page - 1) * $perPage;
+
+        list($whereSql, $types, $params) = $this->buildBillsWhereClause($filters);
+        $sql = "
+            SELECT
+                b.bill_id,
+                b.appointment_id,
+                b.patient_id,
+                b.bill_date,
+                b.total_amount,
+                b.paid_amount,
+                b.status,
+                COALESCE(p.patient_name, CONCAT('Patient #', b.patient_id)) AS patient_name,
+                (
+                    SELECT pay.payment_method
+                    FROM payments pay
+                    WHERE pay.bill_id = b.bill_id
+                    ORDER BY pay.payment_date DESC, pay.payment_id DESC
+                    LIMIT 1
+                ) AS latest_payment_method
+            FROM bills b
+            LEFT JOIN patients p ON p.patient_id = b.patient_id
+            {$whereSql}
+            ORDER BY b.bill_date DESC, b.bill_id DESC
+            LIMIT ? OFFSET ?
+        ";
+
+        $types .= 'ii';
+        $params[] = $perPage;
+        $params[] = $offset;
+
+        $stmt = $this->prepareAndBind($sql, $types, $params, 'getBillsList');
+        if ($stmt === null) {
+            return [];
+        }
+
+        if (!$stmt->execute()) {
+            $this->lastError = 'Execute failed in getBillsList: ' . $stmt->error;
+            return [];
+        }
+
+        $result = $stmt->get_result();
+        return $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
+    }
+
+    public function countBills($filters) {
+        $this->lastError = '';
+
+        if (!$this->tableExists('bills')) {
+            return 0;
+        }
+
+        list($whereSql, $types, $params) = $this->buildBillsWhereClause($filters);
+        $sql = "
+            SELECT COUNT(*) AS total_rows
+            FROM bills b
+            LEFT JOIN patients p ON p.patient_id = b.patient_id
+            {$whereSql}
+        ";
+
+        $stmt = $this->prepareAndBind($sql, $types, $params, 'countBills');
+        if ($stmt === null) {
+            return 0;
+        }
+
+        if (!$stmt->execute()) {
+            $this->lastError = 'Execute failed in countBills: ' . $stmt->error;
+            return 0;
+        }
+
+        $result = $stmt->get_result();
+        $row = $result ? $result->fetch_assoc() : null;
+        return $row && isset($row['total_rows']) ? intval($row['total_rows']) : 0;
+    }
+
     public function getLastError() {
         return $this->lastError;
+    }
+
+    private function buildBillsWhereClause($filters) {
+        $whereParts = [];
+        $types = '';
+        $params = [];
+
+        $search = trim((string) ($filters['search'] ?? ''));
+        if ($search !== '') {
+            $whereParts[] = '(p.patient_name LIKE ? OR CAST(b.appointment_id AS CHAR) LIKE ? OR b.bill_number LIKE ?)';
+            $likeSearch = '%' . $search . '%';
+            $types .= 'sss';
+            $params[] = $likeSearch;
+            $params[] = $likeSearch;
+            $params[] = $likeSearch;
+        }
+
+        $status = strtolower(trim((string) ($filters['status'] ?? 'all')));
+        if ($status === 'paid_in_full') {
+            $whereParts[] = "b.status = 'PAID'";
+        } elseif ($status === 'partially_paid') {
+            $whereParts[] = "b.status = 'PARTIALLY_PAID'";
+        } elseif ($status === 'unpaid') {
+            $whereParts[] = "b.status IN ('DRAFT', 'PENDING')";
+        } elseif ($status === 'claim_submitted') {
+            $whereParts[] = "b.status = 'CANCELLED'";
+        }
+
+        $paymentMethod = strtolower(trim((string) ($filters['payment_method'] ?? 'all')));
+        if (in_array($paymentMethod, ['cash', 'card', 'transfer'], true)) {
+            $whereParts[] = "EXISTS (
+                SELECT 1
+                FROM payments pay_filter
+                WHERE pay_filter.bill_id = b.bill_id
+                  AND UPPER(pay_filter.payment_method) = ?
+            )";
+            $types .= 's';
+            $params[] = strtoupper($paymentMethod);
+        }
+
+        $fromDate = trim((string) ($filters['from_date'] ?? ''));
+        if ($fromDate !== '') {
+            $whereParts[] = 'b.bill_date >= ?';
+            $types .= 's';
+            $params[] = $fromDate;
+        }
+
+        $toDate = trim((string) ($filters['to_date'] ?? ''));
+        if ($toDate !== '') {
+            $whereParts[] = 'b.bill_date <= ?';
+            $types .= 's';
+            $params[] = $toDate;
+        }
+
+        if (empty($whereParts)) {
+            return ['WHERE 1=1', $types, $params];
+        }
+
+        return ['WHERE ' . implode(' AND ', $whereParts), $types, $params];
+    }
+
+    private function prepareAndBind($sql, $types, $params, $context = 'query') {
+        $stmt = $this->db->prepare($sql);
+        if ($stmt === false) {
+            $this->lastError = 'Prepare failed in ' . $context . ': ' . $this->db->error;
+            return null;
+        }
+
+        if ($types !== '' && !empty($params)) {
+            $bindOk = $stmt->bind_param($types, ...$params);
+            if (!$bindOk) {
+                $this->lastError = 'Bind failed in ' . $context . ': ' . $stmt->error;
+                return null;
+            }
+        }
+
+        return $stmt;
     }
 
     private function getBillItems($billId) {

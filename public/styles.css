@@ -9,6 +9,7 @@
 :root {
     --primary-color: #3DBDEC;
     --secondary-color: #ffffff;
+    --darklogo-color: #1f2b5b;
     --font-color: #000000;
     --background-color: #F5F6FA;
     --boder: #4F7A96;
@@ -45,7 +46,7 @@ body {
 
 .navbar-brand img {
     height: 45px;
-    margin-right: 8px;
+    margin-right: 2px;
     vertical-align: middle;
 }
 
@@ -81,11 +82,11 @@ body {
 }
 
 .bell {
-    height: 20px;
-    width: 20px;
+    height: 25px;
+    width: 25px;
     border-radius: 100%;
-    padding: 10px;
-    background: var(--primary-color);
+    /* padding: 10px; */
+    /* background: var(--primary-color); */
 }
 
 #user-icon {

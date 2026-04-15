@@ -1,8 +1,14 @@
 <?php
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
+?>
+
+<?php
 require_once __DIR__ . '/app/bootstrap.php'; // <--- keep this
 // require_once __DIR__ . '/config/paths.php'; // <--- remove this line
 
-require_once CONTROLLER_PATH . '/TestCatalog_control.php';
+require_once CONTROLLER_PATH . '/TestCatalog_Control.php';
 require_once CONTROLLER_PATH . '/authController.php';
 require_once CONTROLLER_PATH . '/administratorController.php';
 require_once CONTROLLER_PATH . '/appointmentsController.php';
@@ -13,8 +19,9 @@ require_once CONTROLLER_PATH . '/profileController.php';
 require_once CONTROLLER_PATH . '/partnerLabController.php';
 require_once CONTROLLER_PATH . '/reportsController.php';
 require_once CONTROLLER_PATH . '/billingController.php';
+require_once CONTROLLER_PATH . '/financesController.php';
 // require_once 'C:\xampp\htdocs\lab_sync\app\controllers\appointmentsController.php';
-require_once 'C:\xampp\htdocs\lab_sync\config\db.php';
+require_once __DIR__ . '/config/db.php';
 $controllerName = $_GET['controller'] ?? 'home'; // Default to 'home' controller
 // $controllerName = 'TestCatalog'; 
 // This should be set based 
@@ -197,7 +204,23 @@ elseif ($controllerName === 'appointmentsController') {
     }elseif($action ==='printInvoice'){
         $billingController->printInvoice();
     }
-}elseif($controllerName === 'inventoryController'){
+}
+elseif($controllerName === 'financesController'){
+    $financesController = new financesController();
+    $role = $_GET['role'] ?? '';
+    $action = $_GET['action'] ?? 'index'; // or your desired default
+    if($action ==='index'){
+        $financesController->index($role);
+    }elseif($action === 'listBills'){
+        $financesController->listBills();
+    }elseif($action === 'sendReminder'){
+        $financesController->sendReminder();
+    }elseif($action === 'deleteBill'){
+        $financesController->deleteBill();
+    }
+}
+
+elseif($controllerName === 'inventoryController'){
     $inventoryController = new inventoryController();
     $role = $_GET['role'] ?? '';
     $action = $_GET['action'] ?? 'index'; // or your desired default

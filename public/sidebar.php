@@ -83,9 +83,9 @@ $reportsAction = ($role === 'receptionist') ? 'receptionistDashboard' : 'index';
         // Billing
         showMenuItem(['admin', 'receptionist'], "
             <li>
-                <a href='index.php?controller=billingController&action=index&role=" . $role . "'
-                   class='" . (($currentController === 'billingController' && $currentAction === 'index') ? 'active' : '') . "'>
-                    <img class='sidebar-icon' src='/lab_sync/public/assests/billing.png' alt='Billing Icon'>Billing
+                <a href='index.php?controller=financesController&action=index&role=" . $role . "'
+                   class='" . (($currentController === 'financesController' && $currentAction === 'index') ? 'active' : '') . "'>
+                    <img class='sidebar-icon' src='/lab_sync/public/assests/billing.png' alt='Billing Icon'>Finances
                 </a>
             </li>
         ");
@@ -113,10 +113,13 @@ $reportsAction = ($role === 'receptionist') ? 'receptionistDashboard' : 'index';
         // Logout
         showMenuItem(['admin', 'receptionist', 'technician'], "
             <li>
-                <a href='index.php?controller=Auth&action=logout&role=" . $role . "'>
-                    <img class='sidebar-icon' src='/lab_sync/public/assests/logout.png' alt='Logout Icon'>Logout
-                </a>
+               <a href='index.php?controller=UserController&action=user&role=" . $role . "'>
+                    <img class='sidebar-icon' src='/lab_sync/public/assests/user.png' alt='User Icon'>User Profile
+                </a> 
+            
+                            
             </li>
+            
         ");
         ?>
     </ul>

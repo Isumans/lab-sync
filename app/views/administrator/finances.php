@@ -8,7 +8,7 @@ if (!isset($_SESSION['user_id'])) {
 ?>
 <html>
 <head>
-    <title>Billing Dashboard</title>
+    <title>Finances</title>
     <link rel="stylesheet" href="/lab_sync/public/styles.css">
     <link rel="stylesheet" href="/lab_sync/public/reportsDashboard.css">
 </head>
@@ -20,8 +20,8 @@ if (!isset($_SESSION['user_id'])) {
         <main class="main-content">
             <section class="reports-dashboard" aria-label="Reports Dashboard">
                 <?php
-                    $pageTitle = 'Billing';
-                    $pageBreadcrumbText = 'Billing->';
+                    $pageTitle = 'Finances';
+                    $pageBreadcrumbText = 'Finances->';
                     $pageActionHtml = '';
                     require __DIR__ . '/../../../public/partials/page-header.php';
                 ?>
@@ -39,26 +39,27 @@ if (!isset($_SESSION['user_id'])) {
                     <div class="rd-filter-grid">
                         <div class="rd-filter-field rd-filter-field-search">
                             <label for="rdSearch">Search Invoices</label>
-                            <input id="rdSearch" type="text" placeholder="Search by Patient Name, Report ID, or Appointment ID..." />
+                            <input id="rdSearch" type="text" placeholder="Search by Patient Name, Bill No, or Appointment ID..." />
                         </div>
 
                         <div class="rd-filter-field">
                             <label for="rdStatus">Status</label>
                             <select id="rdStatus">
                                 <option value="all">All Statuses</option>
-                                <option value="complete">Paid</option>
-                                <option value="in progress">Unpaid</option>
-                                <option value="pending">Partial</option>
+                                <option value="paid_in_full">Paid in Full</option>
+                                <option value="unpaid">Unpaid</option>
+                                <option value="partially_paid">Partially Paid</option>
+                                <option value="claim_submitted">Claim Submitted</option>
                             </select>
                         </div>
 
                         <div class="rd-filter-field">
-                            <label for="rdTestType">Type</label>
-                            <select id="rdTestType">
-                                <option value="all">All </option>
-                                <option value="blood test">Physical</option>
-                                <option value="urinalysis">Online</option>
-                                <option value="xray">Home-Visit</option>
+                            <label for="rdPaymentMethod">Payment Method</label>
+                            <select id="rdPaymentMethod">
+                                <option value="all">All Methods</option>
+                                <option value="card">Card</option>
+                                <option value="cash">Cash</option>
+                                <option value="transfer">Transfer</option>
                             </select>
                         </div>
                     </div>
@@ -86,13 +87,14 @@ if (!isset($_SESSION['user_id'])) {
                                 <tr>
                                     <th>Appointment ID</th>
                                     <th>Patient Name</th>
-                                    <th>Date</th>
-                                    <th>Amount</th>
-                                    <th>Status</th>
-                                    <th class="rd-th-right">Actions</th>
+                                    <th>Total Amount</th>
+                                    <th>Amount Paid</th>
+                                    <th>Payment Method</th>
+                                    <th>Financial Status</th>
+                                    <th class="rd-th-right">Action</th>
                                 </tr>
                             </thead>
-                            <tbody id="billingTableBody"></tbody>
+                            <tbody id="rdTableBody"></tbody>
                         </table>
                     </div>
 
@@ -105,6 +107,6 @@ if (!isset($_SESSION['user_id'])) {
         </main>
     </div>
 
-    <script src="/lab_sync/public/js/billingDashboard.js?v=20260411"></script>
+    <script src="/lab_sync/public/js/billingDashboard.js?v=20260415b"></script>
 </body>
 </html>

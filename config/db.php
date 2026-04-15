@@ -1,23 +1,30 @@
 <?php
 
-
-
-// global $conn;
-
 function connect() {
     static $conn = null;
-    if ($conn === null) {
-        $servername = "localhost";
-        $username = "root";
-        $password = "";
-        $database = "laboratory";
 
-        $conn = new mysqli($servername, $username, $password, $database);
-
-        if ($conn->connect_error) {
-            die("Connection failed: " . $conn->connect_error);
-        }
+    if ($conn !== null) {
+        return $conn;
     }
+
+    $servername = getenv('LABSYNC_DB_HOST') ?: 'localhost';
+    $username = getenv('LABSYNC_DB_USER') ?: 'root';
+    $password = getenv('LABSYNC_DB_PASS') ?: '';
+    $database = getenv('LABSYNC_DB_NAME') ?: 'laboratory';
+
+    mysqli_report(MYSQLI_REPORT_OFF);
+    $conn = @new mysqli($servername, $username, $password, $database);
+
+    if ($conn->connect_error) {
+        http_response_code(500);
+        die(
+            "Database connection failed. " .
+            "Please verify MySQL is running and database '" . htmlspecialchars($database, ENT_QUOTES, 'UTF-8') .
+            "' exists. MySQL error: " . htmlspecialchars($conn->connect_error, ENT_QUOTES, 'UTF-8')
+        );
+    }
+
+    $conn->set_charset('utf8mb4');
     return $conn;
 }
 
@@ -63,9 +70,5 @@ function connect() {
 //    }
 
 // }
-
-
-
-
 
 ?>
