@@ -107,8 +107,8 @@ if (session_status() === PHP_SESSION_NONE) {
           </span>
         </div>
       </div>
-      <a href="/lab_sync/index.php?controller=home&action=explore" class="home-banner-cta">
-        Schedule a Home Visit
+      <a href="/lab_sync/index.php?controller=home&action=about" class="home-banner-cta">
+        About LabSync
         <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
       </a>
     </div>

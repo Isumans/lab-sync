@@ -1,251 +1,217 @@
-﻿<?php
-  // Fetch patient data from the database
-  if (session_status() === PHP_SESSION_NONE) {
+<?php
+if (session_status() === PHP_SESSION_NONE) {
     session_start();
-  }
+}
 
-  $success = $_SESSION['success'] ?? '';
-  $error = $_SESSION['error'] ?? '';
-  unset($_SESSION['success'], $_SESSION['error']);
+$success = $_SESSION['success'] ?? '';
+$error = $_SESSION['error'] ?? '';
+unset($_SESSION['success'], $_SESSION['error']);
 
+$profileName = $patient['patient_name'] ?? $patient['username'] ?? 'Patient';
+$profileEmail = $patient['patient_email'] ?? $patient['user_email'] ?? '';
+$profileContact = $patient['contact_number'] ?? $patient['user_contact'] ?? '';
+$profileGender = $patient['gender'] ?? '';
+$profileAddress = $patient['address'] ?? '';
+
+$initials = 'PP';
+$nameParts = preg_split('/\s+/', trim((string)$profileName));
+if (is_array($nameParts)) {
+    $letters = [];
+    foreach ($nameParts as $part) {
+        if ($part !== '') {
+            $letters[] = strtoupper(substr($part, 0, 1));
+        }
+        if (count($letters) === 2) {
+            break;
+        }
+    }
+
+    if (!empty($letters)) {
+        $initials = implode('', $letters);
+    }
+}
 ?>
-
+<!DOCTYPE html>
 <html lang="en">
 <head>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>LabSync Profile</title>
-  <link rel="stylesheet" href="/lab_sync/public/css/patient.css"/>
-  <link rel="stylesheet" href="/lab_sync/public/css/nav.css"/>
-  <link rel="stylesheet" href="/lab_sync/public/profile.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/lab_sync/public/css/globals.css" />
+  <link rel="stylesheet" href="/lab_sync/public/css/nav.css" />
+  <link rel="stylesheet" href="/lab_sync/public/css/footer.css" />
+  <link rel="stylesheet" href="/lab_sync/public/profile.css" />
 </head>
 <body>
-  <?php require __DIR__ . '/../../../public/partials/header.php'; ?>
+  <?php require_once __DIR__ . '/../../../public/partials/header.php'; ?>
 
   <main class="profile-wrap">
     <header class="profile-head">
       <div>
-        <h1 class="profile-title">Profile Settings</h1>
-        <p class="profile-sub">Manage your personal information and preferences</p>
+        <h1 class="profile-title">My Profile</h1>
+        <p class="profile-sub">View your details and keep your profile up to date.</p>
       </div>
+      <button type="button" class="btn-primary" id="openEditProfileModal">Edit Profile</button>
     </header>
 
-    <?php if (!empty($success)): ?>
-      <div style="margin-bottom:12px; padding:10px 12px; border-radius:8px; border:1px solid #b7ebcd; background:#e8f7ef; color:#067647;">
-        <?php echo htmlspecialchars($success); ?>
-      </div>
+    <?php if ($success !== ''): ?>
+      <div class="profile-alert success"><?php echo htmlspecialchars($success); ?></div>
     <?php endif; ?>
 
-    <?php if (!empty($error)): ?>
-      <div style="margin-bottom:12px; padding:10px 12px; border-radius:8px; border:1px solid #f1c2c2; background:#fff0f0; color:#b32525;">
-        <?php echo htmlspecialchars($error); ?>
-      </div>
+    <?php if ($error !== ''): ?>
+      <div class="profile-alert error"><?php echo htmlspecialchars($error); ?></div>
     <?php endif; ?>
 
-    <!-- ===== Personal Information ===== -->
-    <section class="card profile-card">
-      <div class="profile-card-head">
-        <div class="head-left">
-          <div class="avatar" id="avatar">
-            <span id="avatarInitials">JD</span>
-            <img id="avatarImg" alt="" />
-          </div>
-
-          <div class="upload">
-            <label for="photoInput" class="btn-outline upload-btn">
-              <span class="ico">⇧</span> Upload Photo
-            </label>
-            <input id="photoInput" type="file" accept="image/png, image/jpeg, image/gif" hidden/>
-            <div class="upload-hint">JPG, PNG or GIF. Max 2MB</div>
-          </div>
-        </div>
-
-        <div class="head-right">
-          <div class="badge-soft">Personal Information</div>
+    <section class="profile-card">
+      <div class="profile-summary">
+        <div class="avatar" aria-hidden="true"><?php echo htmlspecialchars($initials); ?></div>
+        <div>
+          <h2 class="profile-name"><?php echo htmlspecialchars($profileName); ?></h2>
+          <p class="profile-role">Patient Account</p>
         </div>
       </div>
 
-      <form class="profile-form" action="/lab_sync/index.php?controller=profile&action=update" method="POST" >
-        <?php if  (isset($patient)): ?>
-          <?php
-          $profileName = $patient['patient_name'] ?? $patient['username'] ?? '';
-          $profileEmail = $patient['patient_email'] ?? $patient['user_email'] ?? '';
-          $profileContact = $patient['contact_number'] ?? $patient['user_contact'] ?? '';
-          $profileGender = $patient['gender'] ?? '';
-          $profileAddress = $patient['address'] ?? '';
-          ?>
-          
-            <div class="pf-grid">
-            <div class="pf-field">
-                <label for="pfName" class="label">Full Name</label>
-            <input id="pfName" name="pfName" class="input input-lg" type="text" value="<?php echo htmlspecialchars($profileName); ?>"/>
-            </div>
-
-            <div class="pf-field">
-                <label for="pfEmail" class="label">Email</label>
-            <input id="pfEmail" name="pfEmail" class="input input-lg" type="email" placeholder="john@example.com" value="<?php echo htmlspecialchars($profileEmail); ?>"/>
-            </div>
-
-            <div class="pf-field">
-                <label for="pfContact" class="label">Contact Number</label>
-            <input id="pfContact" name="pfContact" class="input input-lg" type="tel" placeholder="+94 77 123 4567" value="<?php echo htmlspecialchars($profileContact); ?>"/>
-            </div>
-
-            <div class="pf-field">
-                <label for="pfGender" class="label">Gender</label>
-                <select id="pfGender" name="pfGender" class="input input-lg">
-            <option value="" <?php echo (empty($profileGender)) ? 'selected' : ''; ?>>Select gender</option>
-            <option value="Male" <?php echo ($profileGender === 'Male') ? 'selected' : ''; ?>>Male</option>
-            <option value="Female" <?php echo ($profileGender === 'Female') ? 'selected' : ''; ?>>Female</option>
-            <option value="Other" <?php echo ($profileGender === 'Other') ? 'selected' : ''; ?>>Other</option>
-                </select>
-            </div>
-
-            <div class="pf-field pf-wide">
-                <label for="pfAddress" class="label">Address</label>
-            <textarea id="pfAddress" name="pfAddress" class="input input-lg" rows="3" placeholder="123 Main Street, Colombo"><?php echo htmlspecialchars($profileAddress); ?></textarea>
-            </div>
-            </div>
-
-            <div class="profile-actions">
-            <button class="btn-outline" type="button" onclick="profileReset()">Cancel</button>
-            <button class="btn-primary" type="submit">Save Changes</button>
-            </div>
-        <?php endif; ?>
-      </form>
+      <div class="details-grid">
+        <article class="detail-item">
+          <h3>Full Name</h3>
+          <p><?php echo htmlspecialchars($profileName !== '' ? $profileName : 'Not set'); ?></p>
+        </article>
+        <article class="detail-item">
+          <h3>Email</h3>
+          <p><?php echo htmlspecialchars($profileEmail !== '' ? $profileEmail : 'Not set'); ?></p>
+        </article>
+        <article class="detail-item">
+          <h3>Contact Number</h3>
+          <p><?php echo htmlspecialchars($profileContact !== '' ? $profileContact : 'Not set'); ?></p>
+        </article>
+        <article class="detail-item">
+          <h3>Gender</h3>
+          <p><?php echo htmlspecialchars($profileGender !== '' ? $profileGender : 'Not set'); ?></p>
+        </article>
+        <article class="detail-item detail-wide">
+          <h3>Address</h3>
+          <p><?php echo htmlspecialchars($profileAddress !== '' ? $profileAddress : 'Not set'); ?></p>
+        </article>
+      </div>
     </section>
 
-    <!-- ===== Security / Change Password ===== -->
-    <section class="card security-card">
+    <section class="security-card">
       <div class="security-head">
-        <div class="sec-left">
-          <div class="sec-lock">🔒</div>
-          <div>
-            <h3 class="sec-title">Security</h3>
-            <p class="sec-sub">Update your password to keep your account secure</p>
-          </div>
-        </div>
+        <h2>Security</h2>
+        <p>Change your password regularly to keep your account secure.</p>
       </div>
-
       <form class="security-form" action="/lab_sync/index.php?controller=profile&action=changePassword" method="POST">
-        <div class="sec-grid">
-          <div class="pf-field pf-wide">
-            <label class="label">Current Password</label>
-            <input id="curPwd" name="current_password" class="input input-lg" type="password" placeholder="Enter current password" required/>
+        <div class="security-grid">
+          <div class="field full">
+            <label for="curPwd">Current Password</label>
+            <input id="curPwd" name="current_password" type="password" placeholder="Enter current password" required>
           </div>
-
-          <div class="pf-field">
-            <label class="label">New Password</label>
-            <input id="newPwd" name="new_password" class="input input-lg" type="password" placeholder="Enter new password" oninput="showStrength(this.value)" required/>
-            <div class="pwd-meter">
-              <div id="meterBar" class="meter-bar"></div>
-            </div>
-            <div id="meterText" class="meter-text muted">Use at least 8 characters, with letters & numbers</div>
+          <div class="field">
+            <label for="newPwd">New Password</label>
+            <input id="newPwd" name="new_password" type="password" placeholder="Enter new password" required>
           </div>
-
-          <div class="pf-field">
-            <label class="label">Confirm New Password</label>
-            <input id="cnfPwd" name="confirm_password" class="input input-lg" type="password" placeholder="Confirm new password" required/>
+          <div class="field">
+            <label for="cnfPwd">Confirm New Password</label>
+            <input id="cnfPwd" name="confirm_password" type="password" placeholder="Confirm new password" required>
           </div>
         </div>
-
-        <div class="profile-actions">
+        <div class="security-actions">
           <button class="btn-primary" type="submit">Change Password</button>
         </div>
       </form>
     </section>
 
-    <div style="display:flex; justify-content:flex-end; margin-top:16px; padding-bottom:8px;">
-      <a class="btn-outline" href="/lab_sync/index.php?controller=Auth&action=logout" style="text-decoration:none; display:inline-flex; align-items:center; justify-content:center;">Logout</a>
+    <div class="logout-row">
+      <a class="btn-outline" href="/lab_sync/index.php?controller=Auth&action=logout">Logout</a>
     </div>
   </main>
 
-  <?php require __DIR__ . '/../../../public/partials/footer.php'; ?>
+  <div class="profile-modal" id="profileEditModal" aria-hidden="true">
+    <div class="profile-modal-card" role="dialog" aria-modal="true" aria-labelledby="profileModalTitle">
+      <div class="profile-modal-head">
+        <h2 id="profileModalTitle">Edit Profile</h2>
+        <button type="button" class="modal-close" id="closeEditProfileModal" aria-label="Close">&times;</button>
+      </div>
+      <form class="profile-modal-form" action="/lab_sync/index.php?controller=profile&action=update" method="POST">
+        <div class="field-grid">
+          <div class="field">
+            <label for="pfName">Full Name</label>
+            <input id="pfName" name="pfName" type="text" value="<?php echo htmlspecialchars($profileName); ?>" required>
+          </div>
+          <div class="field">
+            <label for="pfEmail">Email</label>
+            <input id="pfEmail" name="pfEmail" type="email" value="<?php echo htmlspecialchars($profileEmail); ?>" required>
+          </div>
+          <div class="field">
+            <label for="pfContact">Contact Number</label>
+            <input id="pfContact" name="pfContact" type="tel" value="<?php echo htmlspecialchars($profileContact); ?>">
+          </div>
+          <div class="field">
+            <label for="pfGender">Gender</label>
+            <select id="pfGender" name="pfGender">
+              <option value="" <?php echo ($profileGender === '') ? 'selected' : ''; ?>>Select gender</option>
+              <option value="Male" <?php echo ($profileGender === 'Male') ? 'selected' : ''; ?>>Male</option>
+              <option value="Female" <?php echo ($profileGender === 'Female') ? 'selected' : ''; ?>>Female</option>
+              <option value="Other" <?php echo ($profileGender === 'Other') ? 'selected' : ''; ?>>Other</option>
+            </select>
+          </div>
+          <div class="field full">
+            <label for="pfAddress">Address</label>
+            <textarea id="pfAddress" name="pfAddress" rows="3" placeholder="Enter your address"><?php echo htmlspecialchars($profileAddress); ?></textarea>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn-outline" id="cancelEditProfileModal">Cancel</button>
+          <button type="submit" class="btn-primary">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
 
-<!-- <script>
-/* ===== Avatar preview + initials fallback (UI only) ===== */
-const photoInput = document.getElementById('photoInput');
-const avatarImg  = document.getElementById('avatarImg');
-const avatarInitials = document.getElementById('avatarInitials');
-const nameInput = document.getElementById('pfName');
+  <?php require_once __DIR__ . '/../../../public/partials/footer.php'; ?>
 
-function setInitialsFromName() {
-  const n = (nameInput.value || '').trim();
-  const parts = n ? n.split(/\s+/).slice(0,2) : [];
-  const initials = parts.map(p => p[0]?.toUpperCase() || '').join('') || 'PP';
-  avatarInitials.textContent = initials;
-}
-setInitialsFromName();
-nameInput.addEventListener('input', setInitialsFromName);
+  <script>
+    (function () {
+      const modal = document.getElementById('profileEditModal');
+      const openBtn = document.getElementById('openEditProfileModal');
+      const closeBtn = document.getElementById('closeEditProfileModal');
+      const cancelBtn = document.getElementById('cancelEditProfileModal');
 
-photoInput.addEventListener('change', () => {
-  const f = photoInput.files?.[0];
-  if(!f) return;
-  if(f.size > 2 * 1024 * 1024){ alert('Please choose an image under 2MB.'); photoInput.value=''; return; }
-  const reader = new FileReader();
-  reader.onload = e => {
-    avatarImg.src = e.target.result;
-    avatarImg.style.display = 'block';
-    avatarInitials.style.display = 'none';
-  };
-  reader.readAsDataURL(f);
-});
+      function openModal() {
+        modal.classList.add('is-open');
+        modal.setAttribute('aria-hidden', 'false');
+      }
 
-/* ===== Profile save/reset (UI only) ===== */
-function profileReset(){
-  document.querySelector('.profile-form').reset();
-  avatarImg.src = '';
-  avatarImg.style.display = 'none';
-  avatarInitials.style.display = 'block';
-  setInitialsFromName();
-}
-function profileSave(){
-  alert('Saved (UI only). Wire this to your PHP controller to persist.');
-}
+      function closeModal() {
+        modal.classList.remove('is-open');
+        modal.setAttribute('aria-hidden', 'true');
+      }
 
-/* ===== Password strength + change (UI only) ===== */
-const meterBar  = document.getElementById('meterBar');
-const meterText = document.getElementById('meterText');
+      if (openBtn) {
+        openBtn.addEventListener('click', openModal);
+      }
+      if (closeBtn) {
+        closeBtn.addEventListener('click', closeModal);
+      }
+      if (cancelBtn) {
+        cancelBtn.addEventListener('click', closeModal);
+      }
 
-function scorePassword(pwd){
-  let score = 0;
-  if(!pwd) return score;
-  const letters = {};
-  for(let i=0;i<pwd.length;i++){ letters[pwd[i]] = (letters[pwd[i]] || 0) + 1; score += 5.0 / letters[pwd[i]]; }
-  const variations = { digits:/\d/.test(pwd), lower:/[a-z]/.test(pwd), upper:/[A-Z]/.test(pwd), nonWords:/\W/.test(pwd) };
-  let variationCount = 0; for (let check in variations){ variationCount += (variations[check] === true) ? 1 : 0; }
-  score += (variationCount - 1) * 10;
-  return parseInt(score);
-}
+      modal.addEventListener('click', function (event) {
+        if (event.target === modal) {
+          closeModal();
+        }
+      });
 
-function showStrength(pwd){
-  const s = scorePassword(pwd);
-  let w=0, label='Weak', color='#f09b8f';
-  if(s>60){ w=100; label='Strong'; color='#2fb173'; }
-  else if(s>45){ w=70; label='Good'; color='#4fb6ff'; }
-  else if(s>25){ w=40; label='Fair'; color='#f0c66f'; }
-  else { w=20; }
-  meterBar.style.width = w + '%';
-  meterBar.style.background = color;
-  meterText.textContent = label === 'Weak'
-    ? 'Use at least 8 characters, with letters & numbers'
-    : label + ' password';
-}
+      document.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape' && modal.classList.contains('is-open')) {
+          closeModal();
+        }
+      });
+    })();
+  </script>
 
-function changePassword(){
-  const cur = document.getElementById('curPwd').value.trim();
-  const np  = document.getElementById('newPwd').value.trim();
-  const cp  = document.getElementById('cnfPwd').value.trim();
-
-  if(!cur || !np || !cp){ alert('Please fill all password fields.'); return; }
-  if(np.length < 8){ alert('New password must be at least 8 characters.'); return; }
-  if(np !== cp){ alert('New password and confirmation do not match.'); return; }
-
-  // UI only — connect to your PHP endpoint later
-  alert('Password updated (UI only). Hook to your controller to persist.');
-}
-</script> -->
-<script src="/lab_sync/public/js/showAlert.js"></script>
+  <script src="/lab_sync/public/js/showAlert.js"></script>
 </body>
 </html>

@@ -1043,16 +1043,123 @@ class AppointmentModel {
         }
 
         $tests = $this->getAppointmentTestsWithStatus($appointmentId);
+        $testDetails = $this->getAppointmentNotificationTests($appointmentId);
         $canEditScheduleTests = $this->areAllTestsPending($tests);
         $nonPendingStatuses = $this->collectNonPendingStatuses($tests);
 
         return [
             'appointment' => $appointment,
+            'appointment_id' => (int)($appointment['appointment_id'] ?? 0),
+            'appointment_date' => (string)($appointment['appointment_date'] ?? ''),
+            'appointment_time' => (string)($appointment['appointment_time'] ?? ''),
+            'status' => (string)($appointment['status'] ?? 'Pending'),
+            'booking_channel' => (string)($appointment['booking_channel'] ?? 'receptionist_walkin'),
+            'home_collection' => (int)($appointment['home_collection'] ?? 0),
+            'collection_address' => (string)($appointment['collection_address'] ?? ''),
+            'tests_summary' => (string)($appointment['tests_summary'] ?? ''),
+            'total_price' => (float)($appointment['total_price'] ?? 0),
+            'test_details' => $testDetails,
+            'prerequisites_summary' => $this->buildPrerequisitesSummary($testDetails),
             'tests' => $tests,
             'available_tests' => $this->searchTestsCatalog('', 20),
             'can_edit_schedule_tests' => $canEditScheduleTests,
             'non_pending_statuses' => $nonPendingStatuses,
         ];
+    }
+
+    private function getAppointmentNotificationTests($appointmentId) {
+        $appointmentId = intval($appointmentId);
+        if ($appointmentId <= 0) {
+            return [];
+        }
+
+        $hasItems = $this->hasTable('appointment_items');
+
+        if ($hasItems) {
+            $sql = "
+                SELECT
+                    t.test_id,
+                    t.test_name,
+                    COALESCE(NULLIF(t.category, ''), 'General') AS category,
+                    COALESCE(NULLIF(t.description, ''), 'No description available') AS description,
+                    COALESCE(NULLIF(t.prerequisites, ''), 'No special prerequisites') AS prerequisites,
+                    COALESCE(ai.line_total, t.price, 0) AS price
+                FROM appointment_items ai
+                INNER JOIN tests t ON t.test_id = ai.test_id
+                WHERE ai.appointment_id = ?
+                ORDER BY t.test_name ASC
+            ";
+
+            $stmt = $this->db->prepare($sql);
+            if ($stmt) {
+                $stmt->bind_param('i', $appointmentId);
+                if ($stmt->execute()) {
+                    $result = $stmt->get_result();
+                    $rows = $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
+                    $stmt->close();
+                    if (!empty($rows)) {
+                        return $rows;
+                    }
+                } else {
+                    $stmt->close();
+                }
+            }
+        }
+
+        $fallbackSql = "
+            SELECT
+                t.test_id,
+                t.test_name,
+                COALESCE(NULLIF(t.category, ''), 'General') AS category,
+                COALESCE(NULLIF(t.description, ''), 'No description available') AS description,
+                COALESCE(NULLIF(t.prerequisites, ''), 'No special prerequisites') AS prerequisites,
+                COALESCE(t.price, 0) AS price
+            FROM appointment a
+            INNER JOIN tests t ON t.test_id = a.test_id
+            WHERE a.appointment_id = ?
+            LIMIT 1
+        ";
+
+        $fallbackStmt = $this->db->prepare($fallbackSql);
+        if (!$fallbackStmt) {
+            return [];
+        }
+
+        $fallbackStmt->bind_param('i', $appointmentId);
+        if (!$fallbackStmt->execute()) {
+            $fallbackStmt->close();
+            return [];
+        }
+
+        $result = $fallbackStmt->get_result();
+        $row = $result ? $result->fetch_assoc() : null;
+        $fallbackStmt->close();
+
+        return $row ? [$row] : [];
+    }
+
+    private function buildPrerequisitesSummary($testDetails) {
+        if (!is_array($testDetails) || empty($testDetails)) {
+            return 'No special prerequisites.';
+        }
+
+        $parts = [];
+        foreach ($testDetails as $test) {
+            $name = trim((string)($test['test_name'] ?? 'Test'));
+            $prep = trim((string)($test['prerequisites'] ?? ''));
+
+            if ($prep === '') {
+                continue;
+            }
+
+            $parts[] = $name . ': ' . $prep;
+        }
+
+        if (empty($parts)) {
+            return 'No special prerequisites.';
+        }
+
+        return implode(' | ', $parts);
     }
 
     public function searchTestsCatalog($query = '', $limit = 20) {
@@ -1388,7 +1495,46 @@ class AppointmentModel {
             return $tests;
         }
 
+        $itemTests = $this->getAppointmentItemTests($appointmentId);
+        if (!empty($itemTests)) {
+            return $itemTests;
+        }
+
         return $this->getLegacyAppointmentTests($appointmentId);
+    }
+
+    private function getAppointmentItemTests($appointmentId) {
+        $appointmentId = intval($appointmentId);
+        if ($appointmentId <= 0 || !$this->tableExists('appointment_items')) {
+            return [];
+        }
+
+        $sql = "
+            SELECT
+                ai.test_id,
+                t.test_name,
+                t.category,
+                COALESCE(ai.unit_price, t.price, 0) AS price,
+                'PENDING' AS status
+            FROM appointment_items ai
+            LEFT JOIN tests t ON t.test_id = ai.test_id
+            WHERE ai.appointment_id = ?
+            GROUP BY ai.test_id, t.test_name, t.category, ai.unit_price, t.price
+            ORDER BY ai.test_id ASC
+        ";
+
+        $stmt = $this->db->prepare($sql);
+        if ($stmt === false) {
+            return [];
+        }
+
+        $stmt->bind_param('i', $appointmentId);
+        if (!$stmt->execute()) {
+            return [];
+        }
+
+        $result = $stmt->get_result();
+        return $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
     }
 
     private function getLegacyAppointmentTests($appointmentId) {

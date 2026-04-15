@@ -85,13 +85,19 @@ class EmailService {
     }
 
     public function sendAppointmentBookedEmail($email, $recipientName, $payload) {
-        $appointmentId = (int)($payload['appointment_id'] ?? 0);
-        $appointmentDate = htmlspecialchars((string)($payload['appointment_date'] ?? 'N/A'));
-        $appointmentTime = htmlspecialchars((string)($payload['appointment_time'] ?? 'N/A'));
-        $status = htmlspecialchars((string)($payload['status'] ?? 'Pending'));
-        $channel = htmlspecialchars((string)($payload['booking_channel'] ?? 'online_self'));
-        $total = number_format((float)($payload['total_price'] ?? 0), 2);
-        $testsSummary = htmlspecialchars((string)($payload['tests_summary'] ?? 'Selected tests'));
+        $appointment = $this->extractAppointmentData($payload);
+
+        $appointmentId = (int)($appointment['appointment_id'] ?? $payload['appointment_id'] ?? 0);
+        $appointmentDate = htmlspecialchars((string)($appointment['appointment_date'] ?? $payload['appointment_date'] ?? 'N/A'));
+        $appointmentTime = htmlspecialchars((string)($appointment['appointment_time'] ?? $payload['appointment_time'] ?? 'N/A'));
+        $status = htmlspecialchars((string)($appointment['status'] ?? $payload['status'] ?? 'Pending'));
+        $channel = htmlspecialchars((string)($appointment['booking_channel'] ?? $payload['booking_channel'] ?? 'online_self'));
+        $total = number_format((float)($appointment['total_price'] ?? $payload['total_price'] ?? 0), 2);
+        $testsSummary = htmlspecialchars((string)($appointment['tests_summary'] ?? $payload['tests_summary'] ?? 'Selected tests'));
+        $homeCollection = (int)($appointment['home_collection'] ?? $payload['home_collection'] ?? 0) === 1;
+        $collectionAddress = htmlspecialchars((string)($appointment['collection_address'] ?? $payload['collection_address'] ?? ''));
+        $prerequisitesSummary = htmlspecialchars((string)($payload['prerequisites_summary'] ?? 'No special prerequisites.'));
+        $testDetailsHtml = $this->buildAppointmentTestDetailsHtml($payload['test_details'] ?? []);
 
         $subject = 'Appointment Confirmation #' . $appointmentId . ' - LabSync';
 
@@ -121,7 +127,11 @@ class EmailService {
                             <p><strong>Channel:</strong> " . $channel . "</p>
                             <p><strong>Tests:</strong> " . $testsSummary . "</p>
                             <p><strong>Total:</strong> LKR " . $total . "</p>
+                            <p><strong>Home Collection:</strong> " . ($homeCollection ? 'Yes' : 'No') . "</p>
+                            " . ($homeCollection && $collectionAddress !== '' ? "<p><strong>Collection Address:</strong> " . $collectionAddress . "</p>" : '') . "
+                            <p><strong>Preparation Notes:</strong> " . $prerequisitesSummary . "</p>
                         </div>
+                        " . $testDetailsHtml . "
                         <p class='muted'>Please arrive at least 10 minutes before your scheduled time.</p>
                         <p>Best regards,<br><strong>LabSync Team</strong></p>
                     </div>
@@ -130,5 +140,43 @@ class EmailService {
         ";
 
         return $this->sendEmail($email, $recipientName, $subject, $htmlContent);
+    }
+
+    private function extractAppointmentData($payload) {
+        if (is_array($payload) && isset($payload['appointment']) && is_array($payload['appointment'])) {
+            return $payload['appointment'];
+        }
+
+        return is_array($payload) ? $payload : [];
+    }
+
+    private function buildAppointmentTestDetailsHtml($testDetails) {
+        if (!is_array($testDetails) || empty($testDetails)) {
+            return '';
+        }
+
+        $items = [];
+        foreach ($testDetails as $test) {
+            $name = htmlspecialchars((string)($test['test_name'] ?? 'Test'));
+            $category = htmlspecialchars((string)($test['category'] ?? 'General'));
+            $description = htmlspecialchars((string)($test['description'] ?? 'No description available'));
+            $prerequisites = htmlspecialchars((string)($test['prerequisites'] ?? 'No special prerequisites'));
+            $price = number_format((float)($test['price'] ?? 0), 2);
+
+            $items[] = "
+                <li style='margin-bottom:10px;'>
+                    <strong>" . $name . "</strong> (" . $category . ") - LKR " . $price . "<br>
+                    <span>" . $description . "</span><br>
+                    <span><strong>Prerequisites:</strong> " . $prerequisites . "</span>
+                </li>
+            ";
+        }
+
+        return "
+            <div class='box'>
+                <p><strong>Selected Test Details</strong></p>
+                <ul style='padding-left:18px; margin:8px 0 0;'>" . implode('', $items) . "</ul>
+            </div>
+        ";
     }
 }
