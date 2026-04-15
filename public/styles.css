@@ -82,8 +82,8 @@ body {
 }
 
 .bell {
-    height: 25px;
-    width: 25px;
+    height: 22.5px;
+    width: 22.5px;
     border-radius: 100%;
     /* padding: 10px; */
     /* background: var(--primary-color); */

@@ -20,6 +20,7 @@ require_once CONTROLLER_PATH . '/partnerLabController.php';
 require_once CONTROLLER_PATH . '/reportsController.php';
 require_once CONTROLLER_PATH . '/billingController.php';
 require_once CONTROLLER_PATH . '/financesController.php';
+require_once CONTROLLER_PATH . '/userController.php';
 // require_once 'C:\xampp\htdocs\lab_sync\app\controllers\appointmentsController.php';
 require_once __DIR__ . '/config/db.php';
 $controllerName = $_GET['controller'] ?? 'home'; // Default to 'home' controller
@@ -313,7 +314,27 @@ elseif($controllerName === 'inventoryController'){
     }elseif($action === 'getPartnerLabsSection'){
         $partnerLabController->getPartnerLabsSection();
     }
-}else {
+}elseif($controllerName==='userController'){
+    $userController = new userController();
+    $action = $_GET['action'] ?? 'index';
+    $role = $_GET['role'] ?? '';
+    if($action === 'user'){
+        $userController->index($role);
+    }elseif($action === 'saveProfile'){
+        $userController->saveProfile();
+    }elseif($action === 'updatePreferences'){
+        $userController->updatePreferences();
+    }elseif($action === 'changePassword'){
+        $userController->changePassword();
+    }elseif($action === 'toggleTwoFactor'){
+        $userController->toggleTwoFactor();
+    }elseif($action === 'revokeSession'){
+        $userController->revokeSession();
+    }else {
+        echo "404 Not Found";
+    }
+}
+else {
         echo "404 Not Found";
     }
 

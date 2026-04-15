@@ -113,11 +113,10 @@ $reportsAction = ($role === 'receptionist') ? 'receptionistDashboard' : 'index';
         // Logout
         showMenuItem(['admin', 'receptionist', 'technician'], "
             <li>
-               <a href='index.php?controller=UserController&action=user&role=" . $role . "'>
+               <a href='index.php?controller=userController&action=user&role=" . $role . "'
+                  class='" . (($currentController === 'userController' && $currentAction === 'user') ? 'active' : '') . "'>
                     <img class='sidebar-icon' src='/lab_sync/public/assests/user.png' alt='User Icon'>User Profile
                 </a> 
-            
-                            
             </li>
             
         ");

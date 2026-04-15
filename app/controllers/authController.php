@@ -26,6 +26,19 @@ class AuthController {
                 $_SESSION['user_id'] = $user['user_id'] ?? $user['id'] ?? null;
                 $_SESSION['email'] = $user['email'] ?? '';
                 $_SESSION['user_role'] = $user['role'] ?? '';
+                $_SESSION['session_token'] = bin2hex(random_bytes(32));
+
+                $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? '';
+                $ipAddress = $_SERVER['REMOTE_ADDR'] ?? '';
+                $deviceLabel = $this->buildDeviceLabel($userAgent);
+                $model->startTrackedSession(
+                    intval($_SESSION['user_id'] ?? 0),
+                    session_id(),
+                    $_SESSION['session_token'],
+                    $deviceLabel,
+                    $ipAddress,
+                    $userAgent
+                );
                 
                 // Redirect based on user role
                 $role = $_SESSION['user_role'] ?? '';
@@ -45,6 +58,12 @@ class AuthController {
 
     public function logout() {
         // logout action
+        $sessionToken = $_SESSION['session_token'] ?? '';
+        if ($sessionToken !== '') {
+            $model = new AuthModel($this->db);
+            $model->closeTrackedSession($sessionToken);
+        }
+
         $_SESSION = [];
         if (ini_get("session.use_cookies")) {
             $params = session_get_cookie_params();
@@ -56,5 +75,35 @@ class AuthController {
         session_destroy();
         header('Location: /lab_sync/index.php');
         exit;
+    }
+
+    private function buildDeviceLabel($userAgent) {
+        $ua = strtolower((string)$userAgent);
+
+        $os = 'Unknown OS';
+        if (strpos($ua, 'windows') !== false) {
+            $os = 'Windows';
+        } elseif (strpos($ua, 'mac os') !== false || strpos($ua, 'macintosh') !== false) {
+            $os = 'macOS';
+        } elseif (strpos($ua, 'android') !== false) {
+            $os = 'Android';
+        } elseif (strpos($ua, 'iphone') !== false || strpos($ua, 'ipad') !== false || strpos($ua, 'ios') !== false) {
+            $os = 'iOS';
+        } elseif (strpos($ua, 'linux') !== false) {
+            $os = 'Linux';
+        }
+
+        $browser = 'Browser';
+        if (strpos($ua, 'edg/') !== false) {
+            $browser = 'Edge';
+        } elseif (strpos($ua, 'chrome/') !== false) {
+            $browser = 'Chrome';
+        } elseif (strpos($ua, 'firefox/') !== false) {
+            $browser = 'Firefox';
+        } elseif (strpos($ua, 'safari/') !== false && strpos($ua, 'chrome/') === false) {
+            $browser = 'Safari';
+        }
+
+        return $os . ' - ' . $browser;
     }
 }

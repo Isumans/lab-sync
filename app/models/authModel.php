@@ -1,6 +1,7 @@
 <?php
 class AuthModel {
     private $db;
+    private $tableExistsCache = [];
     public function __construct($db) { $this->db = $db; }
 
     public function getUserByUsername($username) {
@@ -50,6 +51,63 @@ class AuthModel {
     
     return false;
 }
+
+    public function startTrackedSession($userId, $phpSessionId, $sessionToken, $deviceLabel, $ipAddress, $userAgent) {
+        if (!$this->tableExists('user_sessions')) {
+            return true;
+        }
+
+        $stmt = $this->db->prepare(
+            "INSERT INTO user_sessions
+                (user_id, php_session_id, session_token, device_label, ip_address, user_agent, logged_in_at, last_activity, is_active)
+             VALUES
+                (?, ?, ?, NULLIF(?, ''), NULLIF(?, ''), NULLIF(?, ''), NOW(), NOW(), 1)"
+        );
+        if (!$stmt) {
+            return false;
+        }
+
+        $userId = intval($userId);
+        $stmt->bind_param('isssss', $userId, $phpSessionId, $sessionToken, $deviceLabel, $ipAddress, $userAgent);
+        $ok = $stmt->execute();
+        $stmt->close();
+
+        return $ok;
+    }
+
+    public function closeTrackedSession($sessionToken) {
+        if (!$this->tableExists('user_sessions')) {
+            return true;
+        }
+
+        $stmt = $this->db->prepare(
+            "UPDATE user_sessions
+             SET is_active = 0, logged_out_at = NOW(), last_activity = NOW()
+             WHERE session_token = ? AND is_active = 1"
+        );
+        if (!$stmt) {
+            return false;
+        }
+
+        $stmt->bind_param('s', $sessionToken);
+        $ok = $stmt->execute();
+        $stmt->close();
+
+        return $ok;
+    }
+
+    private function tableExists($tableName) {
+        if (isset($this->tableExistsCache[$tableName])) {
+            return $this->tableExistsCache[$tableName];
+        }
+
+        $escaped = $this->db->real_escape_string($tableName);
+        $result = $this->db->query("SHOW TABLES LIKE '" . $escaped . "'");
+        $exists = $result && $result->num_rows > 0;
+        $this->tableExistsCache[$tableName] = $exists;
+
+        return $exists;
+    }
 
 }
 ?>
