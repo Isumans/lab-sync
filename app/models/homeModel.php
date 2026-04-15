@@ -119,6 +119,21 @@ class HomeModel {
     public function createAppointment($data) {
         $this->ensureHomeCollectionColumns();
 
+        $testIds = [];
+        if (isset($data['test_ids']) && is_array($data['test_ids'])) {
+            $testIds = $data['test_ids'];
+        } elseif (isset($data['test_id'])) {
+            $testIds = [$data['test_id']];
+        }
+
+        $cleanTestIds = $this->normalizeTestIds($testIds);
+        if (empty($cleanTestIds)) {
+            $this->setLastError('No valid tests were provided.');
+            return false;
+        }
+
+        $primaryTestId = (int)$cleanTestIds[0];
+
         $homeCollection = !empty($data['home_collection']) ? 1 : 0;
         $collectionAddress = trim((string)($data['collection_address'] ?? ''));
         $collectionAddress = $collectionAddress !== '' ? $collectionAddress : null;
@@ -137,7 +152,7 @@ class HomeModel {
         $stmt->bind_param(
             "iisssssis",
             $data['patient_id'],
-            $data['test_id'],
+            $primaryTestId,
             $data['appointment_time'],
             $data['appointment_date'],
             $data['method'],
@@ -156,6 +171,25 @@ class HomeModel {
 
         $newId = $stmt->insert_id;
         $stmt->close();
+
+        if ($this->appointmentTestsTableExists()) {
+            $lineStmt = $this->db->prepare("INSERT INTO appointment_tests (appointment_id, test_id, status) VALUES (?, ?, 'PENDING')");
+            if (!$lineStmt) {
+                $this->setLastError('Prepare failed (appointment_tests): ' . $this->db->error);
+                return false;
+            }
+
+            foreach ($cleanTestIds as $testId) {
+                $lineStmt->bind_param('ii', $newId, $testId);
+                if (!$lineStmt->execute()) {
+                    $lineStmt->close();
+                    $this->setLastError('Execute failed (appointment_tests): ' . $lineStmt->error);
+                    return false;
+                }
+            }
+
+            $lineStmt->close();
+        }
 
         return $newId;
     }
@@ -481,17 +515,41 @@ class HomeModel {
         return $appointments;
     }
 
-    public function updateAppointment($appointment_id, $appointment_time, $appointment_date) {
-        $stmt = $this->db->prepare(
-            "UPDATE appointment SET appointment_time = ?, appointment_date = ? WHERE appointment_id = ?"
-        );
+    public function updateAppointment($appointment_id, $appointment_time, $appointment_date, $patientId = null, $homeCollection = null, $collectionAddress = null) {
+        $query = "UPDATE appointment SET appointment_time = ?, appointment_date = ?";
+        $types = "ss";
+        $params = [$appointment_time, $appointment_date];
+
+        if ($homeCollection !== null) {
+            $query .= ", home_collection = ?";
+            $types .= "i";
+            $params[] = (int)$homeCollection;
+        }
+
+        if ($collectionAddress !== null) {
+            $query .= ", collection_address = ?";
+            $types .= "s";
+            $params[] = $collectionAddress !== '' ? $collectionAddress : null;
+        }
+
+        $query .= " WHERE appointment_id = ?";
+        $types .= "i";
+        $params[] = $appointment_id;
+
+        if ($patientId !== null) {
+            $query .= " AND patient_id = ?";
+            $types .= "i";
+            $params[] = $patientId;
+        }
+
+        $stmt = $this->db->prepare($query);
 
         if (!$stmt) {
             $this->setLastError('Prepare failed: ' . $this->db->error);
             return false;
         }
 
-        $stmt->bind_param("ssi", $appointment_time, $appointment_date, $appointment_id);
+        $stmt->bind_param($types, ...$params);
 
         $success = $stmt->execute();
         if (!$success) {
@@ -504,11 +562,32 @@ class HomeModel {
         return true;
     }
 
-    public function deleteAppointment($appointment_id) {
+    public function deleteAppointment($appointment_id, $patientId = null) {
         if ($this->appointmentTestsTableExists()) {
             $this->db->begin_transaction();
 
             try {
+                if ($patientId !== null) {
+                    $ownershipStmt = $this->db->prepare("SELECT appointment_id FROM appointment WHERE appointment_id = ? AND patient_id = ? LIMIT 1");
+                    if (!$ownershipStmt) {
+                        throw new Exception('Prepare failed (ownership check): ' . $this->db->error);
+                    }
+
+                    $ownershipStmt->bind_param('ii', $appointment_id, $patientId);
+                    if (!$ownershipStmt->execute()) {
+                        throw new Exception('Execute failed (ownership check): ' . $ownershipStmt->error);
+                    }
+
+                    $ownershipResult = $ownershipStmt->get_result();
+                    $ownershipRow = $ownershipResult ? $ownershipResult->fetch_assoc() : null;
+                    $ownershipStmt->close();
+
+                    if (!$ownershipRow) {
+                        $this->db->rollback();
+                        return false;
+                    }
+                }
+
                 $deleteLines = $this->db->prepare("DELETE FROM appointment_tests WHERE appointment_id = ?");
                 if (!$deleteLines) {
                     throw new Exception('Prepare failed (delete appointment_tests): ' . $this->db->error);
@@ -519,12 +598,21 @@ class HomeModel {
                     throw new Exception('Execute failed (delete appointment_tests): ' . $deleteLines->error);
                 }
 
-                $deleteHeader = $this->db->prepare("DELETE FROM appointment WHERE appointment_id = ?");
+                $deleteHeaderQuery = "DELETE FROM appointment WHERE appointment_id = ?";
+                if ($patientId !== null) {
+                    $deleteHeaderQuery .= " AND patient_id = ?";
+                }
+
+                $deleteHeader = $this->db->prepare($deleteHeaderQuery);
                 if (!$deleteHeader) {
                     throw new Exception('Prepare failed (delete appointment): ' . $this->db->error);
                 }
 
-                $deleteHeader->bind_param('i', $appointment_id);
+                if ($patientId !== null) {
+                    $deleteHeader->bind_param('ii', $appointment_id, $patientId);
+                } else {
+                    $deleteHeader->bind_param('i', $appointment_id);
+                }
                 if (!$deleteHeader->execute()) {
                     throw new Exception('Execute failed (delete appointment): ' . $deleteHeader->error);
                 }
@@ -538,14 +626,23 @@ class HomeModel {
             }
         }
 
-        $stmt = $this->db->prepare("DELETE FROM appointment WHERE appointment_id = ?");
+        $query = "DELETE FROM appointment WHERE appointment_id = ?";
+        if ($patientId !== null) {
+            $query .= " AND patient_id = ?";
+        }
+
+        $stmt = $this->db->prepare($query);
 
         if (!$stmt) {
             $this->setLastError('Prepare failed: ' . $this->db->error);
             return false;
         }
 
-        $stmt->bind_param("i", $appointment_id);
+        if ($patientId !== null) {
+            $stmt->bind_param("ii", $appointment_id, $patientId);
+        } else {
+            $stmt->bind_param("i", $appointment_id);
+        }
 
         $success = $stmt->execute();
         if (!$success) {

@@ -6,6 +6,7 @@ if (session_status() === PHP_SESSION_NONE) {
 $user_id = $_SESSION['user_id'] ?? null;
 $email = $_SESSION['email'] ?? null;
 $user_role = $_SESSION['user_role'] ?? null;
+$showAppointmentCta = !isset($user_id) || $user_role === 'patient';
 ?>
 <header class="navbar">
     <div class="container">
@@ -22,11 +23,17 @@ $user_role = $_SESSION['user_role'] ?? null;
         <a href="index.php?controller=home&action=explore">Tests</a>
         <a href="index.php?controller=blog&action=index">Health Updates</a>
         <a href="index.php?controller=home&action=how">How it works</a>
-        <a href="index.php?controller=home&action=about">About</a>
+        <?php if (isset($user_id) && $user_role === 'patient'): ?>
+          <a href="index.php?controller=home&action=dashboard">Patient Dashboard</a>
+        <?php else: ?>
+          <a href="index.php?controller=home&action=about">About</a>
+        <?php endif; ?>
       </nav>
 
       <div class="nav-actions">
-        <a href="/lab_sync/index.php?controller=home&action=appointment_options" class="appointment-cta">Test Appointment</a>
+        <?php if ($showAppointmentCta): ?>
+          <a href="/lab_sync/index.php?controller=home&action=appointment_options" class="appointment-cta">Book Appointment</a>
+        <?php endif; ?>
         <?php if (isset($user_id) && isset($user_role)): ?>
           <?php if (in_array($user_role, ['admin','receptionist','technician'])): ?>
             <a href="/lab_sync/index.php?controller=dashboard&action=index" class="login">

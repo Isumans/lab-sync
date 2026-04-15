@@ -304,8 +304,14 @@ class HomeController {
     }
     public function getAppointment(){
         if (session_status() === PHP_SESSION_NONE) session_start();
-        $patientId = $this->model->getPatientIdByUserId($_SESSION['user_id']);
+        $patientId = (int)$this->model->getPatientIdByUserId($_SESSION['user_id']);
         $appointments = $this->model->getAllAppointments($patientId);
+        $prescriptionRequests = [];
+
+        if ($patientId > 0) {
+            $prescriptionRequests = $this->model->getPrescriptionRequestsByPatient($patientId, 20);
+        }
+
         include VIEW_PATH . '/patient/dashboard.php';
     }
     public function edit_appointment() {
@@ -322,11 +328,21 @@ class HomeController {
     }
 
     $appointmentId = $_POST['appointment_id'] ?? '';
+    $patientId = (int)$this->model->getPatientIdByUserId($_SESSION['user_id']);
+
+    if ($patientId <= 0) {
+        $_SESSION['error'] = 'Unable to identify patient profile.';
+        header('Location: /lab_sync/index.php?controller=home&action=dashboard');
+        exit();
+    }
+
     $result = false;
 
     if (isset($_POST['edit'])) {
         $time = $_POST['time'] ?? '';
         $date = $_POST['date'] ?? '';
+        $homeCollection = !empty($_POST['home_collection']) ? 1 : 0;
+        $collectionAddress = trim($_POST['collection_address'] ?? '');
 
         if (!$time || !$date || !$appointmentId) {
             $_SESSION['error'] = 'Please fill all required fields';
@@ -334,7 +350,17 @@ class HomeController {
             exit();
         }
 
-        $result = $this->model->updateAppointment($appointmentId, $time, $date);
+        if ($homeCollection && $collectionAddress === '') {
+            $_SESSION['error'] = 'Please provide a collection address for home sample collection.';
+            header('Location: /lab_sync/index.php?controller=home&action=dashboard');
+            exit();
+        }
+
+        if (!$homeCollection) {
+            $collectionAddress = '';
+        }
+
+        $result = $this->model->updateAppointment($appointmentId, $time, $date, $patientId, $homeCollection, $collectionAddress);
         $_SESSION['success'] = 'Appointment updated successfully';
     }
 
@@ -345,7 +371,7 @@ class HomeController {
             exit();
         }
 
-        $result = $this->model->deleteAppointment($appointmentId);
+        $result = $this->model->deleteAppointment($appointmentId, $patientId);
         $_SESSION['success'] = 'Appointment deleted successfully';
     }
 

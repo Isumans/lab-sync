@@ -42,9 +42,26 @@ unset($_SESSION['success'], $_SESSION['error']);
     .toggle-row {
       display: flex;
       align-items: center;
-      gap: .5rem;
+      gap: .75rem;
       font-weight: 600;
       color: var(--neutral-600);
+      border: 1px solid var(--neutral-300);
+      border-radius: var(--radius-sm);
+      background: #fff;
+      padding: .7rem .75rem;
+      width: fit-content;
+    }
+
+    .toggle-row input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      margin: 0;
+      accent-color: var(--primary-500);
+      flex: 0 0 auto;
+    }
+
+    .toggle-row span {
+      line-height: 1.2;
     }
 
     label { display: block; font-weight: 600; margin-bottom: .35rem; color: var(--neutral-600); }
@@ -70,8 +87,29 @@ unset($_SESSION['success'], $_SESSION['error']);
       text-decoration: none;
       display: inline-block;
     }
-    .btn.primary { background: var(--tertiary-900); color: #fff; }
+    .btn.primary { background: var(--primary-500); color: #fff; }
+    .btn.primary:hover { background: var(--primary-600); }
     .btn.secondary { background: var(--neutral-200); color: var(--neutral-700); }
+
+    .cta-box {
+      margin-top: 1rem;
+      background: #fff;
+      border: 1px solid var(--neutral-200);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow);
+      padding: 1rem 1.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .cta-box p {
+      margin: 0;
+      color: var(--neutral-600);
+      font-weight: 500;
+    }
 
     .hint { margin-top: .75rem; color: var(--neutral-400); font-size: .9rem; }
 
@@ -118,7 +156,7 @@ unset($_SESSION['success'], $_SESSION['error']);
           <div class="full">
             <label class="toggle-row" for="home_collection">
               <input type="checkbox" id="home_collection" name="home_collection" value="1">
-              Home sample collection
+              <span>Home sample collection</span>
             </label>
           </div>
 
@@ -142,57 +180,9 @@ unset($_SESSION['success'], $_SESSION['error']);
       </form>
     </section>
 
-    <section class="form-box" style="margin-top: 1rem;">
-      <h2 style="margin-top:0; color: var(--tertiary-900);">Your Recent Prescription Requests</h2>
-      <?php if (empty($requests)): ?>
-        <p class="hint" style="margin-top: 0;">No requests yet.</p>
-      <?php else: ?>
-        <div style="overflow-x:auto;">
-          <table style="width:100%; border-collapse: collapse; font-size: .95rem;">
-            <thead>
-              <tr>
-                <th style="text-align:left; border-bottom:1px solid #e4e7ec; padding:.6rem;">Request</th>
-                <th style="text-align:left; border-bottom:1px solid #e4e7ec; padding:.6rem;">Preferred</th>
-                <th style="text-align:left; border-bottom:1px solid #e4e7ec; padding:.6rem;">Home Collection</th>
-                <th style="text-align:left; border-bottom:1px solid #e4e7ec; padding:.6rem;">Status</th>
-                <th style="text-align:left; border-bottom:1px solid #e4e7ec; padding:.6rem;">Decision</th>
-                <th style="text-align:left; border-bottom:1px solid #e4e7ec; padding:.6rem;">Linked Appointment</th>
-                <th style="text-align:left; border-bottom:1px solid #e4e7ec; padding:.6rem;">Updated</th>
-              </tr>
-            </thead>
-            <tbody>
-              <?php foreach ($requests as $request): ?>
-                <tr>
-                  <td style="padding:.6rem; border-bottom:1px solid #f2f4f7;">#<?php echo (int)$request['request_id']; ?></td>
-                  <td style="padding:.6rem; border-bottom:1px solid #f2f4f7;">
-                    <?php
-                      $date = trim((string)($request['preferred_date'] ?? ''));
-                      $time = trim((string)($request['preferred_time'] ?? ''));
-                      echo htmlspecialchars(($date !== '' ? $date : '-') . ' ' . ($time !== '' ? $time : ''));
-                    ?>
-                  </td>
-                  <td style="padding:.6rem; border-bottom:1px solid #f2f4f7;">
-                    <?php echo !empty($request['home_collection']) ? 'Yes' : 'No'; ?>
-                    <?php if (!empty($request['collection_address'])): ?>
-                      <div style="color:#667085; font-size:.85rem;"><?php echo htmlspecialchars($request['collection_address']); ?></div>
-                    <?php endif; ?>
-                  </td>
-                  <td style="padding:.6rem; border-bottom:1px solid #f2f4f7; font-weight:600;"><?php echo htmlspecialchars($request['status'] ?? 'Pending'); ?></td>
-                  <td style="padding:.6rem; border-bottom:1px solid #f2f4f7;"><?php echo htmlspecialchars($request['decision_action'] ?? '-'); ?></td>
-                  <td style="padding:.6rem; border-bottom:1px solid #f2f4f7;">
-                    <?php if (!empty($request['linked_appointment_id'])): ?>
-                      #<?php echo (int)$request['linked_appointment_id']; ?>
-                    <?php else: ?>
-                      -
-                    <?php endif; ?>
-                  </td>
-                  <td style="padding:.6rem; border-bottom:1px solid #f2f4f7;"><?php echo htmlspecialchars($request['updated_at'] ?? ($request['created_at'] ?? '-')); ?></td>
-                </tr>
-              <?php endforeach; ?>
-            </tbody>
-          </table>
-        </div>
-      <?php endif; ?>
+    <section class="cta-box">
+      <p>Want to check your recent prescription uploads?</p>
+      <a class="btn primary" href="/lab_sync/index.php?controller=home&action=dashboard#prescription-submissions">See Recent Prescription Uploads</a>
     </section>
   </main>
 

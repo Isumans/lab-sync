@@ -104,6 +104,8 @@ class SmsService {
         $appointmentId = (int)($appointment['appointment_id'] ?? 0);
         $appointmentDate = (string)($appointment['appointment_date'] ?? 'N/A');
         $appointmentTime = (string)($appointment['appointment_time'] ?? 'N/A');
+        $testsSnippet = $this->buildSmsTestSnippet($payload['test_details'] ?? [], (string)($appointment['tests_summary'] ?? $payload['tests_summary'] ?? 'Selected tests'));
+        $prepSnippet = $this->buildSmsPreparationSnippet($payload['test_details'] ?? [], (string)($payload['prerequisites_summary'] ?? 'No special prerequisites'));
 
         $recipientLabel = trim((string)$recipientName);
         if ($recipientLabel === '') {
@@ -111,11 +113,13 @@ class SmsService {
         }
 
         $message = sprintf(
-            'Hi %s, your LabSync appointment #%d is confirmed for %s at %s.',
+            'Hi %s, your LabSync appointment #%d is confirmed for %s at %s. Tests: %s. Prep: %s.',
             $recipientLabel,
             $appointmentId,
             $appointmentDate,
-            $appointmentTime
+            $appointmentTime,
+            $testsSnippet,
+            $prepSnippet
         );
 
         return $this->sendSms($phoneNumber, $message);
@@ -148,5 +152,56 @@ class SmsService {
         }
 
         return '';
+    }
+
+    private function buildSmsTestSnippet($testDetails, $fallbackSummary) {
+        if (!is_array($testDetails) || empty($testDetails)) {
+            $fallback = trim((string)$fallbackSummary);
+            return $fallback !== '' ? $fallback : 'Selected tests';
+        }
+
+        $names = [];
+        foreach ($testDetails as $row) {
+            $name = trim((string)($row['test_name'] ?? ''));
+            if ($name !== '') {
+                $names[] = $name;
+            }
+        }
+
+        if (empty($names)) {
+            $fallback = trim((string)$fallbackSummary);
+            return $fallback !== '' ? $fallback : 'Selected tests';
+        }
+
+        $names = array_values(array_unique($names));
+        if (count($names) > 2) {
+            return $names[0] . ', ' . $names[1] . ' +' . (count($names) - 2) . ' more';
+        }
+
+        return implode(', ', $names);
+    }
+
+    private function buildSmsPreparationSnippet($testDetails, $fallbackSummary) {
+        if (is_array($testDetails) && !empty($testDetails)) {
+            foreach ($testDetails as $row) {
+                $prep = trim((string)($row['prerequisites'] ?? ''));
+                if ($prep !== '') {
+                    return $prep;
+                }
+            }
+        }
+
+        $fallback = trim((string)$fallbackSummary);
+        if ($fallback === '') {
+            return 'No special prerequisites';
+        }
+
+        $firstPart = explode('|', $fallback)[0] ?? $fallback;
+        $firstPart = trim($firstPart);
+        if ($firstPart === '') {
+            return 'No special prerequisites';
+        }
+
+        return $firstPart;
     }
 }

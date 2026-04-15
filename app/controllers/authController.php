@@ -45,8 +45,8 @@ class AuthController {
                 if ($role === 'admin' || $role === 'receptionist' || $role === 'technician') {
                     header('Location: /lab_sync/index.php?controller=home&action=index');
                 } else {
-                    // Default to patient dashboard
-                    header('Location: /lab_sync/index.php?controller=home&action=dashboard');
+                    // Patients land on the public home/index page first.
+                    header('Location: /lab_sync/index.php');
                 }
                 exit;
             } else {

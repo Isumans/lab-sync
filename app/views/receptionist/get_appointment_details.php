@@ -79,6 +79,7 @@ $homeCollection = !empty($appointment['home_collection']);
 $collectionAddress = trim((string) ($appointment['collection_address'] ?? ''));
 $bookingChannel = trim((string) ($appointment['booking_channel'] ?? 'receptionist_walkin'));
 $reason = trim((string) ($appointment['reason'] ?? ($appointment['clinical_notes'] ?? ($appointment['notes'] ?? ''))));
+$visitMode = $homeCollection ? 'Home Visit' : 'Lab Visit';
 $testNames = [];
 foreach ($tests as $test) {
     $name = trim((string) ($test['test_name'] ?? ''));
@@ -195,8 +196,8 @@ $itemCount = count($tests);
                     <strong><?php echo appointmentDetailsEscape($itemCount); ?></strong>
                 </div>
                 <div>
-                    <span class="label">Home Collection</span>
-                    <strong><?php echo $homeCollection ? 'Yes' : 'No'; ?></strong>
+                    <span class="label">Visit Mode</span>
+                    <strong><?php echo appointmentDetailsEscape($visitMode); ?></strong>
                 </div>
                 <div>
                     <span class="label">Collection Address</span>

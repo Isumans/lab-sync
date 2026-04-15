@@ -15,7 +15,8 @@ $action = $_GET['action'] ?? 'index';
 // Allow these pages without login
 $allowedWithoutLogin = [
     'Auth' => ['login', 'index', 'patient_signup', 'logout'],
-    'home' => ['about', 'how', 'signup'],
+    'home' => ['index', 'about', 'how', 'signup', 'explore', 'appointment_options'],
+    'blog' => ['index', 'view'],
 ];
 
 $isAllowed = isset($allowedWithoutLogin[$controllerName]) && 
