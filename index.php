@@ -216,6 +216,16 @@ elseif ($controllerName === 'appointmentsController') {
         $inventoryController->searchSuppliers();
     }elseif($action ==='createSupplier'){
         $inventoryController->createSupplier();
+    }elseif($action ==='getInventoryDetails'){
+        $inventoryController->getInventoryDetails();
+    }elseif($action ==='getInventoryEditData'){
+        $inventoryController->getInventoryEditData();
+    }elseif($action ==='getSupplierEditData'){
+        $inventoryController->getSupplierEditData();
+    }elseif($action ==='updateSupplier'){
+        $inventoryController->updateSupplier();
+    }elseif($action ==='deleteSupplier'){
+        $inventoryController->deleteSupplier();
     }elseif($action ==='edit_item'){
         $inventoryController->edit_item();
     }

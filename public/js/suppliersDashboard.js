@@ -122,8 +122,21 @@
                     '<td>' + safe(contactNo) + '</td>' +
                     '<td>' + safe(location) + '</td>' +
                     '<td>' + safe(email) + '</td>' +
-                    '<td>' + safe(formatDateTime(item.created_at || '')) + '</td>' +
-                '</tr>'
+                    '<td class="rd-th-right user-actions" style="justify-content:flex-end;">' +
+                        '<div class="user-action-form">' +
+                            '<button type="button" class="action-btn-edit js-edit-supplier-btn" title="Edit" data-supplier-id="' + safe(supplierId) + '" data-supplier-name="' + safe(supplierName) + '" data-contact-no="' + safe(contactNo) + '" data-location="' + safe(location) + '" data-email="' + safe(email) + '">' +
+                                '<svg width="16" height="16" viewBox="0 0 16 16" fill="none">' +
+                                    '<path d="M3 13.5H13M2 11L11.5 1.5C11.8 1.2 12.3 1.2 12.6 1.5L14.5 3.4C14.8 3.7 14.8 4.2 14.5 4.5L5 14H2V11Z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>' +
+                                '</svg>' +
+                            '</button>' +
+                            '<button type="button" class="action-btn-delete js-delete-supplier-btn" title="Delete" data-supplier-id="' + safe(supplierId) + '" data-supplier-name="' + safe(supplierName) + '">' +
+                                '<svg width="16" height="16" viewBox="0 0 16 16" fill="none">' +
+                                    '<path d="M2 4H14M6.5 7V11M9.5 7V11M3 4L4 13C4 13.5 4.5 14 5 14H11C11.5 14 12 13.5 12 13L13 4M5.5 4V2.5C5.5 2.2 5.7 2 6 2H10C10.3 2 10.5 2.2 10.5 2.5V4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>' +
+                                '</svg>' +
+                            '</button>' +
+                        '</div>' +
+                    '</td>' +                
+                    '</tr>'
             );
         }).join('');
     }
@@ -312,6 +325,15 @@
         if (!tableBody || !showingText || !paginationNode) {
             return;
         }
+
+        window.suppliersDashboard = {
+            refresh: function (resetPage) {
+                if (resetPage) {
+                    currentPage = 1;
+                }
+                return fetchSuppliers();
+            }
+        };
 
         wireEvents();
         updateSortHeaderState();

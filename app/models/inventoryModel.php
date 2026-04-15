@@ -11,7 +11,7 @@ class inventoryModel {
     }
 
     public function getAllItems() {
-        $query = "SELECT * FROM inventory";
+        $query = "SELECT * FROM inventory WHERE deleted_date IS NULL OR deleted_date = '0000-00-00'";
         $result = mysqli_query($this->db, $query);
         if (!$result) {
             die("Query failed: " . mysqli_error($this->db));
@@ -301,6 +301,111 @@ class inventoryModel {
         return intval(mysqli_insert_id($this->db));
     }
 
+    public function getSupplierById($supplierId) {
+        $this->lastError = '';
+
+        if (!$this->tableExists('suppliers')) {
+            $this->lastError = 'Suppliers table was not found.';
+            return null;
+        }
+
+        $safeSupplierId = intval($supplierId);
+        if ($safeSupplierId <= 0) {
+            return null;
+        }
+
+        $query = 'SELECT supplier_id, supplier_name, contact_no, location, email FROM suppliers WHERE supplier_id = ? LIMIT 1';
+        $stmt = mysqli_prepare($this->db, $query);
+        if (!$stmt) {
+            $this->lastError = 'Prepare failed in getSupplierById: ' . mysqli_error($this->db);
+            error_log($this->lastError);
+            return null;
+        }
+
+        mysqli_stmt_bind_param($stmt, 'i', $safeSupplierId);
+        if (!mysqli_stmt_execute($stmt)) {
+            $this->lastError = 'Execute failed in getSupplierById: ' . mysqli_stmt_error($stmt);
+            error_log($this->lastError);
+            return null;
+        }
+
+        $result = mysqli_stmt_get_result($stmt);
+        return $result ? mysqli_fetch_assoc($result) : null;
+    }
+
+    public function updateSupplier($supplierId, $supplierName, $contactNo = null, $location = null, $email = null) {
+        $this->lastError = '';
+
+        if (!$this->tableExists('suppliers')) {
+            $this->lastError = 'Suppliers table was not found.';
+            return false;
+        }
+
+        $safeSupplierId = intval($supplierId);
+        $safeName = trim((string) $supplierName);
+        $safeContact = trim((string) $contactNo);
+        $safeLocation = trim((string) $location);
+        $safeEmail = trim((string) $email);
+
+        $safeContact = $safeContact === '' ? null : $safeContact;
+        $safeLocation = $safeLocation === '' ? null : $safeLocation;
+        $safeEmail = $safeEmail === '' ? null : $safeEmail;
+
+        $query = 'UPDATE suppliers SET supplier_name = ?, contact_no = ?, location = ?, email = ? WHERE supplier_id = ?';
+        $stmt = mysqli_prepare($this->db, $query);
+        if (!$stmt) {
+            $this->lastError = 'Prepare failed in updateSupplier: ' . mysqli_error($this->db);
+            error_log($this->lastError);
+            return false;
+        }
+
+        mysqli_stmt_bind_param($stmt, 'ssssi', $safeName, $safeContact, $safeLocation, $safeEmail, $safeSupplierId);
+        if (!mysqli_stmt_execute($stmt)) {
+            $this->lastError = 'Execute failed in updateSupplier: ' . mysqli_stmt_error($stmt);
+            error_log($this->lastError);
+            return false;
+        }
+
+        return mysqli_stmt_affected_rows($stmt) >= 0;
+    }
+
+    public function deleteSupplier($supplierId) {
+        $this->lastError = '';
+
+        if (!$this->tableExists('suppliers')) {
+            $this->lastError = 'Suppliers table was not found.';
+            return false;
+        }
+
+        $safeSupplierId = intval($supplierId);
+        if ($safeSupplierId <= 0) {
+            $this->lastError = 'Valid supplier ID is required.';
+            return false;
+        }
+
+        $query = 'DELETE FROM suppliers WHERE supplier_id = ?';
+        $stmt = mysqli_prepare($this->db, $query);
+        if (!$stmt) {
+            $this->lastError = 'Prepare failed in deleteSupplier: ' . mysqli_error($this->db);
+            error_log($this->lastError);
+            return false;
+        }
+
+        mysqli_stmt_bind_param($stmt, 'i', $safeSupplierId);
+        if (!mysqli_stmt_execute($stmt)) {
+            $this->lastError = 'Execute failed in deleteSupplier: ' . mysqli_stmt_error($stmt);
+            error_log($this->lastError);
+            return false;
+        }
+
+        if (mysqli_stmt_affected_rows($stmt) === 0) {
+            $this->lastError = 'Supplier not found.';
+            return false;
+        }
+
+        return true;
+    }
+
     public function addStockHistoryEntry($inventoryId, $quantity, $unitCost = null, $supplierId = null, $expiryDate = null, $notes = '') {
         $this->lastError = '';
         if (!$this->tableExists('stock_history')) {
@@ -337,17 +442,384 @@ class inventoryModel {
 
         return $ok;
     }
-    public function deleteItem($itemId) {
-        $query = "DELETE FROM inventory WHERE inventory_id = ?";
+
+    public function addInventorySupplierSources($inventoryId, $sources) {
+        $this->lastError = '';
+
+        if (!$this->tableExists('inventory_supplier_sources')) {
+            return true;
+        }
+
+        $safeInventoryId = intval($inventoryId);
+        if ($safeInventoryId <= 0) {
+            $this->lastError = 'Invalid inventory ID for supplier source save.';
+            return false;
+        }
+
+        $normalized = [];
+        foreach ((array) $sources as $source) {
+            $supplierId = isset($source['supplier_id']) ? intval($source['supplier_id']) : 0;
+            if ($supplierId <= 0) {
+                continue;
+            }
+
+            $unitCost = null;
+            if (isset($source['unit_cost']) && $source['unit_cost'] !== '' && $source['unit_cost'] !== null) {
+                $unitCost = floatval($source['unit_cost']);
+            }
+
+            $isPrimary = !empty($source['is_primary']) ? 1 : 0;
+
+            $normalized[] = [
+                'supplier_id' => $supplierId,
+                'unit_cost' => $unitCost,
+                'is_primary' => $isPrimary,
+            ];
+        }
+
+        if (empty($normalized)) {
+            return true;
+        }
+
+        $hasPrimary = false;
+        foreach ($normalized as $entry) {
+            if ($entry['is_primary'] === 1) {
+                $hasPrimary = true;
+                break;
+            }
+        }
+        if (!$hasPrimary) {
+            $normalized[0]['is_primary'] = 1;
+        }
+
+        $query = 'INSERT INTO inventory_supplier_sources '
+            . '(inventory_id, supplier_id, unit_cost, is_primary, is_active, first_seen_date, last_purchase_date) '
+            . 'VALUES (?, ?, ?, ?, 1, CURDATE(), CURDATE()) '
+            . 'ON DUPLICATE KEY UPDATE '
+            . 'unit_cost = COALESCE(VALUES(unit_cost), unit_cost), '
+            . 'is_primary = VALUES(is_primary), '
+            . 'is_active = 1, '
+            . 'updated_at = CURRENT_TIMESTAMP';
+
         $stmt = mysqli_prepare($this->db, $query);
-        mysqli_stmt_bind_param($stmt, 'i', $itemId);
-        return mysqli_stmt_execute($stmt);
+        if (!$stmt) {
+            $this->lastError = 'Prepare failed in addInventorySupplierSources: ' . mysqli_error($this->db);
+            error_log($this->lastError);
+            return false;
+        }
+
+        foreach ($normalized as $entry) {
+            $supplierId = $entry['supplier_id'];
+            $unitCost = $entry['unit_cost'];
+            $isPrimary = $entry['is_primary'];
+
+            mysqli_stmt_bind_param($stmt, 'iidi', $safeInventoryId, $supplierId, $unitCost, $isPrimary);
+            if (!mysqli_stmt_execute($stmt)) {
+                $this->lastError = 'Execute failed in addInventorySupplierSources: ' . mysqli_stmt_error($stmt);
+                error_log($this->lastError);
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    public function getInventoryDetailsPayload($inventoryId) {
+        $this->lastError = '';
+
+        $safeInventoryId = intval($inventoryId);
+        if ($safeInventoryId <= 0) {
+            return null;
+        }
+
+        $itemSql = 'SELECT i.inventory_id, i.item_name, i.quantity, i.reorder_level, i.status, '
+            . 'i.supplier_id, i.category_id, i.unit_of_measure, i.unit_cost, i.expiry_date, i.last_updated, '
+            . 'c.category_name, s.supplier_name AS primary_supplier_name '
+            . 'FROM inventory i '
+            . 'LEFT JOIN inventory_categories c ON c.category_id = i.category_id '
+            . 'LEFT JOIN suppliers s ON s.supplier_id = i.supplier_id '
+            . 'WHERE i.inventory_id = ? LIMIT 1';
+
+        $itemStmt = mysqli_prepare($this->db, $itemSql);
+        if (!$itemStmt) {
+            $this->lastError = 'Prepare failed in getInventoryDetailsPayload(item): ' . mysqli_error($this->db);
+            error_log($this->lastError);
+            return null;
+        }
+
+        mysqli_stmt_bind_param($itemStmt, 'i', $safeInventoryId);
+        if (!mysqli_stmt_execute($itemStmt)) {
+            $this->lastError = 'Execute failed in getInventoryDetailsPayload(item): ' . mysqli_stmt_error($itemStmt);
+            error_log($this->lastError);
+            return null;
+        }
+
+        $itemResult = mysqli_stmt_get_result($itemStmt);
+        $inventory = $itemResult ? mysqli_fetch_assoc($itemResult) : null;
+        if (!$inventory) {
+            return null;
+        }
+
+        $suppliers = [];
+        if ($this->tableExists('inventory_supplier_sources')) {
+            $supplierSql = 'SELECT iss.source_id, iss.supplier_id, iss.unit_cost, iss.min_order_qty, '
+                . 'iss.lead_time_days, iss.is_primary, sup.supplier_name '
+                . 'FROM inventory_supplier_sources iss '
+                . 'LEFT JOIN suppliers sup ON sup.supplier_id = iss.supplier_id '
+                . 'WHERE iss.inventory_id = ? AND iss.is_active = 1 '
+                . 'ORDER BY iss.is_primary DESC, sup.supplier_name ASC, iss.source_id ASC';
+
+            $supplierStmt = mysqli_prepare($this->db, $supplierSql);
+            if (!$supplierStmt) {
+                $this->lastError = 'Prepare failed in getInventoryDetailsPayload(suppliers): ' . mysqli_error($this->db);
+                error_log($this->lastError);
+                return null;
+            }
+
+            mysqli_stmt_bind_param($supplierStmt, 'i', $safeInventoryId);
+            if (!mysqli_stmt_execute($supplierStmt)) {
+                $this->lastError = 'Execute failed in getInventoryDetailsPayload(suppliers): ' . mysqli_stmt_error($supplierStmt);
+                error_log($this->lastError);
+                return null;
+            }
+
+            $supplierResult = mysqli_stmt_get_result($supplierStmt);
+            $suppliers = $supplierResult ? mysqli_fetch_all($supplierResult, MYSQLI_ASSOC) : [];
+        }
+
+        if (empty($suppliers) && !empty($inventory['supplier_id'])) {
+            $suppliers[] = [
+                'source_id' => null,
+                'supplier_id' => intval($inventory['supplier_id']),
+                'unit_cost' => $inventory['unit_cost'],
+                'min_order_qty' => null,
+                'lead_time_days' => null,
+                'is_primary' => 1,
+                'supplier_name' => $inventory['primary_supplier_name'] ?? null,
+            ];
+        }
+
+        return [
+            'inventory' => $inventory,
+            'suppliers' => $suppliers,
+        ];
+    }
+
+    public function deleteItem($itemId, $deletedBy = null) {
+        $this->lastError = '';
+
+        $safeItemId = intval($itemId);
+        if ($safeItemId <= 0) {
+            $this->lastError = 'Valid inventory ID is required for delete.';
+            return false;
+        }
+
+        $safeDeletedBy = $deletedBy === null ? null : intval($deletedBy);
+        $query = "UPDATE inventory SET deleted_date = CURDATE(), deleted_time = CURTIME(), deleted_by = ? WHERE inventory_id = ? AND (deleted_date IS NULL OR deleted_date = '0000-00-00')";
+        $stmt = mysqli_prepare($this->db, $query);
+        if (!$stmt) {
+            $this->lastError = 'Prepare failed in deleteItem: ' . mysqli_error($this->db);
+            error_log($this->lastError);
+            return false;
+        }
+
+        mysqli_stmt_bind_param($stmt, 'ii', $safeDeletedBy, $safeItemId);
+        if (!mysqli_stmt_execute($stmt)) {
+            $this->lastError = 'Execute failed in deleteItem: ' . mysqli_stmt_error($stmt);
+            error_log($this->lastError);
+            return false;
+        }
+
+        if (mysqli_stmt_affected_rows($stmt) < 1) {
+            $this->lastError = 'Inventory item not found or already deleted.';
+            return false;
+        }
+
+        return true;
     }
     public function updateItem($itemId, $itemName, $quantity, $reorderLevel, $supplierId) {
         $query = "UPDATE inventory SET item_name = ?, quantity = ?, reorder_level = ?, supplier_id = ? WHERE inventory_id = ?";
         $stmt = mysqli_prepare($this->db, $query);
         mysqli_stmt_bind_param($stmt, 'siiii', $itemName, $quantity, $reorderLevel, $supplierId, $itemId);
         return mysqli_stmt_execute($stmt);
+    }
+
+    public function updateItemFull($itemId, $itemName, $quantity, $reorderLevel, $status, $supplierId, $categoryId, $unitOfMeasure, $unitCost, $expiryDate) {
+        $this->lastError = '';
+
+        $safeItemId = intval($itemId);
+        if ($safeItemId <= 0) {
+            $this->lastError = 'Invalid inventory item ID.';
+            return false;
+        }
+
+        $safeItemName = trim((string) $itemName);
+        $safeQuantity = intval($quantity);
+        $safeReorderLevel = intval($reorderLevel);
+        $safeStatus = trim((string) $status);
+        $safeSupplierId = ($supplierId === null || $supplierId === '') ? null : intval($supplierId);
+        $safeCategoryId = ($categoryId === null || $categoryId === '') ? null : intval($categoryId);
+        $safeUnitOfMeasure = trim((string) $unitOfMeasure);
+        $safeUnitCost = ($unitCost === null || $unitCost === '') ? null : floatval($unitCost);
+        $safeExpiryDate = ($expiryDate === null || trim((string) $expiryDate) === '') ? null : trim((string) $expiryDate);
+
+        if ($safeStatus === '') {
+            $safeStatus = 'In Stock';
+        }
+        if ($safeUnitOfMeasure === '') {
+            $safeUnitOfMeasure = 'Units';
+        }
+
+        $query = 'UPDATE inventory '
+            . 'SET item_name = ?, quantity = ?, reorder_level = ?, status = ?, supplier_id = ?, category_id = ?, '
+            . 'unit_of_measure = ?, unit_cost = ?, expiry_date = ? '
+            . 'WHERE inventory_id = ?';
+
+        $stmt = mysqli_prepare($this->db, $query);
+        if (!$stmt) {
+            $this->lastError = 'Prepare failed in updateItemFull: ' . mysqli_error($this->db);
+            error_log($this->lastError);
+            return false;
+        }
+
+        mysqli_stmt_bind_param(
+            $stmt,
+            'siisiisdsi',
+            $safeItemName,
+            $safeQuantity,
+            $safeReorderLevel,
+            $safeStatus,
+            $safeSupplierId,
+            $safeCategoryId,
+            $safeUnitOfMeasure,
+            $safeUnitCost,
+            $safeExpiryDate,
+            $safeItemId
+        );
+
+        $ok = mysqli_stmt_execute($stmt);
+        if (!$ok) {
+            $this->lastError = 'Execute failed in updateItemFull: ' . mysqli_stmt_error($stmt);
+            error_log($this->lastError);
+            return false;
+        }
+
+        return true;
+    }
+
+    public function replaceInventorySupplierSources($inventoryId, $sources) {
+        $this->lastError = '';
+
+        if (!$this->tableExists('inventory_supplier_sources')) {
+            return true;
+        }
+
+        $safeInventoryId = intval($inventoryId);
+        if ($safeInventoryId <= 0) {
+            $this->lastError = 'Invalid inventory ID for supplier source replacement.';
+            return false;
+        }
+
+        $normalized = [];
+        foreach ((array) $sources as $source) {
+            $supplierId = isset($source['supplier_id']) ? intval($source['supplier_id']) : 0;
+            if ($supplierId <= 0) {
+                continue;
+            }
+
+            $unitCost = null;
+            if (isset($source['unit_cost']) && $source['unit_cost'] !== null && $source['unit_cost'] !== '') {
+                $unitCost = floatval($source['unit_cost']);
+            }
+
+            $minOrderQty = null;
+            if (isset($source['min_order_qty']) && $source['min_order_qty'] !== null && $source['min_order_qty'] !== '') {
+                $minOrderQty = intval($source['min_order_qty']);
+            }
+
+            $leadTimeDays = null;
+            if (isset($source['lead_time_days']) && $source['lead_time_days'] !== null && $source['lead_time_days'] !== '') {
+                $leadTimeDays = intval($source['lead_time_days']);
+            }
+
+            $isPrimary = !empty($source['is_primary']) ? 1 : 0;
+
+            $normalized[] = [
+                'supplier_id' => $supplierId,
+                'unit_cost' => $unitCost,
+                'min_order_qty' => $minOrderQty,
+                'lead_time_days' => $leadTimeDays,
+                'is_primary' => $isPrimary,
+            ];
+        }
+
+        $deleteQuery = 'DELETE FROM inventory_supplier_sources WHERE inventory_id = ?';
+        $deleteStmt = mysqli_prepare($this->db, $deleteQuery);
+        if (!$deleteStmt) {
+            $this->lastError = 'Prepare failed in replaceInventorySupplierSources(delete): ' . mysqli_error($this->db);
+            error_log($this->lastError);
+            return false;
+        }
+
+        mysqli_stmt_bind_param($deleteStmt, 'i', $safeInventoryId);
+        if (!mysqli_stmt_execute($deleteStmt)) {
+            $this->lastError = 'Execute failed in replaceInventorySupplierSources(delete): ' . mysqli_stmt_error($deleteStmt);
+            error_log($this->lastError);
+            return false;
+        }
+
+        if (empty($normalized)) {
+            return true;
+        }
+
+        $hasPrimary = false;
+        foreach ($normalized as $entry) {
+            if ($entry['is_primary'] === 1) {
+                $hasPrimary = true;
+                break;
+            }
+        }
+        if (!$hasPrimary) {
+            $normalized[0]['is_primary'] = 1;
+        }
+
+        $insertQuery = 'INSERT INTO inventory_supplier_sources '
+            . '(inventory_id, supplier_id, unit_cost, min_order_qty, lead_time_days, is_primary, is_active, first_seen_date, last_purchase_date) '
+            . 'VALUES (?, ?, ?, ?, ?, ?, 1, CURDATE(), CURDATE())';
+
+        $insertStmt = mysqli_prepare($this->db, $insertQuery);
+        if (!$insertStmt) {
+            $this->lastError = 'Prepare failed in replaceInventorySupplierSources(insert): ' . mysqli_error($this->db);
+            error_log($this->lastError);
+            return false;
+        }
+
+        foreach ($normalized as $entry) {
+            $supplierId = $entry['supplier_id'];
+            $unitCost = $entry['unit_cost'];
+            $minOrderQty = $entry['min_order_qty'];
+            $leadTimeDays = $entry['lead_time_days'];
+            $isPrimary = $entry['is_primary'];
+
+            mysqli_stmt_bind_param(
+                $insertStmt,
+                'iidiii',
+                $safeInventoryId,
+                $supplierId,
+                $unitCost,
+                $minOrderQty,
+                $leadTimeDays,
+                $isPrimary
+            );
+
+            if (!mysqli_stmt_execute($insertStmt)) {
+                $this->lastError = 'Execute failed in replaceInventorySupplierSources(insert): ' . mysqli_stmt_error($insertStmt);
+                error_log($this->lastError);
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private function buildInventoryBaseSql($filters, $countOnly) {
@@ -386,7 +858,8 @@ class inventoryModel {
             $params[] = $toDate;
         }
 
-        $whereSql = empty($where) ? '1=1' : implode(' AND ', $where);
+        $where[] = '(i.deleted_date IS NULL OR i.deleted_date = \'0000-00-00\')';
+        $whereSql = implode(' AND ', $where);
 
         if ($countOnly) {
             $sql = 'SELECT COUNT(*) AS total_rows FROM inventory i WHERE ' . $whereSql;

@@ -145,7 +145,6 @@
                 '<tr>' +
                     '<td><span class="rd-appointment-id">INV-' + String(inventoryId).padStart(4, '0') + '</span></td>' +
                     '<td>' + safe(itemName) + '</td>' +
-                    '<td>' + safe(supplierId) + '</td>' +
                     '<td>' + safe(quantity) + '</td>' +
                     '<td>' + safe(reorderLevel) + '</td>' +
                     '<td><span class="status-badge ' + statusClass(item.status) + '">' + safe(statusLabel) + '</span></td>' +
@@ -157,12 +156,19 @@
                             '<input type="hidden" name="supplier_id" value="' + safe(item.supplier_id == null ? '' : item.supplier_id) + '">' +
                             '<input type="hidden" name="quantity" value="' + safe(item.quantity == null ? '' : item.quantity) + '">' +
                             '<input type="hidden" name="reorder_level" value="' + safe(item.reorder_level == null ? '' : item.reorder_level) + '">' +
-                            '<button type="submit" name="edit" class="action-btn-edit" title="Edit" onclick="showAlertAndSubmit(event)">' +
+                            '<button type="button" class="action-btn-view js-view-inventory-btn" title="View Details" data-inventory-id="' + safe(inventoryId) + '">' +
+                                '<svg width="16" height="16" viewBox="0 0 16 16" fill="none">' +
+                                    '<path d="M1 8C1 8 3.5 2 8 2C12.5 2 15 8 15 8C15 8 12.5 14 8 14C3.5 14 1 8 1 8Z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>' +
+                                    '<path d="M8 5C6.34315 5 5 6.34315 5 8C5 9.65685 6.34315 11 8 11C9.65685 11 11 9.65685 11 8C11 6.34315 9.65685 5 8 5Z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>' +
+                                    '<path d="M8 7C8.55228 7 9 7.44772 9 8C9 8.55228 8.55228 9 8 9C7.44772 9 7 8.55228 7 8C7 7.44772 7.44772 7 8 7Z" fill="currentColor"/>' +
+                                '</svg>' +
+                            '</button>' +
+                            '<button type="button" class="action-btn-edit js-edit-inventory-btn" title="Edit" data-inventory-id="' + safe(inventoryId) + '">' +
                                 '<svg width="16" height="16" viewBox="0 0 16 16" fill="none">' +
                                     '<path d="M3 13.5H13M2 11L11.5 1.5C11.8 1.2 12.3 1.2 12.6 1.5L14.5 3.4C14.8 3.7 14.8 4.2 14.5 4.5L5 14H2V11Z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>' +
                                 '</svg>' +
                             '</button>' +
-                            '<button type="submit" name="delete" class="action-btn-delete" title="Delete" onclick="showAlertAndSubmit(event)">' +
+                            '<button type="button" class="action-btn-delete js-delete-inventory-btn" title="Delete" data-inventory-id="' + safe(inventoryId) + '" data-item-name="' + safe(itemName) + '">' +
                                 '<svg width="16" height="16" viewBox="0 0 16 16" fill="none">' +
                                     '<path d="M2 4H14M6.5 7V11M9.5 7V11M3 4L4 13C4 13.5 4.5 14 5 14H11C11.5 14 12 13.5 12 13L13 4M5.5 4V2.5C5.5 2.2 5.7 2 6 2H10C10.3 2 10.5 2.2 10.5 2.5V4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>' +
                                 '</svg>' +

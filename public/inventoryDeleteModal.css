@@ -1,0 +1,164 @@
+.inventory-delete-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 1500;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background: rgba(15, 23, 42, 0.48);
+    padding: 20px;
+}
+
+.inventory-delete-modal.is-open {
+    display: flex;
+}
+
+.inventory-delete-dialog {
+    width: min(520px, 100%);
+    border-radius: 12px;
+    background: #ffffff;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+    border: 1px solid #d8e2ea;
+    overflow: hidden;
+    padding: 18px 18px 14px;
+}
+
+.inventory-delete-header {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.inventory-delete-icon-wrap {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: #ffe7e7;
+    color: #cf1b1b;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 18px;
+    line-height: 1;
+}
+
+.inventory-delete-header h2 {
+    margin: 0;
+    font-size: 28px;
+    color: #1f2f3a;
+    font-weight: 700;
+}
+
+.inventory-delete-close {
+    border: 0;
+    background: transparent;
+    color: #617789;
+    font-size: 26px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0 4px;
+}
+
+.inventory-delete-close:hover {
+    color: #233845;
+}
+
+.inventory-delete-copy {
+    margin: 0 0 14px;
+    color: #5f7888;
+    font-size: 15px;
+    line-height: 1.45;
+    font-weight: 600;
+}
+
+.inventory-delete-alert {
+    margin: 0 0 12px;
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 13px;
+    border: 1px solid #ffd1d1;
+    background: #fff0f0;
+    color: #b01212;
+    font-weight: 600;
+}
+
+.inventory-delete-summary {
+    border: 1px solid #e4ecf3;
+    border-radius: 10px;
+    background: #f6f9fc;
+    padding: 12px 13px;
+    margin-bottom: 14px;
+    display: grid;
+    gap: 6px;
+}
+
+.inventory-delete-summary-label {
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    font-weight: 800;
+    color: #6f889b;
+    text-transform: uppercase;
+}
+
+.inventory-delete-summary-value {
+    font-size: 18px;
+    color: #223747;
+    font-weight: 700;
+    margin-bottom: 2px;
+}
+
+.inventory-delete-confirm-btn {
+    width: 100%;
+    border: 1px solid #bb1414;
+    border-radius: 10px;
+    padding: 11px 14px;
+    background: #d41717;
+    color: #ffffff;
+    font-size: 18px;
+    font-weight: 700;
+    cursor: pointer;
+    margin-bottom: 10px;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.inventory-delete-confirm-btn:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+}
+
+.inventory-delete-confirm-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.inventory-delete-cancel-btn {
+    width: 100%;
+    border: 0;
+    border-radius: 10px;
+    padding: 10px 14px;
+    background: transparent;
+    color: #58758a;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.inventory-delete-cancel-btn:hover {
+    background: #eef4f8;
+}
+
+.inventory-delete-footer-note {
+    margin-top: 10px;
+    border-top: 1px solid #e5edf3;
+    padding-top: 9px;
+    text-align: center;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    color: #7f96a7;
+    font-weight: 800;
+    text-transform: uppercase;
+}

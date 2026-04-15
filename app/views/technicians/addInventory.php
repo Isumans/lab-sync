@@ -92,13 +92,22 @@ unset($_SESSION['inventory_create_error'], $_SESSION['inventory_create_success']
                         </header>
 
                         <div class="inv-create-grid-single">
+                            <label>Supplier Price Sources</label>
+                            <p class="inv-source-help">Add one or more suppliers for this item and set each supplier's unit cost.</p>
+                            <div id="supplierSourcesList" class="inv-supplier-sources-list"></div>
+                            <input type="hidden" id="primary_source_index" name="primary_source_index" value="0">
+                            <button type="button" id="addSupplierSourceRow" class="inv-create-btn-secondary inv-source-add-btn">+ Add Another Supplier Source</button>
+                        </div>
+
+                        <div class="inv-create-grid-single">
                             <label for="supplierSearch">Search Existing Supplier</label>
                             <input type="text" id="supplierSearch" placeholder="Type supplier name, contact, or email...">
+                            <div id="supplier-suggestions" class="supplier-suggestions" style="display: none;"></div>
                         </div>
 
                         <div class="inv-create-inline-actions">
                             <div class="inv-create-grid-single">
-                                <label for="supplier_id">Supplier</label>
+                                <label for="supplier_id">Initial Intake Supplier</label>
                                 <select id="supplier_id" name="supplier_id">
                                     <option value="">Select supplier (optional)</option>
                                     <?php foreach ($suppliers as $supplier): ?>
@@ -184,6 +193,31 @@ unset($_SESSION['inventory_create_error'], $_SESSION['inventory_create_success']
         </div>
     </div>
 
-    <script src="/lab_sync/public/js/inventoryCreateItem.js?v=20260414-1"></script>
+    <template id="supplierSourceRowTemplate">
+        <div class="inv-supplier-source-row" data-row-index="__INDEX__">
+            <div class="inv-source-row-fields">
+                <div class="inv-source-field">
+                    <label>Supplier</label>
+                    <select name="source_supplier_id[]" class="inv-source-supplier-select">
+                        <option value="">Select supplier</option>
+                        <?php foreach ($suppliers as $supplier): ?>
+                            <option value="<?php echo intval($supplier['supplier_id']); ?>"><?php echo htmlspecialchars($supplier['supplier_name']); ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="inv-source-field">
+                    <label>Unit Cost (USD)</label>
+                    <input type="number" name="source_unit_cost[]" class="inv-source-unit-cost" min="0" step="0.01" placeholder="0.00">
+                </div>
+                <div class="inv-source-field inv-source-primary-wrap">
+                    <label>Primary</label>
+                    <input type="radio" name="source_primary_radio" class="inv-source-primary-radio" value="__INDEX__">
+                </div>
+            </div>
+            <button type="button" class="inv-source-remove-btn" aria-label="Remove supplier source">Remove</button>
+        </div>
+    </template>
+
+    <script src="/lab_sync/public/js/inventoryCreateItem.js?v=20260415-2"></script>
 </body>
 </html>
