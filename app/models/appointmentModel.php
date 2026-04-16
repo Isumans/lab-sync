@@ -2,98 +2,36 @@
 
 class AppointmentModel {
     private $db;
-    private $lastError = '';
-    private static $appointmentColumnCache = [];
+    private static $columnCache = [];
     private static $tableCache = [];
     private static $tableColumnCache = [];
+    private $lastError = '';
 
     public function __construct($db) {
         $this->db = $db;
     }
 
-    public function createAppointment($patientId, $appointmentDate, $appointmentTime, $reason) {
-        $stmt = $this->db->prepare("INSERT INTO appointments (patient_id, appointment_date, appointment_time, reason) VALUES (?, ?, ?, ?)");
-        $stmt->bind_param("isss", $patientId, $appointmentDate, $appointmentTime, $reason);
-        return $stmt->execute();
-    }
-    public function createReceptionistAppointment($patientId, $testId, $appointmentDate, $appointmentTime, $method = 'Physical', $status = 'Pending', $homeCollection = 0, $collectionAddress = '') {
-        $this->ensureHomeCollectionColumns();
-
-        $channel = strtolower($method) === 'call' ? 'receptionist_phone' : 'receptionist_walkin';
-        $homeCollectionValue = !empty($homeCollection) ? 1 : 0;
-        $collectionAddressValue = trim((string)$collectionAddress);
-        $collectionAddressValue = $collectionAddressValue !== '' ? $collectionAddressValue : null;
-
-        $stmt = $this->db->prepare("INSERT INTO appointment (patient_id, test_id, appointment_time, appointment_date, method, status, booking_channel, home_collection, collection_address) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
-
-        if (!$stmt) {
-            return false;
-        }
-
-        $stmt->bind_param("iisssssis", $patientId, $testId, $appointmentTime, $appointmentDate, $method, $status, $channel, $homeCollectionValue, $collectionAddressValue);
-
-        return $stmt->execute();
-    }
-
-    public function getAllAppointmentsByMethod($method) {
-        $stmt = $this->db->prepare("SELECT * FROM appointment WHERE LOWER(COALESCE(method, '')) = LOWER(?) ORDER BY appointment_date DESC, appointment_time DESC");
-        if ($stmt === false) {
-            $this->lastError = 'Prepare failed in getAllAppointmentsByMethod: ' . $this->db->error;
-            return [];
-        }
-
-        $stmt->bind_param("s", $method);
-        if (!$stmt->execute()) {
-            $this->lastError = 'Execute failed in getAllAppointmentsByMethod: ' . $stmt->error;
-            return [];
-        }
-
-        $result = $stmt->get_result();
-        return $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
-    }
-
-    public function getAllAppointmentsExceptMethod($method) {
-        return $this->fetchAppointmentsByMethodFilter(false, $method);
-    }
-
-    private function fetchAppointmentsByMethodFilter($include, $method) {
-        $sql = $include
-            ? "SELECT * FROM appointment WHERE LOWER(COALESCE(method, '')) = LOWER(?) ORDER BY appointment_date DESC, appointment_time DESC"
-            : "SELECT * FROM appointment WHERE LOWER(COALESCE(method, '')) <> LOWER(?) ORDER BY appointment_date DESC, appointment_time DESC";
-
-        $stmt = $this->db->prepare($sql);
-        if ($stmt === false) {
-            $this->lastError = 'Prepare failed in fetchAppointmentsByMethodFilter: ' . $this->db->error;
-            return [];
-        }
-
-        $stmt->bind_param('s', $method);
-        if (!$stmt->execute()) {
-            $this->lastError = 'Execute failed in fetchAppointmentsByMethodFilter: ' . $stmt->error;
-            return [];
-        }
-
-        $result = $stmt->get_result();
-        return $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
-    }
-
     private function hasAppointmentColumn($columnName) {
-        if (array_key_exists($columnName, self::$appointmentColumnCache)) {
-            return self::$appointmentColumnCache[$columnName];
+        if (array_key_exists($columnName, self::$columnCache)) {
+            return self::$columnCache[$columnName];
         }
 
-        self::$appointmentColumnCache[$columnName] = $this->columnExists('appointment', $columnName);
-        return self::$appointmentColumnCache[$columnName];
+        $safeColumn = preg_replace('/[^a-zA-Z0-9_]/', '', $columnName);
+        $sql = "SHOW COLUMNS FROM appointment LIKE '" . $this->db->real_escape_string($safeColumn) . "'";
+        $result = $this->db->query($sql);
+        self::$columnCache[$columnName] = ($result && $result->num_rows > 0);
+        return self::$columnCache[$columnName];
     }
-<<<<<<< HEAD
-=======
 
     private function hasTable($tableName) {
         if (array_key_exists($tableName, self::$tableCache)) {
             return self::$tableCache[$tableName];
         }
 
-        self::$tableCache[$tableName] = $this->tableExists($tableName);
+        $safeTable = preg_replace('/[^a-zA-Z0-9_]/', '', $tableName);
+        $sql = "SHOW TABLES LIKE '" . $this->db->real_escape_string($safeTable) . "'";
+        $result = $this->db->query($sql);
+        self::$tableCache[$tableName] = ($result && $result->num_rows > 0);
         return self::$tableCache[$tableName];
     }
 
@@ -103,8 +41,80 @@ class AppointmentModel {
             return self::$tableColumnCache[$cacheKey];
         }
 
-        self::$tableColumnCache[$cacheKey] = $this->columnExists($tableName, $columnName);
+        $safeTable = preg_replace('/[^a-zA-Z0-9_]/', '', $tableName);
+        $safeColumn = preg_replace('/[^a-zA-Z0-9_]/', '', $columnName);
+        $sql = "SHOW COLUMNS FROM `" . $this->db->real_escape_string($safeTable) . "` LIKE '" . $this->db->real_escape_string($safeColumn) . "'";
+        $result = $this->db->query($sql);
+        self::$tableColumnCache[$cacheKey] = ($result && $result->num_rows > 0);
         return self::$tableColumnCache[$cacheKey];
+    }
+
+    private function ensurePrescriptionAuditColumns() {
+        if (!$this->hasTable('prescription_requests')) {
+            return false;
+        }
+
+        $alterStatements = [];
+
+        if (!$this->hasTableColumn('prescription_requests', 'decision_action')) {
+            $alterStatements[] = "ADD COLUMN decision_action VARCHAR(40) NULL AFTER status";
+        }
+
+        if (!$this->hasTableColumn('prescription_requests', 'decision_by_user_id')) {
+            $alterStatements[] = "ADD COLUMN decision_by_user_id INT NULL AFTER decision_action";
+        }
+
+        if (!$this->hasTableColumn('prescription_requests', 'decision_at')) {
+            $alterStatements[] = "ADD COLUMN decision_at DATETIME NULL AFTER decision_by_user_id";
+        }
+
+        if (!$this->hasTableColumn('prescription_requests', 'linked_appointment_id')) {
+            $alterStatements[] = "ADD COLUMN linked_appointment_id INT NULL AFTER decision_at";
+        }
+
+        if (count($alterStatements) > 0) {
+            $sql = "ALTER TABLE prescription_requests " . implode(', ', $alterStatements);
+            if (!$this->db->query($sql)) {
+                return false;
+            }
+
+            unset(self::$tableColumnCache['prescription_requests.decision_action']);
+            unset(self::$tableColumnCache['prescription_requests.decision_by_user_id']);
+            unset(self::$tableColumnCache['prescription_requests.decision_at']);
+            unset(self::$tableColumnCache['prescription_requests.linked_appointment_id']);
+        }
+
+        return true;
+    }
+
+    private function ensurePrescriptionEventsTable() {
+        if (!$this->hasTable('prescription_requests')) {
+            return false;
+        }
+
+        $sql = "
+            CREATE TABLE IF NOT EXISTS prescription_request_events (
+                event_id INT AUTO_INCREMENT PRIMARY KEY,
+                request_id INT NOT NULL,
+                event_type VARCHAR(50) NOT NULL,
+                old_status VARCHAR(30) NULL,
+                new_status VARCHAR(30) NULL,
+                note TEXT NULL,
+                created_by_user_id INT NULL,
+                created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+                KEY idx_pre_request_id (request_id),
+                KEY idx_pre_created_by (created_by_user_id),
+                CONSTRAINT fk_pre_request FOREIGN KEY (request_id) REFERENCES prescription_requests(request_id) ON DELETE CASCADE,
+                CONSTRAINT fk_pre_created_by FOREIGN KEY (created_by_user_id) REFERENCES users(user_id) ON DELETE SET NULL
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci
+        ";
+
+        if (!$this->db->query($sql)) {
+            return false;
+        }
+
+        self::$tableCache['prescription_request_events'] = true;
+        return true;
     }
 
     private function ensureHomeCollectionColumns() {
@@ -120,19 +130,16 @@ class AppointmentModel {
             }
         }
 
-        if ($this->hasTable('prescription_requests')) {
-            if (!$this->hasTableColumn('prescription_requests', 'home_collection')) {
-                $alterStatements[] = "ALTER TABLE prescription_requests ADD COLUMN home_collection TINYINT(1) NOT NULL DEFAULT 0 AFTER preferred_time";
-            }
+        if ($this->hasTable('prescription_requests') && !$this->hasTableColumn('prescription_requests', 'home_collection')) {
+            $alterStatements[] = "ALTER TABLE prescription_requests ADD COLUMN home_collection TINYINT(1) NOT NULL DEFAULT 0 AFTER preferred_time";
+        }
 
-            if (!$this->hasTableColumn('prescription_requests', 'collection_address')) {
-                $alterStatements[] = "ALTER TABLE prescription_requests ADD COLUMN collection_address VARCHAR(255) DEFAULT NULL AFTER home_collection";
-            }
+        if ($this->hasTable('prescription_requests') && !$this->hasTableColumn('prescription_requests', 'collection_address')) {
+            $alterStatements[] = "ALTER TABLE prescription_requests ADD COLUMN collection_address VARCHAR(255) DEFAULT NULL AFTER home_collection";
         }
 
         foreach ($alterStatements as $sql) {
             if (!$this->db->query($sql)) {
-                $this->lastError = 'Failed to ensure home collection columns: ' . $this->db->error;
                 return false;
             }
         }
@@ -140,112 +147,94 @@ class AppointmentModel {
         return true;
     }
 
-    private function ensurePrescriptionRequestEventsTable() {
-        $sql = "
-            CREATE TABLE IF NOT EXISTS prescription_request_events (
-                event_id INT AUTO_INCREMENT PRIMARY KEY,
-                request_id INT NOT NULL,
-                event_type VARCHAR(50) NOT NULL,
-                old_status VARCHAR(30) NULL,
-                new_status VARCHAR(30) NULL,
-                note TEXT NULL,
-                created_by_user_id INT NULL,
-                created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
-                KEY idx_pre_request_id (request_id),
-                KEY idx_pre_created_by (created_by_user_id)
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci
-        ";
-
-        if (!$this->db->query($sql)) {
-            $this->lastError = 'Failed to initialize prescription request events table: ' . $this->db->error;
+    public function addPrescriptionRequestEvent($requestId, $eventType, $oldStatus = null, $newStatus = null, $note = '', $createdByUserId = 0) {
+        if (!$this->ensurePrescriptionEventsTable()) {
             return false;
         }
 
-        return true;
-    }
-
-    private function ensurePrescriptionAuditColumns() {
-        if (!$this->hasTable('prescription_requests')) {
-            return false;
-        }
-
-        $alterStatements = [];
-        if (!$this->hasTableColumn('prescription_requests', 'decision_action')) {
-            $alterStatements[] = "ALTER TABLE prescription_requests ADD COLUMN decision_action VARCHAR(50) DEFAULT NULL AFTER status";
-        }
-        if (!$this->hasTableColumn('prescription_requests', 'decision_by_user_id')) {
-            $alterStatements[] = "ALTER TABLE prescription_requests ADD COLUMN decision_by_user_id INT NULL AFTER decision_action";
-        }
-        if (!$this->hasTableColumn('prescription_requests', 'decision_at')) {
-            $alterStatements[] = "ALTER TABLE prescription_requests ADD COLUMN decision_at DATETIME NULL AFTER decision_by_user_id";
-        }
-        if (!$this->hasTableColumn('prescription_requests', 'linked_appointment_id')) {
-            $alterStatements[] = "ALTER TABLE prescription_requests ADD COLUMN linked_appointment_id INT NULL AFTER decision_at";
-        }
-
-        foreach ($alterStatements as $sql) {
-            if (!$this->db->query($sql)) {
-                $this->lastError = 'Failed to ensure prescription audit columns: ' . $this->db->error;
-                return false;
-            }
-        }
-
-        return $this->ensurePrescriptionRequestEventsTable();
-    }
-
-    private function addPrescriptionRequestEvent($requestId, $eventType, $oldStatus = null, $newStatus = null, $note = null, $createdByUserId = null) {
-        if (!$this->ensurePrescriptionRequestEventsTable()) {
-            return false;
-        }
+        $uid = $createdByUserId > 0 ? (int)$createdByUserId : null;
+        $cleanNote = trim((string)$note);
+        $noteValue = $cleanNote !== '' ? $cleanNote : null;
 
         $stmt = $this->db->prepare(
             "INSERT INTO prescription_request_events (request_id, event_type, old_status, new_status, note, created_by_user_id)
              VALUES (?, ?, ?, ?, ?, ?)"
         );
 
-        if ($stmt === false) {
-            $this->lastError = 'Prepare failed while adding prescription event: ' . $this->db->error;
+        if (!$stmt) {
             return false;
         }
 
-        $requestId = intval($requestId);
-        $createdBy = is_numeric($createdByUserId) ? intval($createdByUserId) : null;
-        $stmt->bind_param('issssi', $requestId, $eventType, $oldStatus, $newStatus, $note, $createdBy);
-
-        if (!$stmt->execute()) {
-            $this->lastError = 'Execute failed while adding prescription event: ' . $stmt->error;
-            return false;
-        }
-
-        return true;
+        $stmt->bind_param("issssi", $requestId, $eventType, $oldStatus, $newStatus, $noteValue, $uid);
+        $ok = $stmt->execute();
+        $stmt->close();
+        return $ok;
     }
 
-    private function normalizeTestIds($testIds) {
-        if (!is_array($testIds)) {
-            $testIds = [$testIds];
+    public function getPrescriptionRequestEvents($requestId) {
+        if (!$this->hasTable('prescription_request_events')) {
+            return [];
         }
 
-        $normalized = [];
-        foreach ($testIds as $testId) {
-            if (is_string($testId) && strpos($testId, ',') !== false) {
-                foreach (explode(',', $testId) as $part) {
-                    $part = trim($part);
-                    if ($part !== '' && ctype_digit($part)) {
-                        $normalized[] = intval($part);
-                    }
-                }
-                continue;
-            }
+        $sql = "
+            SELECT
+                e.event_id,
+                e.request_id,
+                e.event_type,
+                e.old_status,
+                e.new_status,
+                e.note,
+                e.created_by_user_id,
+                e.created_at,
+                u.username AS created_by_username,
+                u.role AS created_by_role
+            FROM prescription_request_events e
+            LEFT JOIN users u ON u.user_id = e.created_by_user_id
+            WHERE e.request_id = ?
+            ORDER BY e.created_at DESC, e.event_id DESC
+        ";
 
-            if (is_numeric($testId)) {
-                $value = intval($testId);
-                if ($value > 0) {
-                    $normalized[] = $value;
-                }
-            }
+        $stmt = $this->db->prepare($sql);
+        if (!$stmt) {
+            return [];
         }
 
-        return array_values(array_unique($normalized));
+        $stmt->bind_param("i", $requestId);
+        if (!$stmt->execute()) {
+            $stmt->close();
+            return [];
+        }
+
+        $result = $stmt->get_result();
+        $rows = $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
+        $stmt->close();
+        return $rows;
+    }
+
+    public function hasTimeSlotConflict($appointmentDate, $appointmentTime) {
+        $hasStatus = $this->hasAppointmentColumn('status');
+
+        if ($hasStatus) {
+            $stmt = $this->db->prepare("SELECT COUNT(*) AS total FROM appointment WHERE appointment_date = ? AND appointment_time = ? AND LOWER(COALESCE(status, 'pending')) <> 'cancelled'");
+        } else {
+            $stmt = $this->db->prepare("SELECT COUNT(*) AS total FROM appointment WHERE appointment_date = ? AND appointment_time = ?");
+        }
+
+        if (!$stmt) {
+            return false;
+        }
+
+        $stmt->bind_param("ss", $appointmentDate, $appointmentTime);
+        if (!$stmt->execute()) {
+            $stmt->close();
+            return false;
+        }
+
+        $result = $stmt->get_result();
+        $row = $result ? $result->fetch_assoc() : ['total' => 0];
+        $stmt->close();
+
+        return ((int)($row['total'] ?? 0)) > 0;
     }
 
     private function fetchAppointmentsByMethodFilter($includeMethodMatch, $method) {
@@ -332,62 +321,36 @@ class AppointmentModel {
         if ($stmt2 === false) {
             $this->lastError = 'Prepare failed in createAppointment (no reason, with method): ' . $this->db->error;
             error_log($this->lastError);
-    public function createOnlineAppointmentWithItems($data, $testIds) {
-        return $this->createAppointmentWithTests(
-            intval($data['patient_id'] ?? 0),
-            (string)($data['appointment_date'] ?? ''),
-            (string)($data['appointment_time'] ?? ''),
-            (string)($data['reason'] ?? ''),
-            (string)($data['method'] ?? 'online'),
-            $testIds,
-            !empty($data['home_collection']) ? 1 : 0,
-            (string)($data['collection_address'] ?? '')
-        );
+            return false;
+        }
+        $stmt2->bind_param("isss", $patientId, $appointmentDate, $appointmentTime, $method);
+        $result2 = $stmt2->execute();
+        if ($result2 === false) {
+            $this->lastError = 'Execute failed in createAppointment (no reason, with method): ' . $stmt2->error;
+            error_log($this->lastError);
+        }
+        return $result2;
     }
 
-    public function createAppointmentWithTests($patientId, $appointmentDate, $appointmentTime, $reason, $method, $testIds, $homeCollection = 0, $collectionAddress = '') {
-        $this->lastError = '';
-        $patientId = intval($patientId);
+    public function createAppointmentWithTests($patientId, $appointmentDate, $appointmentTime, $reason = '', $method = 'online', $testIds = []) {
         $cleanTestIds = $this->normalizeTestIds($testIds);
-
-        if ($patientId <= 0 || $appointmentDate === '' || $appointmentTime === '') {
-            $this->lastError = 'Missing required appointment data.';
-            return false;
-        }
-
         if (empty($cleanTestIds)) {
-            $this->lastError = 'Please select at least one test.';
+            $this->lastError = 'No valid tests were provided.';
             return false;
         }
 
-        $hasItemsTable = $this->hasTable('appointment_items');
-        if (!$hasItemsTable && count($cleanTestIds) > 1) {
-            $this->lastError = 'appointment_items table is missing for multi-test booking.';
+        if (!$this->appointmentTestsTableExists()) {
+            $this->lastError = 'Missing required table: appointment_tests. Please run the migration.';
+            error_log($this->lastError);
             return false;
         }
 
         $this->db->begin_transaction();
+
         try {
-            $primaryTestId = intval($cleanTestIds[0]);
-            $status = 'Pending';
-            $created = $this->createReceptionistAppointment(
-                $patientId,
-                $primaryTestId,
-                $appointmentDate,
-                $appointmentTime,
-                $method,
-                $status,
-                $homeCollection,
-                $collectionAddress
-            );
-
-            if (!$created) {
-                throw new Exception($this->lastError !== '' ? $this->lastError : 'Failed to create appointment.');
-            }
-
-            $appointmentId = intval($this->db->insert_id);
+            $appointmentId = $this->insertAppointmentHeader($patientId, $appointmentDate, $appointmentTime, $reason, $method);
             if ($appointmentId <= 0) {
-                throw new Exception('Unable to resolve appointment id after insert.');
+                throw new Exception($this->lastError ?: 'Could not resolve appointment_id after insert.');
             }
 
             if ($this->columnExists('appointment', 'test_id')) {
@@ -403,16 +366,16 @@ class AppointmentModel {
                 }
             }
 
-            $reasonColumn = $this->resolveFirstExistingColumn('appointment', ['reason', 'clinical_notes', 'notes']);
-            if ($reasonColumn !== null && trim((string)$reason) !== '') {
-                $reasonStmt = $this->db->prepare("UPDATE appointment SET {$reasonColumn} = ? WHERE appointment_id = ?");
-                if ($reasonStmt === false) {
-                    throw new Exception('Prepare failed while saving reason: ' . $this->db->error);
-                }
+            $lineSql = "INSERT INTO appointment_tests (appointment_id, test_id, status) VALUES (?, ?, 'PENDING')";
+            $lineStmt = $this->db->prepare($lineSql);
+            if ($lineStmt === false) {
+                throw new Exception('Prepare failed in createAppointmentWithTests (appointment_tests): ' . $this->db->error);
+            }
 
-                $reasonStmt->bind_param('si', $reason, $appointmentId);
-                if (!$reasonStmt->execute()) {
-                    throw new Exception('Execute failed while saving reason: ' . $reasonStmt->error);
+            foreach ($cleanTestIds as $testId) {
+                $lineStmt->bind_param('ii', $appointmentId, $testId);
+                if (!$lineStmt->execute()) {
+                    throw new Exception('Execute failed in createAppointmentWithTests (appointment_tests): ' . $lineStmt->error);
                 }
             }
 
@@ -476,439 +439,170 @@ class AppointmentModel {
 
         return array_values(array_unique($clean));
     }
-            if ($hasItemsTable) {
-                $placeholders = implode(',', array_fill(0, count($cleanTestIds), '?'));
-                $types = str_repeat('i', count($cleanTestIds));
-                $priceStmt = $this->db->prepare("SELECT test_id, price FROM tests WHERE test_id IN ($placeholders)");
-                if ($priceStmt === false) {
-                    throw new Exception('Prepare failed while loading test prices: ' . $this->db->error);
-                }
 
-                $priceStmt->bind_param($types, ...$cleanTestIds);
-                if (!$priceStmt->execute()) {
-                    throw new Exception('Execute failed while loading test prices: ' . $priceStmt->error);
-                }
+    public function getAppointmentDetailsPayload($appointmentId) {
+        $appointmentId = intval($appointmentId);
+        if ($appointmentId <= 0) {
+            return null;
+        }
 
-                $priceResult = $priceStmt->get_result();
-                $priceMap = [];
-                while ($row = $priceResult->fetch_assoc()) {
-                    $priceMap[intval($row['test_id'])] = floatval($row['price']);
-                }
+        $patientProjection = $this->buildPatientProjectionSql('p');
+        $notDeletedClause = $this->buildNotDeletedClause('a');
 
-                if (count($priceMap) !== count($cleanTestIds)) {
-                    throw new Exception('One or more selected tests are invalid.');
-                }
+        $sql = "
+            SELECT a.*, {$patientProjection}
+            FROM appointment a
+            LEFT JOIN patients p ON p.patient_id = a.patient_id
+            WHERE a.appointment_id = ? AND {$notDeletedClause}
+            LIMIT 1
+        ";
 
-                $itemStmt = $this->db->prepare(
-                    'INSERT INTO appointment_items (appointment_id, test_id, unit_price, quantity, line_total) VALUES (?, ?, ?, 1, ?)'
-                );
-                if ($itemStmt === false) {
-                    throw new Exception('Prepare failed while creating appointment items: ' . $this->db->error);
-                }
-
-                foreach ($cleanTestIds as $testId) {
-                    $unitPrice = $priceMap[$testId];
-                    $lineTotal = $unitPrice;
-                    $itemStmt->bind_param('iidd', $appointmentId, $testId, $unitPrice, $lineTotal);
-                    if (!$itemStmt->execute()) {
-                        throw new Exception('Execute failed while creating appointment item: ' . $itemStmt->error);
-                    }
-                }
-            }
-
-            $this->db->commit();
-            return $appointmentId;
-        } catch (Throwable $e) {
-            $this->db->rollback();
-            $this->lastError = $e->getMessage();
+        $stmt = $this->db->prepare($sql);
+        if ($stmt === false) {
+            $this->lastError = 'Prepare failed in getAppointmentDetailsPayload: ' . $this->db->error;
             error_log($this->lastError);
-            return false;
-        }
-    }
-
-    public function getPrescriptionRequestEvents($requestId) {
-        $requestId = intval($requestId);
-        if ($requestId <= 0 || !$this->hasTable('prescription_request_events')) {
-            return [];
+            return null;
         }
 
-        $sql = "
-            SELECT
-                e.event_id,
-                e.request_id,
-                e.event_type,
-                e.old_status,
-                e.new_status,
-                e.note,
-                e.created_by_user_id,
-                e.created_at,
-                u.username AS created_by_username
-            FROM prescription_request_events e
-            LEFT JOIN users u ON u.user_id = e.created_by_user_id
-            WHERE e.request_id = ?
-            ORDER BY e.created_at DESC, e.event_id DESC
-        ";
-
-        $stmt = $this->db->prepare($sql);
-        if ($stmt === false) {
-            return [];
-        }
-
-        $stmt->bind_param('i', $requestId);
+        $stmt->bind_param('i', $appointmentId);
         if (!$stmt->execute()) {
-            return [];
+            $this->lastError = 'Execute failed in getAppointmentDetailsPayload: ' . $stmt->error;
+            error_log($this->lastError);
+            return null;
         }
 
         $result = $stmt->get_result();
-        return $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
+        $appointment = $result ? $result->fetch_assoc() : null;
+        if (!$appointment) {
+            return null;
+        }
+
+        $tests = $this->getAppointmentTestsWithStatus($appointmentId);
+        $billing = $this->getBillingSummary($appointment, $tests);
+
+        return [
+            'appointment' => $appointment,
+            'tests' => $tests,
+            'billing' => $billing,
+        ];
     }
 
-    private function fetchAppointmentsByMethodFilter($include, $method) {
-        $sql = $include
-            ? "SELECT * FROM appointment WHERE LOWER(COALESCE(method, '')) = LOWER(?) ORDER BY appointment_date DESC, appointment_time DESC"
-            : "SELECT * FROM appointment WHERE LOWER(COALESCE(method, '')) <> LOWER(?) ORDER BY appointment_date DESC, appointment_time DESC";
+    public function createReceptionistAppointment($patientId, $testId, $appointmentDate, $appointmentTime, $method = 'Physical', $status = 'Pending', $homeCollection = 0, $collectionAddress = '') {
+        $this->ensureHomeCollectionColumns();
 
-        $stmt = $this->db->prepare($sql);
-        if ($stmt === false) {
-            $this->lastError = 'Prepare failed in fetchAppointmentsByMethodFilter: ' . $this->db->error;
-            return [];
-        }
+        $channel = strtolower($method) === 'call' ? 'receptionist_phone' : 'receptionist_walkin';
+        $homeCollectionValue = !empty($homeCollection) ? 1 : 0;
+        $collectionAddressValue = trim((string)$collectionAddress);
+        $collectionAddressValue = $collectionAddressValue !== '' ? $collectionAddressValue : null;
 
-        $stmt->bind_param('s', $method);
-        if (!$stmt->execute()) {
-            $this->lastError = 'Execute failed in fetchAppointmentsByMethodFilter: ' . $stmt->error;
-            return [];
-        }
+        $stmt = $this->db->prepare("INSERT INTO appointment (patient_id, test_id, appointment_time, appointment_date, method, status, booking_channel, home_collection, collection_address) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
-        $result = $stmt->get_result();
-        return $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
-    }
-
-    private function hasAppointmentColumn($columnName) {
-        if (array_key_exists($columnName, self::$appointmentColumnCache)) {
-            return self::$appointmentColumnCache[$columnName];
-        }
-
-        self::$appointmentColumnCache[$columnName] = $this->columnExists('appointment', $columnName);
-        return self::$appointmentColumnCache[$columnName];
-    }
-
-    private function hasTable($tableName) {
-        if (array_key_exists($tableName, self::$tableCache)) {
-            return self::$tableCache[$tableName];
-        }
-
-        self::$tableCache[$tableName] = $this->tableExists($tableName);
-        return self::$tableCache[$tableName];
-    }
-
-    private function hasTableColumn($tableName, $columnName) {
-        $cacheKey = $tableName . '.' . $columnName;
-        if (array_key_exists($cacheKey, self::$tableColumnCache)) {
-            return self::$tableColumnCache[$cacheKey];
-        }
-
-        self::$tableColumnCache[$cacheKey] = $this->columnExists($tableName, $columnName);
-        return self::$tableColumnCache[$cacheKey];
-    }
-
-    private function ensureHomeCollectionColumns() {
-        $alterStatements = [];
-
-        if ($this->hasTable('appointment')) {
-            if (!$this->hasAppointmentColumn('home_collection')) {
-                $alterStatements[] = "ALTER TABLE appointment ADD COLUMN home_collection TINYINT(1) NOT NULL DEFAULT 0 AFTER booking_channel";
-            }
-
-            if (!$this->hasAppointmentColumn('collection_address')) {
-                $alterStatements[] = "ALTER TABLE appointment ADD COLUMN collection_address VARCHAR(255) DEFAULT NULL AFTER home_collection";
-            }
-        }
-
-        if ($this->hasTable('prescription_requests')) {
-            if (!$this->hasTableColumn('prescription_requests', 'home_collection')) {
-                $alterStatements[] = "ALTER TABLE prescription_requests ADD COLUMN home_collection TINYINT(1) NOT NULL DEFAULT 0 AFTER preferred_time";
-            }
-
-            if (!$this->hasTableColumn('prescription_requests', 'collection_address')) {
-                $alterStatements[] = "ALTER TABLE prescription_requests ADD COLUMN collection_address VARCHAR(255) DEFAULT NULL AFTER home_collection";
-            }
-        }
-
-        foreach ($alterStatements as $sql) {
-            if (!$this->db->query($sql)) {
-                $this->lastError = 'Failed to ensure home collection columns: ' . $this->db->error;
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    private function ensurePrescriptionRequestEventsTable() {
-        $sql = "
-            CREATE TABLE IF NOT EXISTS prescription_request_events (
-                event_id INT AUTO_INCREMENT PRIMARY KEY,
-                request_id INT NOT NULL,
-                event_type VARCHAR(50) NOT NULL,
-                old_status VARCHAR(30) NULL,
-                new_status VARCHAR(30) NULL,
-                note TEXT NULL,
-                created_by_user_id INT NULL,
-                created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
-                KEY idx_pre_request_id (request_id),
-                KEY idx_pre_created_by (created_by_user_id)
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci
-        ";
-
-        if (!$this->db->query($sql)) {
-            $this->lastError = 'Failed to initialize prescription request events table: ' . $this->db->error;
+        if (!$stmt) {
             return false;
         }
 
-        return true;
+        $stmt->bind_param("iisssssis", $patientId, $testId, $appointmentTime, $appointmentDate, $method, $status, $channel, $homeCollectionValue, $collectionAddressValue);
+
+        return $stmt->execute();
     }
 
-    private function ensurePrescriptionAuditColumns() {
-        if (!$this->hasTable('prescription_requests')) {
-            return false;
-        }
-
-        $alterStatements = [];
-        if (!$this->hasTableColumn('prescription_requests', 'decision_action')) {
-            $alterStatements[] = "ALTER TABLE prescription_requests ADD COLUMN decision_action VARCHAR(50) DEFAULT NULL AFTER status";
-        }
-        if (!$this->hasTableColumn('prescription_requests', 'decision_by_user_id')) {
-            $alterStatements[] = "ALTER TABLE prescription_requests ADD COLUMN decision_by_user_id INT NULL AFTER decision_action";
-        }
-        if (!$this->hasTableColumn('prescription_requests', 'decision_at')) {
-            $alterStatements[] = "ALTER TABLE prescription_requests ADD COLUMN decision_at DATETIME NULL AFTER decision_by_user_id";
-        }
-        if (!$this->hasTableColumn('prescription_requests', 'linked_appointment_id')) {
-            $alterStatements[] = "ALTER TABLE prescription_requests ADD COLUMN linked_appointment_id INT NULL AFTER decision_at";
-        }
-
-        foreach ($alterStatements as $sql) {
-            if (!$this->db->query($sql)) {
-                $this->lastError = 'Failed to ensure prescription audit columns: ' . $this->db->error;
-                return false;
-            }
-        }
-
-        return $this->ensurePrescriptionRequestEventsTable();
+    public function getAllAppointmentsByMethod($method) {
+        return $this->fetchAppointmentsByMethodFilter(true, $method);
     }
 
-    private function addPrescriptionRequestEvent($requestId, $eventType, $oldStatus = null, $newStatus = null, $note = null, $createdByUserId = null) {
-        if (!$this->ensurePrescriptionRequestEventsTable()) {
-            return false;
-        }
-
-        $stmt = $this->db->prepare(
-            "INSERT INTO prescription_request_events (request_id, event_type, old_status, new_status, note, created_by_user_id)
-             VALUES (?, ?, ?, ?, ?, ?)"
-        );
-
-        if ($stmt === false) {
-            $this->lastError = 'Prepare failed while adding prescription event: ' . $this->db->error;
-            return false;
-        }
-
-        $requestId = intval($requestId);
-        $createdBy = is_numeric($createdByUserId) ? intval($createdByUserId) : null;
-        $stmt->bind_param('issssi', $requestId, $eventType, $oldStatus, $newStatus, $note, $createdBy);
-
-        if (!$stmt->execute()) {
-            $this->lastError = 'Execute failed while adding prescription event: ' . $stmt->error;
-            return false;
-        }
-
-        return true;
+    public function getAllAppointmentsExceptMethod($method) {
+        return $this->fetchAppointmentsByMethodFilter(false, $method);
     }
 
-    private function normalizeTestIds($testIds) {
-        if (!is_array($testIds)) {
-            $testIds = [$testIds];
-        }
-
-        $normalized = [];
-        foreach ($testIds as $testId) {
-            if (is_string($testId) && strpos($testId, ',') !== false) {
-                foreach (explode(',', $testId) as $part) {
-                    $part = trim($part);
-                    if ($part !== '' && ctype_digit($part)) {
-                        $normalized[] = intval($part);
-                    }
-                }
-                continue;
-            }
-
-            if (is_numeric($testId)) {
-                $value = intval($testId);
-                if ($value > 0) {
-                    $normalized[] = $value;
-                }
-            }
-        }
-
-        return array_values(array_unique($normalized));
-    }
-
-    public function createOnlineAppointmentWithItems($data, $testIds) {
-        return $this->createAppointmentWithTests(
-            intval($data['patient_id'] ?? 0),
-            (string)($data['appointment_date'] ?? ''),
-            (string)($data['appointment_time'] ?? ''),
-            (string)($data['reason'] ?? ''),
-            (string)($data['method'] ?? 'online'),
-            $testIds,
-            !empty($data['home_collection']) ? 1 : 0,
-            (string)($data['collection_address'] ?? '')
-        );
-    }
-
-    public function createAppointmentWithTests($patientId, $appointmentDate, $appointmentTime, $reason, $method, $testIds, $homeCollection = 0, $collectionAddress = '') {
+    public function getAppointmentsList($filters = [], $page = 1, $perPage = 7, $sortBy = 'appointment_date', $sortDir = 'desc') {
         $this->lastError = '';
-        $patientId = intval($patientId);
-        $cleanTestIds = $this->normalizeTestIds($testIds);
 
-        if ($patientId <= 0 || $appointmentDate === '' || $appointmentTime === '') {
-            $this->lastError = 'Missing required appointment data.';
-            return false;
-        }
+        $page = max(1, intval($page));
+        $perPage = max(1, min(50, intval($perPage)));
+        $rows = $this->getFilteredAppointmentsDataset($filters, $sortBy, $sortDir);
 
-        if (empty($cleanTestIds)) {
-            $this->lastError = 'Please select at least one test.';
-            return false;
-        }
-
-        $hasItemsTable = $this->hasTable('appointment_items');
-        if (!$hasItemsTable && count($cleanTestIds) > 1) {
-            $this->lastError = 'appointment_items table is missing for multi-test booking.';
-            return false;
-        }
-
-        $this->db->begin_transaction();
-        try {
-            $primaryTestId = intval($cleanTestIds[0]);
-            $status = 'Pending';
-            $created = $this->createReceptionistAppointment(
-                $patientId,
-                $primaryTestId,
-                $appointmentDate,
-                $appointmentTime,
-                $method,
-                $status,
-                $homeCollection,
-                $collectionAddress
-            );
-
-            if (!$created) {
-                throw new Exception($this->lastError !== '' ? $this->lastError : 'Failed to create appointment.');
-            }
-
-            $appointmentId = intval($this->db->insert_id);
-            if ($appointmentId <= 0) {
-                throw new Exception('Unable to resolve appointment id after insert.');
-            }
-
-            $reasonColumn = $this->resolveFirstExistingColumn('appointment', ['reason', 'clinical_notes', 'notes']);
-            if ($reasonColumn !== null && trim((string)$reason) !== '') {
-                $reasonStmt = $this->db->prepare("UPDATE appointment SET {$reasonColumn} = ? WHERE appointment_id = ?");
-                if ($reasonStmt === false) {
-                    throw new Exception('Prepare failed while saving reason: ' . $this->db->error);
-                }
-
-                $reasonStmt->bind_param('si', $reason, $appointmentId);
-                if (!$reasonStmt->execute()) {
-                    throw new Exception('Execute failed while saving reason: ' . $reasonStmt->error);
-                }
-            }
-
-            if ($hasItemsTable) {
-                $placeholders = implode(',', array_fill(0, count($cleanTestIds), '?'));
-                $types = str_repeat('i', count($cleanTestIds));
-                $priceStmt = $this->db->prepare("SELECT test_id, price FROM tests WHERE test_id IN ($placeholders)");
-                if ($priceStmt === false) {
-                    throw new Exception('Prepare failed while loading test prices: ' . $this->db->error);
-                }
-
-                $priceStmt->bind_param($types, ...$cleanTestIds);
-                if (!$priceStmt->execute()) {
-                    throw new Exception('Execute failed while loading test prices: ' . $priceStmt->error);
-                }
-
-                $priceResult = $priceStmt->get_result();
-                $priceMap = [];
-                while ($row = $priceResult->fetch_assoc()) {
-                    $priceMap[intval($row['test_id'])] = floatval($row['price']);
-                }
-
-                if (count($priceMap) !== count($cleanTestIds)) {
-                    throw new Exception('One or more selected tests are invalid.');
-                }
-
-                $itemStmt = $this->db->prepare(
-                    'INSERT INTO appointment_items (appointment_id, test_id, unit_price, quantity, line_total) VALUES (?, ?, ?, 1, ?)'
-                );
-                if ($itemStmt === false) {
-                    throw new Exception('Prepare failed while creating appointment items: ' . $this->db->error);
-                }
-
-                foreach ($cleanTestIds as $testId) {
-                    $unitPrice = $priceMap[$testId];
-                    $lineTotal = $unitPrice;
-                    $itemStmt->bind_param('iidd', $appointmentId, $testId, $unitPrice, $lineTotal);
-                    if (!$itemStmt->execute()) {
-                        throw new Exception('Execute failed while creating appointment item: ' . $itemStmt->error);
-                    }
-                }
-            }
-
-            $this->db->commit();
-            return $appointmentId;
-        } catch (Throwable $e) {
-            $this->db->rollback();
-            $this->lastError = $e->getMessage();
-            error_log($this->lastError);
-            return false;
-        }
+        $offset = ($page - 1) * $perPage;
+        return array_slice($rows, $offset, $perPage);
     }
 
-    public function getPrescriptionRequestEvents($requestId) {
-        $requestId = intval($requestId);
-        if ($requestId <= 0 || !$this->hasTable('prescription_request_events')) {
-            return [];
+    public function countAppointments($filters = []) {
+        $this->lastError = '';
+        $rows = $this->getFilteredAppointmentsDataset($filters);
+        return count($rows);
+    }
+
+    private function getFilteredAppointmentsDataset($filters = [], $sortBy = 'appointment_date', $sortDir = 'desc') {
+        $methodFilter = strtolower(trim((string)($filters['method'] ?? 'all')));
+        $search = strtolower(trim((string)($filters['search'] ?? '')));
+        $fromDate = trim((string)($filters['from_date'] ?? ''));
+        $toDate = trim((string)($filters['to_date'] ?? ''));
+
+        $rows = array_merge(
+            $this->getAllAppointmentsByMethod('online') ?: [],
+            $this->getAllAppointmentsByMethod('physical') ?: [],
+            $this->getAllAppointmentsByMethod('call') ?: []
+        );
+
+        if (in_array($methodFilter, ['online', 'physical', 'call'], true)) {
+            $rows = array_values(array_filter($rows, function ($row) use ($methodFilter) {
+                $rowMethod = strtolower(trim((string)($row['method'] ?? '')));
+                if ($methodFilter === 'physical') {
+                    return in_array($rowMethod, ['physical', 'call'], true);
+                }
+                return $rowMethod === $methodFilter;
+            }));
         }
 
-        $sql = "
-            SELECT
-                e.event_id,
-                e.request_id,
-                e.event_type,
-                e.old_status,
-                e.new_status,
-                e.note,
-                e.created_by_user_id,
-                e.created_at,
-                u.username AS created_by_username
-            FROM prescription_request_events e
-            LEFT JOIN users u ON u.user_id = e.created_by_user_id
-            WHERE e.request_id = ?
-            ORDER BY e.created_at DESC, e.event_id DESC
-        ";
+        if ($search !== '') {
+            $rows = array_values(array_filter($rows, function ($row) use ($search) {
+                $patientName = strtolower((string)($row['patient_name'] ?? ($row['patient_display_name'] ?? '')));
+                $appointmentId = strtolower((string)($row['appointment_id'] ?? ''));
+                $methodValue = strtolower((string)($row['method'] ?? ''));
 
-        $stmt = $this->db->prepare($sql);
-        if ($stmt === false) {
-            return [];
+                return strpos($patientName, $search) !== false
+                    || strpos($appointmentId, $search) !== false
+                    || strpos($methodValue, $search) !== false;
+            }));
         }
 
-        $stmt->bind_param('i', $requestId);
-        if (!$stmt->execute()) {
-            return [];
+        if ($fromDate !== '') {
+            $rows = array_values(array_filter($rows, function ($row) use ($fromDate) {
+                $rowDate = (string)($row['appointment_date'] ?? '');
+                return $rowDate !== '' && $rowDate >= $fromDate;
+            }));
         }
 
-        $result = $stmt->get_result();
-        return $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
+        if ($toDate !== '') {
+            $rows = array_values(array_filter($rows, function ($row) use ($toDate) {
+                $rowDate = (string)($row['appointment_date'] ?? '');
+                return $rowDate !== '' && $rowDate <= $toDate;
+            }));
+        }
+
+        $sortAllowlist = [
+            'appointment_id' => 'appointment_id',
+            'patient_name' => 'patient_name',
+            'appointment_date' => 'appointment_date',
+            'appointment_time' => 'appointment_time',
+            'method' => 'method',
+        ];
+        $sortKey = $sortAllowlist[strtolower(trim((string)$sortBy))] ?? 'appointment_date';
+        $direction = strtolower(trim((string)$sortDir)) === 'asc' ? 1 : -1;
+
+        usort($rows, function ($a, $b) use ($sortKey, $direction) {
+            $aValue = $a[$sortKey] ?? '';
+            $bValue = $b[$sortKey] ?? '';
+
+            if (is_numeric($aValue) && is_numeric($bValue)) {
+                $cmp = intval($aValue) <=> intval($bValue);
+            } else {
+                $cmp = strcmp(strtolower((string)$aValue), strtolower((string)$bValue));
+            }
+
+            return $cmp * $direction;
+        });
+
+        return $rows;
     }
 
     public function getAllTests() {
@@ -1085,13 +779,16 @@ class AppointmentModel {
         ";
 
         $stmt = $this->db->prepare($sql);
-        if (!$stmt) {
+        if ($stmt === false) {
+            $this->lastError = 'Prepare failed in getAppointmentEditPayload: ' . $this->db->error;
+            error_log($this->lastError);
             return null;
         }
 
-        $stmt->bind_param("i", $requestId);
+        $stmt->bind_param('i', $appointmentId);
         if (!$stmt->execute()) {
-            $stmt->close();
+            $this->lastError = 'Execute failed in getAppointmentEditPayload: ' . $stmt->error;
+            error_log($this->lastError);
             return null;
         }
 
@@ -1104,12 +801,14 @@ class AppointmentModel {
         }
 
         $tests = $this->getAppointmentTestsWithStatus($appointmentId);
+        $billing = $this->getBillingSummary($row, $tests);
         $canEditScheduleTests = $this->areAllTestsPending($tests);
         $nonPendingStatuses = $this->collectNonPendingStatuses($tests);
 
         return [
             'appointment' => $row,
             'tests' => $tests,
+            'billing' => $billing,
             'available_tests' => $this->searchTestsCatalog('', 20),
             'can_edit_schedule_tests' => $canEditScheduleTests,
             'non_pending_statuses' => $nonPendingStatuses,
@@ -1430,218 +1129,6 @@ class AppointmentModel {
         }
 
         $result = $stmt->get_result();
-            return null;
-        }
-
-        $result = $stmt->get_result();
-        $payload = $result ? $result->fetch_assoc() : null;
-        $stmt->close();
-        return $payload ?: null;
-    }
-
-    public function getAppointmentsList($filters, $page = 1, $perPage = 7, $sortBy = 'appointment_date', $sortDir = 'desc') {
-        $this->lastError = '';
-        $page = max(1, intval($page));
-        $perPage = max(1, min(50, intval($perPage)));
-        $offset = ($page - 1) * $perPage;
-
-        list($sql, $types, $params) = $this->buildAppointmentsListBaseSql($filters, false);
-
-        $sortMap = [
-            'appointment_id' => 'a.appointment_id',
-            'patient_name' => 'patient_name',
-            'appointment_date' => 'a.appointment_date',
-            'appointment_time' => 'a.appointment_time',
-            'method' => 'a.method',
-        ];
-
-        $sortKey = strtolower(trim((string) $sortBy));
-        if (!isset($sortMap[$sortKey])) {
-            $sortKey = 'appointment_date';
-        }
-
-        $direction = strtolower(trim((string) $sortDir)) === 'asc' ? 'ASC' : 'DESC';
-        $orderBy = $sortMap[$sortKey] . ' ' . $direction;
-        if ($sortKey !== 'appointment_id') {
-            $orderBy .= ', a.appointment_id DESC';
-        }
-
-        $sql .= " ORDER BY {$orderBy} LIMIT ? OFFSET ?";
-        $types .= 'ii';
-        $params[] = $perPage;
-        $params[] = $offset;
-
-        $stmt = $this->prepareAndBind($sql, $types, $params);
-        if ($stmt === null) {
-            return [];
-        }
-
-        if (!$stmt->execute()) {
-            $this->lastError = 'Execute failed in getAppointmentsList: ' . $stmt->error;
-            error_log($this->lastError);
-            return [];
-        }
-
-        $result = $stmt->get_result();
-        return $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
-    }
-
-    public function countAppointments($filters) {
-        $this->lastError = '';
-        list($sql, $types, $params) = $this->buildAppointmentsListBaseSql($filters, true);
-
-        $stmt = $this->prepareAndBind($sql, $types, $params);
-        if ($stmt === null) {
-            return 0;
-        }
-
-        if (!$stmt->execute()) {
-            $this->lastError = 'Execute failed in countAppointments: ' . $stmt->error;
-            error_log($this->lastError);
-            return 0;
-        }
-
-        $result = $stmt->get_result();
-        $row = $result ? $result->fetch_assoc() : null;
-        return $row ? intval($row['total_rows'] ?? 0) : 0;
-    }
-    
-
-    public function getAppointmentDetailsPayload($appointmentId) {
-        $appointmentId = intval($appointmentId);
-        if ($appointmentId <= 0) {
-            return null;
-        }
-
-        $patientProjection = $this->buildPatientProjectionSql('p');
-        $notDeletedClause = $this->buildNotDeletedClause('a');
-
-        $sql = "
-            SELECT a.*, {$patientProjection}
-            FROM appointment a
-            LEFT JOIN patients p ON p.patient_id = a.patient_id
-            WHERE a.appointment_id = ? AND {$notDeletedClause}
-            LIMIT 1
-        ";
-
-        $stmt = $this->db->prepare($sql);
-        if ($stmt === false) {
-            $this->lastError = 'Prepare failed in getAppointmentDetailsPayload: ' . $this->db->error;
-            error_log($this->lastError);
-            return null;
-        }
-
-        $stmt->bind_param('i', $appointmentId);
-        if (!$stmt->execute()) {
-            $this->lastError = 'Execute failed in getAppointmentDetailsPayload: ' . $stmt->error;
-            error_log($this->lastError);
-            return null;
-        }
-
-        $result = $stmt->get_result();
-        $appointment = $result ? $result->fetch_assoc() : null;
-        if (!$appointment) {
-            return null;
-        }
-
-        $tests = $this->getAppointmentTestsWithStatus($appointmentId);
-        $billing = $this->getBillingSummary($appointment, $tests);
-
-        return [
-            'appointment' => $appointment,
-            'tests' => $tests,
-            'billing' => $billing,
-        ];
-    }
-
-    public function getAppointmentEditPayload($appointmentId) {
-        $appointmentId = intval($appointmentId);
-        if ($appointmentId <= 0) {
-            return null;
-        }
-
-        $reasonColumn = $this->resolveFirstExistingColumn('appointment', ['reason', 'clinical_notes', 'notes']);
-        $reasonSelect = $reasonColumn !== null ? ", a.{$reasonColumn} AS reason" : ", '' AS reason";
-        $patientProjection = $this->buildPatientProjectionSql('p');
-        $notDeletedClause = $this->buildNotDeletedClause('a');
-
-        $sql = "
-            SELECT a.appointment_id, a.patient_id, a.appointment_date, a.appointment_time{$reasonSelect},
-                   {$patientProjection}
-            FROM appointment a
-            LEFT JOIN patients p ON p.patient_id = a.patient_id
-            WHERE a.appointment_id = ? AND {$notDeletedClause}
-            LIMIT 1
-        ";
-
-        $stmt = $this->db->prepare($sql);
-        if ($stmt === false) {
-            $this->lastError = 'Prepare failed in getAppointmentEditPayload: ' . $this->db->error;
-            error_log($this->lastError);
-            return null;
-        }
-
-        $stmt->bind_param('i', $appointmentId);
-        if (!$stmt->execute()) {
-            $this->lastError = 'Execute failed in getAppointmentEditPayload: ' . $stmt->error;
-            error_log($this->lastError);
-            return null;
-        }
-
-        $result = $stmt->get_result();
-        $appointment = $result ? $result->fetch_assoc() : null;
-        $stmt->close();
-        if (!$appointment) {
-            return null;
-        }
-
-        $tests = $this->getAppointmentTestsWithStatus($appointmentId);
-        $billing = $this->getBillingSummary($appointment, $tests);
-
-        return [
-            'appointment' => $appointment,
-            'tests' => $tests,
-            'billing' => $billing,
-        ];
-    }
-
-    public function getAppointmentEditPayload($appointmentId) {
-        $appointmentId = intval($appointmentId);
-        if ($appointmentId <= 0) {
-            return null;
-        }
-
-        $reasonColumn = $this->resolveFirstExistingColumn('appointment', ['reason', 'clinical_notes', 'notes']);
-        $reasonSelect = $reasonColumn !== null ? ", a.{$reasonColumn} AS reason" : ", '' AS reason";
-        $patientProjection = $this->buildPatientProjectionSql('p');
-        $notDeletedClause = $this->buildNotDeletedClause('a');
-
-        $sql = "
-            SELECT a.appointment_id, a.patient_id, a.appointment_date, a.appointment_time{$reasonSelect},
-                   {$patientProjection}
-            FROM appointment a
-            LEFT JOIN patients p ON p.patient_id = a.patient_id
-            WHERE a.appointment_id = ? AND {$notDeletedClause}
-            LIMIT 1
-        ";
-
-        $stmt = $this->db->prepare($sql);
-        if ($stmt === false) {
-            $this->lastError = 'Prepare failed in getAppointmentEditPayload: ' . $this->db->error;
-            error_log($this->lastError);
-            return null;
-        }
-
-        $stmt->bind_param('i', $appointmentId);
-        if (!$stmt->execute()) {
-            $this->lastError = 'Execute failed in getAppointmentEditPayload: ' . $stmt->error;
-            error_log($this->lastError);
-            return null;
-        }
-
-        $result = $stmt->get_result();
-=======
->>>>>>> b405545 (Added SMS capabilities)
         $appointment = $result ? $result->fetch_assoc() : null;
         $stmt->close();
         if (!$appointment) {
@@ -1664,21 +1151,13 @@ class AppointmentModel {
     public function searchTestsCatalog($query = '', $limit = 20) {
         $limit = max(1, min(60, intval($limit)));
         $query = trim((string) $query);
-        $testCategoryColumn = $this->resolveFirstExistingColumn('tests', ['category', 'department']);
-        $categorySelect = $testCategoryColumn !== null
-            ? "COALESCE({$testCategoryColumn}, '') AS category"
-            : "'' AS category";
 
         if ($query !== '') {
-            $categoryWhere = $testCategoryColumn !== null
-                ? " OR {$testCategoryColumn} LIKE CONCAT('%', ?, '%')"
-                : '';
-
             $sql = "
-                SELECT test_id, test_name, {$categorySelect}, price
+                SELECT test_id, test_name, category, price
                 FROM tests
                 WHERE test_name LIKE CONCAT('%', ?, '%')
-                   {$categoryWhere}
+                   OR category LIKE CONCAT('%', ?, '%')
                 ORDER BY test_name ASC
                 LIMIT {$limit}
             ";
@@ -1687,11 +1166,7 @@ class AppointmentModel {
                 return [];
             }
 
-            if ($testCategoryColumn !== null) {
-                $stmt->bind_param('ss', $query, $query);
-            } else {
-                $stmt->bind_param('s', $query);
-            }
+            $stmt->bind_param('ss', $query, $query);
             if (!$stmt->execute()) {
                 return [];
             }
@@ -1701,7 +1176,7 @@ class AppointmentModel {
         }
 
         $sql = "
-            SELECT test_id, test_name, {$categorySelect}, price
+            SELECT test_id, test_name, category, price
             FROM tests
             ORDER BY test_name ASC
             LIMIT {$limit}
@@ -1965,10 +1440,6 @@ class AppointmentModel {
     private function getAppointmentTestsWithStatus($appointmentId) {
         $appointmentId = intval($appointmentId);
         $tests = [];
-        $testCategoryColumn = $this->resolveFirstExistingColumn('tests', ['category', 'department']);
-        $categorySelect = $testCategoryColumn !== null
-            ? "COALESCE(t.{$testCategoryColumn}, '') AS category"
-            : "'' AS category";
 
         if ($this->tableExists('appointment_tests')) {
             $statusColumn = $this->resolveFirstExistingColumn('appointment_tests', ['status', 'workflow_status', 'progress_status']);
@@ -1981,7 +1452,7 @@ class AppointmentModel {
                 SELECT
                     at.test_id,
                     t.test_name,
-                    {$categorySelect},
+                    t.category,
                     t.price,
                     {$statusSelect}
                 FROM appointment_tests at
@@ -2018,11 +1489,6 @@ class AppointmentModel {
             return [];
         }
 
-        $testCategoryColumn = $this->resolveFirstExistingColumn('tests', ['category', 'department']);
-        $categorySelect = $testCategoryColumn !== null
-            ? "COALESCE(t.{$testCategoryColumn}, '') AS category"
-            : "'' AS category";
-
         $legacyIdSql = 'SELECT test_id FROM appointment WHERE appointment_id = ? LIMIT 1';
         $legacyIdStmt = $this->db->prepare($legacyIdSql);
         if ($legacyIdStmt === false) {
@@ -2055,7 +1521,7 @@ class AppointmentModel {
             SELECT
                 t.test_id,
                 t.test_name,
-                {$categorySelect},
+                t.category,
                 t.price,
                 'PENDING' AS status
             FROM tests t
@@ -2204,119 +1670,6 @@ class AppointmentModel {
             {$nameExpr} AS patient_display_name,
             {$pidExpr} AS patient_display_pid
         ";
-    }
-
-    private function buildAppointmentsListBaseSql($filters, $countOnly = false) {
-        $method = isset($filters['method']) ? strtolower(trim((string) $filters['method'])) : 'all';
-        $search = isset($filters['search']) ? strtolower(trim((string) $filters['search'])) : '';
-        $fromDate = isset($filters['from_date']) ? trim((string) $filters['from_date']) : '';
-        $toDate = isset($filters['to_date']) ? trim((string) $filters['to_date']) : '';
-
-        $notDeletedClause = $this->buildNotDeletedClause('a');
-        $where = [$notDeletedClause];
-        $types = '';
-        $params = [];
-
-        if ($method === 'online') {
-            $where[] = 'a.method = ?';
-            $types .= 's';
-            $params[] = 'online';
-        } elseif ($method === 'physical') {
-            $where[] = "a.method IN ('physical', 'call')";
-        } elseif ($method === 'call') {
-            $where[] = 'a.method = ?';
-            $types .= 's';
-            $params[] = 'call';
-        }
-
-        if ($search !== '') {
-            $patientSearchExpr = $this->buildPatientSearchExpression('p');
-            $where[] = "(
-                CAST(a.appointment_id AS CHAR) LIKE ?
-                OR LOWER({$patientSearchExpr}) LIKE ?
-                OR LOWER(COALESCE(a.method, '')) LIKE ?
-            )";
-            $like = '%' . $search . '%';
-            $types .= 'sss';
-            $params = array_merge($params, [$like, $like, $like]);
-        }
-
-        if ($fromDate !== '' && preg_match('/^\d{4}-\d{2}-\d{2}$/', $fromDate)) {
-            $where[] = 'a.appointment_date >= ?';
-            $types .= 's';
-            $params[] = $fromDate;
-        }
-
-        if ($toDate !== '' && preg_match('/^\d{4}-\d{2}-\d{2}$/', $toDate)) {
-            $where[] = 'a.appointment_date <= ?';
-            $types .= 's';
-            $params[] = $toDate;
-        }
-
-        $whereSql = implode(' AND ', $where);
-
-        if ($countOnly) {
-            $sql = "
-                SELECT COUNT(*) AS total_rows
-                FROM appointment a
-                LEFT JOIN patients p ON p.patient_id = a.patient_id
-                WHERE {$whereSql}
-            ";
-            return [$sql, $types, $params];
-        }
-
-        $patientProjection = $this->buildPatientProjectionSql('p');
-        $billSelect = 'NULL AS bill_id, NULL AS bill_status';
-        $billJoin = '';
-        if ($this->tableExists('bills')) {
-            $billSelect = 'b.bill_id, b.status AS bill_status';
-            $billJoin = "LEFT JOIN bills b ON b.appointment_id = a.appointment_id AND b.status <> 'CANCELLED'";
-        }
-
-        $sql = "
-            SELECT a.*, {$patientProjection}, {$billSelect}
-            FROM appointment a
-            LEFT JOIN patients p ON p.patient_id = a.patient_id
-            {$billJoin}
-            WHERE {$whereSql}
-        ";
-
-        return [$sql, $types, $params];
-    }
-
-    private function buildPatientSearchExpression($alias = 'p') {
-        $firstNameCol = $this->columnExists('patients', 'first_name') ? 'first_name' : null;
-        $lastNameCol = $this->columnExists('patients', 'last_name') ? 'last_name' : null;
-
-        if ($firstNameCol !== null && $lastNameCol !== null) {
-            return "COALESCE(NULLIF(TRIM(CONCAT(COALESCE({$alias}.{$firstNameCol}, ''), ' ', COALESCE({$alias}.{$lastNameCol}, ''))), ''), '')";
-        }
-
-        $nameCol = $this->resolveFirstExistingColumn('patients', ['patient_name', 'full_name', 'name', 'first_name']);
-        if ($nameCol !== null) {
-            return "COALESCE({$alias}.{$nameCol}, '')";
-        }
-
-        return "''";
-    }
-
-    private function prepareAndBind($sql, $types, $params) {
-        $stmt = $this->db->prepare($sql);
-        if ($stmt === false) {
-            $this->lastError = 'Prepare failed: ' . $this->db->error;
-            error_log($this->lastError);
-            return null;
-        }
-
-        if ($types !== '' && !empty($params)) {
-            $bindParams = [$types];
-            foreach ($params as $index => $value) {
-                $bindParams[] = &$params[$index];
-            }
-            call_user_func_array([$stmt, 'bind_param'], $bindParams);
-        }
-
-        return $stmt;
     }
 
     private function normalizeStatusValue($value) {
@@ -2559,11 +1912,11 @@ class AppointmentModel {
         $parts = [];
 
         if ($this->columnExists('appointment', 'deleted_at')) {
-            $parts[] = "COALESCE({$alias}.deleted_at, '0000-00-00 00:00:00') = '0000-00-00 00:00:00'";
+            $parts[] = "{$alias}.deleted_at IS NULL";
         }
 
         if ($this->columnExists('appointment', 'deleted_by')) {
-            $parts[] = "COALESCE({$alias}.deleted_by, 0) = 0";
+            $parts[] = "{$alias}.deleted_by IS NULL";
         }
 
         if (empty($parts)) {
