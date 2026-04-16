@@ -104,6 +104,16 @@ class BillingModel {
             return null;
         }
 
+        if ($taxPercent > 100) {
+            $this->lastError = 'Tax percent cannot be greater than 100.';
+            return null;
+        }
+
+        if (!$this->isValidReferenceNo($referenceNo)) {
+            $this->lastError = 'Reference number is invalid.';
+            return null;
+        }
+
         if (!in_array($paymentMethod, ['CASH', 'CARD', 'TRANSFER'], true)) {
             $paymentMethod = 'CASH';
         }
@@ -613,12 +623,19 @@ class BillingModel {
             }
 
             $quantity = max(1, intval($item['quantity'] ?? 1));
+            if ($quantity > 1000) {
+                continue;
+            }
+
             $unitPrice = $this->toMoney($item['unit_price'] ?? 0);
+            if ($unitPrice < 0) {
+                continue;
+            }
             $lineTotal = round($quantity * $unitPrice, 2);
 
             $normalized[] = [
                 'test_id' => max(0, intval($item['test_id'] ?? 0)),
-                'test_name' => $name,
+                'test_name' => substr($name, 0, 150),
                 'quantity' => $quantity,
                 'unit_price' => $unitPrice,
                 'line_total' => $lineTotal,
@@ -641,5 +658,17 @@ class BillingModel {
         $tableName = $this->db->real_escape_string($tableName);
         $result = $this->db->query("SHOW TABLES LIKE '{$tableName}'");
         return $result && $result->num_rows > 0;
+    }
+
+    private function isValidReferenceNo($value) {
+        if ($value === '') {
+            return true;
+        }
+
+        if (strlen($value) > 64) {
+            return false;
+        }
+
+        return preg_match('/^[A-Za-z0-9_\-\/ ]+$/', $value) === 1;
     }
 }

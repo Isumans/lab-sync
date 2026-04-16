@@ -35,7 +35,7 @@ $role=$_GET['user_role'] ?? '';
                         <form class="formStyle" action="/lab_sync/index.php?controller=patientController&action=register&role=<?php echo htmlspecialchars($role); ?>" method="POST">
                             <!-- Form fields for patient registration -->
                             <label for="patient_name">Patient Name:</label>
-                            <input type="text" id="patient_name" name="patient_name" required>
+                            <input type="text" id="patient_name" name="patient_name" maxlength="120" required>
 
                             <label for="date_of_birth">Date of Birth:</label>
                             <input type="date" id="date_of_birth" name="date_of_birth" required>
@@ -47,9 +47,9 @@ $role=$_GET['user_role'] ?? '';
                                 <option value="other">Other</option>
                             </select>
                             <label for="contact_no">Contact Number:</label>
-                            <input type="tel" id="contact_no" name="contact_no" required>
+                            <input type="tel" id="contact_no" name="contact_no" maxlength="25" pattern="^[0-9+()\-\s]{7,25}$" title="Use 7-25 characters: digits, space, plus, parentheses, or hyphen." required>
                             <label for="email">Email:</label>
-                            <input type="email" id="email" name="email" required>
+                            <input type="email" id="email" name="email" maxlength="120" required>
                             <button type="submit">Register Patient</button>
 
                         </form>

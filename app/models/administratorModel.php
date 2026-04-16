@@ -42,6 +42,10 @@ class administratorModel {
     }
 
     public function saveLabConfig(array $data) {
+        if (!$this->isValidLabConfigData($data)) {
+            return false;
+        }
+
         $sql = "INSERT INTO lab_configuration
                     (id, lab_name, accreditation, address, phone, email, logo_path,
                      hours_mon_fri_open, hours_mon_fri_close, hours_mon_fri_enabled,
@@ -92,6 +96,35 @@ class administratorModel {
             $data['auto_email_reports']
         );
         return $stmt->execute();
+    }
+
+    private function isValidLabConfigData(array $data) {
+        if (empty($data['lab_name']) || strlen((string)$data['lab_name']) > 120) {
+            return false;
+        }
+        if (empty($data['accreditation']) || strlen((string)$data['accreditation']) > 80) {
+            return false;
+        }
+        if (empty($data['address']) || strlen((string)$data['address']) > 255) {
+            return false;
+        }
+        if (!filter_var((string)($data['email'] ?? ''), FILTER_VALIDATE_EMAIL)) {
+            return false;
+        }
+        if (!preg_match('/^[0-9+()\-\s]{7,25}$/', (string)($data['phone'] ?? ''))) {
+            return false;
+        }
+
+        return $this->isValidTime((string)($data['hours_mon_fri_open'] ?? ''))
+            && $this->isValidTime((string)($data['hours_mon_fri_close'] ?? ''))
+            && $this->isValidTime((string)($data['hours_sat_open'] ?? ''))
+            && $this->isValidTime((string)($data['hours_sat_close'] ?? ''))
+            && $this->isValidTime((string)($data['hours_sun_open'] ?? ''))
+            && $this->isValidTime((string)($data['hours_sun_close'] ?? ''));
+    }
+
+    private function isValidTime($value) {
+        return preg_match('/^(?:[01]\d|2[0-3]):[0-5]\d$/', $value) === 1;
     }
 
     // ─── General Settings ────────────────────────────────────────────────────

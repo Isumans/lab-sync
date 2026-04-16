@@ -332,6 +332,18 @@ class billingController {
             return;
         }
 
+        $validation = $this->validateSavePayload($payload);
+        if (!$validation['ok']) {
+            http_response_code(400);
+            echo json_encode([
+                'status' => 'error',
+                'message' => $validation['message']
+            ]);
+            return;
+        }
+
+        $payload = $validation['payload'];
+
         $billingModel = new BillingModel(connect());
         $saved = $billingModel->saveBill($payload, $finalize, intval($_SESSION['user_id']));
 
@@ -372,5 +384,138 @@ class billingController {
         }
 
         echo json_encode($response);
+    }
+
+    private function validateSavePayload($payload) {
+        $appointmentId = intval($payload['appointment_id'] ?? 0);
+        $patientId = intval($payload['patient_id'] ?? 0);
+
+        if ($appointmentId <= 0 || $patientId <= 0) {
+            return [
+                'ok' => false,
+                'message' => 'Invalid appointment or patient reference.'
+            ];
+        }
+
+        $discountAmount = $this->sanitizeMoney($payload['discount_amount'] ?? 0);
+        $taxPercent = $this->sanitizePercent($payload['tax_percent'] ?? 0);
+        $amountTendered = $this->sanitizeMoney($payload['amount_tendered'] ?? 0);
+
+        if ($discountAmount === null || $taxPercent === null || $amountTendered === null) {
+            return [
+                'ok' => false,
+                'message' => 'Invalid billing amount fields.'
+            ];
+        }
+
+        $paymentMethod = strtoupper(trim((string)($payload['payment_method'] ?? 'CASH')));
+        if (!in_array($paymentMethod, ['CASH', 'CARD', 'TRANSFER'], true)) {
+            return [
+                'ok' => false,
+                'message' => 'Invalid payment method.'
+            ];
+        }
+
+        $referenceNo = trim((string)($payload['reference_no'] ?? ''));
+        if (!$this->isValidReferenceNo($referenceNo)) {
+            return [
+                'ok' => false,
+                'message' => 'Reference number contains invalid characters or is too long.'
+            ];
+        }
+
+        $items = isset($payload['items']) && is_array($payload['items']) ? $payload['items'] : [];
+        $sanitizedItems = [];
+        foreach ($items as $item) {
+            if (!is_array($item)) {
+                continue;
+            }
+
+            $testName = trim((string)($item['test_name'] ?? ''));
+            if ($testName !== '' && strlen($testName) > 150) {
+                return [
+                    'ok' => false,
+                    'message' => 'Test name is too long.'
+                ];
+            }
+
+            $quantity = intval($item['quantity'] ?? 1);
+            if ($quantity < 1 || $quantity > 1000) {
+                return [
+                    'ok' => false,
+                    'message' => 'Invalid quantity value.'
+                ];
+            }
+
+            $unitPrice = $this->sanitizeMoney($item['unit_price'] ?? 0);
+            if ($unitPrice === null) {
+                return [
+                    'ok' => false,
+                    'message' => 'Invalid unit price value.'
+                ];
+            }
+
+            $sanitizedItems[] = [
+                'test_id' => max(0, intval($item['test_id'] ?? 0)),
+                'test_name' => $testName,
+                'unit_price' => $unitPrice,
+                'quantity' => $quantity,
+                'selected' => !empty($item['selected']),
+                'is_custom' => !empty($item['is_custom']),
+            ];
+        }
+
+        return [
+            'ok' => true,
+            'message' => '',
+            'payload' => [
+                'appointment_id' => $appointmentId,
+                'patient_id' => $patientId,
+                'discount_amount' => $discountAmount,
+                'tax_percent' => $taxPercent,
+                'amount_tendered' => $amountTendered,
+                'payment_method' => $paymentMethod,
+                'reference_no' => $referenceNo,
+                'items' => $sanitizedItems,
+            ]
+        ];
+    }
+
+    private function sanitizeMoney($value) {
+        if (!is_numeric($value)) {
+            return null;
+        }
+
+        $amount = round(floatval($value), 2);
+        if ($amount < 0 || $amount > 100000000) {
+            return null;
+        }
+
+        return $amount;
+    }
+
+    private function sanitizePercent($value) {
+        if (!is_numeric($value)) {
+            return null;
+        }
+
+        $percent = round(floatval($value), 2);
+        if ($percent < 0 || $percent > 100) {
+            return null;
+        }
+
+        return $percent;
+    }
+
+    private function isValidReferenceNo($value) {
+        if ($value === '') {
+            return true;
+        }
+
+        if (strlen($value) > 64) {
+            return false;
+        }
+
+        return preg_match('/^[A-Za-z0-9_\-\/ ]+$/', $value) === 1;
     }
 }

@@ -61,12 +61,12 @@ $auto_email        = isset($c['auto_email_reports']) ? (int)$c['auto_email_repor
             <div class="config-column">
                 <div class="config-group">
                     <label for="lab-name">Lab Official Name</label>
-                    <input type="text" id="lab-name" name="lab_name" placeholder="Enter lab official name" value="<?= $lab_name ?>">
+                    <input type="text" id="lab-name" name="lab_name" placeholder="Enter lab official name" value="<?= $lab_name ?>" maxlength="120" required>
                 </div>
 
                 <div class="config-group">
                     <label for="accreditation">Accreditation Number</label>
-                    <input type="text" id="accreditation" name="accreditation" placeholder="Enter accreditation number" value="<?= $accreditation ?>">
+                    <input type="text" id="accreditation" name="accreditation" placeholder="Enter accreditation number" value="<?= $accreditation ?>" maxlength="80" required>
                 </div>
             </div>
         </div>
@@ -74,19 +74,19 @@ $auto_email        = isset($c['auto_email_reports']) ? (int)$c['auto_email_repor
         <div class="config-row">
             <div class="config-group full-width">
                 <label for="address">Physical Address</label>
-                <textarea id="address" name="address" placeholder="Enter physical address" rows="3"><?= $address ?></textarea>
+                <textarea id="address" name="address" placeholder="Enter physical address" rows="3" maxlength="255" required><?= $address ?></textarea>
             </div>
         </div>
 
         <div class="config-row">
             <div class="config-group">
                 <label for="phone">Primary Phone</label>
-                <input type="tel" id="phone" name="phone" placeholder="Enter primary phone" value="<?= $phone ?>">
+                <input type="tel" id="phone" name="phone" placeholder="Enter primary phone" value="<?= $phone ?>" maxlength="25" pattern="^[0-9+()\-\s]{7,25}$" title="Use 7-25 characters: digits, space, plus, parentheses, or hyphen." required>
             </div>
 
             <div class="config-group">
                 <label for="email">Official Email</label>
-                <input type="email" id="email" name="email" placeholder="Enter official email" value="<?= $email ?>">
+                <input type="email" id="email" name="email" placeholder="Enter official email" value="<?= $email ?>" maxlength="120" required>
             </div>
         </div>
     </div>
@@ -103,9 +103,9 @@ $auto_email        = isset($c['auto_email_reports']) ? (int)$c['auto_email_repor
                 <div class="day-label">Monday - Friday</div>
                 <div class="time-inputs">
                     <div class="time-group">
-                        <input type="time" name="hours_mon_fri_open" value="<?= $mf_open ?>">
+                        <input type="time" name="hours_mon_fri_open" value="<?= $mf_open ?>" required>
                         <span class="time-to">to</span>
-                        <input type="time" name="hours_mon_fri_close" value="<?= $mf_close ?>">
+                        <input type="time" name="hours_mon_fri_close" value="<?= $mf_close ?>" required>
                     </div>
                     <label class="toggle">
                         <input type="checkbox" name="hours_mon_fri_enabled" <?= $mf_enabled ? 'checked' : '' ?>>
@@ -120,9 +120,9 @@ $auto_email        = isset($c['auto_email_reports']) ? (int)$c['auto_email_repor
                 <div class="day-label">Saturday</div>
                 <div class="time-inputs">
                     <div class="time-group">
-                        <input type="time" name="hours_sat_open" value="<?= $sat_open ?>">
+                        <input type="time" name="hours_sat_open" value="<?= $sat_open ?>" required>
                         <span class="time-to">to</span>
-                        <input type="time" name="hours_sat_close" value="<?= $sat_close ?>">
+                        <input type="time" name="hours_sat_close" value="<?= $sat_close ?>" required>
                     </div>
                     <label class="toggle">
                         <input type="checkbox" name="hours_sat_enabled" <?= $sat_enabled ? 'checked' : '' ?>>
@@ -137,9 +137,9 @@ $auto_email        = isset($c['auto_email_reports']) ? (int)$c['auto_email_repor
                 <div class="day-label">Sunday</div>
                 <div class="time-inputs">
                     <div class="time-group">
-                        <input type="time" name="hours_sun_open" value="<?= $sun_open ?>">
+                        <input type="time" name="hours_sun_open" value="<?= $sun_open ?>" required>
                         <span class="time-to">to</span>
-                        <input type="time" name="hours_sun_close" value="<?= $sun_close ?>">
+                        <input type="time" name="hours_sun_close" value="<?= $sun_close ?>" required>
                     </div>
                     <label class="toggle">
                         <input type="checkbox" name="hours_sun_enabled" <?= $sun_enabled ? 'checked' : '' ?>>
