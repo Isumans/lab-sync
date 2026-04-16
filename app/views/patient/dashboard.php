@@ -9,7 +9,7 @@
   <link rel="stylesheet" href="/lab_sync/public/table.css" />
 </head>
 <body>
-  <?php require 'C:\xampp\htdocs\lab_sync\public\partials\header.php'; ?>
+  <?php require __DIR__ . '/../../../public/partials/header.php'; ?>
 <main class="container">
   <h2 class="page-title">Good morning, John!</h2>
 
@@ -161,10 +161,31 @@ function showAlertAndSubmit(event, action) {
     }
 }
 
+function openRescheduleFromNext() {
+  openEdit();
+}
+
+function cancelFromNext() {
+  const firstDeleteButton = document.querySelector('.editForm button[name="delete"]');
+  if (!firstDeleteButton) {
+    alert('No appointment available to cancel.');
+    return;
+  }
+
+  if (confirm('Cancel your next appointment?')) {
+    firstDeleteButton.click();
+  }
+}
+
+function saveEdit() {
+  closeEdit();
+  alert('Use the row-level update button to save appointment changes.');
+}
+
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', renderAppointments);
 </script>
-<?php require 'C:\xampp\htdocs\lab_sync\public\partials\footer.php'; ?>
+<?php require __DIR__ . '/../../../public/partials/footer.php'; ?>
 <script src="/lab_sync/public/js/showAlert.js"></script>
 </body>
 </html>

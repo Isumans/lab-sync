@@ -6,13 +6,13 @@ if (!defined('ROOT_PATH')) {
 require_once MODEL_PATH . '/appointmentModel.php';
 require_once MODEL_PATH . '/patientModel.php';
 require_once APP_PATH . '/services/EmailService.php';
-require_once 'C:\xampp\htdocs\lab_sync\config\db.php';
+require_once __DIR__ . '/../../config/db.php';
 class appointmentsController {
     public function index($role = '') {
         // Logic to fetch and display appointments can be added here
         $appointmentsModel = new AppointmentModel(connect());
-        $appointmentsOnline = $appointmentsModel->getAllAppointmentsbyMethod("online");
-        $appointmentsPhysical = $appointmentsModel->getAllAppointmentsbyMethod("physical");
+        $appointmentsOnline = $appointmentsModel->getAllAppointmentsByMethod("online");
+        $appointmentsPhysical = $appointmentsModel->getAllAppointmentsByMethod("physical");
         include VIEW_PATH . '/receptionist/appointments.php';
     }
 
@@ -34,7 +34,7 @@ class appointmentsController {
             }
         }
 
-        include VIEW_PATH . '/receptionist/create_Appointment.php';
+        include VIEW_PATH . '/receptionist/create_appointment.php';
     }
 
     public function prescriptionQueue() {
@@ -142,14 +142,62 @@ class appointmentsController {
         include VIEW_PATH . '/receptionist/prescription_request_details.php';
     }
 
+    public function processPrescriptionDecision() {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: /lab_sync/index.php?controller=appointmentsController&action=prescriptionQueue');
+            exit;
+        }
+
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+
+        $requestId = isset($_POST['request_id']) ? intval($_POST['request_id']) : 0;
+        $decision = strtolower(trim((string)($_POST['decision_action'] ?? $_POST['decision'] ?? '')));
+        $note = trim((string)($_POST['note'] ?? ''));
+        $appointmentId = isset($_POST['appointment_id']) ? intval($_POST['appointment_id']) : 0;
+        $decisionByUserId = isset($_SESSION['user_id']) ? intval($_SESSION['user_id']) : 0;
+
+        if ($requestId <= 0) {
+            $_SESSION['error'] = 'Invalid prescription request id.';
+            header('Location: /lab_sync/index.php?controller=appointmentsController&action=prescriptionQueue');
+            exit;
+        }
+
+        $appointmentsModel = new AppointmentModel(connect());
+
+        if ($decision === 'book_for_patient') {
+            if ($appointmentId <= 0) {
+                header('Location: /lab_sync/index.php?controller=appointmentsController&action=createAppointment&request_id=' . $requestId);
+                exit;
+            }
+
+            $ok = $appointmentsModel->markPrescriptionRequestBooked($requestId, $appointmentId, $decisionByUserId);
+            $_SESSION[$ok ? 'success' : 'error'] = $ok
+                ? 'Prescription request marked as booked.'
+                : ($appointmentsModel->getLastError() ?: 'Unable to mark prescription request as booked.');
+        } elseif ($decision === 'self_book') {
+            $ok = $appointmentsModel->markPrescriptionRequestSelfBooking($requestId, $note, $decisionByUserId);
+            $_SESSION[$ok ? 'success' : 'error'] = $ok
+                ? 'Patient has been asked to self-book.'
+                : ($appointmentsModel->getLastError() ?: 'Unable to process self-booking decision.');
+        } else {
+            $_SESSION['error'] = 'Invalid prescription decision action.';
+        }
+
+        header('Location: /lab_sync/index.php?controller=appointmentsController&action=prescriptionQueue');
+        exit;
+    }
+
     public function storeAppointment($role = '') {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $patientId = isset($_POST['patient_id']) ? intval($_POST['patient_id']) : 0;
             $appointmentDate = $_POST['appointment_date'] ?? '';
             $appointmentTime = $_POST['appointment_time'] ?? '';
             $reason = $_POST['reason'] ?? '';
-            $method = $_POST['method'] ?? 'physical';
-            $selectedTestIds = $this->parseSelectedTestIds($_POST['selected_test_ids'] ?? '');
+            $method = $_POST['method'] ?? ($_POST['booking_method'] ?? 'physical');
+            $selectedRaw = $_POST['selected_test_ids'] ?? ($_POST['test_id'] ?? '');
+            $selectedTestIds = $this->parseSelectedTestIds($selectedRaw);
 
             if ($patientId <= 0) {
                 echo "Error: patient_id is missing or invalid.";
@@ -176,6 +224,15 @@ class appointmentsController {
                 $method,
                 $selectedTestIds
             );
+
+            if ($success && isset($_POST['prescription_request_id'])) {
+                $requestId = intval($_POST['prescription_request_id']);
+                if ($requestId > 0) {
+                    $decisionByUserId = isset($_SESSION['user_id']) ? intval($_SESSION['user_id']) : 0;
+                    $model->markPrescriptionRequestBooked($requestId, (int)$success, $decisionByUserId);
+                }
+            }
+
             if ($success) {
                 // Redirect back to appointments page to show saved appointment
                 header('Location: /lab_sync/index.php?controller=appointmentsController&action=index');
@@ -225,11 +282,6 @@ class appointmentsController {
 
     $results = $model1->searchPatients($type, $query);
     echo json_encode($results);
-}
-
-public function createAppointment($role) {
-    
-    include VIEW_PATH . '/receptionist/create_appointment.php';
 }
 
 public function filterAppointments() {
@@ -282,9 +334,9 @@ public function filterAppointments() {
     if ($listError !== '') {
         // Fallback: use legacy list methods and apply filtering/sorting/pagination in PHP.
         $usedFallback = true;
-        $legacyOnline = $appointmentsModel->getAllAppointmentsbyMethod('online');
-        $legacyPhysical = $appointmentsModel->getAllAppointmentsbyMethod('physical');
-        $legacyCall = $appointmentsModel->getAllAppointmentsbyMethod('call');
+        $legacyOnline = $appointmentsModel->getAllAppointmentsByMethod('online');
+        $legacyPhysical = $appointmentsModel->getAllAppointmentsByMethod('physical');
+        $legacyCall = $appointmentsModel->getAllAppointmentsByMethod('call');
 
         $fallbackRows = array_merge($legacyOnline ?: [], $legacyPhysical ?: [], $legacyCall ?: []);
 

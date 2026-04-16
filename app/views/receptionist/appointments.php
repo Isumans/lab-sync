@@ -24,10 +24,10 @@ if (!isset($_SESSION['user_id'])) {
 </head>
 <body>
         <!-- Navigation Bar -->
-        <?php require 'C:\xampp\htdocs\lab_sync\public\navbar.php'; ?>
+        <?php require __DIR__ . '/../../../public/navbar.php'; ?>
         <div class="container">
             <!-- Sidebar -->
-            <?php require 'C:\xampp\htdocs\lab_sync\public\sidebar.php'; ?>
+            <?php require __DIR__ . '/../../../public/sidebar.php'; ?>
 
             <!-- Main Body Section -->
             <main class="main-content">

@@ -78,8 +78,8 @@ if ($controllerName === 'TestCatalog') {
 
     }elseif ($action === 'login_open') {
         include VIEW_PATH . '/auth/dash_login.php';
-    }elseif($action ==='createAppointment'){
-        include VIEW_PATH . '/receptionist/create_Appointment.php';
+    }elseif($action==='createAppointment'){
+        include VIEW_PATH . '/receptionist/create_appointment.php';
     }elseif($action ==='edit_test'){
         $Testcontroller->edit_test($role);
     }
@@ -140,23 +140,18 @@ elseif ($controllerName === 'appointmentsController') {
         $appointmentController->index($role);
     } elseif ($action === 'test_catalog') {
         include VIEW_PATH . '/receptionist/test_catalog.php';
-    }elseif($action==='createAppointment'){
-        $appointmentController->createAppointment();
-    }elseif($action==='prescriptionQueue'){
-        $appointmentController->prescriptionQueue();
-    }elseif($action==='prescriptionDecisionReport'){
-        $appointmentController->prescriptionDecisionReport();
-    }elseif($action==='prescriptionRequestDetails'){
-        $appointmentController->prescriptionRequestDetails();
-    }elseif($action==='processPrescriptionDecision'){
-        $appointmentController->processPrescriptionDecision();
-    }elseif($action==='storeAppointment'){
     } elseif ($action === 'createAppointment') {
-        $appointmentController->createAppointment($role);
+        $appointmentController->createAppointment();
+    } elseif ($action === 'prescriptionQueue') {
+        $appointmentController->prescriptionQueue();
+    } elseif ($action === 'prescriptionDecisionReport') {
+        $appointmentController->prescriptionDecisionReport();
+    } elseif ($action === 'prescriptionRequestDetails') {
+        $appointmentController->prescriptionRequestDetails();
+    } elseif ($action === 'processPrescriptionDecision') {
+        $appointmentController->processPrescriptionDecision();
     } elseif ($action === 'storeAppointment') {
         $appointmentController->storeAppointment($role);
-    }elseif($action==='searchPatients'){
-        $appointmentController->searchPatients();
     } elseif ($action === 'searchPatients') {
         $appointmentController->searchPatients();
     } elseif ($action === 'filterAppointments') {
@@ -354,7 +349,8 @@ elseif($controllerName === 'inventoryController'){
         $partnerLabController->getPartnerLabsSection();
     }
 }elseif($controllerName==='userController'){
-    $userController = new userController();
+    $userControllerClass = 'userController';
+    $userController = new $userControllerClass();
     $action = $_GET['action'] ?? 'index';
     $role = $_GET['role'] ?? '';
     if($action === 'user'){
