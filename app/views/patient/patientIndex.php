@@ -2,6 +2,11 @@
 if (session_status() === PHP_SESSION_NONE) {
     // session_start();
 }
+
+$styleVersion = @filemtime(__DIR__ . '/../../../public/css/nav.css');
+if ($styleVersion === false) {
+  $styleVersion = time();
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -13,10 +18,10 @@ if (session_status() === PHP_SESSION_NONE) {
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="/lab_sync/public/css/globals.css" />
-  <link rel="stylesheet" href="/lab_sync/public/css/nav.css" />
-  <link rel="stylesheet" href="/lab_sync/public/css/home.css" />
-  <link rel="stylesheet" href="/lab_sync/public/css/footer.css" />
+  <link rel="stylesheet" href="/lab_sync/public/css/globals.css?v=<?= $styleVersion ?>" />
+  <link rel="stylesheet" href="/lab_sync/public/css/nav.css?v=<?= $styleVersion ?>" />
+  <link rel="stylesheet" href="/lab_sync/public/css/home.css?v=<?= $styleVersion ?>" />
+  <link rel="stylesheet" href="/lab_sync/public/css/footer.css?v=<?= $styleVersion ?>" />
 </head>
 <body>
   <?php require_once __DIR__ . '/../../../public/partials/header.php'; ?>
