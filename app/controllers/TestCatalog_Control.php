@@ -21,7 +21,6 @@ class TestCatalogController {
     private $db;
 
      public function __construct() {
-        if (session_status() === PHP_SESSION_NONE) session_start();
         
         // Verify authentication
         if (!isset($_SESSION['user_id'])) {

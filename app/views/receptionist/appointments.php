@@ -1,7 +1,4 @@
 <?php
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
 if (!isset($_SESSION['user_id'])) {
     header('Location: /lab_sync/index.php?controller=Auth&action=index');
     exit();
@@ -43,6 +40,7 @@ $role = $role ?? '';
 
             <!-- Main Body Section -->
             <main class="main-content">
+            <section class="reports-dashboard" aria-label="Reports Dashboard">
                 <?php
                     $pageTitle = 'Appointments';
                     $pageBreadcrumbText = 'Appointments->';
@@ -697,6 +695,9 @@ $role = $role ?? '';
                     </div>
                 <div id="appointmentEditToast" class="appointment-edit-toast" aria-live="polite" hidden></div>
 
+
+            </section>
+                
             </main>
             <script src="/lab_sync/public/js/appointmentPopup.js"></script>
             <script src="/lab_sync/public/js/addTest.js"></script>

@@ -14,9 +14,6 @@ class ProfileController {
     }
 
     public function viewProfile() {
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
 
         $userId = (int)($_SESSION['user_id'] ?? 0);
         if ($userId <= 0) {
@@ -31,9 +28,6 @@ class ProfileController {
     }
 
     public function updateProfile() {
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
 
         $email = $_SESSION['email'] ?? null;
         $userId = $_SESSION['user_id'] ?? null;
@@ -93,9 +87,6 @@ class ProfileController {
     }
 
     public function changePassword() {
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
 
         $userId = (int)($_SESSION['user_id'] ?? 0);
         if ($userId <= 0) {

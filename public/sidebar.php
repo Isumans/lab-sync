@@ -1,10 +1,8 @@
 <?php
-if (session_status() === PHP_SESSION_NONE) session_start();
 
 $role = $_SESSION['user_role'] ?? '';
 
 function showMenuItem($rolesAllowed, $content) {
-    if (session_status() === PHP_SESSION_NONE) session_start();
     $role = $_SESSION['user_role'] ?? '';
     
     if ($role && in_array($role, $rolesAllowed)) {

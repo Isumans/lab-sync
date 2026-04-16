@@ -1,6 +1,5 @@
 <?php
 // require 'C:\xampp\htdocs\lab_sync\config\db.php';
-session_start();
 if (!isset($_SESSION['user_id'])) {
     // User is not logged in, redirect to login page
     header('Location: /lab_sync/index.php?controller=Auth&action=index');
@@ -29,68 +28,71 @@ if (!isset($_SESSION['user_id'])) {
             <?php require 'C:\xampp\htdocs\lab_sync\public\sidebar.php'; ?>
             <!-- Main Body Section -->
             <main class="main-content">
-                <?php
-                    $pageTitle = 'Dashboard';
-                    $pageBreadcrumbText = 'Dashboard->';
-                    $pageActionHtml = '';
-                    require __DIR__ . '/../../../public/partials/page-header.php';
-                ?>
-                <h3>Quick Overview</h3>
-                <br />
-                
-                <!-- Metric Cards Section -->
-                <div class="metrics-grid">
-                    <div class="metric-card">
-                        <div class="metric-icon user-icon">👤</div>
-                        <div class="metric-content">
-                            <h3>Total Patients past week</h3>
-                            <p class="metric-value">40,689</p>
-                            <span class="metric-change up">↑ 8.5% Up from previous</span>
-                        </div>
-                    </div>
+                <section class="reports-dashboard" aria-label="Reports Dashboard">
+                        <?php
+                        $pageTitle = 'Dashboard';
+                        $pageBreadcrumbText = 'Dashboard->';
+                        $pageActionHtml = '';
+                        require __DIR__ . '/../../../public/partials/page-header.php';
+                    ?>
+                    <h3>Quick Overview</h3>
+                    <br />
                     
-                    <div class="metric-card">
-                        <div class="metric-icon order-icon">📦</div>
-                        <div class="metric-content">
-                            <h3>Samples Collected past week</h3>
-                            <p class="metric-value">10293</p>
-                            <span class="metric-change up">↑ 1.3% Up from past week</span>
+                    <!-- Metric Cards Section -->
+                    <div class="metrics-grid">
+                        <div class="metric-card">
+                            <div class="metric-icon user-icon">👤</div>
+                            <div class="metric-content">
+                                <h3>Total Patients past week</h3>
+                                <p class="metric-value">40,689</p>
+                                <span class="metric-change up">↑ 8.5% Up from previous</span>
+                            </div>
+                        </div>
+                        
+                        <div class="metric-card">
+                            <div class="metric-icon order-icon">📦</div>
+                            <div class="metric-content">
+                                <h3>Samples Collected past week</h3>
+                                <p class="metric-value">10293</p>
+                                <span class="metric-change up">↑ 1.3% Up from past week</span>
+                            </div>
+                        </div>
+                        
+                        <div class="metric-card">
+                            <div class="metric-icon sales-icon">📈</div>
+                            <div class="metric-content">
+                                <h3>Payments pending</h3>
+                                <p class="metric-value">$89,000</p>
+                                <span class="metric-change down">↓ 4.3% Down from yesterday</span>
+                            </div>
+                        </div>
+                        
+                        <div class="metric-card">
+                            <div class="metric-icon pending-icon">⏱️</div>
+                            <div class="metric-content">
+                                <h3>Pending Reports</h3>
+                                <p class="metric-value">2040</p>
+                                <span class="metric-change up">↑ 1.8% Up from yesterday</span>
+                            </div>
                         </div>
                     </div>
-                    
-                    <div class="metric-card">
-                        <div class="metric-icon sales-icon">📈</div>
-                        <div class="metric-content">
-                            <h3>Payments pending</h3>
-                            <p class="metric-value">$89,000</p>
-                            <span class="metric-change down">↓ 4.3% Down from yesterday</span>
-                        </div>
-                    </div>
-                    
-                    <div class="metric-card">
-                        <div class="metric-icon pending-icon">⏱️</div>
-                        <div class="metric-content">
-                            <h3>Pending Reports</h3>
-                            <p class="metric-value">2040</p>
-                            <span class="metric-change up">↑ 1.8% Up from yesterday</span>
-                        </div>
-                    </div>
-                </div>
 
-                <!-- Sales Details Section -->
-                <div class="sales-section">
-                    <div class="section-header">
-                        <h2>Revenue Details</h2>
-                        <select class="month-selector">
-                            <option>October</option>
-                            <option>November</option>
-                            <option>December</option>
-                        </select>
+                    <!-- Sales Details Section -->
+                    <div class="sales-section">
+                        <div class="section-header">
+                            <h2>Revenue Details</h2>
+                            <select class="month-selector">
+                                <option>October</option>
+                                <option>November</option>
+                                <option>December</option>
+                            </select>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="salesChart"></canvas>
+                        </div>
                     </div>
-                    <div class="chart-container">
-                        <canvas id="salesChart"></canvas>
-                    </div>
-                </div>
+                </section>
+                
                 
             </main>
         </div>

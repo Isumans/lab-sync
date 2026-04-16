@@ -1,5 +1,4 @@
 <?php
-session_start();
 if (!isset($_SESSION['user_id'])) {
     header('Location: /lab_sync/index.php?controller=Auth&action=index');
     exit();
@@ -38,7 +37,8 @@ if (is_array($patients)) {
         <?php require 'C:\xampp\htdocs\lab_sync\public\sidebar.php'; ?>
 
         <main class="main-content">
-            <?php
+            <section class="reports-dashboard" aria-label="Reports Dashboard">
+                <?php
                 $pageTitle = 'Patients';
                 $pageBreadcrumbText = 'Patients->';
                 $pageActionHtml = '<a class="add-user-button" href="/lab_sync/index.php?controller=patientController&action=register_patient&role=' . rawurlencode((string)$role) . '">+ Register Walk-in Patient</a>';
@@ -121,6 +121,15 @@ if (is_array($patients)) {
                     <div class="rd-pagination" id="ptPagination"></div>
                 </div>
             </section>
+
+
+
+
+
+
+
+            </section>
+            
         </main>
     </div>
 

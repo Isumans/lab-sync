@@ -1,7 +1,4 @@
 <?php
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
 
 $appointments = is_array($appointments ?? null) ? $appointments : [];
 $prescriptionRequests = is_array($prescriptionRequests ?? null) ? $prescriptionRequests : [];

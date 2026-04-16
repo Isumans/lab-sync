@@ -136,7 +136,7 @@ body {
 
 .main-content {
     flex: 1;
-    padding: 32px;
+    padding: 24px 16px 28px;
     background: var(--background-color);
     min-height: 100%;
     box-shadow: 0 0

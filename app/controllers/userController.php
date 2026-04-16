@@ -198,9 +198,6 @@ class userController {
     }
 
     private function ensureStaffSession() {
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
 
         $userId = intval($_SESSION['user_id'] ?? 0);
         $role = (string)($_SESSION['user_role'] ?? '');

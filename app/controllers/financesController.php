@@ -278,9 +278,6 @@ class financesController {
     }
 
     private function ensureSession() {
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
     }
 
     private function mapStatus($status) {

@@ -85,9 +85,6 @@ class HomeController {
     }
 
     public function getHelp() {
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
 
         $requests = [];
         if (isset($_SESSION['user_id'])) {
@@ -101,9 +98,6 @@ class HomeController {
     }
 
     public function submitPrescriptionHelp() {
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
 
         if (!isset($_SESSION['user_id'])) {
             header('Location: /lab_sync/index.php?controller=Auth&action=index');
@@ -205,7 +199,6 @@ class HomeController {
     }
     public function bookAppointment() {
         // Start session and check if user is logged in
-        if (session_status() === PHP_SESSION_NONE) session_start();
         
         if (!isset($_SESSION['user_id'])) {
             header('Location: /lab_sync/index.php?controller=Auth&action=login');
@@ -303,7 +296,6 @@ class HomeController {
         exit;
     }
     public function getAppointment(){
-        if (session_status() === PHP_SESSION_NONE) session_start();
         $patientId = (int)$this->model->getPatientIdByUserId($_SESSION['user_id']);
         $appointments = $this->model->getAllAppointments($patientId);
         $prescriptionRequests = [];
@@ -315,7 +307,6 @@ class HomeController {
         include VIEW_PATH . '/patient/dashboard.php';
     }
     public function edit_appointment() {
-    if (session_status() === PHP_SESSION_NONE) session_start();
 
     if (!isset($_SESSION['user_id'])) {
         header('Location: /lab_sync/index.php?controller=Auth&action=login');
