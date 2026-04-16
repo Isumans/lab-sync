@@ -26,25 +26,7 @@ if (!$isAllowed && !isset($_SESSION['user_id'])) {
     exit();
 }
 
-// Check if user is logged in - redirect to login if not (except for auth actions)
-$controllerName = $_GET['controller'] ?? 'home';
-$action = $_GET['action'] ?? 'index';
-
-// Allow these pages without login
-$allowedWithoutLogin = [
-    'Auth' => ['login', 'index', 'patient_signup', 'logout'],
-    'home' => ['about', 'how'],
-];
-
-$isAllowed = isset($allowedWithoutLogin[$controllerName]) && 
-             in_array($action, $allowedWithoutLogin[$controllerName]);
-
-if (!$isAllowed && !isset($_SESSION['user_id'])) {
-    header('Location: ' . BASE_URL . '/index.php?controller=Auth&action=index&loginRequired=true');
-    exit();
-}
-
-require_once CONTROLLER_PATH . '/TestCatalog_Control.php';
+require_once CONTROLLER_PATH . '/TestCatalog_control.php';
 require_once CONTROLLER_PATH . '/authController.php';
 require_once CONTROLLER_PATH . '/administratorController.php';
 require_once CONTROLLER_PATH . '/appointmentsController.php';
@@ -173,6 +155,8 @@ elseif ($controllerName === 'appointmentsController') {
         $appointmentController->createAppointment($role);
     } elseif ($action === 'storeAppointment') {
         $appointmentController->storeAppointment($role);
+    }elseif($action==='searchPatients'){
+        $appointmentController->searchPatients();
     } elseif ($action === 'searchPatients') {
         $appointmentController->searchPatients();
     } elseif ($action === 'filterAppointments') {
