@@ -242,11 +242,21 @@ class AppointmentModel {
 
         $hasStatus = $this->hasAppointmentColumn('status');
         $hasItems = $this->hasTable('appointment_items');
+        $hasTestId = $this->hasAppointmentColumn('test_id');
+        $hasHomeCollection = $this->hasAppointmentColumn('home_collection');
+        $hasCollectionAddress = $this->hasAppointmentColumn('collection_address');
         $patientProjection = $this->buildPatientProjectionSql('p');
+        $notDeletedClause = $this->buildNotDeletedClause('a');
 
         $statusField = $hasStatus
             ? "COALESCE(NULLIF(a.status, ''), 'Pending')"
             : "'Pending'";
+
+        $homeCollectionField = $hasHomeCollection ? 'COALESCE(a.home_collection, 0)' : '0';
+        $collectionAddressField = $hasCollectionAddress ? "COALESCE(a.collection_address, '')" : "''";
+        $testsJoinSql = $hasTestId
+            ? 'LEFT JOIN tests t ON t.test_id = a.test_id'
+            : 'LEFT JOIN tests t ON 1 = 0';
 
         if ($hasItems) {
             $testsSummaryField = "COALESCE((SELECT GROUP_CONCAT(CONCAT(ti.test_name, ' (LKR ', FORMAT(ai.unit_price, 2), ')') ORDER BY ti.test_name SEPARATOR ', ') FROM appointment_items ai JOIN tests ti ON ti.test_id = ai.test_id WHERE ai.appointment_id = a.appointment_id), t.test_name)";
@@ -258,23 +268,29 @@ class AppointmentModel {
             $itemCountField = "1";
         }
 
-        $operator = $includeMethodMatch ? '=' : '<>';
+        $whereParts = [$notDeletedClause];
+        if ($method !== '*') {
+            $operator = $includeMethodMatch ? '=' : '<>';
+            $whereParts[] = "LOWER(a.method) " . $operator . " LOWER(?)";
+        }
+        $whereClause = 'WHERE ' . implode(' AND ', $whereParts);
+
         $query = "
             SELECT
                 a.*,
                 {$patientProjection},
                 t.test_name,
                 t.price AS test_price,
-                COALESCE(a.home_collection, 0) AS home_collection,
-                COALESCE(a.collection_address, '') AS collection_address,
+                {$homeCollectionField} AS home_collection,
+                {$collectionAddressField} AS collection_address,
                 " . $statusField . " AS appointment_status,
                 " . $testsSummaryField . " AS tests_summary,
                 " . $totalPriceField . " AS total_price,
                 " . $itemCountField . " AS item_count
             FROM appointment a
             LEFT JOIN patients p ON p.patient_id = a.patient_id
-            LEFT JOIN tests t ON t.test_id = a.test_id
-            WHERE LOWER(a.method) " . $operator . " LOWER(?)
+            {$testsJoinSql}
+            {$whereClause}
             ORDER BY a.appointment_date DESC, a.appointment_time DESC
         ";
 
@@ -285,7 +301,9 @@ class AppointmentModel {
             return [];
         }
 
-        $stmt->bind_param('s', $method);
+        if ($method !== '*') {
+            $stmt->bind_param('s', $method);
+        }
         if (!$stmt->execute()) {
             $this->lastError = 'Execute failed in fetchAppointmentsByMethodFilter: ' . $stmt->error;
             error_log($this->lastError);
@@ -427,47 +445,6 @@ class AppointmentModel {
         return array_values(array_unique($clean));
     }
 
-    public function getAllAppointmentsbyMethod($method) {
-        $patientProjection = $this->buildPatientProjectionSql('p');
-        $notDeletedClause = $this->buildNotDeletedClause('a');
-        $sql = "
-            SELECT a.*, {$patientProjection}
-            FROM appointment a
-            LEFT JOIN patients p ON p.patient_id = a.patient_id
-            WHERE a.method = ? AND {$notDeletedClause}
-            ORDER BY a.appointment_date DESC, a.appointment_time DESC
-        ";
-
-        $stmt = $this->db->prepare($sql);
-        if ($stmt === false) {
-            $this->lastError = 'Prepare failed in getAppointmentDetailsPayload: ' . $this->db->error;
-            error_log($this->lastError);
-            return null;
-        }
-
-        $stmt->bind_param('i', $appointmentId);
-        if (!$stmt->execute()) {
-            $this->lastError = 'Execute failed in getAppointmentDetailsPayload: ' . $stmt->error;
-            error_log($this->lastError);
-            return null;
-        }
-
-        $result = $stmt->get_result();
-        $appointment = $result ? $result->fetch_assoc() : null;
-        if (!$appointment) {
-            return null;
-        }
-
-        $tests = $this->getAppointmentTestsWithStatus($appointmentId);
-        $billing = $this->getBillingSummary($appointment, $tests);
-
-        return [
-            'appointment' => $appointment,
-            'tests' => $tests,
-            'billing' => $billing,
-        ];
-    }
-
     public function createReceptionistAppointment($patientId, $testId, $appointmentDate, $appointmentTime, $method = 'Physical', $status = 'Pending', $homeCollection = 0, $collectionAddress = '') {
         $this->ensureHomeCollectionColumns();
 
@@ -513,20 +490,19 @@ class AppointmentModel {
     }
 
     private function getFilteredAppointmentsDataset($filters = [], $sortBy = 'appointment_date', $sortDir = 'desc') {
-        $methodFilter = strtolower(trim((string)($filters['method'] ?? 'all')));
+        $methodFilter = $this->normalizeAppointmentMethod($filters['method'] ?? 'all');
+        if (!in_array($methodFilter, ['all', 'online', 'physical', 'call'], true)) {
+            $methodFilter = 'all';
+        }
         $search = strtolower(trim((string)($filters['search'] ?? '')));
         $fromDate = trim((string)($filters['from_date'] ?? ''));
         $toDate = trim((string)($filters['to_date'] ?? ''));
 
-        $rows = array_merge(
-            $this->getAllAppointmentsByMethod('online') ?: [],
-            $this->getAllAppointmentsByMethod('physical') ?: [],
-            $this->getAllAppointmentsByMethod('call') ?: []
-        );
+        $rows = $this->getAllAppointmentsByMethod('*') ?: [];
 
         if (in_array($methodFilter, ['online', 'physical', 'call'], true)) {
             $rows = array_values(array_filter($rows, function ($row) use ($methodFilter) {
-                $rowMethod = strtolower(trim((string)($row['method'] ?? '')));
+                $rowMethod = $this->normalizeAppointmentMethod($row['method'] ?? '');
                 if ($methodFilter === 'physical') {
                     return in_array($rowMethod, ['physical', 'call'], true);
                 }
@@ -538,7 +514,7 @@ class AppointmentModel {
             $rows = array_values(array_filter($rows, function ($row) use ($search) {
                 $patientName = strtolower((string)($row['patient_name'] ?? ($row['patient_display_name'] ?? '')));
                 $appointmentId = strtolower((string)($row['appointment_id'] ?? ''));
-                $methodValue = strtolower((string)($row['method'] ?? ''));
+                $methodValue = strtolower((string)$this->normalizeAppointmentMethod($row['method'] ?? ''));
 
                 return strpos($patientName, $search) !== false
                     || strpos($appointmentId, $search) !== false
@@ -574,6 +550,11 @@ class AppointmentModel {
             $aValue = $a[$sortKey] ?? '';
             $bValue = $b[$sortKey] ?? '';
 
+            if ($sortKey === 'method') {
+                $aValue = $this->normalizeAppointmentMethod($aValue);
+                $bValue = $this->normalizeAppointmentMethod($bValue);
+            }
+
             if (is_numeric($aValue) && is_numeric($bValue)) {
                 $cmp = intval($aValue) <=> intval($bValue);
             } else {
@@ -586,19 +567,481 @@ class AppointmentModel {
         return $rows;
     }
 
+    private function normalizeAppointmentMethod($method) {
+        $normalized = strtolower(trim((string)$method));
+
+        if ($normalized === '' || $normalized === 'all') {
+            return $normalized === '' ? 'physical' : 'all';
+        }
+
+        if (in_array($normalized, ['online', 'virtual', 'video', 'telemedicine', 'telemed', 'remote'], true)) {
+            return 'online';
+        }
+
+        if (in_array($normalized, ['call', 'phone', 'telephone', 'phone_call', 'phone-call'], true)) {
+            return 'call';
+        }
+
+        if (in_array($normalized, ['physical', 'in_person', 'in-person', 'walkin', 'walk-in', 'offline', 'onsite', 'on-site'], true)) {
+            return 'physical';
+        }
+
+        return $normalized;
+    }
+
     public function getAllTests() {
         $result = $this->db->query("SELECT test_id, test_name, price FROM tests ORDER BY test_name ASC");
         return $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
+    }
+
+    public function getAppointmentDetailsPayload($appointmentId) {
+        $appointmentId = intval($appointmentId);
+        if ($appointmentId <= 0) {
+            return null;
+        }
+
+        $patientProjection = $this->buildPatientProjectionSql('p');
+        $notDeletedClause = $this->buildNotDeletedClause('a');
+        $hasReason = $this->columnExists('appointment', 'reason');
+        $reasonSelect = $hasReason ? 'COALESCE(a.reason, "") AS reason,' : '"" AS reason,';
+
+        $sql = "
+            SELECT
+                a.*,
+                {$reasonSelect}
+                {$patientProjection}
+            FROM appointment a
+            LEFT JOIN patients p ON p.patient_id = a.patient_id
+            WHERE a.appointment_id = ? AND {$notDeletedClause}
+            LIMIT 1
+        ";
+
+        $stmt = $this->db->prepare($sql);
+        if ($stmt === false) {
+            $this->lastError = 'Prepare failed in getAppointmentDetailsPayload: ' . $this->db->error;
+            error_log($this->lastError);
+            return null;
+        }
+
+        $stmt->bind_param('i', $appointmentId);
+        if (!$stmt->execute()) {
+            $this->lastError = 'Execute failed in getAppointmentDetailsPayload: ' . $stmt->error;
+            error_log($this->lastError);
+            $stmt->close();
+            return null;
+        }
+
+        $result = $stmt->get_result();
+        $appointment = $result ? $result->fetch_assoc() : null;
+        $stmt->close();
+        if (!$appointment) {
+            return null;
+        }
+
+        $tests = $this->getAppointmentTestsWithStatus($appointmentId);
+        $billing = $this->getBillingSummary($appointmentId);
+
+        return [
+            'appointment' => $appointment,
+            'tests' => $tests,
+            'billing' => $billing,
+        ];
+    }
+
+    public function getAppointmentEditPayload($appointmentId) {
+        $payload = $this->getAppointmentDetailsPayload($appointmentId);
+        if ($payload === null) {
+            return null;
+        }
+
+        $tests = $payload['tests'];
+        $nonPendingStatuses = [];
+
+        foreach ($tests as $test) {
+            $status = strtoupper(trim((string) ($test['status'] ?? 'PENDING')));
+            if ($status !== 'PENDING') {
+                $nonPendingStatuses[$status] = $status;
+            }
+        }
+
+        $appointment = $payload['appointment'];
+        $appointment['patient_display_name'] = $appointment['patient_name'] ?? ('Patient #' . intval($appointment['patient_id'] ?? 0));
+        $appointment['patient_display_pid'] = $appointment['pid'] ?? ('P-' . intval($appointment['patient_id'] ?? 0));
+
+        return [
+            'appointment' => $appointment,
+            'tests' => $tests,
+            'can_edit_schedule_tests' => empty($nonPendingStatuses),
+            'non_pending_statuses' => array_values($nonPendingStatuses),
+        ];
+    }
+
+    public function searchTestsCatalog($query = '', $limit = 20) {
+        if (!$this->tableExists('tests')) {
+            return [];
+        }
+
+        $safeLimit = max(1, min(50, intval($limit)));
+        $categoryCol = $this->resolveFirstExistingColumn('tests', ['category', 'department']);
+        $categoryExpr = $categoryCol !== null ? "COALESCE(t.{$categoryCol}, '')" : "''";
+
+        $sql = "
+            SELECT
+                t.test_id,
+                COALESCE(t.test_name, '') AS test_name,
+                {$categoryExpr} AS category,
+                COALESCE(t.price, 0) AS price
+            FROM tests t
+        ";
+
+        $types = '';
+        $params = [];
+        $query = trim((string) $query);
+        if ($query !== '') {
+            $sql .= ' WHERE LOWER(COALESCE(t.test_name, \"\")) LIKE ? OR LOWER(' . $categoryExpr . ') LIKE ?';
+            $needle = '%' . strtolower($query) . '%';
+            $types = 'ss';
+            $params[] = $needle;
+            $params[] = $needle;
+        }
+
+        $sql .= ' ORDER BY t.test_name ASC LIMIT ' . $safeLimit;
+
+        $stmt = $this->db->prepare($sql);
+        if ($stmt === false) {
+            $this->lastError = 'Prepare failed in searchTestsCatalog: ' . $this->db->error;
+            error_log($this->lastError);
+            return [];
+        }
+
+        if ($types !== '') {
+            $stmt->bind_param($types, ...$params);
+        }
+
+        if (!$stmt->execute()) {
+            $this->lastError = 'Execute failed in searchTestsCatalog: ' . $stmt->error;
+            error_log($this->lastError);
+            $stmt->close();
+            return [];
+        }
+
+        $result = $stmt->get_result();
+        $rows = $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
+        $stmt->close();
+        return $rows;
+    }
+
+    public function updateAppointmentWithTests($appointmentId, $appointmentDate, $appointmentTime, $reason = '', $testIds = []) {
+        $appointmentId = intval($appointmentId);
+        $cleanTestIds = $this->normalizeTestIds($testIds);
+
+        if ($appointmentId <= 0) {
+            $this->lastError = 'Invalid appointment ID.';
+            return false;
+        }
+
+        if (empty($cleanTestIds)) {
+            $this->lastError = 'Please select at least one test.';
+            return false;
+        }
+
+        $payload = $this->getAppointmentEditPayload($appointmentId);
+        if ($payload === null) {
+            $this->lastError = 'Appointment not found.';
+            return false;
+        }
+
+        $existingTests = $payload['tests'] ?? [];
+        $nonPending = !empty($payload['non_pending_statuses']);
+        if ($nonPending) {
+            $existingIds = [];
+            foreach ($existingTests as $row) {
+                $existingIds[] = intval($row['test_id'] ?? 0);
+            }
+            sort($existingIds);
+            $incomingIds = $cleanTestIds;
+            sort($incomingIds);
+
+            $scheduleChanged = ((string) ($payload['appointment']['appointment_date'] ?? '') !== (string) $appointmentDate)
+                || ((string) ($payload['appointment']['appointment_time'] ?? '') !== (string) $appointmentTime);
+
+            if ($scheduleChanged || $existingIds !== $incomingIds) {
+                $this->lastError = 'Schedule and tests can only be modified while all tests are in PENDING status.';
+                return false;
+            }
+        }
+
+        $this->db->begin_transaction();
+        try {
+            $hasReason = $this->columnExists('appointment', 'reason');
+            if ($hasReason) {
+                $headerSql = 'UPDATE appointment SET appointment_date = ?, appointment_time = ?, reason = ? WHERE appointment_id = ?';
+                $headerStmt = $this->db->prepare($headerSql);
+                if ($headerStmt === false) {
+                    throw new Exception('Prepare failed in updateAppointmentWithTests: ' . $this->db->error);
+                }
+                $headerStmt->bind_param('sssi', $appointmentDate, $appointmentTime, $reason, $appointmentId);
+            } else {
+                $headerSql = 'UPDATE appointment SET appointment_date = ?, appointment_time = ? WHERE appointment_id = ?';
+                $headerStmt = $this->db->prepare($headerSql);
+                if ($headerStmt === false) {
+                    throw new Exception('Prepare failed in updateAppointmentWithTests: ' . $this->db->error);
+                }
+                $headerStmt->bind_param('ssi', $appointmentDate, $appointmentTime, $appointmentId);
+            }
+
+            if (!$headerStmt->execute()) {
+                throw new Exception('Execute failed in updateAppointmentWithTests: ' . $headerStmt->error);
+            }
+
+            if ($this->tableExists('appointment_tests') && !$nonPending) {
+                $deleteSql = 'DELETE FROM appointment_tests WHERE appointment_id = ?';
+                $deleteStmt = $this->db->prepare($deleteSql);
+                if ($deleteStmt === false) {
+                    throw new Exception('Prepare failed while resetting appointment tests: ' . $this->db->error);
+                }
+                $deleteStmt->bind_param('i', $appointmentId);
+                if (!$deleteStmt->execute()) {
+                    throw new Exception('Execute failed while resetting appointment tests: ' . $deleteStmt->error);
+                }
+
+                $insertSql = "INSERT INTO appointment_tests (appointment_id, test_id, status) VALUES (?, ?, 'PENDING')";
+                $insertStmt = $this->db->prepare($insertSql);
+                if ($insertStmt === false) {
+                    throw new Exception('Prepare failed while saving appointment tests: ' . $this->db->error);
+                }
+
+                foreach ($cleanTestIds as $testId) {
+                    $insertStmt->bind_param('ii', $appointmentId, $testId);
+                    if (!$insertStmt->execute()) {
+                        throw new Exception('Execute failed while saving appointment tests: ' . $insertStmt->error);
+                    }
+                }
+            }
+
+            if ($this->columnExists('appointment', 'test_id')) {
+                $primaryTestId = intval($cleanTestIds[0]);
+                $legacyStmt = $this->db->prepare('UPDATE appointment SET test_id = ? WHERE appointment_id = ?');
+                if ($legacyStmt !== false) {
+                    $legacyStmt->bind_param('ii', $primaryTestId, $appointmentId);
+                    $legacyStmt->execute();
+                }
+            }
+
+            $this->db->commit();
+            return true;
+        } catch (Throwable $e) {
+            $this->db->rollback();
+            $this->lastError = $e->getMessage();
+            error_log($this->lastError);
+            return false;
+        }
+    }
+
+    public function startTestInProgress($appointmentId, $testId, $actorUserId = null) {
+        $appointmentId = intval($appointmentId);
+        $testId = intval($testId);
+
+        if ($appointmentId <= 0 || $testId <= 0) {
+            $this->lastError = 'Invalid appointment_id or test_id.';
+            return false;
+        }
+
+        if (!$this->tableExists('appointment_tests')) {
+            $this->lastError = 'Table appointment_tests does not exist.';
+            return false;
+        }
+
+        $statusCol = $this->resolveFirstExistingColumn('appointment_tests', ['status', 'test_status']);
+        if ($statusCol === null) {
+            $this->lastError = 'Unable to resolve appointment_tests status column.';
+            return false;
+        }
+
+        $assignedCol = $this->resolveFirstExistingColumn('appointment_tests', ['assigned_to']);
+
+        $lookupSql = "SELECT {$statusCol} AS status FROM appointment_tests WHERE appointment_id = ? AND test_id = ? LIMIT 1";
+        $lookupStmt = $this->db->prepare($lookupSql);
+        if ($lookupStmt === false) {
+            $this->lastError = 'Prepare failed in startTestInProgress: ' . $this->db->error;
+            return false;
+        }
+
+        $lookupStmt->bind_param('ii', $appointmentId, $testId);
+        if (!$lookupStmt->execute()) {
+            $this->lastError = 'Execute failed in startTestInProgress: ' . $lookupStmt->error;
+            return false;
+        }
+
+        $rowResult = $lookupStmt->get_result();
+        $row = $rowResult ? $rowResult->fetch_assoc() : null;
+        if (!$row) {
+            $this->lastError = 'Appointment test record not found.';
+            return false;
+        }
+
+        $currentStatus = strtoupper(trim((string) ($row['status'] ?? 'PENDING')));
+        if ($currentStatus !== 'PENDING') {
+            $this->lastError = 'Only pending tests can be moved to IN_PROGRESS.';
+            return false;
+        }
+
+        $setParts = ["{$statusCol} = 'IN_PROGRESS'"];
+        $types = 'ii';
+        $params = [$appointmentId, $testId];
+
+        if ($assignedCol !== null && is_numeric($actorUserId) && intval($actorUserId) > 0) {
+            $setParts[] = "{$assignedCol} = ?";
+            $types = 'iii';
+            $params = [intval($actorUserId), $appointmentId, $testId];
+        }
+
+        $updateSql = 'UPDATE appointment_tests SET ' . implode(', ', $setParts) . ' WHERE appointment_id = ? AND test_id = ?';
+        $updateStmt = $this->db->prepare($updateSql);
+        if ($updateStmt === false) {
+            $this->lastError = 'Prepare failed in startTestInProgress(update): ' . $this->db->error;
+            return false;
+        }
+
+        $updateStmt->bind_param($types, ...$params);
+        if (!$updateStmt->execute()) {
+            $this->lastError = 'Execute failed in startTestInProgress(update): ' . $updateStmt->error;
+            return false;
+        }
+
+        return [
+            'appointment_id' => $appointmentId,
+            'test_id' => $testId,
+            'status' => 'IN_PROGRESS'
+        ];
     }
 
     public function getPrescriptionRequests($status = 'Pending') {
         if (!$this->hasTable('prescription_requests')) {
             return [];
         }
-        $stmt->bind_param("s", $method);
-        $stmt->execute();
+
+        $status = trim((string) $status);
+        $whereSql = '';
+        $types = '';
+        $params = [];
+
+        if ($status !== '' && strtolower($status) !== 'all') {
+            $whereSql = 'WHERE LOWER(COALESCE(pr.status, "pending")) = LOWER(?)';
+            $types = 's';
+            $params[] = $status;
+        }
+
+        $patientNameExpr = $this->buildPatientNameExpr('p');
+        $contactCol = $this->resolveFirstExistingColumn('patients', ['contact_number', 'phone_number', 'phone', 'mobile']);
+        $contactExpr = $contactCol !== null ? "COALESCE(p.{$contactCol}, '')" : "''";
+
+        $sql = "
+            SELECT
+                pr.request_id,
+                pr.patient_id,
+                pr.prescription_file_path,
+                pr.preferred_date,
+                pr.preferred_time,
+                pr.home_collection,
+                pr.collection_address,
+                pr.notes,
+                pr.symptoms,
+                pr.status,
+                pr.created_at,
+                pr.updated_at,
+                pr.decision_action,
+                pr.decision_by_user_id,
+                pr.decision_at,
+                pr.linked_appointment_id,
+                COALESCE(u.username, '') AS decision_by_username,
+                {$patientNameExpr} AS patient_name,
+                {$contactExpr} AS contact_number,
+                COALESCE(p.email, '') AS email
+            FROM prescription_requests pr
+            LEFT JOIN patients p ON p.patient_id = pr.patient_id
+            LEFT JOIN users u ON u.user_id = pr.decision_by_user_id
+            {$whereSql}
+            ORDER BY pr.created_at DESC, pr.request_id DESC
+        ";
+
+        $stmt = $this->db->prepare($sql);
+        if ($stmt === false) {
+            $this->lastError = 'Prepare failed in getPrescriptionRequests: ' . $this->db->error;
+            error_log($this->lastError);
+            return [];
+        }
+
+        if ($types !== '') {
+            $stmt->bind_param($types, ...$params);
+        }
+
+        if (!$stmt->execute()) {
+            $this->lastError = 'Execute failed in getPrescriptionRequests: ' . $stmt->error;
+            error_log($this->lastError);
+            $stmt->close();
+            return [];
+        }
+
         $result = $stmt->get_result();
-        return $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
+        $rows = $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
+        $stmt->close();
+        return $rows;
+    }
+
+    public function tableExists($tableName) {
+        return $this->hasTable($tableName);
+    }
+
+    public function columnExists($tableName, $columnName) {
+        return $this->hasTableColumn($tableName, $columnName);
+    }
+
+    private function buildPatientNameExpr($alias) {
+        $firstNameCol = $this->columnExists('patients', 'first_name') ? 'first_name' : null;
+        $lastNameCol = $this->columnExists('patients', 'last_name') ? 'last_name' : null;
+
+        if ($firstNameCol !== null && $lastNameCol !== null) {
+            return "COALESCE(NULLIF(TRIM(CONCAT(COALESCE({$alias}.{$firstNameCol}, ''), ' ', COALESCE({$alias}.{$lastNameCol}, ''))), ''), '')";
+        }
+
+        $nameCol = $this->resolveFirstExistingColumn('patients', ['patient_name', 'full_name', 'name', 'first_name']);
+        if ($nameCol !== null) {
+            return "COALESCE({$alias}.{$nameCol}, '')";
+        }
+
+        return "''";
+    }
+
+    private function buildPatientProjectionSql($alias) {
+        $nameExpr = $this->buildPatientNameExpr($alias);
+        $pidCol = $this->resolveFirstExistingColumn('patients', ['pid', 'patient_code', 'patient_no', 'patient_number', 'patient_id']);
+        $genderCol = $this->resolveFirstExistingColumn('patients', ['gender', 'sex']);
+        $dobCol = $this->resolveFirstExistingColumn('patients', ['date_of_birth', 'dob', 'birth_date']);
+        $contactCol = $this->resolveFirstExistingColumn('patients', ['contact_number', 'phone_number', 'phone', 'mobile']);
+
+        $pidExpr = $pidCol !== null ? "COALESCE({$alias}.{$pidCol}, '')" : "''";
+        $genderExpr = $genderCol !== null ? "COALESCE({$alias}.{$genderCol}, '')" : "''";
+        $dobExpr = $dobCol !== null ? "{$alias}.{$dobCol}" : 'NULL';
+        $contactExpr = $contactCol !== null ? "COALESCE({$alias}.{$contactCol}, '')" : "''";
+
+        return "
+            {$nameExpr} AS patient_name,
+            {$pidExpr} AS pid,
+            {$genderExpr} AS gender,
+            {$dobExpr} AS date_of_birth,
+            {$contactExpr} AS contact_number
+        ";
+    }
+
+    private function resolveFirstExistingColumn($tableName, $candidates) {
+        foreach ($candidates as $candidate) {
+            if ($this->columnExists($tableName, $candidate)) {
+                return $candidate;
+            }
+        }
+
+        return null;
     }
 
     public function getLastError() {
@@ -720,11 +1163,11 @@ class AppointmentModel {
         $parts = [];
 
         if ($this->columnExists('appointment', 'deleted_at')) {
-            $parts[] = "{$alias}.deleted_at IS NULL";
+            $parts[] = "({$alias}.deleted_at IS NULL OR {$alias}.deleted_at = '0000-00-00 00:00:00' OR {$alias}.deleted_at = '0000-00-00')";
         }
 
         if ($this->columnExists('appointment', 'deleted_by')) {
-            $parts[] = "{$alias}.deleted_by IS NULL";
+            $parts[] = "({$alias}.deleted_by IS NULL OR {$alias}.deleted_by = 0)";
         }
 
         if (empty($parts)) {
@@ -732,6 +1175,208 @@ class AppointmentModel {
         }
 
         return implode(' AND ', $parts);
+    }
+
+    private function getAppointmentTestsWithStatus($appointmentId) {
+        $appointmentId = intval($appointmentId);
+        if ($appointmentId <= 0) {
+            return [];
+        }
+
+        if (!$this->tableExists('appointment_tests')) {
+            return $this->getLegacyAppointmentTests($appointmentId);
+        }
+
+        $statusCol = $this->resolveFirstExistingColumn('appointment_tests', ['status', 'test_status']);
+        $pkCol = $this->resolveFirstExistingColumn('appointment_tests', ['appointment_test_id', 'id', 'appointment_testid']);
+        $statusExpr = $statusCol !== null ? "at.{$statusCol}" : "'PENDING'";
+        $pkExpr = $pkCol !== null ? "at.{$pkCol}" : '0';
+
+        $hasTestsTable = $this->tableExists('tests');
+        $testsJoinSql = $hasTestsTable ? 'LEFT JOIN tests t ON t.test_id = at.test_id' : '';
+        $testNameExpr = $hasTestsTable ? "COALESCE(t.test_name, '')" : "''";
+        $categoryCol = $this->resolveFirstExistingColumn('tests', ['category', 'department']);
+        $categoryExpr = ($hasTestsTable && $categoryCol !== null) ? "COALESCE(t.{$categoryCol}, '')" : "''";
+        $priceExpr = $hasTestsTable ? 'COALESCE(t.price, 0)' : '0';
+
+        $sql = "
+            SELECT
+                {$pkExpr} AS appointment_test_id,
+                at.test_id,
+                {$testNameExpr} AS test_name,
+                {$categoryExpr} AS category,
+                {$priceExpr} AS price,
+                UPPER(COALESCE({$statusExpr}, 'PENDING')) AS status
+            FROM appointment_tests at
+            {$testsJoinSql}
+            WHERE at.appointment_id = ?
+            ORDER BY test_name ASC
+        ";
+
+        $stmt = $this->db->prepare($sql);
+        if ($stmt === false) {
+            return $this->getLegacyAppointmentTests($appointmentId);
+        }
+
+        $stmt->bind_param('i', $appointmentId);
+        if (!$stmt->execute()) {
+            $stmt->close();
+            return $this->getLegacyAppointmentTests($appointmentId);
+        }
+
+        $result = $stmt->get_result();
+        $rows = $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
+        $stmt->close();
+
+        if (!empty($rows)) {
+            return $rows;
+        }
+
+        return $this->getLegacyAppointmentTests($appointmentId);
+    }
+
+    private function getLegacyAppointmentTests($appointmentId) {
+        if (!$this->columnExists('appointment', 'test_id')) {
+            return [];
+        }
+
+        $stmt = $this->db->prepare('SELECT test_id, status FROM appointment WHERE appointment_id = ? LIMIT 1');
+        if ($stmt === false) {
+            return [];
+        }
+
+        $stmt->bind_param('i', $appointmentId);
+        if (!$stmt->execute()) {
+            $stmt->close();
+            return [];
+        }
+
+        $result = $stmt->get_result();
+        $row = $result ? $result->fetch_assoc() : null;
+        $stmt->close();
+        if (!$row) {
+            return [];
+        }
+
+        $testId = intval($row['test_id'] ?? 0);
+        if ($testId <= 0) {
+            return [];
+        }
+
+        $status = strtoupper(trim((string) ($row['status'] ?? 'PENDING')));
+        if ($status === '') {
+            $status = 'PENDING';
+        }
+
+        if (!$this->tableExists('tests')) {
+            return [[
+                'appointment_test_id' => 0,
+                'test_id' => $testId,
+                'test_name' => '',
+                'category' => '',
+                'price' => 0,
+                'status' => $status,
+            ]];
+        }
+
+        $categoryCol = $this->resolveFirstExistingColumn('tests', ['category', 'department']);
+        $categoryExpr = $categoryCol !== null ? "COALESCE(t.{$categoryCol}, '')" : "''";
+
+        $testStmt = $this->db->prepare("SELECT t.test_id, COALESCE(t.test_name, '') AS test_name, {$categoryExpr} AS category, COALESCE(t.price, 0) AS price FROM tests t WHERE t.test_id = ? LIMIT 1");
+        if ($testStmt === false) {
+            return [];
+        }
+
+        $testStmt->bind_param('i', $testId);
+        if (!$testStmt->execute()) {
+            $testStmt->close();
+            return [];
+        }
+
+        $testResult = $testStmt->get_result();
+        $testRow = $testResult ? $testResult->fetch_assoc() : null;
+        $testStmt->close();
+        if (!$testRow) {
+            return [];
+        }
+
+        $testRow['appointment_test_id'] = 0;
+        $testRow['status'] = $status;
+        return [$testRow];
+    }
+
+    private function getBillingSummary($appointmentId) {
+        $summary = [
+            'total_fee' => 0,
+            'payment_status' => '',
+            'reference' => '',
+        ];
+
+        if (!$this->tableExists('billing')) {
+            $tests = $this->getAppointmentTestsWithStatus($appointmentId);
+            $total = 0;
+            foreach ($tests as $test) {
+                $total += floatval($test['price'] ?? 0);
+            }
+            $summary['total_fee'] = $total;
+            return $summary;
+        }
+
+        $appointmentFk = $this->resolveFirstExistingColumn('billing', ['appointment_id', 'bill_id']);
+        if ($appointmentFk === null) {
+            return $summary;
+        }
+
+        $totalCol = $this->resolveFirstExistingColumn('billing', ['total_fee', 'total_amount', 'amount']);
+        $statusCol = $this->resolveFirstExistingColumn('billing', ['payment_status', 'status']);
+        $refCol = $this->resolveFirstExistingColumn('billing', ['reference_no', 'reference', 'bill_reference']);
+
+        $totalExpr = $totalCol !== null ? $totalCol : '0';
+        $statusExpr = $statusCol !== null ? $statusCol : "''";
+        $refExpr = $refCol !== null ? $refCol : "''";
+
+        $sql = "
+            SELECT
+                {$totalExpr} AS total_fee,
+                {$statusExpr} AS payment_status,
+                {$refExpr} AS reference
+            FROM billing
+            WHERE {$appointmentFk} = ?
+            ORDER BY 1 DESC
+            LIMIT 1
+        ";
+
+        $stmt = $this->db->prepare($sql);
+        if ($stmt === false) {
+            return $summary;
+        }
+
+        $stmt->bind_param('i', $appointmentId);
+        if (!$stmt->execute()) {
+            $stmt->close();
+            return $summary;
+        }
+
+        $result = $stmt->get_result();
+        $row = $result ? $result->fetch_assoc() : null;
+        $stmt->close();
+        if (!$row) {
+            return $summary;
+        }
+
+        if (isset($row['total_fee']) && is_numeric($row['total_fee'])) {
+            $summary['total_fee'] = floatval($row['total_fee']);
+        }
+
+        if (!empty($row['payment_status'])) {
+            $summary['payment_status'] = strtoupper((string) $row['payment_status']);
+        }
+
+        if (!empty($row['reference'])) {
+            $summary['reference'] = (string) $row['reference'];
+        }
+
+        return $summary;
     }
 
 

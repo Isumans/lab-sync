@@ -146,7 +146,7 @@ elseif ($controllerName === 'appointmentsController') {
     } elseif ($action === 'test_catalog') {
         include VIEW_PATH . '/receptionist/test_catalog.php';
     } elseif ($action === 'createAppointment') {
-        $appointmentController->createAppointment();
+        $appointmentController->createAppointment($role);
     } elseif ($action === 'prescriptionQueue') {
         $appointmentController->prescriptionQueue();
     } elseif ($action === 'prescriptionDecisionReport') {
@@ -155,9 +155,6 @@ elseif ($controllerName === 'appointmentsController') {
         $appointmentController->prescriptionRequestDetails();
     } elseif ($action === 'processPrescriptionDecision') {
         $appointmentController->processPrescriptionDecision();
-    } elseif ($action === 'storeAppointment') {
-    } elseif ($action === 'createAppointment') {
-        $appointmentController->createAppointment($role);
     } elseif ($action === 'storeAppointment') {
         $appointmentController->storeAppointment($role);
     } elseif ($action === 'searchPatients') {

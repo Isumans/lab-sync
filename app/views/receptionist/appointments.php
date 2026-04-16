@@ -101,6 +101,30 @@ $role = $role ?? '';
                     </div>
                 </section>
 
+                <section class="rd-table-card" aria-label="Appointments Table">
+                    <div class="rd-table-wrap">
+                        <table class="rd-table">
+                            <thead>
+                                <tr>
+                                    <th class="rd-sortable is-active" data-sort="appointment_id" data-direction="desc">Appointment ID</th>
+                                    <th class="rd-sortable" data-sort="patient_name" data-direction="asc">Patient Name</th>
+                                    <th class="rd-sortable" data-sort="appointment_date" data-direction="desc">Date</th>
+                                    <th class="rd-sortable" data-sort="appointment_time" data-direction="desc">Time</th>
+                                    <th class="rd-sortable" data-sort="method" data-direction="asc">Type</th>
+                                    <th class="rd-th-right">Billing</th>
+                                    <th class="rd-th-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="aptTableBody"></tbody>
+                        </table>
+                    </div>
+
+                    <div class="rd-table-footer">
+                        <p id="aptShowingText">Showing 0-0 of 0 appointments</p>
+                        <div class="rd-pagination" id="aptPagination"></div>
+                    </div>
+                </section>
+
                 <!-- Create Appointment Modal -->
                 <div id="createAppointmentModal" class="modal" aria-hidden="true">
                     <div class="modal-content">
@@ -673,39 +697,12 @@ $role = $role ?? '';
                     </div>
                 <div id="appointmentEditToast" class="appointment-edit-toast" aria-live="polite" hidden></div>
 
-                <section class="rd-table-card" aria-label="Appointments Table">
-                    <div class="rd-table-wrap">
-                        <table class="rd-table">
-                            <thead>
-                                <tr>
-                                    <th class="rd-sortable is-active" data-sort="appointment_id" data-direction="desc">Appointment ID</th>
-                                    <th class="rd-sortable" data-sort="patient_name" data-direction="asc">Patient Name</th>
-                                    <th class="rd-sortable" data-sort="appointment_date" data-direction="desc">Date</th>
-                                    <th class="rd-sortable" data-sort="appointment_time" data-direction="desc">Time</th>
-                                    <th class="rd-sortable" data-sort="method" data-direction="asc">Type</th>
-                                    <th class="rd-th-right">Billing</th>
-                                    <th class="rd-th-right">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="aptTableBody"></tbody>
-                        </table>
-                    </div>
-
-                    <div class="rd-table-footer">
-                        <p id="aptShowingText">Showing 0-0 of 0 appointments</p>
-                        <div class="rd-pagination" id="aptPagination"></div>
-                    </div>
-                </section>
             </main>
             <script src="/lab_sync/public/js/appointmentPopup.js"></script>
             <script src="/lab_sync/public/js/addTest.js"></script>
             <script src="/lab_sync/public/js/showSection.js"></script>
-            <script src="/lab_sync/public/js/showSection.js"></script>
             <script src="/lab_sync/public/js/searchPatient.js"></script>
-            <script src="/lab_sync/public/js/appointmentForm.js"></script>
-            <script src="/lab_sync/public/js/appointmentDetailsModal.js"></script>
-            <script src="/lab_sync/public/js/appointmentEditModal.js"></script>
-            <script src="/lab_sync/public/js/appointmentDeleteModal.js"></script>
+            <script src="/lab_sync/public/js/appointmentFilter.js"></script>
             <script src="/lab_sync/public/js/appointmentForm.js"></script>
             <script src="/lab_sync/public/js/appointmentDetailsModal.js"></script>
             <script src="/lab_sync/public/js/appointmentEditModal.js"></script>

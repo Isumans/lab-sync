@@ -10,7 +10,6 @@ require_once APP_PATH . '/services/SmsService.php';
 require_once __DIR__ . '/../../config/db.php';
 class appointmentsController {
     public function index($role = '') {
-    public function index($role = '') {
         // Logic to fetch and display appointments can be added here
         $appointmentsModel = new AppointmentModel(connect());
         $appointmentsOnline = $appointmentsModel->getAllAppointmentsByMethod("online");
@@ -92,7 +91,7 @@ class appointmentsController {
     echo json_encode($results);
 }
 
-public function createAppointment($role) {
+public function createAppointment($role = '') {
     
     include VIEW_PATH . '/receptionist/create_appointment.php';
 }
@@ -131,20 +130,20 @@ public function filterAppointments() {
     ];
 
     $appointmentsModel = new AppointmentModel(connect());
-    
-    $appointments = [];
-    
-    if ($filter === 'online') {
-        $appointments = $appointmentsModel->getAllAppointmentsbyMethod("online");
-    } elseif ($filter === 'physical') {
-        $appointments = $appointmentsModel->getAllAppointmentsbyMethod("physical");
-    } else { // 'all'
-        $online = $appointmentsModel->getAllAppointmentsbyMethod("online");
-        $physical = $appointmentsModel->getAllAppointmentsbyMethod("physical");
-        $appointments = array_merge($online, $physical);
-    }
-    
-    echo json_encode($appointments);
+    $appointments = $appointmentsModel->getAppointmentsList($filters, $page, $perPage, $sortBy, $sortDir);
+    $totalItems = $appointmentsModel->countAppointments($filters);
+    $totalPages = max(1, (int) ceil($totalItems / $perPage));
+
+    echo json_encode([
+        'status' => 'success',
+        'data' => $appointments,
+        'pagination' => [
+            'current_page' => $page,
+            'per_page' => $perPage,
+            'total' => $totalItems,
+            'total_pages' => $totalPages,
+        ]
+    ]);
 }
 
 public function getAppointmentDetails() {
@@ -454,6 +453,218 @@ public function updateTestStatus() {
         'message' => 'Test status updated to IN_PROGRESS.',
         'data' => $result
     ]);
+}
+
+public function prescriptionQueue() {
+    $statusFilter = isset($_GET['status']) ? strtolower(trim((string) $_GET['status'])) : 'pending';
+    $model = new AppointmentModel(connect());
+
+    if ($statusFilter === 'all') {
+        $requests = $model->getPrescriptionRequests('all');
+    } elseif ($statusFilter === 'processed') {
+        $all = $model->getPrescriptionRequests('all');
+        $requests = array_values(array_filter($all, function ($row) {
+            return strtolower((string) ($row['status'] ?? '')) !== 'pending';
+        }));
+    } else {
+        $requests = $model->getPrescriptionRequests('pending');
+    }
+
+    include VIEW_PATH . '/receptionist/prescription_queue.php';
+}
+
+public function prescriptionDecisionReport() {
+    $model = new AppointmentModel(connect());
+    $rows = $model->getPrescriptionRequests('all');
+
+    $filters = [
+        'status' => trim((string) ($_GET['status'] ?? '')),
+        'decision_action' => trim((string) ($_GET['decision_action'] ?? '')),
+        'date_from' => trim((string) ($_GET['date_from'] ?? '')),
+        'date_to' => trim((string) ($_GET['date_to'] ?? '')),
+        'decision_by_user_id' => intval($_GET['decision_by_user_id'] ?? 0),
+    ];
+
+    $reportRows = array_values(array_filter($rows, function ($row) use ($filters) {
+        if ($filters['status'] !== '' && stripos((string) ($row['status'] ?? ''), $filters['status']) === false) {
+            return false;
+        }
+
+        if ($filters['decision_action'] !== '' && strtolower((string) ($row['decision_action'] ?? '')) !== strtolower($filters['decision_action'])) {
+            return false;
+        }
+
+        if ($filters['decision_by_user_id'] > 0 && intval($row['decision_by_user_id'] ?? 0) !== $filters['decision_by_user_id']) {
+            return false;
+        }
+
+        $decisionAt = (string) ($row['decision_at'] ?? '');
+        if ($filters['date_from'] !== '' && ($decisionAt === '' || substr($decisionAt, 0, 10) < $filters['date_from'])) {
+            return false;
+        }
+
+        if ($filters['date_to'] !== '' && ($decisionAt === '' || substr($decisionAt, 0, 10) > $filters['date_to'])) {
+            return false;
+        }
+
+        return true;
+    }));
+
+    $summary = [
+        'total_requests' => count($reportRows),
+        'pending' => 0,
+        'processed' => 0,
+        'booked_by_receptionist' => 0,
+        'self_book_requested' => 0,
+    ];
+
+    foreach ($reportRows as $row) {
+        $status = strtolower((string) ($row['status'] ?? ''));
+        $decision = strtolower((string) ($row['decision_action'] ?? ''));
+
+        if ($status === 'pending') {
+            $summary['pending'] += 1;
+        } else {
+            $summary['processed'] += 1;
+        }
+
+        if ($decision === 'book_for_patient') {
+            $summary['booked_by_receptionist'] += 1;
+        }
+
+        if ($decision === 'self_book') {
+            $summary['self_book_requested'] += 1;
+        }
+    }
+
+    if (isset($_GET['format']) && strtolower((string) $_GET['format']) === 'csv') {
+        header('Content-Type: text/csv; charset=UTF-8');
+        header('Content-Disposition: attachment; filename="prescription_decisions_' . date('Ymd_His') . '.csv"');
+
+        $out = fopen('php://output', 'w');
+        fputcsv($out, ['request_id', 'patient_name', 'status', 'decision_action', 'decision_by_user_id', 'decision_by_username', 'linked_appointment_id', 'decision_at', 'created_at']);
+        foreach ($reportRows as $row) {
+            fputcsv($out, [
+                $row['request_id'] ?? '',
+                $row['patient_name'] ?? '',
+                $row['status'] ?? '',
+                $row['decision_action'] ?? '',
+                $row['decision_by_user_id'] ?? '',
+                $row['decision_by_username'] ?? '',
+                $row['linked_appointment_id'] ?? '',
+                $row['decision_at'] ?? '',
+                $row['created_at'] ?? '',
+            ]);
+        }
+        fclose($out);
+        return;
+    }
+
+    include VIEW_PATH . '/receptionist/prescription_decisions.php';
+}
+
+public function prescriptionRequestDetails() {
+    $requestId = isset($_GET['request_id']) ? intval($_GET['request_id']) : 0;
+    if ($requestId <= 0) {
+        http_response_code(400);
+        echo 'Invalid request_id';
+        return;
+    }
+
+    $model = new AppointmentModel(connect());
+    $requests = $model->getPrescriptionRequests('all');
+    $request = null;
+    foreach ($requests as $row) {
+        if (intval($row['request_id'] ?? 0) === $requestId) {
+            $request = $row;
+            break;
+        }
+    }
+
+    if ($request === null) {
+        http_response_code(404);
+        echo 'Prescription request not found.';
+        return;
+    }
+
+    $events = $model->getPrescriptionRequestEvents($requestId);
+    include VIEW_PATH . '/receptionist/prescription_request_details.php';
+}
+
+public function processPrescriptionDecision() {
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        http_response_code(405);
+        echo 'Invalid request method.';
+        return;
+    }
+
+    $requestId = intval($_POST['request_id'] ?? 0);
+    $decision = strtolower(trim((string) ($_POST['decision'] ?? '')));
+    $note = trim((string) ($_POST['decision_note'] ?? ''));
+
+    if ($requestId <= 0 || !in_array($decision, ['book_for_patient', 'self_book'], true)) {
+        $_SESSION['error'] = 'Invalid request decision payload.';
+        header('Location: /lab_sync/index.php?controller=appointmentsController&action=prescriptionQueue');
+        exit();
+    }
+
+    $status = $decision === 'book_for_patient' ? 'Booked by Receptionist' : 'Self Book Requested';
+    $decisionUserId = isset($_SESSION['user_id']) ? intval($_SESSION['user_id']) : 0;
+
+    $conn = connect();
+    $model = new AppointmentModel($conn);
+    $ok = false;
+
+    if ($model->tableExists('prescription_requests')) {
+        $sql = "
+            UPDATE prescription_requests
+            SET status = ?,
+                decision_action = ?,
+                decision_by_user_id = ?,
+                decision_at = NOW(),
+                updated_at = NOW()
+            WHERE request_id = ?
+        ";
+        $stmt = $conn->prepare($sql);
+        if ($stmt !== false) {
+            $stmt->bind_param('ssii', $status, $decision, $decisionUserId, $requestId);
+            $ok = $stmt->execute();
+            $stmt->close();
+        }
+    }
+
+    if ($ok) {
+        $eventNote = $note !== '' ? $note : ('Decision: ' . $decision);
+        $model->addPrescriptionRequestEvent($requestId, 'decision', 'PENDING', strtoupper($status), $eventNote, $decisionUserId);
+        $_SESSION['success'] = 'Prescription request updated successfully.';
+    } else {
+        $_SESSION['error'] = 'Failed to update prescription request decision.';
+    }
+
+    header('Location: /lab_sync/index.php?controller=appointmentsController&action=prescriptionQueue');
+    exit();
+}
+
+private function parseSelectedTestIds($rawValue) {
+    if (is_array($rawValue)) {
+        $values = $rawValue;
+    } else {
+        $rawString = trim((string) $rawValue);
+        if ($rawString === '') {
+            return [];
+        }
+        $values = explode(',', $rawString);
+    }
+
+    $ids = [];
+    foreach ($values as $value) {
+        $id = intval(trim((string) $value));
+        if ($id > 0) {
+            $ids[$id] = $id;
+        }
+    }
+
+    return array_values($ids);
 }
 
 
