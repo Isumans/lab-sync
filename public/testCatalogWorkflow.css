@@ -244,6 +244,10 @@ body {
 }
 
 /* Active step */
+.progress-step.active {
+    background-color: var(--secondary-color);
+}
+
 .progress-step.active .progress-number {
     background: var(--primary-color);
     color: white;
@@ -256,6 +260,10 @@ body {
 }
 
 /* Completed step */
+.progress-step.completed {
+    background-color: var(--secondary-color);
+}
+
 .progress-step.completed .progress-number {
     background: var(--primary-color);
     color: white;

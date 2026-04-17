@@ -88,6 +88,7 @@ $role = $role ?? '';
                                 <option value="all">All Appointments</option>
                                 <option value="online">Online</option>
                                 <option value="physical">Physical/Call</option>
+                                <option value="home_visit">Home Visit</option>
                             </select>
                         </div>
 

@@ -746,76 +746,54 @@ class HomeModel {
     }
 
     public function deleteAppointment($appointment_id, $patientId = null) {
-        if ($this->appointmentTestsTableExists()) {
-            $this->db->begin_transaction();
-
-            try {
-                if ($patientId !== null) {
-                    $ownershipStmt = $this->db->prepare("SELECT appointment_id FROM appointment WHERE appointment_id = ? AND patient_id = ? LIMIT 1");
-                    if (!$ownershipStmt) {
-                        throw new Exception('Prepare failed (ownership check): ' . $this->db->error);
-                    }
-
-                    $ownershipStmt->bind_param('ii', $appointment_id, $patientId);
-                    if (!$ownershipStmt->execute()) {
-                        throw new Exception('Execute failed (ownership check): ' . $ownershipStmt->error);
-                    }
-
-                    $ownershipResult = $ownershipStmt->get_result();
-                    $ownershipRow = $ownershipResult ? $ownershipResult->fetch_assoc() : null;
-                    $ownershipStmt->close();
-
-                    if (!$ownershipRow) {
-                        $this->db->rollback();
-                        return false;
-                    }
-                }
-
-                $deleteLines = $this->db->prepare("DELETE FROM appointment_tests WHERE appointment_id = ?");
-                if (!$deleteLines) {
-                    throw new Exception('Prepare failed (delete appointment_tests): ' . $this->db->error);
-                }
-
-                $deleteLines->bind_param('i', $appointment_id);
-                if (!$deleteLines->execute()) {
-                    throw new Exception('Execute failed (delete appointment_tests): ' . $deleteLines->error);
-                }
-
-                $deleteHeaderQuery = "DELETE FROM appointment WHERE appointment_id = ?";
-                if ($patientId !== null) {
-                    $deleteHeaderQuery .= " AND patient_id = ?";
-                }
-
-                $deleteHeader = $this->db->prepare($deleteHeaderQuery);
-                if (!$deleteHeader) {
-                    throw new Exception('Prepare failed (delete appointment): ' . $this->db->error);
-                }
-
-                if ($patientId !== null) {
-                    $deleteHeader->bind_param('ii', $appointment_id, $patientId);
-                } else {
-                    $deleteHeader->bind_param('i', $appointment_id);
-                }
-                if (!$deleteHeader->execute()) {
-                    throw new Exception('Execute failed (delete appointment): ' . $deleteHeader->error);
-                }
-
-                $this->db->commit();
-                return true;
-            } catch (Throwable $e) {
-                $this->db->rollback();
-                error_log('deleteAppointment transaction failed: ' . $e->getMessage());
-                return false;
-            }
+        if (!$this->hasAppointmentColumn('status')) {
+            $this->setLastError('Soft delete is unavailable because the appointment status column is missing.');
+            return false;
         }
 
-        $query = "DELETE FROM appointment WHERE appointment_id = ?";
+        $checkQuery = "SELECT appointment_id, COALESCE(status, 'Pending') AS appointment_status FROM appointment WHERE appointment_id = ?";
+        if ($patientId !== null) {
+            $checkQuery .= " AND patient_id = ?";
+        }
+
+        $checkStmt = $this->db->prepare($checkQuery);
+        if (!$checkStmt) {
+            $this->setLastError('Prepare failed: ' . $this->db->error);
+            return false;
+        }
+
+        if ($patientId !== null) {
+            $checkStmt->bind_param("ii", $appointment_id, $patientId);
+        } else {
+            $checkStmt->bind_param("i", $appointment_id);
+        }
+
+        if (!$checkStmt->execute()) {
+            $this->setLastError('Execute failed: ' . $checkStmt->error);
+            $checkStmt->close();
+            return false;
+        }
+
+        $checkResult = $checkStmt->get_result();
+        $appointment = $checkResult ? $checkResult->fetch_assoc() : null;
+        $checkStmt->close();
+
+        if (!$appointment) {
+            $this->setLastError('Appointment not found.');
+            return false;
+        }
+
+        if (strcasecmp((string)($appointment['appointment_status'] ?? ''), 'Cancelled') === 0) {
+            $this->setLastError('This appointment has already been cancelled.');
+            return false;
+        }
+
+        $query = "UPDATE appointment SET status = 'Cancelled' WHERE appointment_id = ?";
         if ($patientId !== null) {
             $query .= " AND patient_id = ?";
         }
 
         $stmt = $this->db->prepare($query);
-
         if (!$stmt) {
             $this->setLastError('Prepare failed: ' . $this->db->error);
             return false;
@@ -1056,6 +1034,37 @@ class HomeModel {
         }
 
         return array_values(array_unique($cleanIds));
+    }
+
+    public function updatePaymentStatus($appointmentId, $status, $reference) {
+        $stmt = $this->db->prepare(
+            "UPDATE appointment SET payment_status = ?, payment_reference = ? WHERE appointment_id = ?"
+        );
+        if (!$stmt) {
+            $this->setLastError('Prepare failed (updatePaymentStatus): ' . $this->db->error);
+            return false;
+        }
+        $stmt->bind_param('ssi', $status, $reference, $appointmentId);
+        $success = $stmt->execute();
+        $stmt->close();
+        return $success;
+    }
+
+    public function getTestsTotal(array $testIds) {
+        $cleanIds = array_values(array_filter(array_map('intval', $testIds), function ($id) { return $id > 0; }));
+        if (empty($cleanIds)) return 0.0;
+
+        $placeholders = implode(',', array_fill(0, count($cleanIds), '?'));
+        $stmt = $this->db->prepare("SELECT SUM(price) AS total FROM tests WHERE test_id IN ($placeholders)");
+        if (!$stmt) return 0.0;
+
+        $stmt->bind_param(str_repeat('i', count($cleanIds)), ...$cleanIds);
+        if (!$stmt->execute()) { $stmt->close(); return 0.0; }
+
+        $result = $stmt->get_result();
+        $row = $result->fetch_assoc();
+        $stmt->close();
+        return (float)($row['total'] ?? 0.0);
     }
 }
 

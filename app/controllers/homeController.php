@@ -242,6 +242,7 @@ class HomeController {
             $preSelectedTestIds = $this->model->getTestIdsForRequest($fromRequestId);
         }
         $tests = $this->model->getAllTests();
+        $csrfToken = $this->ensureCsrfToken();
         include VIEW_PATH . '/patient/book.php';
     }
     public function bookAppointment() {
@@ -366,6 +367,7 @@ class HomeController {
             }
         }
 
+        $csrfToken = $this->ensureCsrfToken();
         include VIEW_PATH . '/patient/dashboard.php';
     }
     public function edit_appointment() {
@@ -414,7 +416,9 @@ class HomeController {
         }
 
         $result = $this->model->updateAppointment($appointmentId, $time, $date, $patientId, $homeCollection, $collectionAddress);
-        $_SESSION['success'] = 'Appointment updated successfully';
+        if ($result) {
+            $_SESSION['success'] = 'Appointment updated successfully';
+        }
     }
 
     elseif (isset($_POST['delete'])) {
@@ -425,11 +429,13 @@ class HomeController {
         }
 
         $result = $this->model->deleteAppointment($appointmentId, $patientId);
-        $_SESSION['success'] = 'Appointment deleted successfully';
+        if ($result) {
+            $_SESSION['success'] = 'Appointment cancelled successfully';
+        }
     }
 
     if (!$result) {
-        $_SESSION['error'] = 'Failed to update appointment';
+        $_SESSION['error'] = $this->model->getLastError() ?: 'Failed to update appointment';
     }
 
     header('Location: ' . route_url('home', 'dashboard'));

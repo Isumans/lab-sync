@@ -177,8 +177,9 @@
             var appointmentId = Number(item.appointment_id || 0);
             var patientName = resolvePatientName(item);
             var method = String(item.method || 'physical').toLowerCase();
-            var methodClass = method === 'online' ? 'status-active' : 'status-inactive';
-            var methodLabel = method === 'online' ? 'Online' : 'Physical/Call';
+            var isHomeVisit = Number(item.home_collection || 0) === 1;
+            var methodClass = isHomeVisit ? 'status-home' : (method === 'online' ? 'status-active' : 'status-inactive');
+            var methodLabel = isHomeVisit ? 'Home Visit' : (method === 'online' ? 'Online' : 'Physical/Call');
 
             return (
                 '<tr>' +

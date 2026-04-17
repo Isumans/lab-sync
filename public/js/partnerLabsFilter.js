@@ -7,25 +7,38 @@
         return String(left || '').localeCompare(String(right || ''), undefined, { sensitivity: 'base' });
     }
 
-    document.addEventListener('DOMContentLoaded', function () {
-        var searchEl = document.getElementById('tmSearch');
-        var roleEl = document.getElementById('tmRoleFilter');
-        var clearBtn = document.getElementById('tmClearBtn');
-        var tbody = document.getElementById('usersTableBody');
-        var showingEl = document.getElementById('tmShowingText');
-        var pagEl = document.getElementById('tmPagination');
-        var sortableHeaders = Array.prototype.slice.call(document.querySelectorAll('#team .rd-sortable'));
+    function compareNumbers(left, right) {
+        return (Number(left) || 0) - (Number(right) || 0);
+    }
 
-        if (!tbody || !showingEl || !pagEl) {
+    window.initPartnerLabsFilter = function () {
+        var root = document.getElementById('partner-labs');
+        var searchEl = document.getElementById('plSearch');
+        var statusEl = document.getElementById('plStatus');
+        var clearBtn = document.getElementById('plClearBtn');
+        var tbody = document.getElementById('plTableBody');
+        var showingEl = document.getElementById('plShowingText');
+        var pagEl = document.getElementById('plPagination');
+        var sortableHeaders = Array.prototype.slice.call(document.querySelectorAll('#partner-labs .rd-sortable'));
+
+        if (!root || !tbody || !showingEl || !pagEl) {
             return;
         }
 
-        var allRows = Array.from(tbody.querySelectorAll('.user-row'));
+        if (root.getAttribute('data-filter-init') === '1') {
+            return;
+        }
+        root.setAttribute('data-filter-init', '1');
+
+        var allRows = Array.from(tbody.querySelectorAll('tr')).filter(function (row) {
+            return !row.querySelector('td[colspan]');
+        });
+
         var state = {
             page: 1,
             search: '',
-            role: 'all',
-            sortBy: 'name',
+            status: 'all',
+            sortBy: 'lab_name',
             sortDir: 'asc'
         };
 
@@ -42,29 +55,40 @@
         }
 
         function getRowValue(row, key) {
-            if (key === 'name') return row.getAttribute('data-name') || '';
-            if (key === 'role') return row.getAttribute('data-role') || '';
-            if (key === 'status') return row.getAttribute('data-status') || '';
+            if (key === 'lab_name') return row.getAttribute('data-lab-name') || '';
             if (key === 'email') return row.getAttribute('data-email') || '';
+            if (key === 'contact_person') return row.getAttribute('data-contact-person') || '';
+            if (key === 'contact_number') return row.getAttribute('data-contact-number') || '';
+            if (key === 'status') return row.getAttribute('data-status') || '';
+            if (key === 'total_tests') return row.getAttribute('data-total-tests') || '0';
             return '';
         }
 
         function getVisibleRows() {
             var query = state.search;
-            var role = state.role;
+            var status = state.status;
 
             return allRows.filter(function (row) {
-                var name = getRowValue(row, 'name');
-                var email = getRowValue(row, 'email');
-                var rowRole = getRowValue(row, 'role');
+                var searchable = [
+                    getRowValue(row, 'lab_name'),
+                    getRowValue(row, 'email'),
+                    getRowValue(row, 'contact_person'),
+                    getRowValue(row, 'contact_number')
+                ].join(' ');
 
-                var matchesSearch = !query || name.indexOf(query) !== -1 || email.indexOf(query) !== -1;
-                var matchesRole = role === 'all' || rowRole === role;
-                return matchesSearch && matchesRole;
+                var rowStatus = getRowValue(row, 'status');
+                var matchesSearch = !query || searchable.indexOf(query) !== -1;
+                var matchesStatus = status === 'all' || rowStatus === status;
+                return matchesSearch && matchesStatus;
             }).sort(function (left, right) {
-                var leftValue = getRowValue(left, state.sortBy);
-                var rightValue = getRowValue(right, state.sortBy);
-                var comparison = compareStrings(leftValue, rightValue);
+                var comparison;
+
+                if (state.sortBy === 'total_tests') {
+                    comparison = compareNumbers(getRowValue(left, state.sortBy), getRowValue(right, state.sortBy));
+                } else {
+                    comparison = compareStrings(getRowValue(left, state.sortBy), getRowValue(right, state.sortBy));
+                }
+
                 return state.sortDir === 'asc' ? comparison : -comparison;
             });
         }
@@ -117,7 +141,7 @@
 
             var from = totalRows ? start + 1 : 0;
             var to = Math.min(end, totalRows);
-            showingEl.textContent = 'Showing ' + from + '\u2013' + to + ' of ' + totalRows + ' users';
+            showingEl.textContent = 'Showing ' + from + '\u2013' + to + ' of ' + totalRows + ' partner labs';
 
             buildPagination(totalPages);
             updateSortUi();
@@ -133,20 +157,20 @@
             resetAndRender();
         });
 
-        roleEl && roleEl.addEventListener('change', function () {
-            state.role = String(roleEl.value || 'all').toLowerCase();
+        statusEl && statusEl.addEventListener('change', function () {
+            state.status = String(statusEl.value || 'all').toLowerCase();
             resetAndRender();
         });
 
         clearBtn && clearBtn.addEventListener('click', function () {
             state.search = '';
-            state.role = 'all';
-            state.sortBy = 'name';
+            state.status = 'all';
+            state.sortBy = 'lab_name';
             state.sortDir = 'asc';
             state.page = 1;
 
             if (searchEl) searchEl.value = '';
-            if (roleEl) roleEl.value = 'all';
+            if (statusEl) statusEl.value = 'all';
 
             render();
         });
@@ -193,5 +217,5 @@
         });
 
         render();
-    });
+    };
 })();
