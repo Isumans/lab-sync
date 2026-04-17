@@ -18,6 +18,7 @@ $role = $_GET['user_role'] ?? '';
         <link rel="stylesheet" href="/lab_sync/public/formStyles.css">
         <link rel="stylesheet" href="/lab_sync/public/teamStyles.css">
         <link rel="stylesheet" href="/lab_sync/public/partnerLabForm.css">
+        <link rel="stylesheet" href="/lab_sync/public/reportsDashboard.css">
     </head>
     <body>
         <!-- Navigation Bar -->
@@ -63,6 +64,7 @@ $role = $_GET['user_role'] ?? '';
         <script src="/lab_sync/public/js/editUserModal.js?v=2"></script>
         <script src="/lab_sync/public/js/labConfig.js"></script>
         <script src="/lab_sync/public/js/generalSettings.js"></script>
-        
+        <script src="/lab_sync/public/js/partnerLabsFilter.js"></script>
+
     </body>
 </html>

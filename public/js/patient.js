@@ -132,10 +132,28 @@ document.addEventListener('DOMContentLoaded', () => {
     pagination: document.getElementById('ptPagination'),
     summary: document.getElementById('ptResultSummary'),
     sortableHeaders: document.querySelectorAll('.pt-sortable'),
-    editModal: document.getElementById('editModal'),
+    editModal: document.getElementById('patientAdminEditModal'),
     editForm: document.getElementById('editPatientForm'),
-    closeModal: document.getElementById('editModalClose'),
-    cancelModal: document.getElementById('cancelEdit')
+    closeModal: document.getElementById('patientAdminEditClose'),
+    cancelModal: document.getElementById('patientAdminEditCancel'),
+    editAlert: document.getElementById('patientAdminEditAlert'),
+    editId: document.getElementById('patientAdminPatientId'),
+    editName: document.getElementById('patientAdminName'),
+    editEmail: document.getElementById('patientAdminEmail'),
+    editContact: document.getElementById('patientAdminContact'),
+    editDisplayName: document.getElementById('patientAdminDisplayName'),
+    editDisplayEmail: document.getElementById('patientAdminDisplayEmail'),
+    editDisplayId: document.getElementById('patientAdminDisplayId'),
+    editInitials: document.getElementById('patientAdminInitials'),
+    deleteModal: document.getElementById('patientAdminDeleteModal'),
+    deleteClose: document.getElementById('patientAdminDeleteClose'),
+    deleteCancel: document.getElementById('patientAdminDeleteCancel'),
+    deleteAlert: document.getElementById('patientAdminDeleteAlert'),
+    deleteForm: document.getElementById('deletePatientForm'),
+    deleteId: document.getElementById('patientAdminDeletePatientId'),
+    deleteName: document.getElementById('patientAdminDeleteName'),
+    deleteEmail: document.getElementById('patientAdminDeleteEmail'),
+    deleteContact: document.getElementById('patientAdminDeleteContact')
   };
 
   if (!dom.tableBody || !dom.pagination || !dom.summary) {
@@ -427,16 +445,106 @@ document.addEventListener('DOMContentLoaded', () => {
     render();
   });
 
+  function setEditAlert(message) {
+    if (!dom.editAlert) {
+      return;
+    }
+
+    dom.editAlert.textContent = message || '';
+    dom.editAlert.hidden = !message;
+  }
+
+  function setDeleteAlert(message) {
+    if (!dom.deleteAlert) {
+      return;
+    }
+
+    dom.deleteAlert.textContent = message || '';
+    dom.deleteAlert.hidden = !message;
+  }
+
+  function openEditModal() {
+    if (!dom.editModal) {
+      return;
+    }
+
+    dom.editModal.classList.add('is-open');
+    dom.editModal.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+    setEditAlert('');
+  }
+
+  function closeEditModal() {
+    if (!dom.editModal) {
+      return;
+    }
+
+    dom.editModal.classList.remove('is-open');
+    dom.editModal.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = '';
+    setEditAlert('');
+  }
+
+  function openDeleteModal() {
+    if (!dom.deleteModal) {
+      return;
+    }
+
+    dom.deleteModal.classList.add('is-open');
+    dom.deleteModal.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+    setDeleteAlert('');
+  }
+
+  function closeDeleteModal() {
+    if (!dom.deleteModal) {
+      return;
+    }
+
+    dom.deleteModal.classList.remove('is-open');
+    dom.deleteModal.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = '';
+    setDeleteAlert('');
+  }
+
   function openModalWithRow(row) {
     if (!dom.editModal || !dom.editForm) {
       return;
     }
 
-    dom.editForm.elements.patient_id.value = row.dataset.id || '';
-    dom.editForm.elements.patient_name.value = row.dataset.name || '';
-    dom.editForm.elements.patient_email.value = row.dataset.email || '';
-    dom.editForm.elements.contact_number.value = row.dataset.contact || '';
-    dom.editModal.style.display = 'block';
+    const patientId = row.dataset.id || '';
+    const patientName = row.dataset.name || '';
+    const patientEmail = row.dataset.email || '';
+    const patientContact = row.dataset.contact || '';
+
+    if (dom.editId) dom.editId.value = patientId;
+    if (dom.editName) dom.editName.value = patientName;
+    if (dom.editEmail) dom.editEmail.value = patientEmail;
+    if (dom.editContact) dom.editContact.value = patientContact;
+    if (dom.editDisplayName) dom.editDisplayName.textContent = patientName || 'Unknown Patient';
+    if (dom.editDisplayEmail) dom.editDisplayEmail.textContent = patientEmail || 'No email address';
+    if (dom.editDisplayId) dom.editDisplayId.textContent = patientId ? `PID-${patientId}` : 'PID-0';
+    if (dom.editInitials) dom.editInitials.textContent = initialsFromName(patientName);
+
+    openEditModal();
+  }
+
+  function openDeleteModalWithRow(row) {
+    if (!dom.deleteModal || !dom.deleteForm) {
+      return;
+    }
+
+    const patientId = row.dataset.id || '';
+    const patientName = row.dataset.name || '';
+    const patientEmail = row.dataset.email || '';
+    const patientContact = row.dataset.contact || '';
+
+    if (dom.deleteId) dom.deleteId.value = patientId;
+    if (dom.deleteName) dom.deleteName.textContent = patientName || 'Unknown Patient';
+    if (dom.deleteEmail) dom.deleteEmail.textContent = patientEmail || 'No email address';
+    if (dom.deleteContact) dom.deleteContact.textContent = patientContact || 'N/A';
+
+    openDeleteModal();
   }
 
   dom.tableBody.addEventListener('click', (event) => {
@@ -451,61 +559,55 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (event.target.closest('.delete-btn')) {
-      const patientId = row.dataset.id || '';
-      if (!patientId) {
-        return;
-      }
-
-      if (!window.confirm('Delete this patient? This action cannot be undone.')) {
-        return;
-      }
-
-      const form = document.createElement('form');
-      form.method = 'post';
-      form.action = `/lab_sync/index.php?controller=patientController&action=edit_patient&role=${encodeURIComponent(role)}`;
-
-      const patientIdInput = document.createElement('input');
-      patientIdInput.type = 'hidden';
-      patientIdInput.name = 'patient_id';
-      patientIdInput.value = patientId;
-      form.appendChild(patientIdInput);
-
-      const deleteInput = document.createElement('input');
-      deleteInput.type = 'hidden';
-      deleteInput.name = 'delete';
-      deleteInput.value = '1';
-      form.appendChild(deleteInput);
-
-      document.body.appendChild(form);
-      form.submit();
+      openDeleteModalWithRow(row);
     }
   });
 
-  function closeModal() {
-    if (dom.editModal) {
-      dom.editModal.style.display = 'none';
-    }
-  }
-
   if (dom.closeModal) {
-    dom.closeModal.addEventListener('click', closeModal);
+    dom.closeModal.addEventListener('click', closeEditModal);
   }
 
   if (dom.cancelModal) {
-    dom.cancelModal.addEventListener('click', closeModal);
+    dom.cancelModal.addEventListener('click', closeEditModal);
+  }
+
+  if (dom.deleteClose) {
+    dom.deleteClose.addEventListener('click', closeDeleteModal);
+  }
+
+  if (dom.deleteCancel) {
+    dom.deleteCancel.addEventListener('click', closeDeleteModal);
   }
 
   window.addEventListener('click', (event) => {
     if (event.target === dom.editModal) {
-      closeModal();
+      closeEditModal();
+    }
+
+    if (event.target === dom.deleteModal) {
+      closeDeleteModal();
     }
   });
 
   document.addEventListener('keydown', (event) => {
     if (event.key === 'Escape') {
-      closeModal();
+      closeEditModal();
+      closeDeleteModal();
     }
   });
+
+  if (dom.editForm) {
+    dom.editForm.addEventListener('submit', (event) => {
+      const patientName = String(dom.editName?.value || '').trim();
+      const patientEmail = String(dom.editEmail?.value || '').trim();
+      const patientContact = String(dom.editContact?.value || '').trim();
+
+      if (!patientName || !patientEmail || !patientContact) {
+        event.preventDefault();
+        setEditAlert('Please complete all required patient fields.');
+      }
+    });
+  }
 
   animateStats();
   updateSortHeaderUi();

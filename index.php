@@ -40,6 +40,7 @@ require_once CONTROLLER_PATH . '/reportsController.php';
 require_once CONTROLLER_PATH . '/billingController.php';
 require_once CONTROLLER_PATH . '/financesController.php';
 require_once CONTROLLER_PATH . '/userController.php';
+require_once CONTROLLER_PATH . '/paymentController.php';
 // require_once 'C:\xampp\htdocs\lab_sync\app\controllers\appointmentsController.php';
 require_once __DIR__ . '/config/db.php';
 $controllerName = $_GET['controller'] ?? 'home'; // Default to 'home' controller
@@ -378,6 +379,17 @@ elseif($controllerName === 'inventoryController'){
         $userController->revokeSession();
     }else {
         echo "404 Not Found";
+    }
+}
+elseif ($controllerName === 'payment') {
+    $paymentController = new paymentController();
+    $action = $_GET['action'] ?? 'initiate';
+    if ($action === 'initiate') {
+        $paymentController->initiate();
+    } elseif ($action === 'confirmPayment') {
+        $paymentController->confirmPayment();
+    } elseif ($action === 'notify') {
+        $paymentController->notify();
     }
 }
 else {

@@ -1160,7 +1160,7 @@ class AppointmentModel {
 
     private function getFilteredAppointmentsDataset($filters = [], $sortBy = 'appointment_date', $sortDir = 'desc') {
         $methodFilter = $this->normalizeAppointmentMethod($filters['method'] ?? 'all');
-        if (!in_array($methodFilter, ['all', 'online', 'physical', 'call'], true)) {
+        if (!in_array($methodFilter, ['all', 'online', 'physical', 'call', 'home_visit'], true)) {
             $methodFilter = 'all';
         }
         $search = strtolower(trim((string)($filters['search'] ?? '')));
@@ -1176,6 +1176,10 @@ class AppointmentModel {
                     return in_array($rowMethod, ['physical', 'call'], true);
                 }
                 return $rowMethod === $methodFilter;
+            }));
+        } elseif ($methodFilter === 'home_visit') {
+            $rows = array_values(array_filter($rows, function ($row) {
+                return !empty($row['home_collection']) && (int)$row['home_collection'] === 1;
             }));
         }
 
@@ -1238,6 +1242,10 @@ class AppointmentModel {
 
     private function normalizeAppointmentMethod($method) {
         $normalized = strtolower(trim((string)$method));
+
+        if ($normalized === 'home_visit') {
+            return 'home_visit';
+        }
 
         if ($normalized === '' || $normalized === 'all') {
             return $normalized === '' ? 'physical' : 'all';

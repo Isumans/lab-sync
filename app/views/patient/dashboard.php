@@ -17,8 +17,14 @@ unset($_SESSION['success'], $_SESSION['error']);
   <link rel="stylesheet" href="/lab_sync/public/css/globals.css" />
   <link rel="stylesheet" href="/lab_sync/public/css/nav.css" />
   <link rel="stylesheet" href="/lab_sync/public/css/footer.css" />
+  <link rel="stylesheet" href="/lab_sync/public/paymentModal.css" />
+  <link rel="stylesheet" href="/lab_sync/public/appointmentEditModal.css" />
+  <link rel="stylesheet" href="/lab_sync/public/appointmentDeleteModal.css" />
   <style>
     :root {
+      --primary-color: #3DBDEC;
+      --secondary-color: #ffffff;
+      --background-color: #f4f6f9;
       --bg: #f4f6f9;
       --card: #ffffff;
       --line: #e3e7ee;
@@ -44,10 +50,6 @@ unset($_SESSION['success'], $_SESSION['error']);
     }
 
     .page-head {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 12px;
       margin-bottom: 18px;
     }
 
@@ -57,19 +59,41 @@ unset($_SESSION['success'], $_SESSION['error']);
       color: #1c2736;
     }
 
-    .book-link {
-      text-decoration: none;
-      background: var(--primary-500);
-      color: #fff;
-      border-radius: 10px;
-      padding: 10px 14px;
-      font-weight: 700;
-      font-size: 0.92rem;
-      transition: background-color .2s ease;
+    .slider-tabs {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #f2f4f7;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 5px;
+      margin-bottom: 16px;
     }
 
-    .book-link:hover {
-      background: var(--primary-600);
+    .slider-tab {
+      border: 0;
+      border-radius: 9px;
+      background: transparent;
+      color: #5b6f84;
+      font-size: 0.96rem;
+      font-weight: 700;
+      padding: 10px 18px;
+      cursor: pointer;
+      transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .slider-tab:hover {
+      color: #36536a;
+    }
+
+    .slider-tab.is-active {
+      background: #ffffff;
+      color: var(--primary-color, #3DBDEC);
+      box-shadow: 0 4px 10px rgba(16, 24, 40, 0.08);
+    }
+
+    .tab-panel[hidden] {
+      display: none !important;
     }
 
     .card {
@@ -94,6 +118,10 @@ unset($_SESSION['success'], $_SESSION['error']);
       letter-spacing: 0.02em;
     }
 
+    .table-card {
+      padding-top: 6px;
+    }
+
     .flash {
       margin: 0 18px 14px;
       border-radius: 10px;
@@ -116,41 +144,49 @@ unset($_SESSION['success'], $_SESSION['error']);
 
     .table-wrap {
       overflow-x: auto;
-      padding: 0 18px 18px;
+      padding: 0;
     }
 
     table {
       width: 100%;
       border-collapse: collapse;
-      min-width: 780px;
+      min-width: 820px;
     }
 
-    th,
-    td {
+    thead th {
       text-align: left;
-      padding: 14px 10px;
-      border-bottom: 1px solid #e8edf3;
-      vertical-align: middle;
-      font-size: 0.94rem;
+      padding: 14px 18px;
+      border-bottom: 1px solid #e5edf4;
+      font-size: 0.66rem;
+      letter-spacing: 0.09em;
+      font-weight: 800;
+      text-transform: uppercase;
+      color: #708193;
     }
 
-    th {
-      color: #526072;
-      font-size: 0.82rem;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      font-weight: 700;
+    tbody td {
+      padding: 14px 18px;
+      border-bottom: 1px solid #edf2f6;
+      vertical-align: middle;
+      font-size: 0.9rem;
+      color: #263b50;
+    }
+
+    tbody tr:hover {
+      background: #f8fbff;
     }
 
     .status-pill {
       display: inline-flex;
       align-items: center;
       border-radius: 999px;
-      padding: 5px 10px;
-      font-weight: 700;
-      font-size: 0.78rem;
+      padding: 6px 11px;
+      font-weight: 800;
+      font-size: 0.74rem;
+      letter-spacing: 0.03em;
       background: #eef4fa;
       color: #35526e;
+      text-transform: uppercase;
     }
 
     .status-pill.confirmed { background: #e6f8ed; color: #1e7f48; }
@@ -167,7 +203,7 @@ unset($_SESSION['success'], $_SESSION['error']);
     .actions {
       display: flex;
       gap: 8px;
-      justify-content: flex-start;
+      justify-content: flex-end;
       align-items: center;
       min-width: 86px;
     }
@@ -221,12 +257,13 @@ unset($_SESSION['success'], $_SESSION['error']);
       display: inline-flex;
       align-items: center;
       border-radius: 999px;
-      padding: 5px 10px;
-      font-weight: 700;
-      font-size: 0.78rem;
+      padding: 6px 11px;
+      font-weight: 800;
+      font-size: 0.74rem;
+      letter-spacing: 0.03em;
       background: #eef4fa;
       color: #35526e;
-      text-transform: capitalize;
+      text-transform: uppercase;
     }
 
     .rx-pill.pending { background: #fff7e4; color: #916b0f; }
@@ -241,6 +278,74 @@ unset($_SESSION['success'], $_SESSION['error']);
 
     .file-link:hover {
       text-decoration: underline;
+    }
+
+    .cell-strong {
+      font-weight: 700;
+      color: #445d76;
+    }
+
+    .tests-cell {
+      max-width: 320px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .th-right,
+    .td-right {
+      text-align: right;
+    }
+
+    .table-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 16px;
+      gap: 12px;
+      flex-wrap: wrap;
+      border-top: 1px solid #edf2f6;
+    }
+
+    .table-footer p {
+      margin: 0;
+      font-size: 0.8rem;
+      color: #6b7d91;
+    }
+
+    .table-pagination {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .page-btn {
+      min-width: 32px;
+      height: 32px;
+      padding: 0 10px;
+      border: 1px solid #dbe5ef;
+      border-radius: 8px;
+      background: #fff;
+      color: #5a7087;
+      font-weight: 700;
+      cursor: pointer;
+      transition: border-color .16s ease, color .16s ease, background-color .16s ease;
+    }
+
+    .page-btn:hover:not(:disabled) {
+      border-color: var(--primary-color, #3DBDEC);
+      color: var(--primary-color, #3DBDEC);
+    }
+
+    .page-btn.is-active {
+      background: var(--primary-color, #3DBDEC);
+      border-color: var(--primary-color, #3DBDEC);
+      color: #fff;
+    }
+
+    .page-btn:disabled {
+      opacity: 0.45;
+      cursor: default;
     }
 
     .results-note {
@@ -413,10 +518,22 @@ unset($_SESSION['success'], $_SESSION['error']);
 <main class="dashboard-wrap">
   <div class="page-head">
     <h1>Your Appointments</h1>
-    <a class="book-link" href="/lab_sync/index.php?controller=home&action=appointment_options">Book New Appointment</a>
   </div>
 
-  <section class="card">
+  <div class="slider-tabs" role="tablist" aria-label="Patient dashboard sections">
+    <button type="button" class="slider-tab is-active" role="tab" aria-selected="true" data-patient-tab="appointments">
+      Appointments
+    </button>
+    <button type="button" class="slider-tab" role="tab" aria-selected="false" data-patient-tab="prescriptions">
+      Prescription Submissions
+    </button>
+    <button type="button" class="slider-tab" role="tab" aria-selected="false" data-patient-tab="results">
+      Test Results
+    </button>
+  </div>
+
+  <div id="patientAppointmentsSection" class="tab-panel is-active" role="tabpanel" aria-label="Appointments">
+  <section class="card table-card">
     <div class="card-head">
       <h2>Appointments</h2>
     </div>
@@ -438,7 +555,7 @@ unset($_SESSION['success'], $_SESSION['error']);
             <th>Tests</th>
             <th>Status</th>
             <th>Home Collection</th>
-            <th>Actions</th>
+            <th class="th-right">Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -462,12 +579,12 @@ unset($_SESSION['success'], $_SESSION['error']);
                 data-address="<?php echo htmlspecialchars((string)($appointment['collection_address'] ?? '')); ?>"
                 data-home="<?php echo $homeCollection ? 'Yes' : 'No'; ?>"
               >
-                <td><?php echo htmlspecialchars($date); ?></td>
+                <td class="cell-strong"><?php echo htmlspecialchars($date); ?></td>
                 <td><?php echo htmlspecialchars($time); ?></td>
-                <td><?php echo htmlspecialchars($testsSummary); ?></td>
+                <td class="tests-cell" title="<?php echo htmlspecialchars($testsSummary); ?>"><?php echo htmlspecialchars($testsSummary); ?></td>
                 <td><span class="status-pill <?php echo htmlspecialchars($statusClass); ?>"><?php echo htmlspecialchars($status); ?></span></td>
                 <td><span class="home-badge <?php echo $homeCollection ? '' : 'no'; ?>"><?php echo $homeCollection ? 'Yes' : 'No'; ?></span></td>
-                <td>
+                <td class="td-right">
                   <div class="actions">
                     <button type="button" class="action-btn edit" title="Edit" onclick="openEdit(this)">
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"></path></svg>
@@ -487,9 +604,15 @@ unset($_SESSION['success'], $_SESSION['error']);
         </tbody>
       </table>
     </div>
+    <div class="table-footer">
+      <p id="appointmentsShowingText">Showing 0-0 of 0 appointments</p>
+      <div class="table-pagination" id="appointmentsPagination"></div>
+    </div>
   </section>
+  </div>
 
-  <section class="card rx-card" id="prescription-submissions">
+  <div id="patientPrescriptionsSection" class="tab-panel" role="tabpanel" aria-label="Prescription submissions" hidden>
+  <section class="card table-card rx-card" id="prescription-submissions">
     <div class="card-head">
       <h2>Prescription Submissions</h2>
     </div>
@@ -502,7 +625,7 @@ unset($_SESSION['success'], $_SESSION['error']);
             <th>Type</th>
             <th>Status</th>
             <th>File</th>
-            <th>Actions</th>
+            <th class="th-right">Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -526,7 +649,7 @@ unset($_SESSION['success'], $_SESSION['error']);
                 }, $tests);
               ?>
               <tr>
-                <td><?php echo htmlspecialchars($createdAt); ?></td>
+                <td class="cell-strong"><?php echo htmlspecialchars($createdAt); ?></td>
                 <td><?php echo htmlspecialchars($typeLabel); ?></td>
                 <td><span class="rx-pill <?php echo htmlspecialchars($status); ?>"><?php echo htmlspecialchars($statusLabel); ?></span></td>
                 <td>
@@ -536,7 +659,7 @@ unset($_SESSION['success'], $_SESSION['error']);
                     N/A
                   <?php endif; ?>
                 </td>
-                <td>
+                <td class="td-right">
                   <?php if ($isCommunicated && !$isBooked): ?>
                     <button type="button" class="rx-book-btn"
                       data-request-id="<?php echo $reqId; ?>"
@@ -562,8 +685,14 @@ unset($_SESSION['success'], $_SESSION['error']);
         </tbody>
       </table>
     </div>
+    <div class="table-footer">
+      <p id="prescriptionsShowingText">Showing 0-0 of 0 requests</p>
+      <div class="table-pagination" id="prescriptionsPagination"></div>
+    </div>
   </section>
+  </div>
 
+  <div id="patientResultsSection" class="tab-panel" role="tabpanel" aria-label="Test results" hidden>
   <section class="card results-card">
     <div class="card-head" style="padding: 0 0 12px; border-bottom: 0;">
       <h2>Test Results</h2>
@@ -584,6 +713,7 @@ unset($_SESSION['success'], $_SESSION['error']);
       </article>
     </div>
   </section>
+  </div>
 </main>
 
 <div class="modal" id="viewModal" aria-hidden="true">
@@ -605,61 +735,130 @@ unset($_SESSION['success'], $_SESSION['error']);
   </div>
 </div>
 
-<div class="modal" id="editModal" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-head">
-      <h3>Edit Appointment</h3>
-      <button class="modal-close" type="button" onclick="closeModal('editModal')">&times;</button>
-    </div>
-    <div class="modal-body">
-      <form method="POST" action="/lab_sync/index.php?controller=home&action=edit_appointment">
-        <input type="hidden" name="appointment_id" id="editAppointmentId" value="">
-        <div class="modal-row">
-          <label for="editDateInput">Date</label>
-          <input id="editDateInput" name="date" type="date" required>
+<div class="appointment-edit-modal" id="patientEditAppointmentModal" aria-hidden="true">
+  <div class="appointment-edit-dialog" role="dialog" aria-modal="true" aria-labelledby="patientEditAppointmentTitle">
+    <form id="patientEditAppointmentForm" method="POST" action="/lab_sync/index.php?controller=home&action=edit_appointment">
+      <div class="appointment-edit-header">
+        <div>
+          <h2 id="patientEditAppointmentTitle">Edit Appointment</h2>
+          <p class="appointment-edit-subtitle">UPDATE YOUR APPOINTMENT DETAILS</p>
         </div>
-        <div class="modal-row">
-          <label for="editTimeInput">Time</label>
-          <input id="editTimeInput" name="time" type="time" required>
-        </div>
-        <div class="modal-row">
-          <label>Home Collection</label>
-          <div class="checkbox-row">
-            <input id="editHomeCollection" name="home_collection" type="checkbox" value="1" onchange="toggleHomeCollectionEdit()">
-            <span>Require a home visit for this appointment</span>
+        <button type="button" class="appointment-edit-close" id="patientEditAppointmentClose" aria-label="Close">&times;</button>
+      </div>
+
+      <div class="appointment-edit-alert" id="patientEditAppointmentAlert" hidden></div>
+
+      <div class="appointment-edit-body">
+        <input type="hidden" name="appointment_id" id="patientEditAppointmentId" value="">
+        <input type="hidden" name="time" id="patientEditTimeInput" value="">
+
+        <section class="edit-section-card">
+          <div class="edit-section-title">
+            <span class="section-icon" aria-hidden="true">&#128197;</span>
+            <h3>Appointment Summary</h3>
           </div>
-        </div>
-        <div class="modal-row" id="editAddressRow">
-          <label for="editAddressInput">Collection Address</label>
-          <textarea id="editAddressInput" name="collection_address" rows="3" placeholder="Enter the sample collection address"></textarea>
-        </div>
-        <div class="modal-actions">
-          <button type="button" class="btn secondary" onclick="closeModal('editModal')">Cancel</button>
-          <button type="submit" name="edit" class="btn primary">Save Changes</button>
-        </div>
-      </form>
-    </div>
+          <div class="patient-readonly-card">
+            <div class="patient-identity">
+              <span class="patient-avatar" aria-hidden="true">AP</span>
+              <div>
+                <p class="patient-name" id="patientEditSummaryTitle">Appointment</p>
+                <p class="patient-pid" id="patientEditSummaryTests">Tests</p>
+              </div>
+            </div>
+            <span class="readonly-badge" id="patientEditSummaryStatus">Pending</span>
+          </div>
+        </section>
+
+        <section class="edit-section-card">
+          <div class="edit-section-title">
+            <span class="section-icon" aria-hidden="true">&#9201;</span>
+            <h3>Scheduling</h3>
+          </div>
+
+          <div class="schedule-grid">
+            <div>
+              <label class="edit-label" for="patientEditDateInput">Select Date</label>
+              <div class="date-input-wrap">
+                <span class="date-icon" aria-hidden="true">&#128197;</span>
+                <input id="patientEditDateInput" name="date" type="date" required>
+              </div>
+            </div>
+
+            <div>
+              <label class="edit-label">Time Slots</label>
+              <div class="time-slot-grid" id="patientEditTimeSlots"></div>
+            </div>
+          </div>
+
+          <div class="modal-row" style="margin-top: 14px;">
+            <label class="edit-label" for="patientEditTimeFallback">Custom Time</label>
+            <div class="date-input-wrap">
+              <span class="date-icon" aria-hidden="true">&#128340;</span>
+              <input id="patientEditTimeFallback" type="time">
+            </div>
+          </div>
+        </section>
+
+        <section class="edit-section-card">
+          <div class="edit-section-title">
+            <span class="section-icon" aria-hidden="true">&#127968;</span>
+            <h3>Collection</h3>
+          </div>
+
+          <div class="modal-row">
+            <label>Home Collection</label>
+            <div class="checkbox-row">
+              <input id="patientEditHomeCollection" name="home_collection" type="checkbox" value="1">
+              <span>Require a home visit for this appointment</span>
+            </div>
+          </div>
+
+          <div class="modal-row" id="patientEditAddressRow">
+            <label for="patientEditAddressInput">Collection Address</label>
+            <textarea id="patientEditAddressInput" name="collection_address" rows="3" placeholder="Enter the sample collection address"></textarea>
+          </div>
+        </section>
+      </div>
+
+      <div class="appointment-edit-footer">
+        <button type="button" class="edit-cancel-btn" id="patientEditAppointmentCancel">Cancel</button>
+        <button type="submit" name="edit" class="edit-submit-btn" id="patientEditAppointmentSubmit">
+          <span aria-hidden="true">&#128190;</span> Update Appointment
+        </button>
+      </div>
+    </form>
   </div>
 </div>
 
-<div class="modal" id="deleteModal" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-head">
-      <h3>Delete Appointment</h3>
-      <button class="modal-close" type="button" onclick="closeModal('deleteModal')">&times;</button>
+<div class="appointment-delete-modal" id="patientDeleteAppointmentModal" aria-hidden="true">
+  <div class="appointment-delete-dialog" role="dialog" aria-modal="true" aria-labelledby="patientDeleteAppointmentTitle">
+    <div class="appointment-delete-header">
+      <span class="delete-icon-wrap" aria-hidden="true">!</span>
+      <h2 id="patientDeleteAppointmentTitle">Cancel Appointment</h2>
+      <button type="button" class="appointment-delete-close" id="patientDeleteAppointmentClose" aria-label="Close">&times;</button>
     </div>
-    <div class="modal-body">
-      <p style="margin-top:0; color:#5c6b7d;">Are you sure you want to delete this appointment?</p>
-      <div class="modal-row"><label>Appointment Date</label><p id="deleteDate">-</p></div>
-      <div class="modal-row"><label>Appointment Time</label><p id="deleteTime">-</p></div>
-      <form method="POST" action="/lab_sync/index.php?controller=home&action=edit_appointment">
-        <input type="hidden" name="appointment_id" id="deleteAppointmentId" value="">
-        <div class="modal-actions">
-          <button type="button" class="btn secondary" onclick="closeModal('deleteModal')">Cancel</button>
-          <button type="submit" name="delete" class="btn danger">Delete</button>
-        </div>
-      </form>
+
+    <p class="appointment-delete-copy">This will mark the appointment as cancelled and keep it in your appointment history.</p>
+    <div class="appointment-delete-alert" id="patientDeleteAppointmentAlert" hidden></div>
+
+    <div class="appointment-delete-summary">
+      <span class="summary-label">Appointment</span>
+      <div class="summary-value" id="patientDeleteAppointmentNumber">#APP-0</div>
+
+      <span class="summary-label">Tests</span>
+      <div class="summary-value" id="patientDeleteAppointmentTests">-</div>
+
+      <span class="summary-label">Schedule</span>
+      <div class="summary-value" id="patientDeleteAppointmentSchedule">-</div>
     </div>
+
+    <form method="POST" action="/lab_sync/index.php?controller=home&action=edit_appointment">
+      <input type="hidden" name="appointment_id" id="patientDeleteAppointmentId" value="">
+      <button type="submit" name="delete" class="delete-confirm-btn" id="patientDeleteAppointmentConfirm">Cancel Appointment</button>
+      <button type="button" class="delete-cancel-btn" id="patientDeleteAppointmentCancel">Keep Appointment</button>
+    </form>
+
+    <div class="appointment-delete-footer-note">Soft Delete • Appointment Remains In History</div>
   </div>
 </div>
 
@@ -723,7 +922,7 @@ unset($_SESSION['success'], $_SESSION['error']);
             <span id="rxGrandTotal" class="rxm-total-val">LKR 0.00</span>
           </div>
           <button type="button" class="rxm-confirm-btn" id="rxConfirmBtn" onclick="submitRxBooking()">
-            Confirm Appointment &#8594;
+            Confirm &amp; Proceed Payment &#8594;
           </button>
         </div>
       </form>
@@ -997,24 +1196,148 @@ unset($_SESSION['success'], $_SESSION['error']);
     if (!state.date)  { alert('Please select a date.'); return; }
     if (!state.time)  { alert('Please select a time slot.'); return; }
 
-    // Inject test_ids as hidden inputs
-    var form = document.getElementById('rxBookingForm');
-    form.querySelectorAll('.rxm-hidden-test').forEach(function(el){ el.remove(); });
-    state.tests.forEach(function(t) {
-      var inp = document.createElement('input');
-      inp.type = 'hidden'; inp.name = 'test_ids[]'; inp.value = t.test_id;
-      inp.className = 'rxm-hidden-test';
-      form.appendChild(inp);
-    });
+    var formattedTime = state.time.length === 5 ? state.time + ':00' : state.time;
 
-    if (confirm('Confirm appointment booking?')) {
-      form.submit();
+    closeRxBookingModal();
+
+    if (typeof window.openRxPaymentModal === 'function') {
+      window.openRxPaymentModal({
+        tests:          state.tests,
+        date:           state.date,
+        time:           formattedTime,
+        requestId:      state.requestId,
+        homeCollection: document.getElementById('rxHomeCollection').value === '1',
+        address:        document.getElementById('rxCollectionAddr').value
+      });
     }
   };
 })();
 </script>
 
 <script>
+  function setupSectionTabs() {
+    const tabButtons = Array.from(document.querySelectorAll('[data-patient-tab]'));
+    const panels = {
+      appointments: document.getElementById('patientAppointmentsSection'),
+      prescriptions: document.getElementById('patientPrescriptionsSection'),
+      results: document.getElementById('patientResultsSection')
+    };
+
+    if (!tabButtons.length || !panels.appointments || !panels.prescriptions || !panels.results) {
+      return;
+    }
+
+    const applyTabState = (nextTab) => {
+      const activeTab = Object.prototype.hasOwnProperty.call(panels, nextTab) ? nextTab : 'appointments';
+
+      Object.keys(panels).forEach((key) => {
+        const isActive = key === activeTab;
+        panels[key].classList.toggle('is-active', isActive);
+        panels[key].hidden = !isActive;
+      });
+
+      tabButtons.forEach((button) => {
+        const isActive = (button.getAttribute('data-patient-tab') || '') === activeTab;
+        button.classList.toggle('is-active', isActive);
+        button.setAttribute('aria-selected', isActive ? 'true' : 'false');
+      });
+    };
+
+    tabButtons.forEach((button) => {
+      button.addEventListener('click', () => {
+        applyTabState(button.getAttribute('data-patient-tab') || 'appointments');
+      });
+    });
+
+    applyTabState('appointments');
+  }
+
+  function setupTablePagination(config) {
+    const tableSection = document.querySelector(config.sectionSelector);
+    const showingText = document.getElementById(config.showingTextId);
+    const paginationNode = document.getElementById(config.paginationId);
+
+    if (!tableSection || !showingText || !paginationNode) {
+      return;
+    }
+
+    const tableBody = tableSection.querySelector('tbody');
+    if (!tableBody) {
+      return;
+    }
+
+    const allRows = Array.from(tableBody.querySelectorAll('tr'));
+    const dataRows = allRows.filter((row) => !row.querySelector('.empty'));
+    const emptyRow = allRows.find((row) => row.querySelector('.empty')) || null;
+    const pageSize = Number(config.pageSize || 7);
+    let currentPage = 1;
+
+    const renderPagination = (totalPages) => {
+      if (!dataRows.length || totalPages <= 1) {
+        paginationNode.innerHTML = '';
+        return;
+      }
+
+      const buttons = [];
+      buttons.push(
+        `<button type="button" class="page-btn" data-page="${currentPage - 1}" ${currentPage === 1 ? 'disabled' : ''} aria-label="Previous page">&#8249;</button>`
+      );
+
+      for (let page = 1; page <= totalPages; page += 1) {
+        buttons.push(
+          `<button type="button" class="page-btn${page === currentPage ? ' is-active' : ''}" data-page="${page}">${page}</button>`
+        );
+      }
+
+      buttons.push(
+        `<button type="button" class="page-btn" data-page="${currentPage + 1}" ${currentPage === totalPages ? 'disabled' : ''} aria-label="Next page">&#8250;</button>`
+      );
+
+      paginationNode.innerHTML = buttons.join('');
+    };
+
+    const renderPage = (page) => {
+      if (!dataRows.length) {
+        if (emptyRow) {
+          emptyRow.style.display = '';
+        }
+        showingText.textContent = `Showing 0-0 of 0 ${config.label}`;
+        paginationNode.innerHTML = '';
+        return;
+      }
+
+      const totalItems = dataRows.length;
+      const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+      currentPage = Math.min(Math.max(1, page), totalPages);
+
+      const startIndex = (currentPage - 1) * pageSize;
+      const endIndex = Math.min(startIndex + pageSize, totalItems);
+
+      dataRows.forEach((row, index) => {
+        row.style.display = index >= startIndex && index < endIndex ? '' : 'none';
+      });
+
+      if (emptyRow) {
+        emptyRow.style.display = 'none';
+      }
+
+      showingText.textContent = `Showing ${startIndex + 1}-${endIndex} of ${totalItems} ${config.label}`;
+      renderPagination(totalPages);
+    };
+
+    paginationNode.addEventListener('click', (event) => {
+      const button = event.target.closest('.page-btn');
+      if (!button || button.disabled) {
+        return;
+      }
+
+      const nextPage = Number(button.getAttribute('data-page') || currentPage);
+      renderPage(nextPage);
+    });
+
+    renderPage(1);
+  }
+
   function rowDataFromButton(button) {
     const row = button.closest('tr');
     if (!row) return null;
@@ -1025,55 +1348,153 @@ unset($_SESSION['success'], $_SESSION['error']);
       time: row.getAttribute('data-time') || '',
       tests: row.getAttribute('data-tests') || '',
       status: row.getAttribute('data-status') || '',
-      home: row.getAttribute('data-home') || 'No'
+      home: row.getAttribute('data-home') || 'No',
+      address: row.getAttribute('data-address') || ''
     };
   }
 
   function openModal(id) {
     const modal = document.getElementById(id);
-    if (modal) {
-      modal.classList.add('is-open');
-      modal.setAttribute('aria-hidden', 'false');
+    if (!modal) {
+      return;
     }
+
+    modal.classList.add('is-open');
+    modal.setAttribute('aria-hidden', 'false');
   }
 
   function closeModal(id) {
     const modal = document.getElementById(id);
-    if (modal) {
-      modal.classList.remove('is-open');
-      modal.setAttribute('aria-hidden', 'true');
+    if (!modal) {
+      return;
+    }
+
+    modal.classList.remove('is-open');
+    modal.setAttribute('aria-hidden', 'true');
+  }
+
+  const patientEditSlots = ['08:00', '08:30', '09:00', '09:30', '10:00', '10:30', '11:00', '13:00', '13:30', '14:00', '14:30', '15:00', '15:30'];
+
+  function formatAppointmentNumber(value) {
+    const raw = String(value || '').trim();
+    return raw.startsWith('APP-') ? raw : `APP-${raw}`;
+  }
+
+  function normalizePatientTime(value) {
+    const raw = String(value || '').trim().toUpperCase();
+    if (!raw) {
+      return '';
+    }
+
+    if (/^\d{2}:\d{2}:\d{2}$/.test(raw)) {
+      return raw.slice(0, 5);
+    }
+
+    if (/^\d{2}:\d{2}$/.test(raw)) {
+      return raw;
+    }
+
+    return raw;
+  }
+
+  function formatDisplayTime(value) {
+    const normalized = normalizePatientTime(value);
+    const match = normalized.match(/^(\d{2}):(\d{2})$/);
+    if (!match) {
+      return value || '';
+    }
+
+    const hour = Number(match[1]);
+    const minute = match[2];
+    return `${hour % 12 || 12}:${minute} ${hour >= 12 ? 'PM' : 'AM'}`;
+  }
+
+  function setPatientEditAlert(message) {
+    const alertNode = document.getElementById('patientEditAppointmentAlert');
+    if (!alertNode) {
+      return;
+    }
+
+    alertNode.textContent = message || '';
+    alertNode.hidden = !message;
+  }
+
+  function setPatientEditModalOpen(open) {
+    const modal = document.getElementById('patientEditAppointmentModal');
+    if (!modal) {
+      return;
+    }
+
+    modal.classList.toggle('is-open', open);
+    modal.setAttribute('aria-hidden', open ? 'false' : 'true');
+    document.body.style.overflow = open ? 'hidden' : '';
+    if (!open) {
+      setPatientEditAlert('');
     }
   }
 
-  function openEdit(button) {
-    const row = rowDataFromButton(button);
-    if (!row) return;
+  function setPatientDeleteModalOpen(open) {
+    const modal = document.getElementById('patientDeleteAppointmentModal');
+    if (!modal) {
+      return;
+    }
 
-    document.getElementById('editAppointmentId').value = row.id;
-    document.getElementById('editDateInput').value = row.date;
-    document.getElementById('editTimeInput').value = row.time;
-    document.getElementById('editHomeCollection').checked = row.home === 'Yes';
-    document.getElementById('editAddressInput').value = button.closest('tr').getAttribute('data-address') || '';
-    toggleHomeCollectionEdit();
-    openModal('editModal');
+    modal.classList.toggle('is-open', open);
+    modal.setAttribute('aria-hidden', open ? 'false' : 'true');
+    document.body.style.overflow = open ? 'hidden' : '';
+    const alertNode = document.getElementById('patientDeleteAppointmentAlert');
+    if (alertNode) {
+      alertNode.hidden = true;
+      alertNode.textContent = '';
+    }
   }
 
-  function openDelete(button) {
-    const row = rowDataFromButton(button);
-    if (!row) return;
+  function renderPatientEditTimeSlots(selectedTime) {
+    const host = document.getElementById('patientEditTimeSlots');
+    if (!host) {
+      return;
+    }
 
-    document.getElementById('deleteAppointmentId').value = row.id;
-    document.getElementById('deleteDate').textContent = row.date;
-    document.getElementById('deleteTime').textContent = row.time;
-    openModal('deleteModal');
+    const normalizedSelected = normalizePatientTime(selectedTime);
+    host.innerHTML = '';
+
+    patientEditSlots.forEach((slotTime) => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'time-slot' + (normalizedSelected === slotTime ? ' is-selected' : '');
+      button.textContent = formatDisplayTime(slotTime);
+      button.setAttribute('data-time', slotTime);
+      button.addEventListener('click', () => {
+        setPatientEditSelectedTime(slotTime);
+      });
+      host.appendChild(button);
+    });
   }
 
-  function toggleHomeCollectionEdit() {
-    const checkbox = document.getElementById('editHomeCollection');
-    const addressRow = document.getElementById('editAddressRow');
-    const addressInput = document.getElementById('editAddressInput');
+  function setPatientEditSelectedTime(timeValue) {
+    const normalized = normalizePatientTime(timeValue);
+    const hiddenInput = document.getElementById('patientEditTimeInput');
+    const fallbackInput = document.getElementById('patientEditTimeFallback');
 
-    if (!checkbox || !addressRow || !addressInput) return;
+    if (hiddenInput) {
+      hiddenInput.value = normalized;
+    }
+
+    if (fallbackInput) {
+      fallbackInput.value = normalized;
+    }
+
+    renderPatientEditTimeSlots(normalized);
+  }
+
+  function togglePatientEditHomeCollection() {
+    const checkbox = document.getElementById('patientEditHomeCollection');
+    const addressRow = document.getElementById('patientEditAddressRow');
+    const addressInput = document.getElementById('patientEditAddressInput');
+
+    if (!checkbox || !addressRow || !addressInput) {
+      return;
+    }
 
     if (checkbox.checked) {
       addressRow.style.display = 'block';
@@ -1085,13 +1506,137 @@ unset($_SESSION['success'], $_SESSION['error']);
     }
   }
 
+  function openEdit(button) {
+    const row = rowDataFromButton(button);
+    if (!row) return;
+
+    if (String(row.status || '').toLowerCase() === 'cancelled') {
+      window.alert('Cancelled appointments cannot be edited.');
+      return;
+    }
+
+    document.getElementById('patientEditAppointmentId').value = row.id;
+    document.getElementById('patientEditAppointmentTitle').textContent = `Edit Appointment #${formatAppointmentNumber(row.id)}`;
+    document.getElementById('patientEditSummaryTitle').textContent = `Appointment #${formatAppointmentNumber(row.id)}`;
+    document.getElementById('patientEditSummaryTests').textContent = row.tests || 'No tests selected';
+    document.getElementById('patientEditSummaryStatus').textContent = row.status || 'Pending';
+    document.getElementById('patientEditDateInput').value = row.date;
+    document.getElementById('patientEditAddressInput').value = row.address || '';
+    document.getElementById('patientEditHomeCollection').checked = row.home === 'Yes';
+    togglePatientEditHomeCollection();
+    setPatientEditSelectedTime(row.time);
+    setPatientEditAlert('');
+    setPatientEditModalOpen(true);
+  }
+
+  function openDelete(button) {
+    const row = rowDataFromButton(button);
+    if (!row) return;
+
+    if (String(row.status || '').toLowerCase() === 'cancelled') {
+      window.alert('This appointment has already been cancelled.');
+      return;
+    }
+
+    document.getElementById('patientDeleteAppointmentId').value = row.id;
+    document.getElementById('patientDeleteAppointmentNumber').textContent = `#${formatAppointmentNumber(row.id)}`;
+    document.getElementById('patientDeleteAppointmentTests').textContent = row.tests || 'No tests selected';
+    document.getElementById('patientDeleteAppointmentSchedule').textContent = `${row.date} • ${formatDisplayTime(row.time)}`;
+    setPatientDeleteModalOpen(true);
+  }
+
   document.addEventListener('DOMContentLoaded', function () {
-    toggleHomeCollectionEdit();
+    setupSectionTabs();
+    setupTablePagination({
+      sectionSelector: 'main .table-card:first-of-type',
+      showingTextId: 'appointmentsShowingText',
+      paginationId: 'appointmentsPagination',
+      label: 'appointments',
+      pageSize: 7
+    });
+    setupTablePagination({
+      sectionSelector: '#prescription-submissions',
+      showingTextId: 'prescriptionsShowingText',
+      paginationId: 'prescriptionsPagination',
+      label: 'requests',
+      pageSize: 7
+    });
+
+    const patientEditClose = document.getElementById('patientEditAppointmentClose');
+    const patientEditCancel = document.getElementById('patientEditAppointmentCancel');
+    const patientEditModal = document.getElementById('patientEditAppointmentModal');
+    const patientEditHomeCollection = document.getElementById('patientEditHomeCollection');
+    const patientEditFallbackTime = document.getElementById('patientEditTimeFallback');
+    const patientEditForm = document.getElementById('patientEditAppointmentForm');
+
+    patientEditClose && patientEditClose.addEventListener('click', () => setPatientEditModalOpen(false));
+    patientEditCancel && patientEditCancel.addEventListener('click', () => setPatientEditModalOpen(false));
+    patientEditHomeCollection && patientEditHomeCollection.addEventListener('change', togglePatientEditHomeCollection);
+    patientEditFallbackTime && patientEditFallbackTime.addEventListener('input', function () {
+      const normalized = normalizePatientTime(this.value);
+      document.getElementById('patientEditTimeInput').value = normalized;
+      renderPatientEditTimeSlots(normalized);
+    });
+
+    patientEditForm && patientEditForm.addEventListener('submit', function (event) {
+      const selectedTime = normalizePatientTime(document.getElementById('patientEditTimeInput').value);
+      const homeCollection = document.getElementById('patientEditHomeCollection').checked;
+      const addressValue = document.getElementById('patientEditAddressInput').value.trim();
+
+      if (!selectedTime) {
+        event.preventDefault();
+        setPatientEditAlert('Please choose a time slot or enter a custom time.');
+        return;
+      }
+
+      if (homeCollection && addressValue === '') {
+        event.preventDefault();
+        setPatientEditAlert('Please provide a collection address for home sample collection.');
+        return;
+      }
+    });
+
+    patientEditModal && patientEditModal.addEventListener('click', function (event) {
+      if (event.target === patientEditModal) {
+        setPatientEditModalOpen(false);
+      }
+    });
+
+    const patientDeleteClose = document.getElementById('patientDeleteAppointmentClose');
+    const patientDeleteCancel = document.getElementById('patientDeleteAppointmentCancel');
+    const patientDeleteModal = document.getElementById('patientDeleteAppointmentModal');
+
+    patientDeleteClose && patientDeleteClose.addEventListener('click', () => setPatientDeleteModalOpen(false));
+    patientDeleteCancel && patientDeleteCancel.addEventListener('click', () => setPatientDeleteModalOpen(false));
+    patientDeleteModal && patientDeleteModal.addEventListener('click', function (event) {
+      if (event.target === patientDeleteModal) {
+        setPatientDeleteModalOpen(false);
+      }
+    });
+  });
+
+  document.addEventListener('keydown', function (event) {
+    if (event.key !== 'Escape') {
+      return;
+    }
+
+    const patientEditModal = document.getElementById('patientEditAppointmentModal');
+    const patientDeleteModal = document.getElementById('patientDeleteAppointmentModal');
+
+    if (patientEditModal && patientEditModal.classList.contains('is-open')) {
+      setPatientEditModalOpen(false);
+    }
+
+    if (patientDeleteModal && patientDeleteModal.classList.contains('is-open')) {
+      setPatientDeleteModalOpen(false);
+    }
   });
 
   document.addEventListener('click', function (event) {
     const modal = event.target.closest('.modal');
-    if (!modal) return;
+    if (!modal) {
+      return;
+    }
 
     if (event.target === modal) {
       modal.classList.remove('is-open');
@@ -1100,6 +1645,39 @@ unset($_SESSION['success'], $_SESSION['error']);
   });
 </script>
 <?php require __DIR__ . '/../../../public/partials/footer.php'; ?>
+
+<div id="rxPaymentModal" class="payment-modal" aria-hidden="true">
+  <div class="payment-dialog">
+    <div class="payment-header">
+      <span class="payment-icon-wrap">💳</span>
+      <h2>Complete Payment</h2>
+      <button id="rxBtnCancelPayment" class="payment-close" aria-label="Close">&times;</button>
+    </div>
+    <div class="pm-divider"></div>
+    <div class="pm-section-label">Order Summary</div>
+    <div id="rxPmOrderLines" class="pm-order-lines"></div>
+    <div class="pm-total-row">
+      <span class="pm-total-label">Total</span>
+      <strong id="rxPmTotal" class="pm-total-val">LKR 0.00</strong>
+    </div>
+    <div id="rxPmError" class="pm-error"></div>
+    <button id="rxBtnPayNow" class="btn-pay-now">Pay Now via Payhere</button>
+    <button id="rxBtnCancelPaymentBottom" class="btn-cancel-payment">Cancel</button>
+    <div class="pm-secure-note">🔒 Secured by Payhere</div>
+    <div id="rxPmSpinnerOverlay" class="pm-spinner-overlay">
+      <div class="pm-spinner"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+window.LAB_SYNC_RX_CONFIG = {
+    baseUrl:   '/lab_sync',
+    csrfToken: '<?php echo htmlspecialchars($csrfToken ?? '', ENT_QUOTES, 'UTF-8'); ?>'
+};
+</script>
+<script src="https://www.payhere.lk/lib/payhere.js"></script>
+<script src="/lab_sync/public/js/rxPaymentModal.js"></script>
 <script src="/lab_sync/public/js/showAlert.js"></script>
 </body>
 </html>

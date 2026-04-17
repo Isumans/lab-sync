@@ -29,7 +29,9 @@ function showSection(sectionId, tabElement, event) {
             })
             .then(html => {
                 sectionElement.innerHTML = html;
-                // Re-initialize any scripts if necessary (e.g., event listeners)
+                if (sectionId === 'partner-labs' && typeof initPartnerLabsFilter === 'function') {
+                    initPartnerLabsFilter();
+                }
             })
             .catch(error => {
                 console.error('Error loading section:', error);

@@ -118,7 +118,7 @@ public function filterAppointments() {
     if ($method === '' && isset($_GET['filter'])) {
         $method = strtolower(trim((string) $_GET['filter']));
     }
-    if (!in_array($method, ['all', 'online', 'physical', 'call'], true)) {
+    if (!in_array($method, ['all', 'online', 'physical', 'call', 'home_visit'], true)) {
         $method = 'all';
     }
 
