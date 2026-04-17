@@ -31,7 +31,7 @@ class userController {
         $profileData = $this->userModel->getStaffProfileData($userId);
         if (!$profileData) {
             $this->setFlash('error', 'Unable to load profile information.');
-            header('Location: /lab_sync/index.php?controller=home&action=index');
+            header('Location: ' . route_url('home', 'index'));
             exit();
         }
 
@@ -46,7 +46,7 @@ class userController {
         $this->validateCsrfOrFail();
 
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            header('Location: /lab_sync/index.php?controller=userController&action=user');
+            header('Location: ' . route_url('userController', 'user'));
             exit();
         }
 
@@ -62,7 +62,7 @@ class userController {
 
         if (!filter_var($payload['email'], FILTER_VALIDATE_EMAIL)) {
             $this->setFlash('error', 'Please provide a valid email address.');
-            header('Location: /lab_sync/index.php?controller=userController&action=user');
+            header('Location: ' . route_url('userController', 'user'));
             exit();
         }
 
@@ -78,7 +78,7 @@ class userController {
             $this->setFlash('error', 'Unable to save profile details.');
         }
 
-        header('Location: /lab_sync/index.php?controller=userController&action=user');
+        header('Location: ' . route_url('userController', 'user'));
         exit();
     }
 
@@ -87,7 +87,7 @@ class userController {
         $this->validateCsrfOrFail();
 
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            header('Location: /lab_sync/index.php?controller=userController&action=user');
+            header('Location: ' . route_url('userController', 'user'));
             exit();
         }
 
@@ -106,7 +106,7 @@ class userController {
             $this->setFlash('error', 'Unable to update preferences. Run the latest profile migration first.');
         }
 
-        header('Location: /lab_sync/index.php?controller=userController&action=user');
+        header('Location: ' . route_url('userController', 'user'));
         exit();
     }
 
@@ -115,7 +115,7 @@ class userController {
         $this->validateCsrfOrFail();
 
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            header('Location: /lab_sync/index.php?controller=userController&action=user');
+            header('Location: ' . route_url('userController', 'user'));
             exit();
         }
 
@@ -125,26 +125,26 @@ class userController {
 
         if ($currentPassword === '' || $newPassword === '' || $confirmPassword === '') {
             $this->setFlash('error', 'Please complete all password fields.');
-            header('Location: /lab_sync/index.php?controller=userController&action=user');
+            header('Location: ' . route_url('userController', 'user'));
             exit();
         }
 
         if (strlen($newPassword) < 8) {
             $this->setFlash('error', 'New password must contain at least 8 characters.');
-            header('Location: /lab_sync/index.php?controller=userController&action=user');
+            header('Location: ' . route_url('userController', 'user'));
             exit();
         }
 
         if ($newPassword !== $confirmPassword) {
             $this->setFlash('error', 'New password and confirmation do not match.');
-            header('Location: /lab_sync/index.php?controller=userController&action=user');
+            header('Location: ' . route_url('userController', 'user'));
             exit();
         }
 
         $result = $this->userModel->changePassword(intval($_SESSION['user_id']), $currentPassword, $newPassword);
         $this->setFlash($result['ok'] ? 'success' : 'error', $result['message']);
 
-        header('Location: /lab_sync/index.php?controller=userController&action=user');
+        header('Location: ' . route_url('userController', 'user'));
         exit();
     }
 
@@ -153,7 +153,7 @@ class userController {
         $this->validateCsrfOrFail();
 
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            header('Location: /lab_sync/index.php?controller=userController&action=user');
+            header('Location: ' . route_url('userController', 'user'));
             exit();
         }
 
@@ -166,7 +166,7 @@ class userController {
             $this->setFlash('error', 'Unable to update 2FA settings. Run the latest profile migration first.');
         }
 
-        header('Location: /lab_sync/index.php?controller=userController&action=user');
+        header('Location: ' . route_url('userController', 'user'));
         exit();
     }
 
@@ -175,14 +175,14 @@ class userController {
         $this->validateCsrfOrFail();
 
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            header('Location: /lab_sync/index.php?controller=userController&action=user');
+            header('Location: ' . route_url('userController', 'user'));
             exit();
         }
 
         $sessionId = intval($_POST['user_session_id'] ?? 0);
         if ($sessionId <= 0) {
             $this->setFlash('error', 'Invalid session selected.');
-            header('Location: /lab_sync/index.php?controller=userController&action=user');
+            header('Location: ' . route_url('userController', 'user'));
             exit();
         }
 
@@ -193,7 +193,7 @@ class userController {
         );
 
         $this->setFlash($ok ? 'success' : 'error', $ok ? 'Session revoked successfully.' : 'Unable to revoke that session.');
-        header('Location: /lab_sync/index.php?controller=userController&action=user');
+        header('Location: ' . route_url('userController', 'user'));
         exit();
     }
 
@@ -204,7 +204,7 @@ class userController {
         $allowedRoles = ['admin', 'receptionist', 'technician'];
 
         if ($userId <= 0 || !in_array($role, $allowedRoles, true)) {
-            header('Location: /lab_sync/index.php?controller=Auth&action=index');
+            header('Location: ' . route_url('Auth', 'index'));
             exit();
         }
     }
@@ -227,7 +227,7 @@ class userController {
 
         if ($sessionToken === '' || $requestToken === '' || !hash_equals($sessionToken, $requestToken)) {
             $this->setFlash('error', 'Security check failed. Please retry.');
-            header('Location: /lab_sync/index.php?controller=userController&action=user');
+            header('Location: ' . route_url('userController', 'user'));
             exit();
         }
     }

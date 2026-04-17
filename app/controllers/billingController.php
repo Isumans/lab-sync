@@ -12,7 +12,7 @@ class billingController {
 
     public function registerBilling() {
         if (!isset($_SESSION['user_id'])) {
-            header('Location: /lab_sync/index.php?controller=Auth&action=index');
+            header('Location: ' . route_url('Auth', 'index'));
             exit();
         }
 
@@ -41,7 +41,7 @@ class billingController {
 
     public function printInvoice() {
         if (!isset($_SESSION['user_id'])) {
-            header('Location: /lab_sync/index.php?controller=Auth&action=index');
+            header('Location: ' . route_url('Auth', 'index'));
             exit();
         }
 

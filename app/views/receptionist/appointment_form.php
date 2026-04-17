@@ -6,6 +6,7 @@
       method="post" 
       action="/lab_sync/index.php?controller=appointmentsController&action=storeAppointment" 
       class="appointment-form-container">
+        <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars((string)($csrfToken ?? ($_SESSION['csrf_token'] ?? ''))); ?>">
     
     <div class="appointment-form-wrapper">
         <!-- Left Column -->

@@ -1,4 +1,7 @@
 (function () {
+    var appConfig = window.LAB_SYNC_CONFIG || {};
+    var baseUrl = String(appConfig.baseUrl || '/lab_sync').replace(/\/$/, '');
+
     var pageSize = 7;
     var currentPage = 1;
     var totalPages = 1;
@@ -18,9 +21,13 @@
     var showingText = null;
     var paginationNode = null;
     var sortableHeaders = [];
+    var tabButtons = [];
+    var scheduledSection = null;
+    var prescriptionSection = null;
+    var activeTab = 'scheduled';
 
     function endpoint() {
-        return '/lab_sync/index.php?controller=appointmentsController&action=filterAppointments';
+        return baseUrl + '/index.php?controller=appointmentsController&action=filterAppointments';
     }
 
     function queryNodes() {
@@ -35,7 +42,45 @@
         tableBody = document.getElementById('aptTableBody');
         showingText = document.getElementById('aptShowingText');
         paginationNode = document.getElementById('aptPagination');
-        sortableHeaders = Array.prototype.slice.call(document.querySelectorAll('.rd-sortable'));
+        sortableHeaders = Array.prototype.slice.call(document.querySelectorAll('#scheduledAppointmentsSection .rd-sortable'));
+    }
+
+    function queryTabNodes() {
+        tabButtons = Array.prototype.slice.call(document.querySelectorAll('[data-appointments-tab]'));
+        scheduledSection = document.getElementById('scheduledAppointmentsSection');
+        prescriptionSection = document.getElementById('prescriptionRequestsSection');
+    }
+
+    function applyTabState(nextTab, shouldFetch) {
+        if (!scheduledSection || !prescriptionSection || !tabButtons.length) {
+            return;
+        }
+
+        activeTab = nextTab === 'prescription' ? 'prescription' : 'scheduled';
+        var scheduledActive = activeTab === 'scheduled';
+
+        scheduledSection.classList.toggle('is-active', scheduledActive);
+        scheduledSection.hidden = !scheduledActive;
+
+        prescriptionSection.classList.toggle('is-active', !scheduledActive);
+        prescriptionSection.hidden = scheduledActive;
+
+        tabButtons.forEach(function (button) {
+            var tabName = button.getAttribute('data-appointments-tab') || '';
+            var isActive = tabName === activeTab;
+            button.classList.toggle('is-active', isActive);
+            button.setAttribute('aria-selected', isActive ? 'true' : 'false');
+        });
+
+        if (scheduledActive && shouldFetch) {
+            fetchAppointments();
+        }
+
+        document.dispatchEvent(new CustomEvent('appointments:tab-changed', {
+            detail: {
+                tab: activeTab
+            }
+        }));
     }
 
     function safe(value) {
@@ -301,6 +346,17 @@
     }
 
     function wireEvents() {
+        tabButtons.forEach(function (button) {
+            button.addEventListener('click', function () {
+                var nextTab = button.getAttribute('data-appointments-tab') || 'scheduled';
+                if (nextTab === activeTab) {
+                    return;
+                }
+
+                applyTabState(nextTab, nextTab === 'scheduled');
+            });
+        });
+
         if (searchInput) {
             searchInput.addEventListener('input', scheduleSearchFetch);
         }
@@ -387,11 +443,13 @@
     }
 
     function init() {
+        queryTabNodes();
         queryNodes();
-        if (!tableBody || !showingText || !paginationNode) {
+        if (!tableBody || !showingText || !paginationNode || !tabButtons.length) {
             return;
         }
 
+        applyTabState('scheduled', false);
         wireEvents();
         updateSortHeaderState();
         fetchAppointments();

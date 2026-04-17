@@ -1,6 +1,7 @@
 <?php
 $success = $_SESSION['success'] ?? '';
 $error = $_SESSION['error'] ?? '';
+$csrfToken = (string)($csrfToken ?? ($_SESSION['csrf_token'] ?? ''));
 unset($_SESSION['success'], $_SESSION['error']);
 ?>
 <!DOCTYPE html>
@@ -121,7 +122,7 @@ unset($_SESSION['success'], $_SESSION['error']);
   <main class="wrap">
     <section class="heading">
       <h1>Get Help with Booking</h1>
-      <p>Upload your prescription. Receptionist will review and contact you to finalize your test appointment.</p>
+      <p>Upload a prescription or submit a home visit request. Receptionist will review and contact you to finalize your test appointment.</p>
     </section>
 
     <?php if ($success): ?>
@@ -134,20 +135,11 @@ unset($_SESSION['success'], $_SESSION['error']);
 
     <section class="form-box">
       <form action="/lab_sync/index.php?controller=home&action=submit_prescription_help" method="POST" enctype="multipart/form-data">
+        <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($csrfToken); ?>">
         <div class="grid">
           <div class="full">
-            <label for="prescription_file">Prescription File (PDF/JPG/PNG, max 5MB)</label>
-            <input type="file" id="prescription_file" name="prescription_file" accept=".pdf,.jpg,.jpeg,.png" required>
-          </div>
-
-          <div>
-            <label for="preferred_date">Preferred Date (Optional)</label>
-            <input type="date" id="preferred_date" name="preferred_date">
-          </div>
-
-          <div>
-            <label for="preferred_time">Preferred Time (Optional)</label>
-            <input type="time" id="preferred_time" name="preferred_time">
+            <label for="prescription_file">Prescription File (Optional, PDF/JPG/PNG, max 5MB)</label>
+            <input type="file" id="prescription_file" name="prescription_file" accept=".pdf,.jpg,.jpeg,.png">
           </div>
 
           <div class="full">
@@ -169,11 +161,11 @@ unset($_SESSION['success'], $_SESSION['error']);
         </div>
 
         <div class="actions">
-          <button type="submit" class="btn primary">Submit Prescription</button>
+          <button type="submit" class="btn primary">Submit Request</button>
           <a class="btn secondary" href="/lab_sync/index.php?controller=home&action=appointment_options">Back</a>
         </div>
 
-        <div class="hint">After submission, status will start as Pending and receptionist will follow up.</div>
+        <div class="hint">After submission, status will start as Pending and receptionist will follow up. If you do not upload a file, enable Home sample collection to submit a home visit request.</div>
       </form>
     </section>
 

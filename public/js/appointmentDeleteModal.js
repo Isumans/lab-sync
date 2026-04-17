@@ -11,7 +11,10 @@ document.addEventListener('DOMContentLoaded', () => {
     return;
   }
 
-  const deleteEndpoint = '/lab_sync/index.php?controller=appointmentsController&action=deleteAppointment';
+  const appConfig = window.LAB_SYNC_CONFIG || {};
+  const baseUrl = String(appConfig.baseUrl || '/lab_sync').replace(/\/$/, '');
+  const csrfToken = String(appConfig.csrfToken || document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '');
+  const deleteEndpoint = baseUrl + '/index.php?controller=appointmentsController&action=deleteAppointment';
 
   let activeTrigger = null;
   let selectedAppointmentId = null;
@@ -79,6 +82,7 @@ document.addEventListener('DOMContentLoaded', () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'X-CSRF-Token': csrfToken,
           'X-Requested-With': 'XMLHttpRequest'
         },
         body: JSON.stringify({ appointment_id: selectedAppointmentId })
