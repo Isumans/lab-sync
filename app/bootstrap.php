@@ -19,6 +19,17 @@ define('BASE_URL', $base);
 /** Helper to build asset URLs from project root */
 function asset(string $path): string { return BASE_URL . '/' . ltrim($path, '/'); }
 
+if (!function_exists('route_url')) {
+    function route_url(string $controller, string $action, array $params = []): string {
+        $query = array_merge([
+            'controller' => $controller,
+            'action' => $action,
+        ], $params);
+
+        return BASE_URL . '/index.php?' . http_build_query($query);
+    }
+}
+
 // Start session once for the whole app
 if (session_status() === PHP_SESSION_NONE) {
     session_start();

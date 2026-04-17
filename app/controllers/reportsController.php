@@ -132,7 +132,7 @@ class reportsController {
     public function printReport($role=''){
         if (!isset($_SESSION['user_id'])) {
             // User is not logged in, redirect to login page
-            header('Location: /lab_sync/index.php?controller=Auth&action=index');
+            header('Location: ' . route_url('Auth', 'index'));
             exit();
         }
 
@@ -535,7 +535,7 @@ class reportsController {
      */
     public function viewPdf() {
         if (!isset($_SESSION['user_id'])) {
-            header('Location: /lab_sync/index.php?controller=Auth&action=index');
+            header('Location: ' . route_url('Auth', 'index'));
             exit();
         }
 
@@ -561,7 +561,7 @@ class reportsController {
      */
     public function downloadPdf() {
         if (!isset($_SESSION['user_id'])) {
-            header('Location: /lab_sync/index.php?controller=Auth&action=index');
+            header('Location: ' . route_url('Auth', 'index'));
             exit();
         }
 
@@ -587,7 +587,7 @@ class reportsController {
      */
     public function receptionistDashboard($role = '') {
         if (!isset($_SESSION['user_id'])) {
-            header('Location: /lab_sync/index.php?controller=Auth&action=index');
+            header('Location: ' . route_url('Auth', 'index'));
             exit();
         }
         include VIEW_PATH . '/receptionist/receptionist_reports.php';

@@ -8,9 +8,13 @@ class PartnerModel {
     }
 
     public function createPartnerLab($lab_name, $email, $contact_person, $phone, $website, $address) {
+        if (!$this->isValidPartnerLabData($lab_name, $email, $contact_person, $phone, $website, $address)) {
+            return false;
+        }
+
         $stmt = $this->db->prepare("INSERT INTO partner_labs (lab_name, email, contact_person_name, contact_person_phone, website, address) VALUES (?, ?, ?, ?, ?, ?)");
         if (!$stmt) {
-            die("Prepare failed: " . $this->db->error);
+            return false;
         }
         $stmt->bind_param("ssssss", $lab_name, $email, $contact_person, $phone, $website, $address);
         if ($stmt->execute()) {
@@ -35,6 +39,35 @@ class PartnerModel {
                 ORDER BY p.created_at DESC";
         $result = $this->db->query($sql);
         return $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
+    }
+
+    private function isValidPartnerLabData($labName, $email, $contactPerson, $phone, $website, $address) {
+        if (trim((string)$labName) === '' || strlen((string)$labName) > 120) {
+            return false;
+        }
+
+        if (!filter_var(trim((string)$email), FILTER_VALIDATE_EMAIL) || strlen((string)$email) > 120) {
+            return false;
+        }
+
+        if (trim((string)$contactPerson) === '' || strlen((string)$contactPerson) > 120) {
+            return false;
+        }
+
+        if (!preg_match('/^[0-9+()\-\s]{7,25}$/', trim((string)$phone))) {
+            return false;
+        }
+
+        if (trim((string)$address) === '' || strlen((string)$address) > 255) {
+            return false;
+        }
+
+        $website = trim((string)$website);
+        if ($website !== '' && (!filter_var($website, FILTER_VALIDATE_URL) || strlen($website) > 255)) {
+            return false;
+        }
+
+        return true;
     }
     
 

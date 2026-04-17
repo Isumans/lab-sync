@@ -164,11 +164,11 @@ $bootstrap = [
                                 <div class="billing-field-grid">
                                     <label>
                                         New Payment Amount (LKR)
-                                        <input type="number" id="amountTenderedInput" min="0" step="0.01">
+                                        <input type="number" id="amountTenderedInput" min="0" step="0.01" inputmode="decimal">
                                     </label>
                                     <label>
                                         Reference Number (Optional)
-                                        <input type="text" id="referenceNumberInput" placeholder="TXN12345678">
+                                        <input type="text" id="referenceNumberInput" placeholder="TXN12345678" maxlength="64" pattern="[A-Za-z0-9_\-\/ ]*" title="Use letters, numbers, space, slash, hyphen, or underscore.">
                                     </label>
                                 </div>
                             </div>
@@ -195,11 +195,11 @@ $bootstrap = [
                                 <div class="billing-summary-row"><span>Subtotal</span><strong id="summarySubtotal">0.00</strong></div>
                                 <div class="billing-summary-row billing-inline-input">
                                     <span>Discount</span>
-                                    <input type="number" id="discountInput" min="0" step="0.01" value="0">
+                                    <input type="number" id="discountInput" min="0" step="0.01" value="0" inputmode="decimal">
                                 </div>
                                 <div class="billing-summary-row billing-inline-input">
                                     <span>Tax (%)</span>
-                                    <input type="number" id="taxPercentInput" min="0" step="0.01" value="0">
+                                    <input type="number" id="taxPercentInput" min="0" max="100" step="0.01" value="0" inputmode="decimal">
                                 </div>
                                 <div class="billing-summary-row grand-total"><span>Grand Total</span><strong id="summaryGrandTotal">0.00</strong></div>
                                 <button type="button" class="billing-primary-btn" id="saveAndPrintBtn">Save & Print Invoice</button>

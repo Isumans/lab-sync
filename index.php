@@ -161,6 +161,12 @@ elseif ($controllerName === 'appointmentsController') {
         $appointmentController->searchPatients();
     } elseif ($action === 'filterAppointments') {
         $appointmentController->filterAppointments();
+    } elseif ($action === 'filterPrescriptionRequests') {
+        $appointmentController->filterPrescriptionRequests();
+    } elseif ($action === 'getPrescriptionRequestManageData') {
+        $appointmentController->getPrescriptionRequestManageData();
+    } elseif ($action === 'savePrescriptionRequestManagement') {
+        $appointmentController->savePrescriptionRequestManagement();
     } elseif ($action === 'getAppointmentDetails') {
         $appointmentController->getAppointmentDetails();
     } elseif ($action === 'getAppointmentEditData') {

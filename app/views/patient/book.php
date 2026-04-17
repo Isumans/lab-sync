@@ -3,9 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>LabSync - Home</title>
-  <link rel="stylesheet" href="/lab_sync/public/css/patient.css" />
+  <title>LabSync - Book a Test</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/lab_sync/public/css/globals.css" />
   <link rel="stylesheet" href="/lab_sync/public/css/nav.css" />
+  <link rel="stylesheet" href="/lab_sync/public/css/footer.css" />
   <link rel="stylesheet" href="/lab_sync/public/book.css" />
 </head>
 <body>
@@ -21,6 +24,9 @@
   <section class="book-layout">
     <div class="book-main">
       <form id="bookingForm" method="POST" action="/lab_sync/index.php?controller=home&action=bookAppointment">
+        <?php if (!empty($fromRequestId)): ?>
+          <input type="hidden" name="from_request" value="<?php echo htmlspecialchars($fromRequestId); ?>">
+        <?php endif; ?>
         <div class="card book-card tests-card">
           <div class="sec-head">
             <h2 class="sec-title">Select tests</h2>
@@ -37,7 +43,10 @@
               </div>
 
               <?php foreach($tests as $t): ?>
-                  <?php $isChecked = (($selectedTestId ?? 0) === (int)$t['test_id']); ?>
+                  <?php
+                $isChecked = (($selectedTestId ?? 0) === (int)$t['test_id'])
+                    || (!empty($preSelectedTestIds) && in_array((int)$t['test_id'], $preSelectedTestIds, true));
+              ?>
                   <label class="test-row">
                     <span class="test-left">
                       <input

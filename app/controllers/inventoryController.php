@@ -259,7 +259,7 @@ class inventoryController {
 
         if (!empty($validationErrors)) {
             $_SESSION['inventory_create_error'] = implode(' ', $validationErrors);
-            header('Location: /lab_sync/index.php?controller=inventoryController&action=add_inventory');
+            header('Location: ' . route_url('inventoryController', 'add_inventory'));
             return;
         }
 
@@ -286,7 +286,7 @@ class inventoryController {
         if (!$success) {
             $errorMessage = $inventoryModel->getLastError();
             $_SESSION['inventory_create_error'] = $errorMessage !== '' ? $errorMessage : 'Unable to create inventory item.';
-            header('Location: /lab_sync/index.php?controller=inventoryController&action=add_inventory');
+            header('Location: ' . route_url('inventoryController', 'add_inventory'));
             return;
         }
 
@@ -296,7 +296,7 @@ class inventoryController {
             $savedSources = $inventoryModel->addInventorySupplierSources($inventoryId, $supplierSources);
             if (!$savedSources) {
                 $_SESSION['inventory_create_error'] = $inventoryModel->getLastError() !== '' ? $inventoryModel->getLastError() : 'Item created, but supplier sources were not saved.';
-                header('Location: /lab_sync/index.php?controller=inventoryController&action=add_inventory');
+                header('Location: ' . route_url('inventoryController', 'add_inventory'));
                 return;
             }
         }
@@ -319,7 +319,7 @@ class inventoryController {
         );
 
         $_SESSION['inventory_create_success'] = 'Inventory item created successfully.';
-        header('Location: /lab_sync/index.php?controller=inventoryController&action=index');
+        header('Location: ' . route_url('inventoryController', 'index'));
     }
 
     public function searchSuppliers() {
@@ -909,7 +909,7 @@ class inventoryController {
             $success=$inventoryModel->deleteItem($itemId, $this->getCurrentUserId());
             // Redirect back to inventory list after deletion
             if($success){
-                header('Location: /lab_sync/index.php?controller=inventoryController&action=index');
+                header('Location: ' . route_url('inventoryController', 'index'));
             } else {
                 echo "Error deleting item.";
             }
@@ -924,7 +924,7 @@ class inventoryController {
             $success=$inventoryModel->updateItem($itemId, $itemName, $quantity, $reorderLevel, $supplierId);
             // Redirect back to inventory list after update
             if($success){
-                header('Location: /lab_sync/index.php?controller=inventoryController&action=index');
+                header('Location: ' . route_url('inventoryController', 'index'));
             } else {
                 echo "Error updating item.";
             }

@@ -38,7 +38,7 @@ if (!isset($_SESSION['user_id'])) {
                     <div class="rd-filter-grid">
                         <div class="rd-filter-field rd-filter-field-search">
                             <label for="rdSearch">Search Invoices</label>
-                            <input id="rdSearch" type="text" placeholder="Search by Patient Name, Bill No, or Appointment ID..." />
+                            <input id="rdSearch" type="text" maxlength="100" placeholder="Search by Patient Name, Bill No, or Appointment ID..." />
                         </div>
 
                         <div class="rd-filter-field">
@@ -67,11 +67,11 @@ if (!isset($_SESSION['user_id'])) {
                         <div class="rd-filter-date-range">
                             <div class="rd-filter-field">
                                 <label for="rdDateFrom">Date Range</label>
-                                <input id="rdDateFrom" type="date" />
+                                <input id="rdDateFrom" type="date" max="9999-12-31" />
                             </div>
                             <div class="rd-filter-field rd-filter-field-to">
                                 <label for="rdDateTo" class="rd-hidden-label">End Date</label>
-                                <input id="rdDateTo" type="date" />
+                                <input id="rdDateTo" type="date" max="9999-12-31" />
                             </div>
                         </div>
 

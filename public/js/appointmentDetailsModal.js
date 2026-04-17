@@ -7,8 +7,11 @@ document.addEventListener('DOMContentLoaded', () => {
     return;
   }
 
-  const endpoint = '/lab_sync/index.php?controller=appointmentsController&action=getAppointmentDetails';
-  const updateStatusEndpoint = '/lab_sync/index.php?controller=appointmentsController&action=updateTestStatus';
+  const appConfig = window.LAB_SYNC_CONFIG || {};
+  const baseUrl = String(appConfig.baseUrl || '/lab_sync').replace(/\/$/, '');
+  const csrfToken = String(appConfig.csrfToken || document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '');
+  const endpoint = baseUrl + '/index.php?controller=appointmentsController&action=getAppointmentDetails';
+  const updateStatusEndpoint = baseUrl + '/index.php?controller=appointmentsController&action=updateTestStatus';
   let activeTrigger = null;
   let currentAppointmentId = null;
 
@@ -101,6 +104,7 @@ document.addEventListener('DOMContentLoaded', () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+          'X-CSRF-Token': csrfToken,
           'X-Requested-With': 'XMLHttpRequest'
         },
         body: formBody

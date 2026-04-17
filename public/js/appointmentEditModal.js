@@ -26,9 +26,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const addTestBtn = document.getElementById('editAddTestBtn');
   const timeSlotsWrap = document.getElementById('editTimeSlots');
 
-  const editDataEndpoint = '/lab_sync/index.php?controller=appointmentsController&action=getAppointmentEditData';
-  const updateEndpoint = '/lab_sync/update_appointment.php';
-  const searchTestsEndpoint = '/lab_sync/index.php?controller=appointmentsController&action=searchTests';
+  const appConfig = window.LAB_SYNC_CONFIG || {};
+  const baseUrl = String(appConfig.baseUrl || '/lab_sync').replace(/\/$/, '');
+  const csrfToken = String(appConfig.csrfToken || document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '');
+
+  const editDataEndpoint = baseUrl + '/index.php?controller=appointmentsController&action=getAppointmentEditData';
+  const updateEndpoint = baseUrl + '/index.php?controller=appointmentsController&action=updateAppointment';
+  const searchTestsEndpoint = baseUrl + '/index.php?controller=appointmentsController&action=searchTests';
 
   let activeTrigger = null;
   let selectedTests = [];
@@ -489,6 +493,7 @@ document.addEventListener('DOMContentLoaded', () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'X-CSRF-Token': csrfToken,
           'X-Requested-With': 'XMLHttpRequest'
         },
         body: JSON.stringify(payload)

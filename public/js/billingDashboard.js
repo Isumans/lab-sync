@@ -94,6 +94,35 @@
         };
     }
 
+    function isIsoDate(value) {
+        return /^\d{4}-\d{2}-\d{2}$/.test(String(value || ""));
+    }
+
+    function getDateRangeError(filters) {
+        if (filters.from_date !== "" && !isIsoDate(filters.from_date)) {
+            return "Invalid start date format.";
+        }
+
+        if (filters.to_date !== "" && !isIsoDate(filters.to_date)) {
+            return "Invalid end date format.";
+        }
+
+        if (filters.from_date !== "" && filters.to_date !== "" && filters.from_date > filters.to_date) {
+            return "Start date cannot be later than end date.";
+        }
+
+        return "";
+    }
+
+    function applyDateRangeLimits() {
+        if (!dateFromInput || !dateToInput) {
+            return;
+        }
+
+        dateFromInput.max = dateToInput.value || "9999-12-31";
+        dateToInput.min = dateFromInput.value || "";
+    }
+
     function setLoadingState() {
         tableBody.innerHTML = '<tr class="rd-empty-row"><td colspan="7">Loading invoices...</td></tr>';
     }
@@ -131,6 +160,12 @@
 
     function fetchBills() {
         var filters = collectFilters();
+        var dateRangeError = getDateRangeError(filters);
+        if (dateRangeError) {
+            setErrorState(dateRangeError);
+            return Promise.resolve();
+        }
+
         var query = new URLSearchParams({
             page: String(currentPage),
             per_page: String(pageSize),
@@ -284,6 +319,7 @@
         [statusInput, paymentMethodInput, dateFromInput, dateToInput].forEach(function (node) {
             if (node) {
                 node.addEventListener("change", function () {
+                    applyDateRangeLimits();
                     currentPage = 1;
                     fetchBills();
                 });
@@ -401,6 +437,7 @@
         }
 
         attachEvents();
+        applyDateRangeLimits();
         fetchBills();
         return true;
     }

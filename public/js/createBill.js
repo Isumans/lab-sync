@@ -68,6 +68,21 @@
         return Number(value || 0).toFixed(2);
     }
 
+    function toNonNegativeNumber(value, fallback) {
+        var parsed = Number(value);
+        if (!isFinite(parsed) || parsed < 0) {
+            return fallback;
+        }
+        return parsed;
+    }
+
+    function isValidReferenceNumber(value) {
+        if (value === "") {
+            return true;
+        }
+        return /^[A-Za-z0-9_\-\/ ]{1,64}$/.test(value);
+    }
+
     function selectedItems() {
         return state.items.filter(function (item) {
             return item.selected;
@@ -232,19 +247,36 @@
     }
 
     function buildPayload() {
-        var entered = Math.max(0, Number(amountTenderedInput.value || 0));
+        var entered = toNonNegativeNumber(amountTenderedInput.value, 0);
         var totalDue = Number(focusTotalDue.textContent || 0);
         var previouslyPaid = (isSettlementOnlyMode() || isPaidLocked()) ? Math.max(0, Number(boot.paid_amount || 0)) : 0;
         var remaining = Math.max(0, totalDue - previouslyPaid);
+        var discount = toNonNegativeNumber(discountInput.value, 0);
+        var taxPercent = toNonNegativeNumber(taxPercentInput.value, 0);
+        var reference = String(referenceNumberInput.value || "").trim();
+
+        if (taxPercent > 100) {
+            taxPercent = 100;
+            taxPercentInput.value = "100.00";
+        }
+
+        if (reference.length > 64) {
+            reference = reference.slice(0, 64);
+            referenceNumberInput.value = reference;
+        }
+
+        if (!isValidReferenceNumber(reference)) {
+            throw new Error("Reference number contains invalid characters.");
+        }
 
         return {
             appointment_id: Number(boot.appointment_id || 0),
             patient_id: Number(boot.patient_id || 0),
-            discount_amount: Number(discountInput.value || 0),
-            tax_percent: Number(taxPercentInput.value || 0),
+            discount_amount: discount,
+            tax_percent: taxPercent,
             amount_tendered: Math.min(entered, remaining),
             payment_method: state.paymentMethod,
-            reference_no: referenceNumberInput.value || "",
+            reference_no: reference,
             items: state.items.map(function (item) {
                 return {
                     test_id: item.test_id,
@@ -272,13 +304,21 @@
         var endpoint = "/lab_sync/index.php?controller=billingController&action=" + encodeURIComponent(actionName);
         formMessage.textContent = "Saving...";
 
+        var payload;
+        try {
+            payload = buildPayload();
+        } catch (error) {
+            formMessage.textContent = error.message || "Invalid billing data.";
+            return Promise.reject(error);
+        }
+
         return fetch(endpoint, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
                 "Accept": "application/json"
             },
-            body: JSON.stringify(buildPayload())
+            body: JSON.stringify(payload)
         })
             .then(function (response) {
                 return response.json();

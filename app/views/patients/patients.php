@@ -151,15 +151,15 @@ if (is_array($patients)) {
                 <input type="hidden" name="patient_id" value="">
                 <div class="form-row">
                     <label for="patient_name">Name</label>
-                    <input type="text" id="patient_name" name="patient_name" required>
+                    <input type="text" id="patient_name" name="patient_name" maxlength="120" required>
                 </div>
                 <div class="form-row">
                     <label for="patient_email">Email</label>
-                    <input type="email" id="patient_email" name="patient_email" required>
+                    <input type="email" id="patient_email" name="patient_email" maxlength="120" required>
                 </div>
                 <div class="form-row">
                     <label for="contact_number">Contact Number</label>
-                    <input type="text" id="contact_number" name="contact_number">
+                    <input type="tel" id="contact_number" name="contact_number" maxlength="25" pattern="^[0-9+()\-\s]{7,25}$" title="Use 7-25 characters: digits, space, plus, parentheses, or hyphen." required>
                 </div>
                 <div class="actions">
                     <button type="button" id="cancelEdit">Cancel</button>

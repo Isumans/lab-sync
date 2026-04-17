@@ -45,6 +45,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const msg = document.getElementById('lab-config-msg');
         const btn = form.querySelector('button[type="submit"]');
 
+        const validationError = validateLabConfigForm(form);
+        if (validationError) {
+            showMsg(msg, validationError, 'error');
+            return;
+        }
+
         showMsg(msg, 'Saving…', 'info');
         if (btn) btn.disabled = true;
 
@@ -66,6 +72,46 @@ document.addEventListener('DOMContentLoaded', () => {
             .finally(() => { if (btn) btn.disabled = false; });
     });
 });
+
+function validateLabConfigForm(form) {
+    if (!form.checkValidity()) {
+        form.reportValidity();
+        return 'Please correct the highlighted fields.';
+    }
+
+    const rows = [
+        {
+            enabled: form.querySelector('input[name="hours_mon_fri_enabled"]'),
+            open: form.querySelector('input[name="hours_mon_fri_open"]'),
+            close: form.querySelector('input[name="hours_mon_fri_close"]'),
+            label: 'Monday - Friday'
+        },
+        {
+            enabled: form.querySelector('input[name="hours_sat_enabled"]'),
+            open: form.querySelector('input[name="hours_sat_open"]'),
+            close: form.querySelector('input[name="hours_sat_close"]'),
+            label: 'Saturday'
+        },
+        {
+            enabled: form.querySelector('input[name="hours_sun_enabled"]'),
+            open: form.querySelector('input[name="hours_sun_open"]'),
+            close: form.querySelector('input[name="hours_sun_close"]'),
+            label: 'Sunday'
+        }
+    ];
+
+    for (const row of rows) {
+        const isEnabled = !!(row.enabled && row.enabled.checked);
+        const open = row.open ? row.open.value : '';
+        const close = row.close ? row.close.value : '';
+
+        if (isEnabled && open !== '' && close !== '' && open >= close) {
+            return `${row.label} close time must be later than open time.`;
+        }
+    }
+
+    return '';
+}
 
 function showMsg(el, text, type) {
     if (!el) return;

@@ -46,6 +46,16 @@ class financesController {
             'to_date' => isset($_GET['to_date']) ? trim((string) $_GET['to_date']) : '',
         ];
 
+        $validationError = $this->validateListFilters($filters);
+        if ($validationError !== '') {
+            http_response_code(400);
+            echo json_encode([
+                'status' => 'error',
+                'message' => $validationError
+            ]);
+            return;
+        }
+
         $rows = $this->billingModel->getBillsList($filters, $page, $perPage);
         $listError = $this->billingModel->getLastError();
         if ($listError !== '') {
@@ -310,5 +320,50 @@ class financesController {
         }
 
         return '-';
+    }
+
+    private function validateListFilters($filters) {
+        $allowedStatus = ['all', 'paid_in_full', 'unpaid', 'partially_paid', 'claim_submitted'];
+        $allowedPaymentMethods = ['all', 'cash', 'card', 'transfer'];
+
+        $status = strtolower((string)($filters['status'] ?? 'all'));
+        if (!in_array($status, $allowedStatus, true)) {
+            return 'Invalid status filter.';
+        }
+
+        $paymentMethod = strtolower((string)($filters['payment_method'] ?? 'all'));
+        if (!in_array($paymentMethod, $allowedPaymentMethods, true)) {
+            return 'Invalid payment method filter.';
+        }
+
+        $fromDate = (string)($filters['from_date'] ?? '');
+        $toDate = (string)($filters['to_date'] ?? '');
+
+        if ($fromDate !== '' && !$this->isValidDateYmd($fromDate)) {
+            return 'Invalid from date format.';
+        }
+
+        if ($toDate !== '' && !$this->isValidDateYmd($toDate)) {
+            return 'Invalid to date format.';
+        }
+
+        if ($fromDate !== '' && $toDate !== '' && strcmp($fromDate, $toDate) > 0) {
+            return 'From date cannot be later than to date.';
+        }
+
+        return '';
+    }
+
+    private function isValidDateYmd($value) {
+        if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $value) !== 1) {
+            return false;
+        }
+
+        $parts = explode('-', $value);
+        if (count($parts) !== 3) {
+            return false;
+        }
+
+        return checkdate(intval($parts[1]), intval($parts[2]), intval($parts[0]));
     }
 }

@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Apr 14, 2026 at 05:27 PM
+-- Generation Time: Apr 17, 2026 at 07:24 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.0.30
 
@@ -132,7 +132,7 @@ CREATE TABLE `bills` (
 
 INSERT INTO `bills` (`bill_id`, `bill_number`, `appointment_id`, `patient_id`, `bill_date`, `due_date`, `subtotal`, `discount_amount`, `tax_amount`, `total_amount`, `paid_amount`, `balance_due`, `status`, `status_updated_at`, `notes`, `created_by`, `created_at`, `updated_at`) VALUES
 (1, 'BILL-000001', 17, 1, '2026-04-14', NULL, 250.00, 0.00, 0.00, 250.00, 250.00, 0.00, 'DRAFT', '2026-04-14 05:04:32', NULL, 6, '2026-04-13 20:42:06', '2026-04-14 05:04:32'),
-(2, 'BILL-000002', 18, 1, '2026-04-14', NULL, 120.00, 0.00, 0.00, 120.00, 110.00, 10.00, 'PARTIALLY_PAID', '2026-04-14 04:50:52', NULL, 6, '2026-04-14 04:50:30', '2026-04-14 04:50:52'),
+(2, 'BILL-000002', 18, 1, '2026-04-14', NULL, 120.00, 0.00, 0.00, 120.00, 120.00, 0.00, 'PAID', '2026-04-15 16:55:39', NULL, 6, '2026-04-14 04:50:30', '2026-04-15 16:55:39'),
 (3, 'BILL-000003', 16, 9, '2026-04-14', NULL, 250.00, 30.00, 26.40, 246.40, 246.40, 0.00, 'PAID', '2026-04-14 08:53:13', NULL, 6, '2026-04-14 06:16:55', '2026-04-14 08:53:13'),
 (4, 'BILL-000004', 15, 7, '2026-04-14', NULL, 120.00, 0.00, 0.00, 120.00, 120.00, 0.00, 'PAID', '2026-04-14 06:54:20', NULL, 6, '2026-04-14 06:41:22', '2026-04-14 06:54:20');
 
@@ -461,7 +461,10 @@ INSERT INTO `patients` (`patient_id`, `uhid`, `patient_name`, `date_of_birth`, `
 (12, NULL, 'surin', NULL, 'Male', 'surini@gmail.com', '12345678', '2025-10-22 17:52:55', '2025-10-22 18:05:46', '', NULL),
 (13, NULL, 'patient', NULL, NULL, 'patient@gmail.com', '123456789', '2025-10-22 18:37:41', '2025-10-22 18:37:41', NULL, NULL),
 (20, NULL, 'yasindu', NULL, NULL, 'yas@gmail.com', '1234567890', '2025-10-23 04:27:41', '2025-10-23 04:27:41', NULL, NULL),
-(22, NULL, 'yasindu6', NULL, NULL, 'yasindu6@gmail.com', '1234567890', '2025-10-23 05:26:29', '2025-10-23 05:26:29', NULL, NULL);
+(22, NULL, 'yasindu6', NULL, NULL, 'yasindu6@gmail.com', '1234567890', '2025-10-23 05:26:29', '2025-10-23 05:26:29', NULL, NULL),
+(23, NULL, 'sachindra', NULL, NULL, 'sachindrasenevirathna03@gmail.com', '0702345678', '2026-04-16 07:54:41', '2026-04-16 07:54:41', NULL, NULL),
+(24, NULL, 'sachindra', NULL, NULL, 'sachindrasenevirathne2003@gmail.com', '0771234567', '2026-04-16 07:56:40', '2026-04-16 07:56:40', NULL, NULL),
+(25, NULL, 'isumPatient', NULL, 'Male', 'isum.manmitha7@gmail.com', '0702836488', '2026-04-16 11:43:57', '2026-04-16 11:45:32', '', NULL);
 
 -- --------------------------------------------------------
 
@@ -497,7 +500,8 @@ INSERT INTO `payments` (`payment_id`, `bill_id`, `payment_amount`, `payment_meth
 (9, 4, 120.00, 'CASH', '', '2026-04-14', NULL, 6, '2026-04-14 06:41:22'),
 (10, 4, 120.00, 'CASH', '', '2026-04-14', NULL, 6, '2026-04-14 06:41:36'),
 (11, 4, 120.00, 'CASH', '', '2026-04-14', NULL, 6, '2026-04-14 06:54:20'),
-(12, 3, 46.40, 'CASH', '', '2026-04-14', NULL, 6, '2026-04-14 08:53:13');
+(12, 3, 46.40, 'CASH', '', '2026-04-14', NULL, 6, '2026-04-14 08:53:13'),
+(13, 2, 10.00, 'CASH', '', '2026-04-15', NULL, 6, '2026-04-15 16:55:39');
 
 -- --------------------------------------------------------
 
@@ -541,6 +545,45 @@ INSERT INTO `reports` (`report_id`, `appointment_id`, `test_id`, `reference_numb
 (5, 17, 29, 'REF-17-29-20260413_175028', NULL, NULL, NULL, NULL, '2026-04-13 17:50:28', 1, NULL, '2026/04/report_app17_test29_20260413_175028.pdf', 'report_app17_test29_20260413_175028.pdf', 'application/pdf', 74985, '2026-04-13 17:50:28', 11, NULL, NULL, 'AUTHORIZED', '2026-04-13 15:50:28'),
 (6, 17, 30, 'REF-17-30-20260413_175245', NULL, NULL, NULL, NULL, '2026-04-13 17:52:45', 1, NULL, '2026/04/report_app17_test30_20260413_175245.pdf', 'report_app17_test30_20260413_175245.pdf', 'application/pdf', 75395, '2026-04-13 17:52:45', 11, NULL, NULL, 'AUTHORIZED', '2026-04-13 15:52:45'),
 (7, 15, 29, 'REF-15-29-20260413_175411', NULL, NULL, NULL, NULL, '2026-04-13 17:54:11', 1, NULL, '2026/04/report_app15_test29_20260413_175411.pdf', 'report_app15_test29_20260413_175411.pdf', 'application/pdf', 74981, '2026-04-13 17:54:11', 11, NULL, NULL, 'AUTHORIZED', '2026-04-13 15:54:11');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `service_requests`
+--
+
+CREATE TABLE `service_requests` (
+  `request_id` bigint(20) UNSIGNED NOT NULL,
+  `patient_id` int(11) NOT NULL,
+  `request_type` enum('PRESCRIPTION','HOME_VISIT_NO_PRESCRIPTION') NOT NULL,
+  `visit_type` enum('ONSITE','HOME_VISIT') NOT NULL,
+  `prescription_file_path` varchar(255) DEFAULT NULL,
+  `notes` text DEFAULT NULL,
+  `symptoms` text DEFAULT NULL,
+  `preferred_date` date DEFAULT NULL,
+  `preferred_time` time DEFAULT NULL,
+  `collection_address` varchar(255) DEFAULT NULL,
+  `status` varchar(40) NOT NULL DEFAULT 'Pending',
+  `decision_action` varchar(40) DEFAULT NULL,
+  `decision_by_user_id` int(11) DEFAULT NULL,
+  `decision_at` datetime DEFAULT NULL,
+  `linked_appointment_id` int(11) DEFAULT NULL,
+  `source_table` varchar(40) DEFAULT NULL,
+  `source_id` bigint(20) DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `service_requests`
+--
+
+INSERT INTO `service_requests` (`request_id`, `patient_id`, `request_type`, `visit_type`, `prescription_file_path`, `notes`, `symptoms`, `preferred_date`, `preferred_time`, `collection_address`, `status`, `decision_action`, `decision_by_user_id`, `decision_at`, `linked_appointment_id`, `source_table`, `source_id`, `created_at`, `updated_at`) VALUES
+(1, 25, 'PRESCRIPTION', 'ONSITE', 'public/uploads/prescriptions/rx_25_1776370515_9c82f06e.png', '', NULL, '2026-04-18', '17:45:00', NULL, 'Pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-04-16 20:15:15', '2026-04-16 20:15:15'),
+(2, 25, 'PRESCRIPTION', 'ONSITE', 'public/uploads/prescriptions/rx_25_1776370526_f1466480.png', '', NULL, '2026-04-18', '17:45:00', NULL, 'Pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-04-16 20:15:26', '2026-04-16 20:15:26'),
+(3, 25, 'PRESCRIPTION', 'ONSITE', 'public/uploads/prescriptions/rx_25_1776371081_ecf3d02b.png', '', NULL, '2026-04-25', '19:54:00', NULL, 'Pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-04-16 20:24:41', '2026-04-16 20:24:41'),
+(4, 25, 'PRESCRIPTION', 'HOME_VISIT', 'public/uploads/prescriptions/rx_25_1776372120_591e2a2d.png', '', NULL, '2026-04-24', NULL, 'colombo', 'Pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-04-16 20:42:00', '2026-04-16 20:42:00'),
+(5, 25, 'PRESCRIPTION', 'ONSITE', 'public/uploads/prescriptions/rx_25_1776375919_652df919.jpeg', '', NULL, '2026-04-25', NULL, NULL, 'Pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-04-16 21:45:19', '2026-04-16 21:45:19');
 
 -- --------------------------------------------------------
 
@@ -609,7 +652,7 @@ CREATE TABLE `suppliers` (
 INSERT INTO `suppliers` (`supplier_id`, `supplier_name`, `contact_no`, `location`, `email`, `created_at`, `updated_at`) VALUES
 (1, 'ABC Medical Supplies', '0771234567', 'Colombo', 'abcmed@example.com', '2025-10-20 22:29:10', '2025-10-20 22:29:10'),
 (2, 'HealthPlus Distributors', '0712345678', 'Kandy', 'healthplus@example.com', '2025-10-20 22:29:10', '2025-10-20 22:29:10'),
-(3, 'BioTech Labs', '0759876543', 'Galle', 'biotechlabs@example.com', '2025-10-20 22:29:10', '2025-10-20 22:29:10');
+(3, 'BioTech Lab', '0759876543', 'Galle', 'biotechlabs@example.com', '2025-10-20 22:29:10', '2026-04-16 07:33:59');
 
 -- --------------------------------------------------------
 
@@ -844,7 +887,7 @@ INSERT INTO `users` (`user_id`, `username`, `password`, `email`, `contact_number
 (3, 'tech01', 'tech123hashed', 'tech01@example.com', '0773456789', 'technician', 'active', '2025-10-20 13:33:50', '2025-10-20 13:33:50'),
 (4, 'patient01', 'patient123hashed', 'patient01@example.com', '0774567890', 'patient', 'active', '2025-10-20 13:33:50', '2025-10-20 13:33:50'),
 (5, 'patient02', 'patient456hashed', 'patient02@example.com', '0775678901', 'patient', 'active', '2025-10-20 13:33:50', '2025-10-20 13:33:50'),
-(6, 'admin1', '$2y$10$tDkXoH4NzoaPt9hjIpZ1aO1RNMktISO7ayDKhQIG.IpE5iJeB6ImO', 'isumanmitha@gmail.com', '0712340678', 'admin', 'active', '2025-10-20 20:45:17', '2025-10-21 10:09:49'),
+(6, 'admin1', '$2y$10$AhtaBI36yrUs3RQM88wI6.2ijAd7otDnUju3KtLIB/Y9dLQwanSqC', 'isumanmitha@gmail.com', '0712340678', 'admin', 'active', '2025-10-20 20:45:17', '2026-04-15 21:07:39'),
 (8, 'admin2', '$2y$10$gGR.AibzYrfgG7FHxb8BbuoEok8Iba4U6IviXqvqj86kUuSuYK0Xy', 'udemy4ucsc@gmail.com', '0712340678', 'admin', 'active', '2025-10-21 12:36:54', '2025-10-21 12:36:54'),
 (10, 'patient123', '$2y$10$p8yspwoq7kJ07Y1gfxIlgOk9byNPi9iUebwoPK4/QS5Ma3E0xLQhK', 'pasidu@gmail.com', '0712340678', 'patient', 'active', '2025-10-21 21:16:09', '2025-10-21 21:16:09'),
 (11, 'tech1', '$2y$10$0UfWVdPIZTJAs/AvY.faP.fhgxUGMOyMpfvZrnxFHvlOJgrfvD3UW', 'ucsc@gmail.com', '1234567890', 'technician', 'active', '2025-10-22 02:58:29', '2025-10-22 02:58:29'),
@@ -863,7 +906,192 @@ INSERT INTO `users` (`user_id`, `username`, `password`, `email`, `contact_number
 (27, 'admin3', '$2y$10$pLXz4Ai0My.Rj6OyiAbYU.FHXS9BAO44LEk3n4kn50AN3m/JMigBm', 'admin3@gmail.com', '`123456789', 'admin', 'active', '2025-10-23 04:14:18', '2025-10-23 04:14:18'),
 (28, 'yasindu', '$2y$10$ek5ST2dAnlcoFAG8vhViIOu4mp9gqIhD4ZTK1TwpMDezcH7z0Ql3G', 'yas@gmail.com', '1234567890', 'patient', 'active', '2025-10-23 04:27:41', '2025-10-23 04:27:41'),
 (30, 'yasindu6', '$2y$10$b2KHWTOhVVS9PLtI.glBsuxwKuT.sd2Dug6Iv/.r94ZDhsD0w3dyK', 'yasindu6@gmail.com', '1234567890', 'patient', 'active', '2025-10-23 05:26:29', '2025-10-23 05:26:29'),
-(31, 'MLT1', '$2y$10$87czWpgyHjMgoQH/kjoH8ulHfGpevV0DUVOIQeqPk/cDk9bvr.Zsq', 'mlt@gmail.com', '0712345678', 'admin', 'active', '2026-02-16 08:28:33', '2026-02-16 08:28:33');
+(31, 'MLT1', '$2y$10$87czWpgyHjMgoQH/kjoH8ulHfGpevV0DUVOIQeqPk/cDk9bvr.Zsq', 'mlt@gmail.com', '0712345678', 'admin', 'active', '2026-02-16 08:28:33', '2026-02-16 08:28:33'),
+(32, '', '$2y$10$aIzptgfD3PRykjfwwV.sf.Y6YE.SX1nqMzIm9pGYo.L8Ao2vBX5tC', 'sachindrasenevirathna03@gmail.com', '0702345678', 'patient', 'active', '2026-04-16 07:54:41', '2026-04-16 07:54:41'),
+(33, '', '$2y$10$WWujfBXP.Xnh9Q3xS.lpluvIhN9N4C/i0TJqOuSvePfXaYvVZeJPK', 'sachindrasenevirathne2003@gmail.com', '0771234567', 'patient', 'active', '2026-04-16 07:56:40', '2026-04-16 07:56:40'),
+(34, 'isumPatient', '$2y$10$v5Q0eI71Ly26WVXdWJ2sROe4wfYeNJp0itZIOU33oXpNAg.Q7lTtq', 'isum.manmitha7@gmail.com', '0702836488', 'patient', 'active', '2026-04-16 11:43:57', '2026-04-16 11:45:32');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `user_2fa`
+--
+
+CREATE TABLE `user_2fa` (
+  `twofa_id` int(11) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  `is_enabled` tinyint(1) NOT NULL DEFAULT 0,
+  `method` enum('TOTP','SMS','EMAIL') NOT NULL DEFAULT 'TOTP',
+  `secret_key` varchar(255) DEFAULT NULL,
+  `recovery_codes` text DEFAULT NULL,
+  `last_verified_at` datetime DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `user_2fa`
+--
+
+INSERT INTO `user_2fa` (`twofa_id`, `user_id`, `is_enabled`, `method`, `secret_key`, `recovery_codes`, `last_verified_at`, `created_at`, `updated_at`) VALUES
+(1, 13, 0, 'TOTP', NULL, NULL, NULL, '2026-04-15 20:00:13', '2026-04-15 20:00:13'),
+(2, 22, 0, 'TOTP', NULL, NULL, NULL, '2026-04-15 20:00:13', '2026-04-15 20:00:13'),
+(3, 27, 0, 'TOTP', NULL, NULL, NULL, '2026-04-15 20:00:13', '2026-04-15 20:00:13'),
+(4, 6, 0, 'TOTP', NULL, NULL, NULL, '2026-04-15 20:00:13', '2026-04-15 20:43:21'),
+(5, 20, 0, 'TOTP', NULL, NULL, NULL, '2026-04-15 20:00:13', '2026-04-15 20:00:13'),
+(6, 15, 0, 'TOTP', NULL, NULL, NULL, '2026-04-15 20:00:13', '2026-04-15 20:00:13'),
+(7, 31, 0, 'TOTP', NULL, NULL, NULL, '2026-04-15 20:00:13', '2026-04-15 20:00:13'),
+(8, 12, 0, 'TOTP', NULL, NULL, NULL, '2026-04-15 20:00:13', '2026-04-15 20:00:13'),
+(9, 10, 0, 'TOTP', NULL, NULL, NULL, '2026-04-15 20:00:13', '2026-04-15 20:00:13'),
+(10, 4, 0, 'TOTP', NULL, NULL, NULL, '2026-04-15 20:00:13', '2026-04-15 20:00:13'),
+(11, 5, 0, 'TOTP', NULL, NULL, NULL, '2026-04-15 20:00:13', '2026-04-15 20:00:13'),
+(12, 23, 0, 'TOTP', NULL, NULL, NULL, '2026-04-15 20:00:13', '2026-04-15 20:00:13'),
+(13, 16, 0, 'TOTP', NULL, NULL, NULL, '2026-04-15 20:00:13', '2026-04-15 20:00:13'),
+(14, 14, 0, 'TOTP', NULL, NULL, NULL, '2026-04-15 20:00:13', '2026-04-15 20:00:13'),
+(15, 18, 0, 'TOTP', NULL, NULL, NULL, '2026-04-15 20:00:13', '2026-04-15 20:00:13'),
+(16, 17, 0, 'TOTP', NULL, NULL, NULL, '2026-04-15 20:00:13', '2026-04-15 20:00:13'),
+(17, 19, 0, 'TOTP', NULL, NULL, NULL, '2026-04-15 20:00:13', '2026-04-15 20:00:13'),
+(18, 21, 0, 'TOTP', NULL, NULL, NULL, '2026-04-15 20:00:13', '2026-04-15 20:00:13'),
+(19, 3, 0, 'TOTP', NULL, NULL, NULL, '2026-04-15 20:00:13', '2026-04-15 20:00:13'),
+(20, 11, 0, 'TOTP', NULL, NULL, NULL, '2026-04-15 20:00:13', '2026-04-15 20:00:13'),
+(21, 8, 0, 'TOTP', NULL, NULL, NULL, '2026-04-15 20:00:13', '2026-04-15 20:00:13'),
+(22, 28, 0, 'TOTP', NULL, NULL, NULL, '2026-04-15 20:00:13', '2026-04-15 20:00:13'),
+(23, 30, 0, 'TOTP', NULL, NULL, NULL, '2026-04-15 20:00:13', '2026-04-15 20:00:13');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `user_preferences`
+--
+
+CREATE TABLE `user_preferences` (
+  `pref_id` int(11) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  `email_notifications` tinyint(1) NOT NULL DEFAULT 1,
+  `sms_alerts` tinyint(1) NOT NULL DEFAULT 0,
+  `quiet_hours_start` time DEFAULT NULL,
+  `quiet_hours_end` time DEFAULT NULL,
+  `theme_mode` enum('Light','Dark','System') NOT NULL DEFAULT 'System',
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `user_preferences`
+--
+
+INSERT INTO `user_preferences` (`pref_id`, `user_id`, `email_notifications`, `sms_alerts`, `quiet_hours_start`, `quiet_hours_end`, `theme_mode`, `created_at`, `updated_at`) VALUES
+(1, 13, 1, 0, NULL, NULL, 'System', '2026-04-15 20:00:13', '2026-04-15 20:00:13'),
+(2, 22, 1, 0, NULL, NULL, 'System', '2026-04-15 20:00:13', '2026-04-15 20:00:13'),
+(3, 27, 1, 0, NULL, NULL, 'System', '2026-04-15 20:00:13', '2026-04-15 20:00:13'),
+(4, 6, 1, 0, '22:00:00', '07:00:00', 'System', '2026-04-15 20:00:13', '2026-04-15 20:43:34'),
+(5, 20, 1, 0, NULL, NULL, 'System', '2026-04-15 20:00:13', '2026-04-15 20:00:13'),
+(6, 15, 1, 0, NULL, NULL, 'System', '2026-04-15 20:00:13', '2026-04-15 20:00:13'),
+(7, 31, 1, 0, NULL, NULL, 'System', '2026-04-15 20:00:13', '2026-04-15 20:00:13'),
+(8, 12, 1, 0, NULL, NULL, 'System', '2026-04-15 20:00:13', '2026-04-15 20:00:13'),
+(9, 10, 1, 0, NULL, NULL, 'System', '2026-04-15 20:00:13', '2026-04-15 20:00:13'),
+(10, 4, 1, 0, NULL, NULL, 'System', '2026-04-15 20:00:13', '2026-04-15 20:00:13'),
+(11, 5, 1, 0, NULL, NULL, 'System', '2026-04-15 20:00:13', '2026-04-15 20:00:13'),
+(12, 23, 1, 0, NULL, NULL, 'System', '2026-04-15 20:00:13', '2026-04-15 20:00:13'),
+(13, 16, 1, 0, NULL, NULL, 'System', '2026-04-15 20:00:13', '2026-04-15 20:00:13'),
+(14, 14, 1, 0, NULL, NULL, 'System', '2026-04-15 20:00:13', '2026-04-15 20:00:13'),
+(15, 18, 1, 0, NULL, NULL, 'System', '2026-04-15 20:00:13', '2026-04-15 20:00:13'),
+(16, 17, 1, 0, NULL, NULL, 'System', '2026-04-15 20:00:13', '2026-04-15 20:00:13'),
+(17, 19, 1, 0, NULL, NULL, 'System', '2026-04-15 20:00:13', '2026-04-15 20:00:13'),
+(18, 21, 1, 0, NULL, NULL, 'System', '2026-04-15 20:00:13', '2026-04-15 20:00:13'),
+(19, 3, 1, 0, NULL, NULL, 'System', '2026-04-15 20:00:13', '2026-04-15 20:00:13'),
+(20, 11, 1, 0, NULL, NULL, 'System', '2026-04-15 20:00:13', '2026-04-15 20:00:13'),
+(21, 8, 1, 0, NULL, NULL, 'System', '2026-04-15 20:00:13', '2026-04-15 20:00:13'),
+(22, 28, 1, 0, NULL, NULL, 'System', '2026-04-15 20:00:13', '2026-04-15 20:00:13'),
+(23, 30, 1, 0, NULL, NULL, 'System', '2026-04-15 20:00:13', '2026-04-15 20:00:13');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `user_profile_details`
+--
+
+CREATE TABLE `user_profile_details` (
+  `profile_id` int(11) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  `full_name` varchar(120) DEFAULT NULL,
+  `date_of_birth` date DEFAULT NULL,
+  `gender` enum('Male','Female','Other') DEFAULT NULL,
+  `residential_address` varchar(255) DEFAULT NULL,
+  `avatar_path` varchar(255) DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `user_profile_details`
+--
+
+INSERT INTO `user_profile_details` (`profile_id`, `user_id`, `full_name`, `date_of_birth`, `gender`, `residential_address`, `avatar_path`, `created_at`, `updated_at`) VALUES
+(1, 3, 'tech01', NULL, NULL, NULL, NULL, '2026-04-15 20:00:13', '2026-04-15 20:00:13'),
+(2, 4, 'patient01', NULL, NULL, NULL, NULL, '2026-04-15 20:00:13', '2026-04-15 20:00:13'),
+(3, 5, 'patient02', NULL, NULL, NULL, NULL, '2026-04-15 20:00:13', '2026-04-15 20:00:13'),
+(4, 6, 'admin1', '2004-01-29', 'Male', NULL, NULL, '2026-04-15 20:00:13', '2026-04-15 20:54:44'),
+(5, 8, 'admin2', NULL, NULL, NULL, NULL, '2026-04-15 20:00:13', '2026-04-15 20:00:13'),
+(6, 10, 'patient123', NULL, NULL, NULL, NULL, '2026-04-15 20:00:13', '2026-04-15 20:00:13'),
+(7, 11, 'tech1', NULL, NULL, NULL, NULL, '2026-04-15 20:00:13', '2026-04-15 20:00:13'),
+(8, 12, 'recep1', NULL, NULL, NULL, NULL, '2026-04-15 20:00:13', '2026-04-15 20:00:13'),
+(9, 13, 'manmitha', NULL, NULL, NULL, NULL, '2026-04-15 20:00:13', '2026-04-15 20:00:13'),
+(10, 14, 'saman', NULL, NULL, NULL, NULL, '2026-04-15 20:00:13', '2026-04-15 20:00:13'),
+(11, 15, 'kumara', NULL, NULL, NULL, NULL, '2026-04-15 20:00:13', '2026-04-15 20:00:13'),
+(12, 16, 'sam', NULL, NULL, NULL, NULL, '2026-04-15 20:00:13', '2026-04-15 20:00:13'),
+(13, 17, 'samy', NULL, NULL, NULL, NULL, '2026-04-15 20:00:13', '2026-04-15 20:00:13'),
+(14, 18, 'sami', NULL, NULL, NULL, NULL, '2026-04-15 20:00:13', '2026-04-15 20:00:13'),
+(15, 19, 'suri', NULL, NULL, NULL, NULL, '2026-04-15 20:00:13', '2026-04-15 20:00:13'),
+(16, 20, 'karuni', NULL, NULL, NULL, NULL, '2026-04-15 20:00:13', '2026-04-15 20:00:13'),
+(17, 21, 'surini', NULL, NULL, NULL, NULL, '2026-04-15 20:00:13', '2026-04-15 20:00:13'),
+(18, 22, 'admin4', NULL, NULL, NULL, NULL, '2026-04-15 20:00:13', '2026-04-15 20:00:13'),
+(19, 23, 'patient', NULL, NULL, NULL, NULL, '2026-04-15 20:00:13', '2026-04-15 20:00:13'),
+(20, 27, 'admin3', NULL, NULL, NULL, NULL, '2026-04-15 20:00:13', '2026-04-15 20:00:13'),
+(21, 28, 'yasindu', NULL, NULL, NULL, NULL, '2026-04-15 20:00:13', '2026-04-15 20:00:13'),
+(22, 30, 'yasindu6', NULL, NULL, NULL, NULL, '2026-04-15 20:00:13', '2026-04-15 20:00:13'),
+(23, 31, 'MLT1', NULL, NULL, NULL, NULL, '2026-04-15 20:00:13', '2026-04-15 20:00:13');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `user_sessions`
+--
+
+CREATE TABLE `user_sessions` (
+  `user_session_id` int(11) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  `php_session_id` varchar(128) NOT NULL,
+  `session_token` char(64) NOT NULL,
+  `device_label` varchar(120) DEFAULT NULL,
+  `ip_address` varchar(45) DEFAULT NULL,
+  `user_agent` varchar(255) DEFAULT NULL,
+  `logged_in_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `last_activity` datetime NOT NULL DEFAULT current_timestamp(),
+  `logged_out_at` datetime DEFAULT NULL,
+  `is_active` tinyint(1) NOT NULL DEFAULT 1
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `user_sessions`
+--
+
+INSERT INTO `user_sessions` (`user_session_id`, `user_id`, `php_session_id`, `session_token`, `device_label`, `ip_address`, `user_agent`, `logged_in_at`, `last_activity`, `logged_out_at`, `is_active`) VALUES
+(1, 6, 'iaug3t06di17m6ubcng7epsv8i', 'ff7294aea63d7214d507fcdf7885cb321fbae6fe1c32f1f49a471d1b614f2b0b', 'Windows - Chrome', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-16 02:16:16', '2026-04-16 13:23:07', '2026-04-16 13:23:07', 0),
+(2, 33, '54rk503rhvgu3uovh0tcsestuq', 'c461a4da6ca8ef72aba8f3ffa0a46ad00027820efa69f28437b1c01043dd8b80', 'Windows - Chrome', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-16 13:26:55', '2026-04-16 15:07:31', '2026-04-16 15:07:31', 0),
+(3, 6, 'hnbmio14av00u0me8ddmkgu0ga', 'c47b69b1b18a57f6fe0b8dc8a3227d2d237f91a9458c731579838dcb3f6b922b', 'Windows - Chrome', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-16 15:08:00', '2026-04-16 17:12:44', '2026-04-16 17:12:44', 0),
+(4, 6, '44riqc5n3pa0vf9f6ucic1d4qh', '53ee6610216e4710382245576b2f666c58c7412753ea7208479289648b4f907b', 'Windows - Edge', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-16 15:24:48', '2026-04-16 15:24:56', '2026-04-16 22:13:16', 0),
+(5, 34, 'snfgjbvbk7g0f5un8ha3edrspo', '98a4f501bef12f72d24f90c5c3d298178a3de5201696f50d6540e729c00d1c9b', 'Windows - Chrome', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-16 17:15:09', '2026-04-16 18:38:09', '2026-04-16 18:38:09', 0),
+(6, 6, 'qmcj1uobuo22d13svgar9bm5rf', '937de54d0cfcbb291fe699520046774d1a96ccc275d78c71d0516d264ec52690', 'Windows - Chrome', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-16 18:38:31', '2026-04-16 19:17:29', '2026-04-16 19:17:29', 0),
+(7, 34, '6rfqfljr50bk3lr6hcn8dlqjm9', '327380afc9244bea4fde1f29662b6605e0315e7eb24aa311d395234da025d31c', 'Windows - Chrome', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-16 19:17:55', '2026-04-16 19:19:07', '2026-04-16 19:19:07', 0),
+(8, 6, 'eteoi9bu4ck1dus50264t35539', 'f3883d0de8efab9b582a57bf7821425cd21c2ea0023a5f1214d286221465b7d7', 'Windows - Chrome', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-16 19:19:40', '2026-04-16 19:19:40', '2026-04-16 22:12:06', 0),
+(9, 6, '9962hrsg03tps6f8thdld3dttc', '9c937c6ac5f3148aaa860971c3b43f312af0247f0d2c712a90c59f8d54ce410a', 'Windows - Chrome', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-16 22:00:01', '2026-04-16 22:21:53', '2026-04-16 22:21:53', 0),
+(10, 34, 'jv2m7ugenlqpvc28slf4a1t9q4', '6a4ce230530d128abfa0bf3d5b962226e6a7f563e421263df7e5d9a01e63fbad', 'Windows - Chrome', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-16 22:22:16', '2026-04-16 22:23:22', '2026-04-16 22:23:22', 0),
+(11, 6, '481f372rcnhspe4nmq6qtsf83s', '69c8c1cade76ba39edda7841266ef4ce159d7b06bf284f2dacbe8e6a0b26cb8f', 'Windows - Chrome', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-16 22:23:47', '2026-04-17 01:09:49', '2026-04-17 01:09:49', 0),
+(12, 34, 'b4rfpsv9k5cb9aqd30986hujal', '9f54fc58650a60fa28bb4c84e65dbd4eb8239d3313878da1a324d4ae971a99b4', 'Windows - Chrome', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-17 01:10:04', '2026-04-17 09:22:56', '2026-04-17 09:22:56', 0),
+(13, 6, '6g3qpnu35efmaj72kav2995h36', '5d0daf74b9cf6d6236f8dd484c53a3da2d4d224a83fd7818daf822181b9f0ac4', 'Windows - Edge', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-17 01:13:06', '2026-04-17 01:13:06', '2026-04-17 10:39:47', 0),
+(14, 6, 'oun9vcs0g7re1qn66cmrs1se8t', 'c2dffa5af7ba98df207502fae24bf68926b961ef5ab253976a642fa703d42fd2', 'Windows - Chrome', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-17 09:23:18', '2026-04-17 09:23:18', NULL, 1),
+(15, 6, '048qgvmo0akrstkunkn46momku', 'f482184550e6e8315bb7cfa066b2204468e51b36bca276b09b0310504854ad32', 'Windows - Chrome', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-17 10:33:04', '2026-04-17 10:39:47', NULL, 1);
 
 --
 -- Indexes for dumped tables
@@ -1011,6 +1239,19 @@ ALTER TABLE `reports`
   ADD KEY `idx_reports_test` (`test_id`);
 
 --
+-- Indexes for table `service_requests`
+--
+ALTER TABLE `service_requests`
+  ADD PRIMARY KEY (`request_id`),
+  ADD KEY `idx_sr_patient` (`patient_id`),
+  ADD KEY `idx_sr_status` (`status`),
+  ADD KEY `idx_sr_type_visit` (`request_type`,`visit_type`),
+  ADD KEY `idx_sr_preferred_date` (`preferred_date`),
+  ADD KEY `idx_sr_created_at` (`created_at`),
+  ADD KEY `fk_sr_decision_user` (`decision_by_user_id`),
+  ADD KEY `fk_sr_appointment` (`linked_appointment_id`);
+
+--
 -- Indexes for table `stock_history`
 --
 ALTER TABLE `stock_history`
@@ -1094,6 +1335,35 @@ ALTER TABLE `test_units`
 ALTER TABLE `users`
   ADD PRIMARY KEY (`user_id`),
   ADD UNIQUE KEY `email` (`email`);
+
+--
+-- Indexes for table `user_2fa`
+--
+ALTER TABLE `user_2fa`
+  ADD PRIMARY KEY (`twofa_id`),
+  ADD UNIQUE KEY `user_id` (`user_id`);
+
+--
+-- Indexes for table `user_preferences`
+--
+ALTER TABLE `user_preferences`
+  ADD PRIMARY KEY (`pref_id`),
+  ADD UNIQUE KEY `user_id` (`user_id`);
+
+--
+-- Indexes for table `user_profile_details`
+--
+ALTER TABLE `user_profile_details`
+  ADD PRIMARY KEY (`profile_id`),
+  ADD UNIQUE KEY `user_id` (`user_id`);
+
+--
+-- Indexes for table `user_sessions`
+--
+ALTER TABLE `user_sessions`
+  ADD PRIMARY KEY (`user_session_id`),
+  ADD UNIQUE KEY `uq_user_sessions_token` (`session_token`),
+  ADD KEY `idx_user_sessions_user_active` (`user_id`,`is_active`);
 
 --
 -- AUTO_INCREMENT for dumped tables
@@ -1187,19 +1457,25 @@ ALTER TABLE `partner_lab_tests`
 -- AUTO_INCREMENT for table `patients`
 --
 ALTER TABLE `patients`
-  MODIFY `patient_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
+  MODIFY `patient_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=26;
 
 --
 -- AUTO_INCREMENT for table `payments`
 --
 ALTER TABLE `payments`
-  MODIFY `payment_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
+  MODIFY `payment_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
 
 --
 -- AUTO_INCREMENT for table `reports`
 --
 ALTER TABLE `reports`
   MODIFY `report_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+
+--
+-- AUTO_INCREMENT for table `service_requests`
+--
+ALTER TABLE `service_requests`
+  MODIFY `request_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT for table `stock_history`
@@ -1259,7 +1535,31 @@ ALTER TABLE `test_units`
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `user_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=32;
+  MODIFY `user_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=35;
+
+--
+-- AUTO_INCREMENT for table `user_2fa`
+--
+ALTER TABLE `user_2fa`
+  MODIFY `twofa_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=104;
+
+--
+-- AUTO_INCREMENT for table `user_preferences`
+--
+ALTER TABLE `user_preferences`
+  MODIFY `pref_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=104;
+
+--
+-- AUTO_INCREMENT for table `user_profile_details`
+--
+ALTER TABLE `user_profile_details`
+  MODIFY `profile_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=103;
+
+--
+-- AUTO_INCREMENT for table `user_sessions`
+--
+ALTER TABLE `user_sessions`
+  MODIFY `user_session_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
 
 --
 -- Constraints for dumped tables
@@ -1330,6 +1630,14 @@ ALTER TABLE `payments`
   ADD CONSTRAINT `fk_payments_received_by` FOREIGN KEY (`received_by`) REFERENCES `users` (`user_id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 --
+-- Constraints for table `service_requests`
+--
+ALTER TABLE `service_requests`
+  ADD CONSTRAINT `fk_sr_appointment` FOREIGN KEY (`linked_appointment_id`) REFERENCES `appointment` (`appointment_id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `fk_sr_decision_user` FOREIGN KEY (`decision_by_user_id`) REFERENCES `users` (`user_id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `fk_sr_patient` FOREIGN KEY (`patient_id`) REFERENCES `patients` (`patient_id`) ON DELETE CASCADE;
+
+--
 -- Constraints for table `stock_purchases`
 --
 ALTER TABLE `stock_purchases`
@@ -1362,6 +1670,30 @@ ALTER TABLE `test_results`
 --
 ALTER TABLE `test_units`
   ADD CONSTRAINT `fk_test_units_test` FOREIGN KEY (`test_id`) REFERENCES `tests` (`test_id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Constraints for table `user_2fa`
+--
+ALTER TABLE `user_2fa`
+  ADD CONSTRAINT `fk_user_2fa_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Constraints for table `user_preferences`
+--
+ALTER TABLE `user_preferences`
+  ADD CONSTRAINT `fk_user_preferences_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Constraints for table `user_profile_details`
+--
+ALTER TABLE `user_profile_details`
+  ADD CONSTRAINT `fk_user_profile_details_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Constraints for table `user_sessions`
+--
+ALTER TABLE `user_sessions`
+  ADD CONSTRAINT `fk_user_sessions_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE ON UPDATE CASCADE;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
