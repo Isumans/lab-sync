@@ -91,14 +91,6 @@ $workflowScriptVersion = file_exists($workflowScriptPath) ? (string)filemtime($w
                                             <option value="Radiology">Radiology</option>
                                         </select>
                                     </div>
-                                    <div class="form-group">
-                                        <label for="test-code">TEST CODE</label>
-                                        <input type="text" id="test-code" name="test_code" placeholder="e.g., T-001" required>
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="lab-id">LAB # / LIB ID</label>
-                                        <input type="text" id="lab-id" name="lab_id" placeholder="e.g., L-4829">
-                                    </div>
                                 </div>
 
                                 <div class="form-row">
@@ -160,20 +152,6 @@ $workflowScriptVersion = file_exists($workflowScriptPath) ? (string)filemtime($w
                                             </div>
                                         </div>
 
-                                        <div class="form-group">
-                                            <label for="print-order">PRINT ORDER</label>
-                                            <input type="number" id="print-order" name="print_order" placeholder="0" min="0">
-                                        </div>
-
-                                        <div class="form-group">
-                                            <label for="decimals">DECIMALS</label>
-                                            <select id="decimals" name="decimals">
-                                                <option value="2">2 Decimal Places</option>
-                                                <option value="3">3 Decimal Places</option>
-                                                <option value="4">4 Decimal Places</option>
-                                            </select>
-                                        </div>
-
                                         <div class="checkbox-group">
                                             <label>
                                                 <input type="checkbox" id="is-active" name="is_active" value="1">
@@ -181,10 +159,6 @@ $workflowScriptVersion = file_exists($workflowScriptPath) ? (string)filemtime($w
                                             </label>
                                         </div>
 
-                                        <div class="validation-note">
-                                            <input type="checkbox" id="validation-required" name="validation_required" value="1">
-                                            <label for="validation-required">Validation Required</label>
-                                        </div>
                                     </div>
 
                                     <!-- Right Column: Units & Reference Ranges -->

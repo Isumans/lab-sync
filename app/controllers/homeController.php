@@ -4,6 +4,7 @@ if (!defined('ROOT_PATH')) {
 }
 
 require_once MODEL_PATH . '/homeModel.php';
+require_once MODEL_PATH . '/billingModel.php';
 require_once APP_PATH . '/services/EmailService.php';
 require_once APP_PATH . '/services/SmsService.php';
 require_once 'C:\xampp\htdocs\lab_sync\config\db.php';
@@ -61,7 +62,7 @@ class HomeController {
                     $user = $this->model->registerPatient($name, $email, $contact_number, $hashed, $role);
 
                     if ($user) {
-                        header('Location: /lab_sync/index.php?controller=Auth&action=login');
+                        header('Location: ' . route_url('Auth', 'login'));
                         exit;
                     } else {
                         $this->error = "Error during registration.";
@@ -86,6 +87,8 @@ class HomeController {
 
     public function getHelp() {
 
+        $csrfToken = $this->ensureCsrfToken();
+
         $requests = [];
         if (isset($_SESSION['user_id'])) {
             $patientId = (int)$this->model->getPatientIdByUserId($_SESSION['user_id']);
@@ -100,59 +103,21 @@ class HomeController {
     public function submitPrescriptionHelp() {
 
         if (!isset($_SESSION['user_id'])) {
-            header('Location: /lab_sync/index.php?controller=Auth&action=index');
+            header('Location: ' . route_url('Auth', 'index'));
             exit;
         }
 
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            header('Location: /lab_sync/index.php?controller=home&action=get_help');
+            header('Location: ' . route_url('home', 'get_help'));
             exit;
         }
+
+        $this->validateCsrfOrFail();
 
         $patientId = (int)$this->model->getPatientIdByUserId($_SESSION['user_id']);
         if ($patientId <= 0) {
             $_SESSION['error'] = 'Unable to identify patient profile.';
-            header('Location: /lab_sync/index.php?controller=home&action=get_help');
-            exit;
-        }
-
-        if (!isset($_FILES['prescription_file']) || $_FILES['prescription_file']['error'] !== UPLOAD_ERR_OK) {
-            $_SESSION['error'] = 'Please upload a valid prescription file.';
-            header('Location: /lab_sync/index.php?controller=home&action=get_help');
-            exit;
-        }
-
-        $allowedExtensions = ['pdf', 'jpg', 'jpeg', 'png'];
-        $originalName = $_FILES['prescription_file']['name'] ?? '';
-        $tmpFile = $_FILES['prescription_file']['tmp_name'] ?? '';
-        $extension = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
-
-        if (!in_array($extension, $allowedExtensions, true)) {
-            $_SESSION['error'] = 'Allowed file types: PDF, JPG, JPEG, PNG.';
-            header('Location: /lab_sync/index.php?controller=home&action=get_help');
-            exit;
-        }
-
-        if ((int)$_FILES['prescription_file']['size'] > 5 * 1024 * 1024) {
-            $_SESSION['error'] = 'File is too large. Maximum size is 5MB.';
-            header('Location: /lab_sync/index.php?controller=home&action=get_help');
-            exit;
-        }
-
-        $uploadDir = ROOT_PATH . DIRECTORY_SEPARATOR . 'public' . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . 'prescriptions';
-        if (!is_dir($uploadDir) && !mkdir($uploadDir, 0755, true)) {
-            $_SESSION['error'] = 'Failed to create upload directory.';
-            header('Location: /lab_sync/index.php?controller=home&action=get_help');
-            exit;
-        }
-
-        $safeName = 'rx_' . $patientId . '_' . time() . '_' . bin2hex(random_bytes(4)) . '.' . $extension;
-        $fullPath = $uploadDir . DIRECTORY_SEPARATOR . $safeName;
-        $relativePath = 'public/uploads/prescriptions/' . $safeName;
-
-        if (!move_uploaded_file($tmpFile, $fullPath)) {
-            $_SESSION['error'] = 'Failed to upload prescription. Please try again.';
-            header('Location: /lab_sync/index.php?controller=home&action=get_help');
+            header('Location: ' . route_url('home', 'get_help'));
             exit;
         }
 
@@ -161,10 +126,62 @@ class HomeController {
         $preferredTime = trim($_POST['preferred_time'] ?? '');
         $homeCollection = !empty($_POST['home_collection']) ? 1 : 0;
         $collectionAddress = trim($_POST['collection_address'] ?? '');
+        $relativePath = null;
+        $fullPath = null;
+        $requestType = 'HOME_VISIT_NO_PRESCRIPTION';
 
         if ($homeCollection && $collectionAddress === '') {
             $_SESSION['error'] = 'Please provide a collection address for home sample collection.';
-            header('Location: /lab_sync/index.php?controller=home&action=get_help');
+            header('Location: ' . route_url('home', 'get_help'));
+            exit;
+        }
+
+        $uploadError = isset($_FILES['prescription_file']) ? intval($_FILES['prescription_file']['error'] ?? UPLOAD_ERR_NO_FILE) : UPLOAD_ERR_NO_FILE;
+        if ($uploadError === UPLOAD_ERR_OK) {
+            $allowedExtensions = ['pdf', 'jpg', 'jpeg', 'png'];
+            $originalName = $_FILES['prescription_file']['name'] ?? '';
+            $tmpFile = $_FILES['prescription_file']['tmp_name'] ?? '';
+            $extension = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
+
+            if (!in_array($extension, $allowedExtensions, true)) {
+                $_SESSION['error'] = 'Allowed file types: PDF, JPG, JPEG, PNG.';
+                header('Location: ' . route_url('home', 'get_help'));
+                exit;
+            }
+
+            if ((int)$_FILES['prescription_file']['size'] > 5 * 1024 * 1024) {
+                $_SESSION['error'] = 'File is too large. Maximum size is 5MB.';
+                header('Location: ' . route_url('home', 'get_help'));
+                exit;
+            }
+
+            $uploadDir = ROOT_PATH . DIRECTORY_SEPARATOR . 'public' . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . 'prescriptions';
+            if (!is_dir($uploadDir) && !mkdir($uploadDir, 0755, true)) {
+                $_SESSION['error'] = 'Failed to create upload directory.';
+                header('Location: ' . route_url('home', 'get_help'));
+                exit;
+            }
+
+            $safeName = 'rx_' . $patientId . '_' . time() . '_' . bin2hex(random_bytes(4)) . '.' . $extension;
+            $fullPath = $uploadDir . DIRECTORY_SEPARATOR . $safeName;
+            $relativePath = 'public/uploads/prescriptions/' . $safeName;
+
+            if (!move_uploaded_file($tmpFile, $fullPath)) {
+                $_SESSION['error'] = 'Failed to upload prescription. Please try again.';
+                header('Location: ' . route_url('home', 'get_help'));
+                exit;
+            }
+
+            $requestType = 'PRESCRIPTION';
+        } elseif ($uploadError !== UPLOAD_ERR_NO_FILE) {
+            $_SESSION['error'] = 'Please upload a valid prescription file.';
+            header('Location: ' . route_url('home', 'get_help'));
+            exit;
+        }
+
+        if ($requestType !== 'PRESCRIPTION' && !$homeCollection) {
+            $_SESSION['error'] = 'Upload a prescription file or select home sample collection.';
+            header('Location: ' . route_url('home', 'get_help'));
             exit;
         }
 
@@ -175,7 +192,8 @@ class HomeController {
             $preferredDate,
             $preferredTime,
             $homeCollection,
-            $collectionAddress
+            $collectionAddress,
+            $requestType
         );
 
         if (!$saved) {
@@ -183,30 +201,61 @@ class HomeController {
                 unlink($fullPath);
             }
             $_SESSION['error'] = $this->model->getLastError() ?: 'Failed to submit prescription request.';
-            header('Location: /lab_sync/index.php?controller=home&action=get_help');
+            header('Location: ' . route_url('home', 'get_help'));
             exit;
         }
 
-        $_SESSION['success'] = 'Prescription submitted. Receptionist will contact you soon.';
-        header('Location: /lab_sync/index.php?controller=home&action=get_help');
+        $_SESSION['success'] = $requestType === 'PRESCRIPTION'
+            ? 'Prescription submitted. Receptionist will contact you soon.'
+            : 'Home visit request submitted. Receptionist will contact you soon.';
+        header('Location: ' . route_url('home', 'get_help'));
         exit;
+    }
+
+    private function ensureCsrfToken() {
+        if (empty($_SESSION['csrf_token'])) {
+            $_SESSION['csrf_token'] = bin2hex(random_bytes(24));
+        }
+
+        return $_SESSION['csrf_token'];
+    }
+
+    private function validateCsrfOrFail() {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            return;
+        }
+
+        $sessionToken = (string)($_SESSION['csrf_token'] ?? '');
+        $requestToken = (string)($_POST['csrf_token'] ?? '');
+
+        if ($sessionToken === '' || $requestToken === '' || !hash_equals($sessionToken, $requestToken)) {
+            $_SESSION['error'] = 'Security check failed. Please retry.';
+            header('Location: ' . route_url('home', 'get_help'));
+            exit;
+        }
     }
 
     public function bookTest(){
         $selectedTestId = (int)($_GET['test'] ?? 0);
+        $fromRequestId = (int)($_GET['from_request'] ?? 0);
+        $preSelectedTestIds = [];
+        if ($fromRequestId > 0) {
+            $preSelectedTestIds = $this->model->getTestIdsForRequest($fromRequestId);
+        }
         $tests = $this->model->getAllTests();
+        $csrfToken = $this->ensureCsrfToken();
         include VIEW_PATH . '/patient/book.php';
     }
     public function bookAppointment() {
         // Start session and check if user is logged in
         
         if (!isset($_SESSION['user_id'])) {
-            header('Location: /lab_sync/index.php?controller=Auth&action=login');
+            header('Location: ' . route_url('Auth', 'login'));
             exit;
         }
 
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            header('Location: /lab_sync/index.php?controller=home&action=index');
+            header('Location: ' . route_url('home', 'index'));
             exit;
         }
 
@@ -234,20 +283,20 @@ class HomeController {
 
         if ($homeCollection && $collectionAddress === '') {
             $_SESSION['error'] = 'Please provide a collection address for home sample collection.';
-            header('Location: /lab_sync/index.php?controller=home&action=book');
+            header('Location: ' . route_url('home', 'book'));
             exit;
         }
 
         if (count($testIds) === 0 || !$date || !$time || !$patientId) {
             $_SESSION['error'] = 'Please fill all required fields';
-            header('Location: /lab_sync/index.php?controller=home&action=book');
+            header('Location: ' . route_url('home', 'book'));
             exit;
         }
 
         $hasConflict = $this->model->hasTimeSlotConflict($date, $time);
         if ($hasConflict) {
             $_SESSION['error'] = 'Selected slot is already taken. Please choose a different date or time.';
-            header('Location: /lab_sync/index.php?controller=home&action=book');
+            header('Location: ' . route_url('home', 'book'));
             exit;
         }
 
@@ -263,6 +312,11 @@ class HomeController {
         ], $testIds);
 
         if ($result) {
+            $fromRequestId = (int)($_POST['from_request'] ?? 0);
+            if ($fromRequestId > 0) {
+                $this->model->linkAppointmentToRequest($fromRequestId, (int)$result);
+            }
+
             $contact = $this->model->getPatientContactByUserId($_SESSION['user_id']);
             if ($contact) {
                 $payload = $this->model->getAppointmentEmailPayload((int)$result);
@@ -288,10 +342,10 @@ class HomeController {
             }
 
             $_SESSION['success'] = 'Appointment booked successfully';
-            header('Location: /lab_sync/index.php?controller=home&action=dashboard');
+            header('Location: ' . route_url('home', 'dashboard'));
         } else {
             $_SESSION['error'] = $this->model->getLastError() ?: 'Failed to book appointment';
-            header('Location: /lab_sync/index.php?controller=home&action=book');
+            header('Location: ' . route_url('home', 'book'));
         }
         exit;
     }
@@ -299,22 +353,39 @@ class HomeController {
         $patientId = (int)$this->model->getPatientIdByUserId($_SESSION['user_id']);
         $appointments = $this->model->getAllAppointments($patientId);
         $prescriptionRequests = [];
+        $requestTests = [];
+        $patientBills = [];
 
         if ($patientId > 0) {
             $prescriptionRequests = $this->model->getPrescriptionRequestsByPatient($patientId, 20);
+            $communicatedIds = [];
+            foreach ($prescriptionRequests as $r) {
+                if (strtolower(trim((string)($r['status'] ?? ''))) === 'communicated') {
+                    $communicatedIds[] = (int)$r['request_id'];
+                }
+            }
+            if (!empty($communicatedIds)) {
+                $requestTests = $this->model->getTestsForRequests($communicatedIds);
+            }
         }
 
+        if ($patientId > 0) {
+            $billingModel = new BillingModel(connect());
+            $patientBills = $billingModel->getBillsByPatientId($patientId);
+        }
+
+        $csrfToken = $this->ensureCsrfToken();
         include VIEW_PATH . '/patient/dashboard.php';
     }
     public function edit_appointment() {
 
     if (!isset($_SESSION['user_id'])) {
-        header('Location: /lab_sync/index.php?controller=Auth&action=login');
+        header('Location: ' . route_url('Auth', 'login'));
         exit();
     }
 
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-        header('Location: /lab_sync/index.php?controller=home&action=dashboard');
+        header('Location: ' . route_url('home', 'dashboard'));
         exit();
     }
 
@@ -323,7 +394,7 @@ class HomeController {
 
     if ($patientId <= 0) {
         $_SESSION['error'] = 'Unable to identify patient profile.';
-        header('Location: /lab_sync/index.php?controller=home&action=dashboard');
+        header('Location: ' . route_url('home', 'dashboard'));
         exit();
     }
 
@@ -337,13 +408,13 @@ class HomeController {
 
         if (!$time || !$date || !$appointmentId) {
             $_SESSION['error'] = 'Please fill all required fields';
-            header('Location: /lab_sync/index.php?controller=home&action=dashboard');
+            header('Location: ' . route_url('home', 'dashboard'));
             exit();
         }
 
         if ($homeCollection && $collectionAddress === '') {
             $_SESSION['error'] = 'Please provide a collection address for home sample collection.';
-            header('Location: /lab_sync/index.php?controller=home&action=dashboard');
+            header('Location: ' . route_url('home', 'dashboard'));
             exit();
         }
 
@@ -352,25 +423,29 @@ class HomeController {
         }
 
         $result = $this->model->updateAppointment($appointmentId, $time, $date, $patientId, $homeCollection, $collectionAddress);
-        $_SESSION['success'] = 'Appointment updated successfully';
+        if ($result) {
+            $_SESSION['success'] = 'Appointment updated successfully';
+        }
     }
 
     elseif (isset($_POST['delete'])) {
         if (!$appointmentId) {
             $_SESSION['error'] = 'Invalid appointment ID';
-            header('Location: /lab_sync/index.php?controller=home&action=dashboard');
+            header('Location: ' . route_url('home', 'dashboard'));
             exit();
         }
 
         $result = $this->model->deleteAppointment($appointmentId, $patientId);
-        $_SESSION['success'] = 'Appointment deleted successfully';
+        if ($result) {
+            $_SESSION['success'] = 'Appointment cancelled successfully';
+        }
     }
 
     if (!$result) {
-        $_SESSION['error'] = 'Failed to update appointment';
+        $_SESSION['error'] = $this->model->getLastError() ?: 'Failed to update appointment';
     }
 
-    header('Location: /lab_sync/index.php?controller=home&action=dashboard');
+    header('Location: ' . route_url('home', 'dashboard'));
     exit();
 }
 

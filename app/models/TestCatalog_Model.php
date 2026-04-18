@@ -188,18 +188,13 @@ class TestCatalog {
         $testRow = [
             'department' => $payload['department'],
             'category' => $payload['department'],
-            'test_code' => $payload['test_code'],
-            'lab_id' => $payload['lab_id'],
             'test_name' => $payload['test_name'],
             'print_name' => $payload['print_name'],
             'default_unit' => $payload['default_unit'],
             'description' => $payload['description'],
             'cost_price' => (float)$payload['cost_price'],
             'price' => $publicPrice,
-            'print_order' => (int)$payload['print_order'],
-            'decimals' => (int)$payload['decimals'],
             'is_active' => (int)$payload['is_active'],
-            'validation_required' => (int)$payload['validation_required'],
             'report_comments' => $payload['report_comments'],
         ];
 
@@ -207,7 +202,16 @@ class TestCatalog {
             $testRow[$discountColumn] = (float)$payload['discount'];
         }
 
-        return $this->insertRow('tests', $testRow, true);
+        $testId = $this->insertRow('tests', $testRow, true);
+
+        if ($this->columnExists('tests', 'test_code')) {
+            $code = 'TC-' . $testId;
+            $stmt = $this->db->prepare("UPDATE tests SET test_code = ? WHERE test_id = ?");
+            $stmt->bind_param('si', $code, $testId);
+            $stmt->execute();
+        }
+
+        return $testId;
     }
 
     private function insertUnitRecord($testId, array $unit, $unitIndex) {

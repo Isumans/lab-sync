@@ -30,6 +30,8 @@ if (is_array($patients)) {
     <link rel="stylesheet" href="/lab_sync/public/reportsDashboard.css">
     <link rel="stylesheet" href="/lab_sync/public/patientStyles.css">
     <link rel="stylesheet" href="/lab_sync/public/teamStyles.css">
+    <link rel="stylesheet" href="/lab_sync/public/appointmentEditModal.css">
+    <link rel="stylesheet" href="/lab_sync/public/appointmentDeleteModal.css">
 </head>
 <body>
     <?php require 'C:\xampp\htdocs\lab_sync\public\navbar.php'; ?>
@@ -133,40 +135,109 @@ if (is_array($patients)) {
         </main>
     </div>
 
-    <style>
-    #editModal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background: rgba(0,0,0,0.4); }
-    #editModal .modal-content { background: #fff; margin: 6% auto; padding: 20px; border-radius: 6px; width: 92%; max-width: 600px; }
-    #editModal .close { float: right; font-size: 24px; font-weight: bold; cursor: pointer; }
-    #editPatientForm .form-row { margin-bottom: 10px; }
-    #editPatientForm label { display: block; font-weight: 600; margin-bottom: 4px; }
-    #editPatientForm input[type=text], #editPatientForm input[type=email] { width: 100%; padding: 8px; box-sizing: border-box; }
-    #editPatientForm .actions { text-align: right; margin-top: 12px; }
-    </style>
-
-    <div id="editModal">
-        <div class="modal-content">
-            <span id="editModalClose" class="close">&times;</span>
-            <h3>Edit Patient</h3>
+    <div class="appointment-edit-modal" id="patientAdminEditModal" aria-hidden="true">
+        <div class="appointment-edit-dialog patient-admin-edit-dialog" role="dialog" aria-modal="true" aria-labelledby="patientAdminEditTitle">
             <form id="editPatientForm" method="post" action="/lab_sync/index.php?controller=patientController&action=edit_patient&role=<?php echo urlencode($role); ?>">
-                <input type="hidden" name="patient_id" value="">
-                <div class="form-row">
-                    <label for="patient_name">Name</label>
-                    <input type="text" id="patient_name" name="patient_name" required>
+                <div class="appointment-edit-header">
+                    <div>
+                        <h2 id="patientAdminEditTitle">Edit Patient</h2>
+                        <p class="appointment-edit-subtitle">UPDATE PATIENT INFORMATION</p>
+                    </div>
+                    <button type="button" class="appointment-edit-close" id="patientAdminEditClose" aria-label="Close">&times;</button>
                 </div>
-                <div class="form-row">
-                    <label for="patient_email">Email</label>
-                    <input type="email" id="patient_email" name="patient_email" required>
+
+                <div class="appointment-edit-alert" id="patientAdminEditAlert" hidden></div>
+
+                <div class="appointment-edit-body">
+                    <input type="hidden" name="patient_id" id="patientAdminPatientId" value="">
+
+                    <section class="edit-section-card">
+                        <div class="edit-section-title">
+                            <span class="section-icon" aria-hidden="true">&#128100;</span>
+                            <h3>Patient Summary</h3>
+                        </div>
+                        <div class="patient-readonly-card">
+                            <div class="patient-identity">
+                                <span class="patient-avatar" id="patientAdminInitials" aria-hidden="true">PT</span>
+                                <div>
+                                    <p class="patient-name" id="patientAdminDisplayName">Patient</p>
+                                    <p class="patient-pid" id="patientAdminDisplayEmail">email@example.com</p>
+                                </div>
+                            </div>
+                            <span class="readonly-badge" id="patientAdminDisplayId">PID-0</span>
+                        </div>
+                    </section>
+
+                    <section class="edit-section-card">
+                        <div class="edit-section-title">
+                            <span class="section-icon" aria-hidden="true">&#9998;</span>
+                            <h3>Account Details</h3>
+                        </div>
+
+                        <div class="patient-admin-form-grid">
+                            <div class="patient-admin-field patient-admin-field-full">
+                                <label class="edit-label" for="patientAdminName">Patient Name</label>
+                                <div class="date-input-wrap">
+                                    <input type="text" id="patientAdminName" name="patient_name" maxlength="120" required>
+                                </div>
+                            </div>
+
+                            <div class="patient-admin-field">
+                                <label class="edit-label" for="patientAdminEmail">Email Address</label>
+                                <div class="date-input-wrap">
+                                    <input type="email" id="patientAdminEmail" name="patient_email" maxlength="120" required>
+                                </div>
+                            </div>
+
+                            <div class="patient-admin-field">
+                                <label class="edit-label" for="patientAdminContact">Contact Number</label>
+                                <div class="date-input-wrap">
+                                    <input type="tel" id="patientAdminContact" name="contact_number" maxlength="25" pattern="^[0-9+()\-\s]{7,25}$" title="Use 7-25 characters: digits, space, plus, parentheses, or hyphen." required>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
                 </div>
-                <div class="form-row">
-                    <label for="contact_number">Contact Number</label>
-                    <input type="text" id="contact_number" name="contact_number">
-                </div>
-                <div class="actions">
-                    <button type="button" id="cancelEdit">Cancel</button>
-                    <button type="submit" name="edit" value="1">Save changes</button>
-                    <button type="submit" name="delete" value="1" style="margin-left:8px; background:#c33; color:#fff;">Delete</button>
+
+                <div class="appointment-edit-footer">
+                    <button type="button" class="edit-cancel-btn" id="patientAdminEditCancel">Cancel</button>
+                    <button type="submit" name="edit" value="1" class="edit-submit-btn" id="patientAdminEditSubmit">
+                        <span aria-hidden="true">&#128190;</span> Save Changes
+                    </button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <div class="appointment-delete-modal" id="patientAdminDeleteModal" aria-hidden="true">
+        <div class="appointment-delete-dialog" role="dialog" aria-modal="true" aria-labelledby="patientAdminDeleteTitle">
+            <div class="appointment-delete-header">
+                <span class="delete-icon-wrap" aria-hidden="true">!</span>
+                <h2 id="patientAdminDeleteTitle">Delete Patient</h2>
+                <button type="button" class="appointment-delete-close" id="patientAdminDeleteClose" aria-label="Close">&times;</button>
+            </div>
+
+            <p class="appointment-delete-copy">This will permanently remove the patient record from the system.</p>
+            <div class="appointment-delete-alert" id="patientAdminDeleteAlert" hidden></div>
+
+            <div class="appointment-delete-summary">
+                <span class="summary-label">Patient</span>
+                <div class="summary-value" id="patientAdminDeleteName">Patient</div>
+
+                <span class="summary-label">Email</span>
+                <div class="summary-value" id="patientAdminDeleteEmail">email@example.com</div>
+
+                <span class="summary-label">Contact</span>
+                <div class="summary-value" id="patientAdminDeleteContact">N/A</div>
+            </div>
+
+            <form id="deletePatientForm" method="post" action="/lab_sync/index.php?controller=patientController&action=edit_patient&role=<?php echo urlencode($role); ?>">
+                <input type="hidden" name="patient_id" id="patientAdminDeletePatientId" value="">
+                <button type="submit" name="delete" value="1" class="delete-confirm-btn" id="patientAdminDeleteConfirm">Delete Patient</button>
+                <button type="button" class="delete-cancel-btn" id="patientAdminDeleteCancel">Keep Patient</button>
+            </form>
+
+            <div class="appointment-delete-footer-note">Permanent Delete • Action Cannot Be Undone</div>
         </div>
     </div>
 

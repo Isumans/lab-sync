@@ -44,36 +44,36 @@ if (!isset($_SESSION['user_id'])) {
                                 <div class="form-row">
                                     <div class="form-group">
                                         <label class="required">Lab Name</label>
-                                        <input type="text" name="lab_name" placeholder="e.g. Metro Diagnostic Center" required>
+                                        <input type="text" name="lab_name" placeholder="e.g. Metro Diagnostic Center" maxlength="120" required>
                                     </div>
                                     <div class="form-group">
                                         <label class="required">Email</label>
-                                        <input type="email" name="email" placeholder="contact@metrolab.com" required>
+                                        <input type="email" name="email" placeholder="contact@metrolab.com" maxlength="120" required>
                                     </div>
                                 </div>
 
                                 <div class="form-row">
                                     <div class="form-group">
                                         <label class="required">Contact Person Name</label>
-                                        <input type="text" name="contact_person" placeholder="John Doe" required>
+                                        <input type="text" name="contact_person" placeholder="John Doe" maxlength="120" required>
                                     </div>
                                     <div class="form-group">
                                         <label class="required">Contact Person Phone Number</label>
-                                        <input type="tel" name="phone" placeholder="+1 (555) 000-0000" required>
+                                        <input type="tel" name="phone" placeholder="+1 (555) 000-0000" maxlength="25" pattern="^[0-9+()\-\s]{7,25}$" title="Use 7-25 characters: digits, space, plus, parentheses, or hyphen." required>
                                     </div>
                                 </div>
 
                                 <div class="form-row full-width">
                                     <div class="form-group">
                                         <label class="optional">Website (Optional)</label>
-                                        <input type="url" name="website" placeholder="https://www.metrolab.com">
+                                        <input type="url" name="website" placeholder="https://www.metrolab.com" maxlength="255">
                                     </div>
                                 </div>
 
                                 <div class="form-row full-width">
                                     <div class="form-group">
                                         <label class="required">Address</label>
-                                        <textarea name="address" placeholder="Enter the full laboratory street address, city, and zip code" required></textarea>
+                                        <textarea name="address" placeholder="Enter the full laboratory street address, city, and zip code" maxlength="255" required></textarea>
                                     </div>
                                 </div>
                                 

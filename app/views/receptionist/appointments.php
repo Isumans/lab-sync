@@ -6,6 +6,7 @@ if (!isset($_SESSION['user_id'])) {
 
 $appointmentsOnline = $appointmentsOnline ?? [];
 $appointmentsPhysical = $appointmentsPhysical ?? [];
+$csrfToken = (string)($csrfToken ?? ($_SESSION['csrf_token'] ?? ''));
 $allAppointments = array_merge($appointmentsOnline, $appointmentsPhysical);
 usort($allAppointments, function ($left, $right) {
     $leftTs = strtotime(($left['appointment_date'] ?? '') . ' ' . ($left['appointment_time'] ?? '')) ?: 0;
@@ -19,6 +20,7 @@ $role = $role ?? '';
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="<?php echo htmlspecialchars($csrfToken); ?>">
     <title>Appointments</title>
     <link rel="stylesheet" href="/lab_sync/public/styles.css">
     <link rel="stylesheet" href="/lab_sync/public/settingStyles.css">
@@ -29,6 +31,7 @@ $role = $role ?? '';
     <link rel="stylesheet" href="/lab_sync/public/appointmentDetailsModal.css">
     <link rel="stylesheet" href="/lab_sync/public/appointmentEditModal.css">
     <link rel="stylesheet" href="/lab_sync/public/appointmentDeleteModal.css">
+    <link rel="stylesheet" href="/lab_sync/public/prescriptionRequestManageModal.css">
     <link rel="stylesheet" href="/lab_sync/public/teamStyles.css">
 </head>
 <body>
@@ -48,6 +51,29 @@ $role = $role ?? '';
                     require __DIR__ . '/../../../public/partials/page-header.php';
                 ?>
 
+                <div class="rd-slider-tabs" role="tablist" aria-label="Appointments sections">
+                    <button
+                        type="button"
+                        class="rd-slider-tab is-active"
+                        role="tab"
+                        aria-selected="true"
+                        data-appointments-tab="scheduled"
+                    >
+                        Scheduled Appointments
+                    </button>
+                    <button
+                        type="button"
+                        class="rd-slider-tab"
+                        role="tab"
+                        aria-selected="false"
+                        data-appointments-tab="prescription"
+                    >
+                        Appointment Requests
+                    </button>
+                </div>
+
+                <div id="scheduledAppointmentsSection" class="rd-tab-panel is-active" role="tabpanel" aria-label="Scheduled appointments">
+
 
                 <section class="rd-filter-card" aria-label="Search and Filters">
                     <div class="rd-filter-grid">
@@ -62,6 +88,7 @@ $role = $role ?? '';
                                 <option value="all">All Appointments</option>
                                 <option value="online">Online</option>
                                 <option value="physical">Physical/Call</option>
+                                <option value="home_visit">Home Visit</option>
                             </select>
                         </div>
 
@@ -122,6 +149,81 @@ $role = $role ?? '';
                         <div class="rd-pagination" id="aptPagination"></div>
                     </div>
                 </section>
+                </div>
+
+                <div id="prescriptionRequestsSection" class="rd-tab-panel" role="tabpanel" aria-label="Prescription requests" hidden>
+                    <section class="rd-filter-card" aria-label="Prescription request filters">
+                        <div class="rd-filter-grid">
+                            <div class="rd-filter-field rd-filter-field-search">
+                                <label for="prxSearch">Search Requests</label>
+                                <input id="prxSearch" type="text" placeholder="Search by Patient Name or Request ID..." />
+                            </div>
+
+                            <div class="rd-filter-field">
+                                <label for="prxType">Request Type</label>
+                                <select id="prxType">
+                                    <option value="all">All Types</option>
+                                    <option value="home_visit">Home Visit</option>
+                                    <option value="onsite">Onsite</option>
+                                </select>
+                            </div>
+
+                            <div class="rd-filter-field">
+                                <label for="prxSortBy">Sort By</label>
+                                <select id="prxSortBy">
+                                    <option value="created_at">Created Date</option>
+                                    <option value="patient_name">Patient Name</option>
+                                    <option value="request_id">Request ID</option>
+                                    <option value="request_type">Type</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="rd-filter-bottom-row">
+                            <div class="rd-filter-date-range">
+                                <div class="rd-filter-field">
+                                    <label for="prxDateFrom">Date Range</label>
+                                    <input id="prxDateFrom" type="date" />
+                                </div>
+                                <div class="rd-filter-field rd-filter-field-to">
+                                    <label for="prxDateTo" class="rd-hidden-label">End Date</label>
+                                    <input id="prxDateTo" type="date" />
+                                </div>
+                            </div>
+
+                            <div class="rd-sort-direction-wrap">
+                                <select id="prxSortDir" class="rd-sort-direction" aria-label="Prescription sort direction">
+                                    <option value="desc">Newest First</option>
+                                    <option value="asc">Oldest First</option>
+                                </select>
+                                <button type="button" class="rd-clear-btn" id="prxClearBtn">Clear All Filters</button>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="rd-table-card" aria-label="Prescription requests table">
+                        <div class="rd-table-wrap">
+                            <table class="rd-table">
+                                <thead>
+                                    <tr>
+                                        <th class="rd-sortable rd-prx-sortable is-active" data-sort="request_id" data-direction="desc">Request ID</th>
+                                        <th class="rd-sortable rd-prx-sortable" data-sort="patient_name" data-direction="asc">Patient Name</th>
+                                        <th class="rd-sortable rd-prx-sortable" data-sort="prescription_available" data-direction="desc">Prescription Available</th>
+                                        <th class="rd-sortable rd-prx-sortable" data-sort="request_type" data-direction="asc">Type</th>
+                                        <th>Status</th>
+                                        <th class="rd-th-right">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="prxTableBody"></tbody>
+                            </table>
+                        </div>
+
+                        <div class="rd-table-footer">
+                            <p id="prxShowingText">Showing 0-0 of 0 requests</p>
+                            <div class="rd-pagination" id="prxPagination"></div>
+                        </div>
+                    </section>
+                </div>
 
                 <!-- Create Appointment Modal -->
                 <div id="createAppointmentModal" class="modal" aria-hidden="true">
@@ -320,379 +422,58 @@ $role = $role ?? '';
 
 
 
-                <div id="appointmentEditToast" class="appointment-edit-toast" aria-live="polite" hidden></div>
-
-                <div id="appointmentDetailsModal" class="appointment-details-modal" aria-hidden="true">
-                    <div class="appointment-details-dialog" role="dialog" aria-modal="true" aria-labelledby="appointmentDetailsTitle">
-                        <div class="appointment-details-topbar">
-                            <div id="appointmentDetailsTitle" class="appointment-details-title">Appointment Details</div>
-                            <button id="appointmentDetailsClose" class="appointment-details-close" type="button" aria-label="Close details">&times;</button>
+                <div id="prescriptionRequestManageModal" class="prx-manage-modal" aria-hidden="true">
+                    <div class="prx-manage-dialog" role="dialog" aria-modal="true" aria-labelledby="prxManageTitle">
+                        <div class="prx-manage-header">
+                            <div>
+                                <p id="prxManageTypeBadge" class="prx-manage-type">Appointment Request</p>
+                                <h2 id="prxManageTitle">Request Details</h2>
+                                <p id="prxManageSubtitle" class="prx-manage-subtitle"></p>
+                            </div>
+                            <button type="button" id="prxManageClose" class="prx-manage-close" aria-label="Close request manager">&times;</button>
                         </div>
-                        <div id="appointmentDetailsBody" class="appointment-details-body"></div>
+
+                        <div id="prxManageAlert" class="prx-manage-alert" hidden></div>
+
+                        <div class="prx-manage-body">
+                            <div class="prx-manage-grid">
+                                <section class="prx-card">
+                                    <h3>Patient Contact Details</h3>
+                                    <div id="prxPatientMeta" class="prx-meta-list"></div>
+                                </section>
+
+                                <section class="prx-card">
+                                    <h3>Prescription Review</h3>
+                                    <div id="prxPrescriptionPanel" class="prx-prescription-panel"></div>
+                                </section>
+
+                                <section class="prx-card">
+                                    <h3>Diagnostics Inventory</h3>
+                                    <div class="prx-test-search-wrap">
+                                        <input type="search" id="prxTestSearch" placeholder="Search & Add Tests..." autocomplete="off" />
+                                        <div id="prxTestSearchResults" class="prx-search-results" hidden></div>
+                                    </div>
+                                    <div id="prxSelectedTests" class="prx-selected-tests"></div>
+                                    <button type="button" id="prxAddCustomTest" class="prx-add-custom-btn">Add Custom Test Request</button>
+                                </section>
+
+                                <section class="prx-card">
+                                    <h3>Request Status</h3>
+                                    <div id="prxStatusInfo" class="prx-status-info"></div>
+                                </section>
+                            </div>
+                        </div>
+
+                        <div class="prx-manage-footer">
+                            <div id="prxTotals" class="prx-totals"></div>
+                            <div class="prx-footer-actions">
+                                <button type="button" id="prxManageCancel" class="prx-cancel-btn">Cancel</button>
+                                <button type="button" id="prxManageSave" class="prx-save-btn">Save &amp; Send to Patient</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <div id="editAppointmentModal" class="appointment-edit-modal" aria-hidden="true">
-                    <div class="appointment-edit-dialog" role="dialog" aria-modal="true" aria-labelledby="editAppointmentTitle">
-                        <form id="editAppointmentForm" novalidate>
-                            <input type="hidden" id="editAppointmentId" name="appointment_id" value="">
-
-                            <div class="appointment-edit-header">
-                                <div>
-                                    <h2 id="editAppointmentTitle">Edit Appointment: #APP-000000</h2>
-                                    <p class="appointment-edit-subtitle">CLINICAL PROCEDURE UPDATE</p>
-                                </div>
-                                <button id="editAppointmentClose" type="button" class="appointment-edit-close" aria-label="Close edit modal">&times;</button>
-                            </div>
-
-                            <div id="editAppointmentAlert" class="appointment-edit-alert" hidden></div>
-
-                            <div class="appointment-edit-body">
-                                <section class="edit-section-card">
-                                    <div class="edit-section-title">
-                                        <span class="section-icon" aria-hidden="true">
-                                            <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                                                <path d="M8 8.5C9.38071 8.5 10.5 7.38071 10.5 6C10.5 4.61929 9.38071 3.5 8 3.5C6.61929 3.5 5.5 4.61929 5.5 6C5.5 7.38071 6.61929 8.5 8 8.5Z" stroke="currentColor" stroke-width="1.4"/>
-                                                <path d="M3 13C3 10.7909 5.23858 9 8 9C10.7614 9 13 10.7909 13 13" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
-                                            </svg>
-                                        </span>
-                                        <h3>Patient Information</h3>
-                                    </div>
-
-                                    <div class="patient-readonly-card">
-                                        <div class="patient-identity">
-                                            <span class="patient-avatar" aria-hidden="true">
-                                                <svg width="18" height="18" viewBox="0 0 16 16" fill="none">
-                                                    <path d="M8 8.5C9.38071 8.5 10.5 7.38071 10.5 6C10.5 4.61929 9.38071 3.5 8 3.5C6.61929 3.5 5.5 4.61929 5.5 6C5.5 7.38071 6.61929 8.5 8 8.5Z" stroke="currentColor" stroke-width="1.4"/>
-                                                    <path d="M3 13C3 10.7909 5.23858 9 8 9C10.7614 9 13 10.7909 13 13" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
-                                                </svg>
-                                            </span>
-                                            <div>
-                                                <p id="editPatientName" class="patient-name">Patient Name</p>
-                                                <p id="editPatientPid" class="patient-pid">PID: N/A</p>
-                                            </div>
-                                        </div>
-                                        <span class="readonly-badge">READ-ONLY</span>
-                                    </div>
-                                </section>
-
-                                <section class="edit-section-card">
-                                    <div class="edit-section-title">
-                                        <span class="section-icon" aria-hidden="true">
-                                            <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                                                <path d="M4 1.75V3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
-                                                <path d="M12 1.75V3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
-                                                <rect x="2.5" y="3" width="11" height="10.5" rx="2" stroke="currentColor" stroke-width="1.4"/>
-                                                <path d="M2.5 5.75H13.5" stroke="currentColor" stroke-width="1.4"/>
-                                            </svg>
-                                        </span>
-                                        <h3>Schedule Details</h3>
-                                        <span class="today-pill">TODAY</span>
-                                    </div>
-
-                                    <div class="schedule-grid">
-                                        <div>
-                                            <label class="edit-label" for="editAppointmentDate">Appointment Date</label>
-                                            <div class="date-input-wrap">
-                                                <span class="date-icon" aria-hidden="true">📅</span>
-                                                <input type="date" id="editAppointmentDate" name="appointment_date" required>
-                                            </div>
-                                        </div>
-
-                                        <div>
-                                            <label class="edit-label">Select Time</label>
-                                            <div class="time-slot-grid" id="editTimeSlots">
-                                                <button type="button" class="time-slot" data-time="NOW">NOW</button>
-                                                <button type="button" class="time-slot" data-time="08:00:00">08:00 AM</button>
-                                                <button type="button" class="time-slot" data-time="09:30:00">09:30 AM</button>
-                                                <button type="button" class="time-slot" data-time="11:00:00">11:00 AM</button>
-                                                <button type="button" class="time-slot" data-time="13:30:00">01:30 PM</button>
-                                                <button type="button" class="time-slot" data-time="15:00:00">03:00 PM</button>
-                                                <button type="button" class="time-slot" data-time="16:30:00">04:30 PM</button>
-                                            </div>
-                                            <input type="hidden" id="editAppointmentTime" name="appointment_time" value="">
-                                        </div>
-                                    </div>
-                                </section>
-
-                                <section class="edit-section-card">
-                                    <div class="edit-section-title">
-                                        <span class="section-icon" aria-hidden="true">
-                                            <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                                                <path d="M6.9 11.2C9.2196 11.2 11.1 9.3196 11.1 7C11.1 4.68041 9.2196 2.8 6.9 2.8C4.58041 2.8 2.7 4.68041 2.7 7C2.7 9.3196 4.58041 11.2 6.9 11.2Z" stroke="currentColor" stroke-width="1.4"/>
-                                                <path d="M10.4 10.5L13.3 13.4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
-                                            </svg>
-                                        </span>
-                                        <h3>Test Selection</h3>
-                                    </div>
-
-                                    <div class="test-search-wrap">
-                                        <span class="search-icon" aria-hidden="true">🔍</span>
-                                        <input type="search" id="editTestSearch" placeholder="Search test catalog..." autocomplete="off">
-                                    </div>
-
-                                    <div id="editTestSearchResults" class="test-search-results" hidden></div>
-
-                                    <div class="test-tag-row">
-                                        <div id="editSelectedTests" class="test-tags"></div>
-                                        <button type="button" id="editAddTestBtn" class="add-new-test-btn">+ ADD NEW</button>
-                                    </div>
-                                </section>
-
-                                <section class="edit-section-card">
-                                    <div class="edit-section-title">
-                                        <span class="section-icon" aria-hidden="true">
-                                            <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                                                <path d="M3 2.75H13" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
-                                                <path d="M3 6.75H13" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
-                                                <path d="M3 10.75H9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
-                                            </svg>
-                                        </span>
-                                        <h3>Reason for Visit / Clinical Notes</h3>
-                                    </div>
-
-                                    <textarea id="editAppointmentReason" name="reason" rows="5" placeholder="Enter updated clinical notes or reasons for modification..."></textarea>
-                                </section>
-                            </div>
-
-                            <div class="appointment-edit-footer">
-                                <button type="button" id="editAppointmentCancel" class="edit-cancel-btn">CANCEL</button>
-                                <button type="submit" id="editAppointmentSubmit" class="edit-submit-btn">
-                                    <span aria-hidden="true">💾</span>
-                                    Update Appointment
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-                <div id="deleteAppointmentModal" class="appointment-delete-modal" aria-hidden="true"> 
-                    <div class="appointment-delete-dialog" role="dialog" aria-modal="true" aria-labelledby="deleteAppointmentTitle"> 
-                        <div class="appointment-delete-header"> 
-                            <div class="delete-icon-wrap" aria-hidden="true">
-                                !
-                            </div> 
-                            <h2 id="deleteAppointmentTitle">
-                                Delete Appointment
-                            </h2> 
-                            <button type="button" id="deleteAppointmentClose" class="appointment-delete-close" aria-label="Close delete modal">
-                                &times;
-                            </button> 
-                        </div>
-                            <p class="appointment-delete-copy">
-                                Are you sure you want to delete this appointment? This action cannot be undone.
-                            </p>
-                            <div id="deleteAppointmentAlert" class="appointment-delete-alert" hidden>
-
-                            </div>
-                            <div class="appointment-delete-summary">
-                                <div class="summary-label">APPOINTMENT ID</div>
-                                <div id="deleteAppointmentNumber" class="summary-value">#APP-0000</div>
-
-                                <div class="summary-label">PATIENT NAME</div>
-                                <div id="deleteAppointmentPatient" class="summary-value">Unknown Patient</div>
-                            </div>
-                            <button type="button" id="deleteAppointmentConfirm" class="delete-confirm-btn">
-                            Delete Appointment
-                        </button>
-
-                        <button type="button" id="deleteAppointmentCancel" class="delete-cancel-btn">
-                            Cancel
-                        </button>
-                        <div class="appointment-delete-footer-note">
-                            SYSTEM: AUTHORIZATION REQUIRED
-                        </div>
-                    </div>
-                        
-                    </div>
-
-
-
-
-
-                <div id="appointmentEditToast" class="appointment-edit-toast" aria-live="polite" hidden></div>
-
-                <div id="appointmentDetailsModal" class="appointment-details-modal" aria-hidden="true">
-                    <div class="appointment-details-dialog" role="dialog" aria-modal="true" aria-labelledby="appointmentDetailsTitle">
-                        <div class="appointment-details-topbar">
-                            <div id="appointmentDetailsTitle" class="appointment-details-title">Appointment Details</div>
-                            <button id="appointmentDetailsClose" class="appointment-details-close" type="button" aria-label="Close details">&times;</button>
-                        </div>
-                        <div id="appointmentDetailsBody" class="appointment-details-body"></div>
-                    </div>
-                </div>
-
-                <div id="editAppointmentModal" class="appointment-edit-modal" aria-hidden="true">
-                    <div class="appointment-edit-dialog" role="dialog" aria-modal="true" aria-labelledby="editAppointmentTitle">
-                        <form id="editAppointmentForm" novalidate>
-                            <input type="hidden" id="editAppointmentId" name="appointment_id" value="">
-
-                            <div class="appointment-edit-header">
-                                <div>
-                                    <h2 id="editAppointmentTitle">Edit Appointment: #APP-000000</h2>
-                                    <p class="appointment-edit-subtitle">CLINICAL PROCEDURE UPDATE</p>
-                                </div>
-                                <button id="editAppointmentClose" type="button" class="appointment-edit-close" aria-label="Close edit modal">&times;</button>
-                            </div>
-
-                            <div id="editAppointmentAlert" class="appointment-edit-alert" hidden></div>
-
-                            <div class="appointment-edit-body">
-                                <section class="edit-section-card">
-                                    <div class="edit-section-title">
-                                        <span class="section-icon" aria-hidden="true">
-                                            <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                                                <path d="M8 8.5C9.38071 8.5 10.5 7.38071 10.5 6C10.5 4.61929 9.38071 3.5 8 3.5C6.61929 3.5 5.5 4.61929 5.5 6C5.5 7.38071 6.61929 8.5 8 8.5Z" stroke="currentColor" stroke-width="1.4"/>
-                                                <path d="M3 13C3 10.7909 5.23858 9 8 9C10.7614 9 13 10.7909 13 13" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
-                                            </svg>
-                                        </span>
-                                        <h3>Patient Information</h3>
-                                    </div>
-
-                                    <div class="patient-readonly-card">
-                                        <div class="patient-identity">
-                                            <span class="patient-avatar" aria-hidden="true">
-                                                <svg width="18" height="18" viewBox="0 0 16 16" fill="none">
-                                                    <path d="M8 8.5C9.38071 8.5 10.5 7.38071 10.5 6C10.5 4.61929 9.38071 3.5 8 3.5C6.61929 3.5 5.5 4.61929 5.5 6C5.5 7.38071 6.61929 8.5 8 8.5Z" stroke="currentColor" stroke-width="1.4"/>
-                                                    <path d="M3 13C3 10.7909 5.23858 9 8 9C10.7614 9 13 10.7909 13 13" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
-                                                </svg>
-                                            </span>
-                                            <div>
-                                                <p id="editPatientName" class="patient-name">Patient Name</p>
-                                                <p id="editPatientPid" class="patient-pid">PID: N/A</p>
-                                            </div>
-                                        </div>
-                                        <span class="readonly-badge">READ-ONLY</span>
-                                    </div>
-                                </section>
-
-                                <section class="edit-section-card">
-                                    <div class="edit-section-title">
-                                        <span class="section-icon" aria-hidden="true">
-                                            <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                                                <path d="M4 1.75V3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
-                                                <path d="M12 1.75V3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
-                                                <rect x="2.5" y="3" width="11" height="10.5" rx="2" stroke="currentColor" stroke-width="1.4"/>
-                                                <path d="M2.5 5.75H13.5" stroke="currentColor" stroke-width="1.4"/>
-                                            </svg>
-                                        </span>
-                                        <h3>Schedule Details</h3>
-                                        <span class="today-pill">TODAY</span>
-                                    </div>
-
-                                    <div class="schedule-grid">
-                                        <div>
-                                            <label class="edit-label" for="editAppointmentDate">Appointment Date</label>
-                                            <div class="date-input-wrap">
-                                                <span class="date-icon" aria-hidden="true">📅</span>
-                                                <input type="date" id="editAppointmentDate" name="appointment_date" required>
-                                            </div>
-                                        </div>
-
-                                        <div>
-                                            <label class="edit-label">Select Time</label>
-                                            <div class="time-slot-grid" id="editTimeSlots">
-                                                <button type="button" class="time-slot" data-time="NOW">NOW</button>
-                                                <button type="button" class="time-slot" data-time="08:00:00">08:00 AM</button>
-                                                <button type="button" class="time-slot" data-time="09:30:00">09:30 AM</button>
-                                                <button type="button" class="time-slot" data-time="11:00:00">11:00 AM</button>
-                                                <button type="button" class="time-slot" data-time="13:30:00">01:30 PM</button>
-                                                <button type="button" class="time-slot" data-time="15:00:00">03:00 PM</button>
-                                                <button type="button" class="time-slot" data-time="16:30:00">04:30 PM</button>
-                                            </div>
-                                            <input type="hidden" id="editAppointmentTime" name="appointment_time" value="">
-                                        </div>
-                                    </div>
-                                </section>
-
-                                <section class="edit-section-card">
-                                    <div class="edit-section-title">
-                                        <span class="section-icon" aria-hidden="true">
-                                            <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                                                <path d="M6.9 11.2C9.2196 11.2 11.1 9.3196 11.1 7C11.1 4.68041 9.2196 2.8 6.9 2.8C4.58041 2.8 2.7 4.68041 2.7 7C2.7 9.3196 4.58041 11.2 6.9 11.2Z" stroke="currentColor" stroke-width="1.4"/>
-                                                <path d="M10.4 10.5L13.3 13.4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
-                                            </svg>
-                                        </span>
-                                        <h3>Test Selection</h3>
-                                    </div>
-
-                                    <div class="test-search-wrap">
-                                        <span class="search-icon" aria-hidden="true">🔍</span>
-                                        <input type="search" id="editTestSearch" placeholder="Search test catalog..." autocomplete="off">
-                                    </div>
-
-                                    <div id="editTestSearchResults" class="test-search-results" hidden></div>
-
-                                    <div class="test-tag-row">
-                                        <div id="editSelectedTests" class="test-tags"></div>
-                                        <button type="button" id="editAddTestBtn" class="add-new-test-btn">+ ADD NEW</button>
-                                    </div>
-                                </section>
-
-                                <section class="edit-section-card">
-                                    <div class="edit-section-title">
-                                        <span class="section-icon" aria-hidden="true">
-                                            <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                                                <path d="M3 2.75H13" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
-                                                <path d="M3 6.75H13" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
-                                                <path d="M3 10.75H9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
-                                            </svg>
-                                        </span>
-                                        <h3>Reason for Visit / Clinical Notes</h3>
-                                    </div>
-
-                                    <textarea id="editAppointmentReason" name="reason" rows="5" placeholder="Enter updated clinical notes or reasons for modification..."></textarea>
-                                </section>
-                            </div>
-
-                            <div class="appointment-edit-footer">
-                                <button type="button" id="editAppointmentCancel" class="edit-cancel-btn">CANCEL</button>
-                                <button type="submit" id="editAppointmentSubmit" class="edit-submit-btn">
-                                    <span aria-hidden="true">💾</span>
-                                    Update Appointment
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-                <div id="deleteAppointmentModal" class="appointment-delete-modal" aria-hidden="true"> 
-                    <div class="appointment-delete-dialog" role="dialog" aria-modal="true" aria-labelledby="deleteAppointmentTitle"> 
-                        <div class="appointment-delete-header"> 
-                            <div class="delete-icon-wrap" aria-hidden="true">
-                                !
-                            </div> 
-                            <h2 id="deleteAppointmentTitle">
-                                Delete Appointment
-                            </h2> 
-                            <button type="button" id="deleteAppointmentClose" class="appointment-delete-close" aria-label="Close delete modal">
-                                &times;
-                            </button> 
-                        </div>
-                            <p class="appointment-delete-copy">
-                                Are you sure you want to delete this appointment? This action cannot be undone.
-                            </p>
-                            <div id="deleteAppointmentAlert" class="appointment-delete-alert" hidden>
-
-                            </div>
-                            <div class="appointment-delete-summary">
-                                <div class="summary-label">ID</div>
-                                <div id="deleteAppointmentNumber" class="summary-value">#APP-0000</div>
-
-                                <div class="summary-label">PATIENT NAME</div>
-                                <div id="deleteAppointmentPatient" class="summary-value">Unknown Patient</div>
-                            </div>
-                            <button type="button" id="deleteAppointmentConfirm" class="delete-confirm-btn">
-                            Delete Appointment
-                        </button>
-
-                        <button type="button" id="deleteAppointmentCancel" class="delete-cancel-btn">
-                            Cancel
-                        </button>
-                        <div class="appointment-delete-footer-note">
-                            SYSTEM: AUTHORIZATION REQUIRED
-                        </div>
-                    </div>
-                        
-                    </div>
                 <div id="appointmentEditToast" class="appointment-edit-toast" aria-live="polite" hidden></div>
 
 
@@ -700,10 +481,18 @@ $role = $role ?? '';
                 
             </main>
             <script src="/lab_sync/public/js/appointmentPopup.js"></script>
+            <script>
+                window.LAB_SYNC_CONFIG = {
+                    baseUrl: '/lab_sync',
+                    csrfToken: '<?php echo htmlspecialchars($csrfToken); ?>'
+                };
+            </script>
             <script src="/lab_sync/public/js/addTest.js"></script>
             <script src="/lab_sync/public/js/showSection.js"></script>
             <script src="/lab_sync/public/js/searchPatient.js"></script>
             <script src="/lab_sync/public/js/appointmentFilter.js"></script>
+            <script src="/lab_sync/public/js/prescriptionRequestFilter.js"></script>
+            <script src="/lab_sync/public/js/prescriptionRequestManageModal.js"></script>
             <script src="/lab_sync/public/js/appointmentForm.js"></script>
             <script src="/lab_sync/public/js/appointmentDetailsModal.js"></script>
             <script src="/lab_sync/public/js/appointmentEditModal.js"></script>

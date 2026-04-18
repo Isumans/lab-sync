@@ -8,42 +8,59 @@
     </div>
 
     <!-- Search and Filters -->
-    <div class="partner-labs-controls">
-        <div class="search-container">
-            <svg class="search-icon" width="16" height="16" viewBox="0 0 16 16" fill="none">
-                <circle cx="6.5" cy="6.5" r="5.5" stroke="currentColor" stroke-width="1.5"/>
-                <path d="M10 10L14.5 14.5" stroke="currentColor" stroke-width="1.5"/>
-            </svg>
-            <input type="text" class="search-input" placeholder="Search by lab name, contact, or specialization...">
+    <section class="rd-filter-card">
+        <div class="rd-filter-grid" style="grid-template-columns: 2fr 1fr auto;">
+            <div class="rd-filter-field rd-filter-field-search">
+                <label for="plSearch">Search Labs</label>
+                <input id="plSearch" type="text" placeholder="Search by lab name, contact, or email..." />
+            </div>
+            <div class="rd-filter-field">
+                <label for="plStatus">Status</label>
+                <select id="plStatus">
+                    <option value="all">All Statuses</option>
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                    <option value="pending">Pending</option>
+                </select>
+            </div>
+            <div class="rd-filter-field" style="justify-content: flex-end;">
+                <label class="rd-hidden-label">Clear</label>
+                <button type="button" class="rd-clear-btn" id="plClearBtn">Clear Filters</button>
+            </div>
         </div>
-        <div class="filter-buttons">
-            <select class="filter-select">
-                <option>All Statuses</option>
-                <option>Active</option>
-                <option>Inactive</option>
-                <option>Pending</option>
-            </select>
-            <button class="filter-btn active-filter">Active</button>
-            <button class="filter-btn">Pending</button>
-        </div>
-    </div>
+    </section>
 
     <!-- Partner Labs Table -->
-    <div class="partner-labs-table-container">
-        <table class="partner-labs-table">
+    <section class="rd-table-card">
+    <div class="rd-table-wrap">
+        <table class="rd-table">
             <thead>
                 <tr>
-                    <th>LAB NAME</th>
-                    <th>CONTACT PERSON</th>
-                    <th>CONTACT NUMBER</th>
-                    <th>TOTAL TESTS</th>
+                    <th class="rd-sortable is-active is-asc" data-sort="lab_name" data-direction="asc">LAB NAME</th>
+                    <th class="rd-sortable" data-sort="contact_person" data-direction="asc">CONTACT PERSON</th>
+                    <th class="rd-sortable" data-sort="contact_number" data-direction="asc">CONTACT NUMBER</th>
+                    <th class="rd-sortable" data-sort="total_tests" data-direction="desc">TOTAL TESTS</th>
                     <th>ACTIONS</th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody id="plTableBody">
                 <?php if (!empty($partnerLabs)): ?>
                     <?php foreach ($partnerLabs as $lab): ?>
-                        <tr>
+                        <?php
+                            $statusValue = strtolower(trim((string)($lab['status'] ?? 'active')));
+                            $labNameValue = (string)($lab['lab_name'] ?? '');
+                            $labEmailValue = (string)($lab['email'] ?? '');
+                            $contactPersonValue = (string)($lab['contact_person_name'] ?? '');
+                            $contactPhoneValue = (string)($lab['contact_person_phone'] ?? '');
+                            $totalTestsValue = (int)($lab['total_tests'] ?? 0);
+                        ?>
+                        <tr
+                            data-status="<?php echo htmlspecialchars($statusValue); ?>"
+                            data-lab-name="<?php echo htmlspecialchars(strtolower($labNameValue)); ?>"
+                            data-email="<?php echo htmlspecialchars(strtolower($labEmailValue)); ?>"
+                            data-contact-person="<?php echo htmlspecialchars(strtolower($contactPersonValue)); ?>"
+                            data-contact-number="<?php echo htmlspecialchars(strtolower($contactPhoneValue)); ?>"
+                            data-total-tests="<?php echo htmlspecialchars((string)$totalTestsValue); ?>">
                             <td>
                                 <div class="lab-info-cell">
                                     <div class="lab-avatar" style="background: #e8f5e9;"><?php echo strtoupper(substr($lab['lab_name'], 0, 2)); ?></div>
@@ -97,15 +114,11 @@
             </tbody>
         </table>
     </div>
-
-
-    <div class="pagination">
-        <span class="pagination-info">Showing 1 to 3 of 12 partner labs</span>
-        <div class="pagination-controls">
-            <button class="pagination-btn">‹</button>
-            <button class="pagination-btn">›</button>
-        </div>
+    <div class="rd-table-footer">
+        <p id="plShowingText">Showing 0–0 of 0 partner labs</p>
+        <div class="rd-pagination" id="plPagination"></div>
     </div>
+    </section>
 
 
     <div class="partner-stats-grid">

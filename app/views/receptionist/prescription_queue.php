@@ -6,6 +6,7 @@ if (!isset($_SESSION['user_id'])) {
 
 $success = $_SESSION['success'] ?? '';
 $error = $_SESSION['error'] ?? '';
+$csrfToken = (string)($csrfToken ?? ($_SESSION['csrf_token'] ?? ''));
 unset($_SESSION['success'], $_SESSION['error']);
 ?>
 <html>
@@ -112,12 +113,14 @@ unset($_SESSION['success'], $_SESSION['error']);
                                                 <br>
                                                 <form action="/lab_sync/index.php?controller=appointmentsController&action=processPrescriptionDecision" method="POST" style="display: inline-block; margin: 0 0 6px;">
                                                     <input type="hidden" name="request_id" value="<?php echo (int)$request['request_id']; ?>">
+                                                    <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($csrfToken); ?>">
                                                     <input type="hidden" name="decision" value="book_for_patient">
                                                     <button type="submit" style="padding:6px 10px; border:0; border-radius:6px; background:#174ea6; color:#fff; cursor:pointer;">Book for Patient</button>
                                                 </form>
 
                                                 <form action="/lab_sync/index.php?controller=appointmentsController&action=processPrescriptionDecision" method="POST" style="display: block; margin-top: 4px;">
                                                     <input type="hidden" name="request_id" value="<?php echo (int)$request['request_id']; ?>">
+                                                    <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($csrfToken); ?>">
                                                     <input type="hidden" name="decision" value="self_book">
                                                     <input type="text" name="decision_note" placeholder="Optional note" style="width:100%; max-width:220px; margin-bottom:6px; padding:6px; border:1px solid #d0d5dd; border-radius:6px;">
                                                     <button type="submit" style="padding:6px 10px; border:1px solid #344054; border-radius:6px; background:#fff; color:#344054; cursor:pointer;">Ask to Self-Book</button>

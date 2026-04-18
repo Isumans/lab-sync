@@ -90,7 +90,13 @@ class administratorController {
         $logoPath = $_POST['existing_logo_path'] ?? '';
         if (!empty($_FILES['logo']['name'])) {
             $allowed = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-            $ftype   = mime_content_type($_FILES['logo']['tmp_name']);
+            $tmpName = $_FILES['logo']['tmp_name'] ?? '';
+            if ($tmpName === '' || !is_uploaded_file($tmpName)) {
+                echo json_encode(['success' => false, 'message' => 'Invalid logo upload.']);
+                return;
+            }
+
+            $ftype   = mime_content_type($tmpName);
             $fsize   = $_FILES['logo']['size'];
 
             if (!in_array($ftype, $allowed)) {
@@ -105,8 +111,11 @@ class administratorController {
             $ext      = pathinfo($_FILES['logo']['name'], PATHINFO_EXTENSION);
             $filename = 'lab_logo_' . time() . '.' . $ext;
             $dest     = ROOT_PATH . '/public/uploads/' . $filename;
-            if (move_uploaded_file($_FILES['logo']['tmp_name'], $dest)) {
+            if (move_uploaded_file($tmpName, $dest)) {
                 $logoPath = '/lab_sync/public/uploads/' . $filename;
+            } else {
+                echo json_encode(['success' => false, 'message' => 'Failed to upload logo.']);
+                return;
             }
         }
 
@@ -130,12 +139,78 @@ class administratorController {
             'auto_email_reports'     => isset($_POST['auto_email_reports'])      ? 1 : 0,
         ];
 
+        $validation = $this->validateLabConfigPayload($data);
+        if (!$validation['ok']) {
+            echo json_encode([
+                'success' => false,
+                'message' => $validation['message'],
+            ]);
+            return;
+        }
+
+        $data = $validation['data'];
+
         $ok = $this->adminModel->saveLabConfig($data);
         echo json_encode([
             'success'   => (bool)$ok,
             'message'   => $ok ? 'Lab configuration saved successfully.' : 'Failed to save. Please try again.',
             'logo_path' => $logoPath,
         ]);
+    }
+
+    private function validateLabConfigPayload(array $data) {
+        if ($data['lab_name'] === '' || strlen($data['lab_name']) > 120) {
+            return ['ok' => false, 'message' => 'Lab name is required and must be at most 120 characters.'];
+        }
+
+        if ($data['accreditation'] === '' || strlen($data['accreditation']) > 80) {
+            return ['ok' => false, 'message' => 'Accreditation number is required and must be at most 80 characters.'];
+        }
+
+        if ($data['address'] === '' || strlen($data['address']) > 255) {
+            return ['ok' => false, 'message' => 'Address is required and must be at most 255 characters.'];
+        }
+
+        if (!filter_var($data['email'], FILTER_VALIDATE_EMAIL) || strlen($data['email']) > 120) {
+            return ['ok' => false, 'message' => 'Official email is invalid.'];
+        }
+
+        if (!preg_match('/^[0-9+()\-\s]{7,25}$/', $data['phone'])) {
+            return ['ok' => false, 'message' => 'Primary phone format is invalid.'];
+        }
+
+        $hoursConfig = [
+            ['enabled' => intval($data['hours_mon_fri_enabled']), 'open' => (string)$data['hours_mon_fri_open'], 'close' => (string)$data['hours_mon_fri_close'], 'label' => 'Monday-Friday'],
+            ['enabled' => intval($data['hours_sat_enabled']), 'open' => (string)$data['hours_sat_open'], 'close' => (string)$data['hours_sat_close'], 'label' => 'Saturday'],
+            ['enabled' => intval($data['hours_sun_enabled']), 'open' => (string)$data['hours_sun_open'], 'close' => (string)$data['hours_sun_close'], 'label' => 'Sunday'],
+        ];
+
+        foreach ($hoursConfig as $cfg) {
+            if (!$this->isValidTimeString($cfg['open']) || !$this->isValidTimeString($cfg['close'])) {
+                return ['ok' => false, 'message' => $cfg['label'] . ' time format is invalid.'];
+            }
+
+            if ($cfg['enabled'] === 1 && strcmp($cfg['open'], $cfg['close']) >= 0) {
+                return ['ok' => false, 'message' => $cfg['label'] . ' close time must be later than open time.'];
+            }
+        }
+
+        $data['lab_name'] = substr($data['lab_name'], 0, 120);
+        $data['accreditation'] = substr($data['accreditation'], 0, 80);
+        $data['address'] = substr($data['address'], 0, 255);
+        $data['phone'] = substr($data['phone'], 0, 25);
+        $data['email'] = substr($data['email'], 0, 120);
+        $data['hours_mon_fri_enabled'] = intval($data['hours_mon_fri_enabled']) ? 1 : 0;
+        $data['hours_sat_enabled'] = intval($data['hours_sat_enabled']) ? 1 : 0;
+        $data['hours_sun_enabled'] = intval($data['hours_sun_enabled']) ? 1 : 0;
+        $data['allow_walkins'] = intval($data['allow_walkins']) ? 1 : 0;
+        $data['auto_email_reports'] = intval($data['auto_email_reports']) ? 1 : 0;
+
+        return ['ok' => true, 'message' => '', 'data' => $data];
+    }
+
+    private function isValidTimeString($value) {
+        return preg_match('/^(?:[01]\d|2[0-3]):[0-5]\d$/', (string)$value) === 1;
     }
 
     public function getGeneralSettingsSection() {

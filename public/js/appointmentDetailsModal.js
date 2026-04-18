@@ -7,8 +7,12 @@ document.addEventListener('DOMContentLoaded', () => {
     return;
   }
 
-  const endpoint = '/lab_sync/index.php?controller=appointmentsController&action=getAppointmentDetails';
-  const updateStatusEndpoint = '/lab_sync/index.php?controller=appointmentsController&action=updateTestStatus';
+  const appConfig = window.LAB_SYNC_CONFIG || {};
+  const baseUrl = String(appConfig.baseUrl || '/lab_sync').replace(/\/$/, '');
+  const csrfToken = String(appConfig.csrfToken || document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '');
+  const endpoint = baseUrl + '/index.php?controller=appointmentsController&action=getAppointmentDetails';
+  const updateStatusEndpoint = baseUrl + '/index.php?controller=appointmentsController&action=updateTestStatus';
+  const viewPdfBase = baseUrl + '/index.php?controller=reportsController&action=viewPdf';
   let activeTrigger = null;
   let currentAppointmentId = null;
 
@@ -101,6 +105,7 @@ document.addEventListener('DOMContentLoaded', () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+          'X-CSRF-Token': csrfToken,
           'X-Requested-With': 'XMLHttpRequest'
         },
         body: formBody
@@ -152,6 +157,21 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       updateProcToInProgress(appointmentId, testId, procStageButton);
+      return;
+    }
+
+    const printStageButton = event.target.closest('.js-print-stage');
+    if (printStageButton) {
+      event.preventDefault();
+
+      const appointmentId = printStageButton.getAttribute('data-appointment-id');
+      const testId = printStageButton.getAttribute('data-test-id');
+      if (!appointmentId || !testId) {
+        return;
+      }
+
+      const url = `${viewPdfBase}&appointment_id=${encodeURIComponent(appointmentId)}&test_id=${encodeURIComponent(testId)}`;
+      window.open(url, '_blank', 'noopener,noreferrer');
       return;
     }
 

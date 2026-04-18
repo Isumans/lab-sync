@@ -14,11 +14,14 @@ class appointmentsController {
         $appointmentsModel = new AppointmentModel(connect());
         $appointmentsOnline = $appointmentsModel->getAllAppointmentsByMethod("online");
         $appointmentsPhysical = $appointmentsModel->getAllAppointmentsByMethod("physical");
+        $csrfToken = $this->ensureCsrfToken();
         include VIEW_PATH . '/receptionist/appointments.php';
     }
 
     public function storeAppointment($role = '') {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $this->validateCsrfOrFail(false, 'appointmentsController', 'index');
+
             $patientId = isset($_POST['patient_id']) ? intval($_POST['patient_id']) : 0;
             $appointmentDate = $_POST['appointment_date'] ?? '';
             $appointmentTime = $_POST['appointment_time'] ?? '';
@@ -63,7 +66,7 @@ class appointmentsController {
             );
             if ($success) {
                 // Redirect back to appointments page to show saved appointment
-                header('Location: /lab_sync/index.php?controller=appointmentsController&action=index');
+                header('Location: ' . route_url('appointmentsController', 'index'));
                 exit();
             } else {
                 $err = $model->getLastError();
@@ -79,16 +82,23 @@ class appointmentsController {
         }
     }
     public function searchPatients() {
-    header('Content-Type: application/json');
-    
-    $type = $_GET['type'] ?? '';
-    $query = $_GET['query'] ?? '';
+    header('Content-Type: application/json; charset=UTF-8');
 
-    // require_once 'C:\xampp\htdocs\lab_sync\app\models\patientModel.php';
+    $type = trim((string)($_GET['type'] ?? 'patient_name'));
+    $query = trim((string)($_GET['query'] ?? ''));
+
+    if (!in_array($type, ['patient_name', 'email'], true)) {
+        $type = 'patient_name';
+    }
+
+    if (mb_strlen($query) < 3) {
+        echo json_encode([]);
+        return;
+    }
+
     $model1 = new patientModel(connect());
-
     $results = $model1->searchPatients($type, $query);
-    echo json_encode($results);
+    echo json_encode(is_array($results) ? $results : []);
 }
 
 public function createAppointment($role = '') {
@@ -115,7 +125,7 @@ public function filterAppointments() {
     if ($method === '' && isset($_GET['filter'])) {
         $method = strtolower(trim((string) $_GET['filter']));
     }
-    if (!in_array($method, ['all', 'online', 'physical', 'call'], true)) {
+    if (!in_array($method, ['all', 'online', 'physical', 'call', 'home_visit'], true)) {
         $method = 'all';
     }
 
@@ -136,6 +146,7 @@ public function filterAppointments() {
 
     echo json_encode([
         'status' => 'success',
+        'message' => 'Appointments loaded successfully.',
         'data' => $appointments,
         'pagination' => [
             'current_page' => $page,
@@ -143,6 +154,172 @@ public function filterAppointments() {
             'total' => $totalItems,
             'total_pages' => $totalPages,
         ]
+    ]);
+}
+
+public function filterPrescriptionRequests() {
+    header('Content-Type: application/json; charset=UTF-8');
+
+    if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
+        http_response_code(405);
+        echo json_encode([
+            'status' => 'error',
+            'message' => 'Invalid request method.'
+        ]);
+        return;
+    }
+
+    $page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
+    $perPage = isset($_GET['per_page']) ? max(1, min(50, intval($_GET['per_page']))) : 7;
+
+    $requestType = isset($_GET['request_type']) ? strtolower(trim((string) $_GET['request_type'])) : 'all';
+    if (!in_array($requestType, ['all', 'home_visit', 'onsite'], true)) {
+        $requestType = 'all';
+    }
+
+    $sortBy = isset($_GET['sort_by']) ? trim((string) $_GET['sort_by']) : 'created_at';
+    $sortDir = isset($_GET['sort_dir']) ? trim((string) $_GET['sort_dir']) : 'desc';
+
+    $filters = [
+        'search' => isset($_GET['search']) ? trim((string) $_GET['search']) : '',
+        'request_type' => $requestType,
+        'from_date' => isset($_GET['from_date']) ? trim((string) $_GET['from_date']) : '',
+        'to_date' => isset($_GET['to_date']) ? trim((string) $_GET['to_date']) : '',
+    ];
+
+    $appointmentsModel = new AppointmentModel(connect());
+    $rows = $appointmentsModel->getPrescriptionRequestsList($filters, $page, $perPage, $sortBy, $sortDir);
+    $totalItems = $appointmentsModel->countPrescriptionRequests($filters);
+    $totalPages = max(1, (int) ceil($totalItems / $perPage));
+
+    echo json_encode([
+        'status' => 'success',
+        'message' => 'Prescription requests loaded successfully.',
+        'data' => $rows,
+        'pagination' => [
+            'current_page' => $page,
+            'per_page' => $perPage,
+            'total' => $totalItems,
+            'total_pages' => $totalPages,
+        ]
+    ]);
+}
+
+public function getPrescriptionRequestManageData() {
+    header('Content-Type: application/json; charset=UTF-8');
+
+    if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
+        http_response_code(405);
+        echo json_encode([
+            'status' => 'error',
+            'message' => 'Invalid request method.'
+        ]);
+        return;
+    }
+
+    $requestId = isset($_GET['request_id']) ? intval($_GET['request_id']) : 0;
+    if ($requestId <= 0) {
+        http_response_code(400);
+        echo json_encode([
+            'status' => 'error',
+            'message' => 'Invalid request ID.'
+        ]);
+        return;
+    }
+
+    $model = new AppointmentModel(connect());
+    $payload = $model->getPrescriptionRequestManagePayload($requestId);
+    if ($payload === null) {
+        http_response_code(404);
+        echo json_encode([
+            'status' => 'error',
+            'message' => 'Request not found.'
+        ]);
+        return;
+    }
+
+    echo json_encode([
+        'status' => 'success',
+        'message' => 'Prescription request details loaded successfully.',
+        'data' => $payload
+    ]);
+}
+
+public function savePrescriptionRequestManagement() {
+    header('Content-Type: application/json; charset=UTF-8');
+
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        http_response_code(405);
+        echo json_encode([
+            'status' => 'error',
+            'message' => 'Invalid request method.'
+        ]);
+        return;
+    }
+
+    $this->validateCsrfOrFail(true);
+
+    $input = $_POST;
+    if (empty($input)) {
+        $raw = file_get_contents('php://input');
+        $decoded = json_decode($raw, true);
+        if (is_array($decoded)) {
+            $input = $decoded;
+        }
+    }
+
+    $requestId = isset($input['request_id']) ? intval($input['request_id']) : 0;
+    $preferredDate = isset($input['preferred_date']) ? trim((string) $input['preferred_date']) : '';
+    $preferredTime = isset($input['preferred_time']) ? trim((string) $input['preferred_time']) : '';
+    $collectionAddress = isset($input['collection_address']) ? trim((string) $input['collection_address']) : '';
+    $note = isset($input['note']) ? trim((string) $input['note']) : '';
+    $testIds = $this->parseSelectedTestIds($input['tests'] ?? []);
+    $actorUserId = isset($_SESSION['user_id']) ? intval($_SESSION['user_id']) : 0;
+
+    if ($requestId <= 0) {
+        http_response_code(400);
+        echo json_encode([
+            'status' => 'error',
+            'message' => 'Invalid request ID.'
+        ]);
+        return;
+    }
+
+    if (empty($testIds)) {
+        http_response_code(400);
+        echo json_encode([
+            'status' => 'error',
+            'message' => 'Please select at least one test before saving.'
+        ]);
+        return;
+    }
+
+    $model = new AppointmentModel(connect());
+    $ok = $model->savePrescriptionRequestManagement($requestId, [
+        'preferred_date' => $preferredDate,
+        'preferred_time' => $preferredTime,
+        'collection_address' => $collectionAddress,
+        'note' => $note,
+        'tests' => $testIds,
+    ], $actorUserId);
+
+    if (!$ok) {
+        $message = $model->getLastError() ?: 'Failed to save request management data.';
+        $statusCode = 500;
+        if (stripos($message, 'required') !== false || stripos($message, 'invalid') !== false || stripos($message, 'not found') !== false) {
+            $statusCode = 400;
+        }
+        http_response_code($statusCode);
+        echo json_encode([
+            'status' => 'error',
+            'message' => $message
+        ]);
+        return;
+    }
+
+    echo json_encode([
+        'status' => 'success',
+        'message' => 'Request updated and sent to patient successfully.'
     ]);
 }
 
@@ -213,6 +390,7 @@ public function getAppointmentEditData() {
 
     echo json_encode([
         'status' => 'success',
+        'message' => 'Appointment edit data loaded successfully.',
         'data' => $payload
     ]);
 }
@@ -230,11 +408,21 @@ public function searchTests() {
     }
 
     $query = isset($_GET['q']) ? trim((string) $_GET['q']) : '';
+    if (mb_strlen($query) < 3) {
+        echo json_encode([
+            'status' => 'success',
+            'message' => 'Please type at least 3 characters to search tests.',
+            'data' => []
+        ]);
+        return;
+    }
+
     $model = new AppointmentModel(connect());
     $tests = $model->searchTestsCatalog($query, 20);
 
     echo json_encode([
         'status' => 'success',
+        'message' => 'Tests loaded successfully.',
         'data' => $tests
     ]);
 }
@@ -250,6 +438,8 @@ public function updateAppointment() {
         ]);
         return;
     }
+
+    $this->validateCsrfOrFail(true);
 
     $input = $_POST;
     if (empty($input)) {
@@ -340,6 +530,8 @@ public function deleteAppointment() {
         return;
     }
 
+    $this->validateCsrfOrFail(true);
+
     $input = $_POST;
     if (empty($input)) {
         $raw = file_get_contents('php://input');
@@ -404,6 +596,8 @@ public function updateTestStatus() {
         return;
     }
 
+    $this->validateCsrfOrFail(true);
+
     $input = $_POST;
     if (empty($input)) {
         $raw = file_get_contents('php://input');
@@ -458,6 +652,7 @@ public function updateTestStatus() {
 public function prescriptionQueue() {
     $statusFilter = isset($_GET['status']) ? strtolower(trim((string) $_GET['status'])) : 'pending';
     $model = new AppointmentModel(connect());
+    $csrfToken = $this->ensureCsrfToken();
 
     if ($statusFilter === 'all') {
         $requests = $model->getPrescriptionRequests('all');
@@ -598,13 +793,15 @@ public function processPrescriptionDecision() {
         return;
     }
 
+    $this->validateCsrfOrFail(false, 'appointmentsController', 'prescriptionQueue');
+
     $requestId = intval($_POST['request_id'] ?? 0);
     $decision = strtolower(trim((string) ($_POST['decision'] ?? '')));
     $note = trim((string) ($_POST['decision_note'] ?? ''));
 
     if ($requestId <= 0 || !in_array($decision, ['book_for_patient', 'self_book'], true)) {
         $_SESSION['error'] = 'Invalid request decision payload.';
-        header('Location: /lab_sync/index.php?controller=appointmentsController&action=prescriptionQueue');
+        header('Location: ' . route_url('appointmentsController', 'prescriptionQueue'));
         exit();
     }
 
@@ -634,14 +831,12 @@ public function processPrescriptionDecision() {
     }
 
     if ($ok) {
-        $eventNote = $note !== '' ? $note : ('Decision: ' . $decision);
-        $model->addPrescriptionRequestEvent($requestId, 'decision', 'PENDING', strtoupper($status), $eventNote, $decisionUserId);
         $_SESSION['success'] = 'Prescription request updated successfully.';
     } else {
         $_SESSION['error'] = 'Failed to update prescription request decision.';
     }
 
-    header('Location: /lab_sync/index.php?controller=appointmentsController&action=prescriptionQueue');
+    header('Location: ' . route_url('appointmentsController', 'prescriptionQueue'));
     exit();
 }
 
@@ -665,6 +860,43 @@ private function parseSelectedTestIds($rawValue) {
     }
 
     return array_values($ids);
+}
+
+private function ensureCsrfToken() {
+    if (empty($_SESSION['csrf_token'])) {
+        $_SESSION['csrf_token'] = bin2hex(random_bytes(24));
+    }
+
+    return $_SESSION['csrf_token'];
+}
+
+private function validateCsrfOrFail($expectsJson = false, $redirectController = 'appointmentsController', $redirectAction = 'index') {
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        return;
+    }
+
+    $sessionToken = (string)($_SESSION['csrf_token'] ?? '');
+    $requestToken = (string)($_POST['csrf_token'] ?? '');
+    if ($requestToken === '') {
+        $requestToken = (string)($_SERVER['HTTP_X_CSRF_TOKEN'] ?? '');
+    }
+
+    if ($sessionToken !== '' && $requestToken !== '' && hash_equals($sessionToken, $requestToken)) {
+        return;
+    }
+
+    if ($expectsJson) {
+        http_response_code(403);
+        echo json_encode([
+            'status' => 'error',
+            'message' => 'Security check failed. Please refresh and retry.'
+        ]);
+        exit;
+    }
+
+    $_SESSION['error'] = 'Security check failed. Please retry.';
+    header('Location: ' . route_url($redirectController, $redirectAction));
+    exit;
 }
 
 

@@ -2,6 +2,7 @@
 
 $appointments = is_array($appointments ?? null) ? $appointments : [];
 $prescriptionRequests = is_array($prescriptionRequests ?? null) ? $prescriptionRequests : [];
+$requestTests = is_array($requestTests ?? null) ? $requestTests : [];
 $flashSuccess = $_SESSION['success'] ?? '';
 $flashError = $_SESSION['error'] ?? '';
 unset($_SESSION['success'], $_SESSION['error']);
@@ -16,8 +17,14 @@ unset($_SESSION['success'], $_SESSION['error']);
   <link rel="stylesheet" href="/lab_sync/public/css/globals.css" />
   <link rel="stylesheet" href="/lab_sync/public/css/nav.css" />
   <link rel="stylesheet" href="/lab_sync/public/css/footer.css" />
+  <link rel="stylesheet" href="/lab_sync/public/paymentModal.css" />
+  <link rel="stylesheet" href="/lab_sync/public/appointmentEditModal.css" />
+  <link rel="stylesheet" href="/lab_sync/public/appointmentDeleteModal.css" />
   <style>
     :root {
+      --primary-color: #3DBDEC;
+      --secondary-color: #ffffff;
+      --background-color: #f4f6f9;
       --bg: #f4f6f9;
       --card: #ffffff;
       --line: #e3e7ee;
@@ -43,10 +50,6 @@ unset($_SESSION['success'], $_SESSION['error']);
     }
 
     .page-head {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 12px;
       margin-bottom: 18px;
     }
 
@@ -56,19 +59,41 @@ unset($_SESSION['success'], $_SESSION['error']);
       color: #1c2736;
     }
 
-    .book-link {
-      text-decoration: none;
-      background: var(--primary-500);
-      color: #fff;
-      border-radius: 10px;
-      padding: 10px 14px;
-      font-weight: 700;
-      font-size: 0.92rem;
-      transition: background-color .2s ease;
+    .slider-tabs {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #f2f4f7;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 5px;
+      margin-bottom: 16px;
     }
 
-    .book-link:hover {
-      background: var(--primary-600);
+    .slider-tab {
+      border: 0;
+      border-radius: 9px;
+      background: transparent;
+      color: #5b6f84;
+      font-size: 0.96rem;
+      font-weight: 700;
+      padding: 10px 18px;
+      cursor: pointer;
+      transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .slider-tab:hover {
+      color: #36536a;
+    }
+
+    .slider-tab.is-active {
+      background: #ffffff;
+      color: var(--primary-color, #3DBDEC);
+      box-shadow: 0 4px 10px rgba(16, 24, 40, 0.08);
+    }
+
+    .tab-panel[hidden] {
+      display: none !important;
     }
 
     .card {
@@ -93,6 +118,10 @@ unset($_SESSION['success'], $_SESSION['error']);
       letter-spacing: 0.02em;
     }
 
+    .table-card {
+      padding-top: 6px;
+    }
+
     .flash {
       margin: 0 18px 14px;
       border-radius: 10px;
@@ -115,41 +144,49 @@ unset($_SESSION['success'], $_SESSION['error']);
 
     .table-wrap {
       overflow-x: auto;
-      padding: 0 18px 18px;
+      padding: 0;
     }
 
     table {
       width: 100%;
       border-collapse: collapse;
-      min-width: 780px;
+      min-width: 820px;
     }
 
-    th,
-    td {
+    thead th {
       text-align: left;
-      padding: 14px 10px;
-      border-bottom: 1px solid #e8edf3;
-      vertical-align: middle;
-      font-size: 0.94rem;
+      padding: 14px 18px;
+      border-bottom: 1px solid #e5edf4;
+      font-size: 0.66rem;
+      letter-spacing: 0.09em;
+      font-weight: 800;
+      text-transform: uppercase;
+      color: #708193;
     }
 
-    th {
-      color: #526072;
-      font-size: 0.82rem;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      font-weight: 700;
+    tbody td {
+      padding: 14px 18px;
+      border-bottom: 1px solid #edf2f6;
+      vertical-align: middle;
+      font-size: 0.9rem;
+      color: #263b50;
+    }
+
+    tbody tr:hover {
+      background: #f8fbff;
     }
 
     .status-pill {
       display: inline-flex;
       align-items: center;
       border-radius: 999px;
-      padding: 5px 10px;
-      font-weight: 700;
-      font-size: 0.78rem;
+      padding: 6px 11px;
+      font-weight: 800;
+      font-size: 0.74rem;
+      letter-spacing: 0.03em;
       background: #eef4fa;
       color: #35526e;
+      text-transform: uppercase;
     }
 
     .status-pill.confirmed { background: #e6f8ed; color: #1e7f48; }
@@ -166,7 +203,7 @@ unset($_SESSION['success'], $_SESSION['error']);
     .actions {
       display: flex;
       gap: 8px;
-      justify-content: flex-start;
+      justify-content: flex-end;
       align-items: center;
       min-width: 86px;
     }
@@ -220,12 +257,13 @@ unset($_SESSION['success'], $_SESSION['error']);
       display: inline-flex;
       align-items: center;
       border-radius: 999px;
-      padding: 5px 10px;
-      font-weight: 700;
-      font-size: 0.78rem;
+      padding: 6px 11px;
+      font-weight: 800;
+      font-size: 0.74rem;
+      letter-spacing: 0.03em;
       background: #eef4fa;
       color: #35526e;
-      text-transform: capitalize;
+      text-transform: uppercase;
     }
 
     .rx-pill.pending { background: #fff7e4; color: #916b0f; }
@@ -240,6 +278,74 @@ unset($_SESSION['success'], $_SESSION['error']);
 
     .file-link:hover {
       text-decoration: underline;
+    }
+
+    .cell-strong {
+      font-weight: 700;
+      color: #445d76;
+    }
+
+    .tests-cell {
+      max-width: 320px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .th-right,
+    .td-right {
+      text-align: right;
+    }
+
+    .table-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 16px;
+      gap: 12px;
+      flex-wrap: wrap;
+      border-top: 1px solid #edf2f6;
+    }
+
+    .table-footer p {
+      margin: 0;
+      font-size: 0.8rem;
+      color: #6b7d91;
+    }
+
+    .table-pagination {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .page-btn {
+      min-width: 32px;
+      height: 32px;
+      padding: 0 10px;
+      border: 1px solid #dbe5ef;
+      border-radius: 8px;
+      background: #fff;
+      color: #5a7087;
+      font-weight: 700;
+      cursor: pointer;
+      transition: border-color .16s ease, color .16s ease, background-color .16s ease;
+    }
+
+    .page-btn:hover:not(:disabled) {
+      border-color: var(--primary-color, #3DBDEC);
+      color: var(--primary-color, #3DBDEC);
+    }
+
+    .page-btn.is-active {
+      background: var(--primary-color, #3DBDEC);
+      border-color: var(--primary-color, #3DBDEC);
+      color: #fff;
+    }
+
+    .page-btn:disabled {
+      opacity: 0.45;
+      cursor: default;
     }
 
     .results-note {
@@ -411,11 +517,26 @@ unset($_SESSION['success'], $_SESSION['error']);
 
 <main class="dashboard-wrap">
   <div class="page-head">
-    <h1>Your Appointments</h1>
-    <a class="book-link" href="/lab_sync/index.php?controller=home&action=appointment_options">Book New Appointment</a>
+    <h1>Patient Dashboard</h1>
   </div>
 
-  <section class="card">
+  <div class="slider-tabs" role="tablist" aria-label="Patient dashboard sections">
+    <button type="button" class="slider-tab is-active" role="tab" aria-selected="true" data-patient-tab="appointments">
+      Appointments
+    </button>
+    <button type="button" class="slider-tab" role="tab" aria-selected="false" data-patient-tab="prescriptions">
+      Prescription Submissions
+    </button>
+    <button type="button" class="slider-tab" role="tab" aria-selected="false" data-patient-tab="results">
+      Test Results
+    </button>
+    <button type="button" class="slider-tab" role="tab" aria-selected="false" data-patient-tab="bills">
+      Bills
+    </button>
+  </div>
+
+  <div id="patientAppointmentsSection" class="tab-panel is-active" role="tabpanel" aria-label="Appointments">
+  <section class="card table-card">
     <div class="card-head">
       <h2>Appointments</h2>
     </div>
@@ -437,7 +558,7 @@ unset($_SESSION['success'], $_SESSION['error']);
             <th>Tests</th>
             <th>Status</th>
             <th>Home Collection</th>
-            <th>Actions</th>
+            <th class="th-right">Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -461,12 +582,12 @@ unset($_SESSION['success'], $_SESSION['error']);
                 data-address="<?php echo htmlspecialchars((string)($appointment['collection_address'] ?? '')); ?>"
                 data-home="<?php echo $homeCollection ? 'Yes' : 'No'; ?>"
               >
-                <td><?php echo htmlspecialchars($date); ?></td>
+                <td class="cell-strong"><?php echo htmlspecialchars($date); ?></td>
                 <td><?php echo htmlspecialchars($time); ?></td>
-                <td><?php echo htmlspecialchars($testsSummary); ?></td>
+                <td class="tests-cell" title="<?php echo htmlspecialchars($testsSummary); ?>"><?php echo htmlspecialchars($testsSummary); ?></td>
                 <td><span class="status-pill <?php echo htmlspecialchars($statusClass); ?>"><?php echo htmlspecialchars($status); ?></span></td>
                 <td><span class="home-badge <?php echo $homeCollection ? '' : 'no'; ?>"><?php echo $homeCollection ? 'Yes' : 'No'; ?></span></td>
-                <td>
+                <td class="td-right">
                   <div class="actions">
                     <button type="button" class="action-btn edit" title="Edit" onclick="openEdit(this)">
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"></path></svg>
@@ -486,9 +607,15 @@ unset($_SESSION['success'], $_SESSION['error']);
         </tbody>
       </table>
     </div>
+    <div class="table-footer">
+      <p id="appointmentsShowingText">Showing 0-0 of 0 appointments</p>
+      <div class="table-pagination" id="appointmentsPagination"></div>
+    </div>
   </section>
+  </div>
 
-  <section class="card rx-card" id="prescription-submissions">
+  <div id="patientPrescriptionsSection" class="tab-panel" role="tabpanel" aria-label="Prescription submissions" hidden>
+  <section class="card table-card rx-card" id="prescription-submissions">
     <div class="card-head">
       <h2>Prescription Submissions</h2>
     </div>
@@ -498,22 +625,35 @@ unset($_SESSION['success'], $_SESSION['error']);
         <thead>
           <tr>
             <th>Submitted On</th>
+            <th>Type</th>
             <th>Status</th>
             <th>File</th>
+            <th class="th-right">Actions</th>
           </tr>
         </thead>
         <tbody>
           <?php if (count($prescriptionRequests) > 0): ?>
             <?php foreach ($prescriptionRequests as $request): ?>
               <?php
-                $createdAt = (string)($request['created_at'] ?? 'N/A');
-                $status = strtolower(trim((string)($request['status'] ?? 'pending')));
-                $statusLabel = ucfirst($status);
-                $filePath = ltrim(str_replace('\\\\', '/', (string)($request['prescription_file_path'] ?? '')), '/');
-                $fileUrl = $filePath !== '' ? '/lab_sync/' . $filePath : '';
+                $reqId       = (int)($request['request_id'] ?? 0);
+                $createdAt   = (string)($request['created_at'] ?? 'N/A');
+                $status      = strtolower(trim((string)($request['status'] ?? 'pending')));
+                $statusLabel = ucwords(str_replace('_', ' ', $status));
+                $filePath    = ltrim(str_replace('\\', '/', (string)($request['prescription_file_path'] ?? '')), '/');
+                $fileUrl     = $filePath !== '' ? '/lab_sync/' . $filePath : '';
+                $visitType   = strtoupper(trim((string)($request['visit_type'] ?? '')));
+                $homeCol     = !empty($request['home_collection']);
+                $typeLabel   = ($visitType === 'HOME_VISIT' || $homeCol) ? 'Home Visit' : 'Onsite';
+                $isCommunicated = $status === 'communicated';
+                $isBooked    = !empty($request['linked_appointment_id']);
+                $tests       = $requestTests[$reqId] ?? [];
+                $testsForModal = array_map(function($t) {
+                    return ['test_id' => (int)$t['test_id'], 'test_name' => (string)$t['test_name'], 'unit_price' => (float)$t['unit_price']];
+                }, $tests);
               ?>
               <tr>
-                <td><?php echo htmlspecialchars($createdAt); ?></td>
+                <td class="cell-strong"><?php echo htmlspecialchars($createdAt); ?></td>
+                <td><?php echo htmlspecialchars($typeLabel); ?></td>
                 <td><span class="rx-pill <?php echo htmlspecialchars($status); ?>"><?php echo htmlspecialchars($statusLabel); ?></span></td>
                 <td>
                   <?php if ($fileUrl !== ''): ?>
@@ -522,18 +662,40 @@ unset($_SESSION['success'], $_SESSION['error']);
                     N/A
                   <?php endif; ?>
                 </td>
+                <td class="td-right">
+                  <?php if ($isCommunicated && !$isBooked): ?>
+                    <button type="button" class="rx-book-btn"
+                      data-request-id="<?php echo $reqId; ?>"
+                      data-tests="<?php echo htmlspecialchars(json_encode($testsForModal), ENT_QUOTES); ?>"
+                      data-home="<?php echo $homeCol ? '1' : '0'; ?>"
+                      data-address="<?php echo htmlspecialchars((string)($request['collection_address'] ?? '')); ?>"
+                      onclick="openRxBookingModal(this)">
+                      Book Appointment
+                    </button>
+                  <?php elseif ($isBooked): ?>
+                    <span class="rx-booked-label">Appointment booked</span>
+                  <?php else: ?>
+                    —
+                  <?php endif; ?>
+                </td>
               </tr>
             <?php endforeach; ?>
           <?php else: ?>
             <tr>
-              <td colspan="3" class="empty">No prescription submissions yet. Submit one from Help section and it will appear here.</td>
+              <td colspan="5" class="empty">No prescription submissions yet. Submit one from the Help section and it will appear here.</td>
             </tr>
           <?php endif; ?>
         </tbody>
       </table>
     </div>
+    <div class="table-footer">
+      <p id="prescriptionsShowingText">Showing 0-0 of 0 requests</p>
+      <div class="table-pagination" id="prescriptionsPagination"></div>
+    </div>
   </section>
+  </div>
 
+  <div id="patientResultsSection" class="tab-panel" role="tabpanel" aria-label="Test results" hidden>
   <section class="card results-card">
     <div class="card-head" style="padding: 0 0 12px; border-bottom: 0;">
       <h2>Test Results</h2>
@@ -554,6 +716,89 @@ unset($_SESSION['success'], $_SESSION['error']);
       </article>
     </div>
   </section>
+  </div>
+
+  <div id="patientBillsSection" class="tab-panel" role="tabpanel" aria-label="Bills" hidden>
+  <section class="card table-card">
+    <div class="card-head">
+      <h2>Bills</h2>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Bill No.</th>
+            <th>Appointment Date</th>
+            <th>Bill Date</th>
+            <th class="th-right">Total</th>
+            <th class="th-right">Paid</th>
+            <th>Status</th>
+            <th class="th-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <?php
+            $patientBills = is_array($patientBills ?? null) ? $patientBills : [];
+            $billStatusClasses = [
+              'PAID'           => 'confirmed',
+              'PARTIALLY_PAID' => 'pending',
+              'PENDING'        => 'pending',
+              'DRAFT'          => 'pending',
+              'CANCELLED'      => 'cancelled',
+            ];
+            $billStatusLabels = [
+              'PAID'           => 'Paid',
+              'PARTIALLY_PAID' => 'Partially Paid',
+              'PENDING'        => 'Pending',
+              'DRAFT'          => 'Draft',
+              'CANCELLED'      => 'Cancelled',
+            ];
+          ?>
+          <?php if (count($patientBills) > 0): ?>
+            <?php foreach ($patientBills as $bill): ?>
+              <?php
+                $billStatus     = strtoupper((string)($bill['status'] ?? 'PENDING'));
+                $statusClass    = $billStatusClasses[$billStatus] ?? 'pending';
+                $statusLabel    = $billStatusLabels[$billStatus]  ?? ucfirst(strtolower($billStatus));
+                $invoiceUrl     = '/lab_sync/index.php?controller=billingController&action=printInvoice&bill_id=' . intval($bill['bill_id']);
+              ?>
+              <tr>
+                <td class="cell-strong"><?php echo htmlspecialchars((string)($bill['bill_number'] ?? '—')); ?></td>
+                <td><?php echo htmlspecialchars((string)($bill['appointment_date'] ?? '—')); ?></td>
+                <td><?php echo htmlspecialchars((string)($bill['bill_date'] ?? '—')); ?></td>
+                <td class="td-right">LKR <?php echo number_format((float)($bill['total_amount'] ?? 0), 2); ?></td>
+                <td class="td-right">LKR <?php echo number_format((float)($bill['paid_amount'] ?? 0), 2); ?></td>
+                <td><span class="status-pill <?php echo htmlspecialchars($statusClass); ?>"><?php echo htmlspecialchars($statusLabel); ?></span></td>
+                <td class="td-right">
+                  <div class="actions">
+                    <a href="<?php echo htmlspecialchars($invoiceUrl); ?>" target="_blank" rel="noopener"
+                       class="action-btn edit" title="View Invoice" style="text-decoration:none;">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                        <polyline points="10 9 9 9 8 9"></polyline>
+                      </svg>
+                    </a>
+                  </div>
+                </td>
+              </tr>
+            <?php endforeach; ?>
+          <?php else: ?>
+            <tr>
+              <td colspan="7" class="empty">No bills yet. Bills will appear here after your payments are processed.</td>
+            </tr>
+          <?php endif; ?>
+        </tbody>
+      </table>
+    </div>
+    <div class="table-footer">
+      <p id="billsShowingText">Showing 0-0 of 0 bills</p>
+      <div class="table-pagination" id="billsPagination"></div>
+    </div>
+  </section>
+  </div>
 </main>
 
 <div class="modal" id="viewModal" aria-hidden="true">
@@ -575,67 +820,610 @@ unset($_SESSION['success'], $_SESSION['error']);
   </div>
 </div>
 
-<div class="modal" id="editModal" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-head">
-      <h3>Edit Appointment</h3>
-      <button class="modal-close" type="button" onclick="closeModal('editModal')">&times;</button>
-    </div>
-    <div class="modal-body">
-      <form method="POST" action="/lab_sync/index.php?controller=home&action=edit_appointment">
-        <input type="hidden" name="appointment_id" id="editAppointmentId" value="">
-        <div class="modal-row">
-          <label for="editDateInput">Date</label>
-          <input id="editDateInput" name="date" type="date" required>
+<div class="appointment-edit-modal" id="patientEditAppointmentModal" aria-hidden="true">
+  <div class="appointment-edit-dialog" role="dialog" aria-modal="true" aria-labelledby="patientEditAppointmentTitle">
+    <form id="patientEditAppointmentForm" method="POST" action="/lab_sync/index.php?controller=home&action=edit_appointment">
+      <div class="appointment-edit-header">
+        <div>
+          <h2 id="patientEditAppointmentTitle">Edit Appointment</h2>
+          <p class="appointment-edit-subtitle">UPDATE YOUR APPOINTMENT DETAILS</p>
         </div>
-        <div class="modal-row">
-          <label for="editTimeInput">Time</label>
-          <input id="editTimeInput" name="time" type="time" required>
-        </div>
-        <div class="modal-row">
-          <label>Home Collection</label>
-          <div class="checkbox-row">
-            <input id="editHomeCollection" name="home_collection" type="checkbox" value="1" onchange="toggleHomeCollectionEdit()">
-            <span>Require a home visit for this appointment</span>
+        <button type="button" class="appointment-edit-close" id="patientEditAppointmentClose" aria-label="Close">&times;</button>
+      </div>
+
+      <div class="appointment-edit-alert" id="patientEditAppointmentAlert" hidden></div>
+
+      <div class="appointment-edit-body">
+        <input type="hidden" name="appointment_id" id="patientEditAppointmentId" value="">
+        <input type="hidden" name="time" id="patientEditTimeInput" value="">
+
+        <section class="edit-section-card">
+          <div class="edit-section-title">
+            <span class="section-icon" aria-hidden="true">&#128197;</span>
+            <h3>Appointment Summary</h3>
           </div>
-        </div>
-        <div class="modal-row" id="editAddressRow">
-          <label for="editAddressInput">Collection Address</label>
-          <textarea id="editAddressInput" name="collection_address" rows="3" placeholder="Enter the sample collection address"></textarea>
-        </div>
-        <div class="modal-actions">
-          <button type="button" class="btn secondary" onclick="closeModal('editModal')">Cancel</button>
-          <button type="submit" name="edit" class="btn primary">Save Changes</button>
+          <div class="patient-readonly-card">
+            <div class="patient-identity">
+              <span class="patient-avatar" aria-hidden="true">AP</span>
+              <div>
+                <p class="patient-name" id="patientEditSummaryTitle">Appointment</p>
+                <p class="patient-pid" id="patientEditSummaryTests">Tests</p>
+              </div>
+            </div>
+            <span class="readonly-badge" id="patientEditSummaryStatus">Pending</span>
+          </div>
+        </section>
+
+        <section class="edit-section-card">
+          <div class="edit-section-title">
+            <span class="section-icon" aria-hidden="true">&#9201;</span>
+            <h3>Scheduling</h3>
+          </div>
+
+          <div class="schedule-grid">
+            <div>
+              <label class="edit-label" for="patientEditDateInput">Select Date</label>
+              <div class="date-input-wrap">
+                <span class="date-icon" aria-hidden="true">&#128197;</span>
+                <input id="patientEditDateInput" name="date" type="date" required>
+              </div>
+            </div>
+
+            <div>
+              <label class="edit-label">Time Slots</label>
+              <div class="time-slot-grid" id="patientEditTimeSlots"></div>
+            </div>
+          </div>
+
+          <div class="modal-row" style="margin-top: 14px;">
+            <label class="edit-label" for="patientEditTimeFallback">Custom Time</label>
+            <div class="date-input-wrap">
+              <span class="date-icon" aria-hidden="true">&#128340;</span>
+              <input id="patientEditTimeFallback" type="time">
+            </div>
+          </div>
+        </section>
+
+        <section class="edit-section-card">
+          <div class="edit-section-title">
+            <span class="section-icon" aria-hidden="true">&#127968;</span>
+            <h3>Collection</h3>
+          </div>
+
+          <div class="modal-row">
+            <label>Home Collection</label>
+            <div class="checkbox-row">
+              <input id="patientEditHomeCollection" name="home_collection" type="checkbox" value="1">
+              <span>Require a home visit for this appointment</span>
+            </div>
+          </div>
+
+          <div class="modal-row" id="patientEditAddressRow">
+            <label for="patientEditAddressInput">Collection Address</label>
+            <textarea id="patientEditAddressInput" name="collection_address" rows="3" placeholder="Enter the sample collection address"></textarea>
+          </div>
+        </section>
+      </div>
+
+      <div class="appointment-edit-footer">
+        <button type="button" class="edit-cancel-btn" id="patientEditAppointmentCancel">Cancel</button>
+        <button type="submit" name="edit" class="edit-submit-btn" id="patientEditAppointmentSubmit">
+          <span aria-hidden="true">&#128190;</span> Update Appointment
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="appointment-delete-modal" id="patientDeleteAppointmentModal" aria-hidden="true">
+  <div class="appointment-delete-dialog" role="dialog" aria-modal="true" aria-labelledby="patientDeleteAppointmentTitle">
+    <div class="appointment-delete-header">
+      <span class="delete-icon-wrap" aria-hidden="true">!</span>
+      <h2 id="patientDeleteAppointmentTitle">Cancel Appointment</h2>
+      <button type="button" class="appointment-delete-close" id="patientDeleteAppointmentClose" aria-label="Close">&times;</button>
+    </div>
+
+    <p class="appointment-delete-copy">This will mark the appointment as cancelled and keep it in your appointment history.</p>
+    <div class="appointment-delete-alert" id="patientDeleteAppointmentAlert" hidden></div>
+
+    <div class="appointment-delete-summary">
+      <span class="summary-label">Appointment</span>
+      <div class="summary-value" id="patientDeleteAppointmentNumber">#APP-0</div>
+
+      <span class="summary-label">Tests</span>
+      <div class="summary-value" id="patientDeleteAppointmentTests">-</div>
+
+      <span class="summary-label">Schedule</span>
+      <div class="summary-value" id="patientDeleteAppointmentSchedule">-</div>
+    </div>
+
+    <form method="POST" action="/lab_sync/index.php?controller=home&action=edit_appointment">
+      <input type="hidden" name="appointment_id" id="patientDeleteAppointmentId" value="">
+      <button type="submit" name="delete" class="delete-confirm-btn" id="patientDeleteAppointmentConfirm">Cancel Appointment</button>
+      <button type="button" class="delete-cancel-btn" id="patientDeleteAppointmentCancel">Keep Appointment</button>
+    </form>
+
+    <div class="appointment-delete-footer-note">Soft Delete • Appointment Remains In History</div>
+  </div>
+</div>
+
+<!-- ── Prescription Booking Modal ───────────────────────── -->
+<div id="rxBookingModal" class="rxm-overlay" aria-hidden="true" hidden>
+  <div class="rxm-card" role="dialog" aria-modal="true" aria-labelledby="rxmTitle">
+
+    <div class="rxm-header">
+      <div>
+        <h2 class="rxm-title" id="rxmTitle">Book Appointment</h2>
+        <p class="rxm-sub">SCHEDULE NEW LABORATORY ANALYSIS</p>
+      </div>
+      <button type="button" class="rxm-close" onclick="closeRxBookingModal()" aria-label="Close">&times;</button>
+    </div>
+
+    <div class="rxm-body">
+      <form id="rxBookingForm" method="POST" action="/lab_sync/index.php?controller=home&action=bookAppointment">
+        <input type="hidden" name="from_request"      id="rxFromRequest">
+        <input type="hidden" name="appointment_time"  id="rxApptTime">
+        <input type="hidden" name="appointment_date"  id="rxApptDate">
+        <input type="hidden" name="home_collection"   id="rxHomeCollection" value="0">
+        <input type="hidden" name="collection_address" id="rxCollectionAddr" value="">
+
+        <!-- Selected tests -->
+        <section class="rxm-section">
+          <h3 class="rxm-section-title">SELECTED TESTS</h3>
+          <div id="rxTestRows"></div>
+          <p id="rxNoTests" class="rxm-empty-note" hidden>No tests were included with this request.</p>
+        </section>
+
+
+        <!-- Scheduling -->
+        <section class="rxm-section">
+          <h3 class="rxm-section-title">SCHEDULING</h3>
+
+          <div class="rxm-sched-row">
+            <h4 class="rxm-sched-label">SELECT DATE</h4>
+            <div class="rxm-date-btns" id="rxDateBtns">
+              <button type="button" class="rxm-date-btn" data-offset="0">Today</button>
+              <button type="button" class="rxm-date-btn" data-offset="1">Tomorrow</button>
+              <button type="button" class="rxm-date-btn rxm-date-other" id="rxBtnOther">
+                <span>&#128197;</span> Other
+              </button>
+            </div>
+            <input type="date" id="rxDatePicker" class="rxm-date-picker" style="display:none;">
+          </div>
+
+          <div class="rxm-sched-row">
+            <h4 class="rxm-sched-label">SELECT TIME SLOT</h4>
+            <div class="rxm-slot-label">Morning</div>
+            <div id="rxSlotMorning" class="rxm-slot-rail"></div>
+            <div class="rxm-slot-label">Afternoon</div>
+            <div id="rxSlotAfternoon" class="rxm-slot-rail"></div>
+          </div>
+        </section>
+
+        <!-- Footer -->
+        <div class="rxm-footer">
+          <div class="rxm-total-block">
+            <span class="rxm-total-label">GRAND TOTAL</span>
+            <span id="rxGrandTotal" class="rxm-total-val">LKR 0.00</span>
+          </div>
+          <button type="button" class="rxm-confirm-btn" id="rxConfirmBtn" onclick="submitRxBooking()">
+            Confirm &amp; Proceed Payment &#8594;
+          </button>
         </div>
       </form>
     </div>
   </div>
 </div>
 
-<div class="modal" id="deleteModal" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-head">
-      <h3>Delete Appointment</h3>
-      <button class="modal-close" type="button" onclick="closeModal('deleteModal')">&times;</button>
-    </div>
-    <div class="modal-body">
-      <p style="margin-top:0; color:#5c6b7d;">Are you sure you want to delete this appointment?</p>
-      <div class="modal-row"><label>Appointment Date</label><p id="deleteDate">-</p></div>
-      <div class="modal-row"><label>Appointment Time</label><p id="deleteTime">-</p></div>
-      <form method="POST" action="/lab_sync/index.php?controller=home&action=edit_appointment">
-        <input type="hidden" name="appointment_id" id="deleteAppointmentId" value="">
-        <div class="modal-actions">
-          <button type="button" class="btn secondary" onclick="closeModal('deleteModal')">Cancel</button>
-          <button type="submit" name="delete" class="btn danger">Delete</button>
-        </div>
-      </form>
-    </div>
-  </div>
-</div>
+<style>
+  /* ── Button in table ── */
+  .rx-book-btn {
+    padding: 6px 14px; background: var(--primary-color, #3DBDEC); color: #fff;
+    border: none; border-radius: 6px; font-size: .82rem; font-weight: 600;
+    cursor: pointer; white-space: nowrap;
+  }
+  .rx-book-btn:hover { background: var(--primary-color, #3DBDEC); }
+  .rx-booked-label { font-size: .8rem; color: var(--muted, #6f7c8f); }
 
-<?php require_once __DIR__ . '/../../../public/partials/footer.php'; ?>
+  /* ── Overlay ── */
+  .rxm-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,.45);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 9000; padding: 16px;
+  }
+  .rxm-overlay[hidden] { display: none; }
+
+  /* ── Card ── */
+  .rxm-card {
+    background: #fff; border-radius: 14px; width: 100%; max-width: 540px;
+    max-height: 90vh; display: flex; flex-direction: column;
+    box-shadow: 0 20px 60px rgba(0,0,0,.22); overflow: hidden;
+  }
+
+  /* ── Header ── */
+  .rxm-header {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    background: #0f1e35; color: #fff; padding: 20px 22px 16px;
+  }
+  .rxm-title { margin: 0 0 3px; font-size: 1.15rem; font-weight: 700; color: #fff; }
+  .rxm-sub   { margin: 0; font-size: .7rem; letter-spacing: .08em; color: #8fa3bc; font-weight: 600; }
+  .rxm-close {
+    background: none; border: none; color: #8fa3bc; font-size: 1.5rem;
+    cursor: pointer; line-height: 1; padding: 0 0 0 12px; margin-top: -2px;
+  }
+  .rxm-close:hover { color: #fff; }
+
+  /* ── Scrollable body ── */
+  .rxm-body { overflow-y: auto; flex: 1; padding: 0 22px; }
+
+  /* ── Sections ── */
+  .rxm-section { padding: 18px 0 14px; border-bottom: 1px solid #eaecf0; }
+  .rxm-section:last-of-type { border-bottom: 0; }
+  .rxm-section-title {
+    margin: 0 0 12px; font-size: .68rem; letter-spacing: .1em;
+    font-weight: 700; color: #8b9ab0; text-transform: uppercase;
+  }
+
+  /* ── Test rows ── */
+  .rxm-test-row {
+    display: flex; align-items: center; gap: 10px;
+    background: #f6f8fb; border: 1px solid #e2e7ef;
+    border-radius: 8px; padding: 9px 12px; margin-bottom: 7px;
+  }
+  .rxm-test-icon { width: 26px; height: 26px; background: #dde8f7; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: .8rem; }
+  .rxm-test-name { flex: 1; font-size: .9rem; font-weight: 500; color: #1a2840; }
+  .rxm-test-price { font-size: .88rem; font-weight: 600; color: #1a2840; white-space: nowrap; }
+  .rxm-empty-note { font-size: .85rem; color: #8b9ab0; margin: 4px 0 0; }
+
+  /* ── Search ── */
+
+  /* ── Date buttons ── */
+  .rxm-date-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+  .rxm-date-btn {
+    padding: 7px 18px; border: 1.5px solid #d1d8e3; border-radius: 8px;
+    background: #fff; font-size: .85rem; font-weight: 600; color: #3a4a5c;
+    cursor: pointer; display: flex; align-items: center; gap: 5px;
+  }
+  .rxm-date-btn:hover { border-color: #1b6fcb; color: #1b6fcb; }
+  .rxm-date-btn.active { background: #1b6fcb; border-color: #1b6fcb; color: #fff; }
+  .rxm-date-picker {
+    margin-top: 10px; padding: 7px 10px; border: 1.5px solid #d1d8e3;
+    border-radius: 8px; font-size: .88rem; color: #1a2840; width: 180px;
+  }
+  .rxm-date-picker:focus { border-color: #1b6fcb; outline: none; }
+
+  /* ── Slots ── */
+  .rxm-sched-row { margin-bottom: 14px; }
+  .rxm-sched-label { margin: 0 0 8px; font-size: .78rem; font-weight: 600; color: #3a4a5c; text-transform: uppercase; letter-spacing: .06em; }
+  .rxm-slot-label { font-size: .76rem; color: #8b9ab0; font-weight: 600; margin: 8px 0 5px; }
+  .rxm-slot-rail { display: flex; flex-wrap: wrap; gap: 7px; }
+  .rxm-slot {
+    padding: 6px 13px; border: 1.5px solid #d1d8e3; border-radius: 7px;
+    background: #fff; font-size: .82rem; font-weight: 600; color: #3a4a5c;
+    cursor: pointer;
+  }
+  .rxm-slot:hover:not(:disabled) { border-color: #1b6fcb; color: #1b6fcb; }
+  .rxm-slot.active { background: #1b6fcb; border-color: #1b6fcb; color: #fff; }
+  .rxm-slot:disabled { opacity: .4; cursor: default; }
+
+  /* ── Footer ── */
+  .rxm-footer {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 22px 20px; border-top: 1px solid #eaecf0; gap: 14px; flex-wrap: wrap;
+  }
+  .rxm-total-block { display: flex; flex-direction: column; }
+  .rxm-total-label { font-size: .68rem; letter-spacing: .1em; font-weight: 700; color: #8b9ab0; text-transform: uppercase; }
+  .rxm-total-val { font-size: 1.2rem; font-weight: 700; color: #0f1e35; margin-top: 2px; }
+  .rxm-confirm-btn {
+    padding: 10px 22px; background: var(--primary-color, #3DBDEC); color: #fff;
+    border: none; border-radius: 8px; font-size: .9rem; font-weight: 700;
+    cursor: pointer; white-space: nowrap;
+  }
+  .rxm-confirm-btn:hover { background: var(--primary-color, #3DBDEC); }
+  .rxm-confirm-btn:disabled { background: #b0bfce; cursor: default; }
+</style>
 
 <script>
+(function () {
+  var BASE = (window.LAB_SYNC_CONFIG && window.LAB_SYNC_CONFIG.baseUrl)
+    ? String(window.LAB_SYNC_CONFIG.baseUrl).replace(/\/$/, '')
+    : '/lab_sync';
+
+  var slotsMorning   = ['08:00','08:30','09:00','09:30','10:00','10:30','11:00'];
+  var slotsAfternoon = ['13:00','13:30','14:00','14:30','15:00','15:30'];
+
+  var state = {
+    requestId: 0,
+    tests: [],           // [{test_id, test_name, unit_price}]
+    date: '',
+    time: ''
+  };
+
+  /* ── helpers ── */
+  function esc(str) {
+    return String(str == null ? '' : str)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+      .replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+  }
+
+  function fmtTime(t) {
+    var m = t.match(/^(\d{1,2}):(\d{2})$/);
+    if (!m) return t;
+    var h = parseInt(m[1], 10), min = m[2];
+    return (h % 12 || 12) + ':' + min + ' ' + (h >= 12 ? 'PM' : 'AM');
+  }
+
+  function updateTotal() {
+    var sum = state.tests.reduce(function(a, t){ return a + Number(t.unit_price || 0); }, 0);
+    document.getElementById('rxGrandTotal').textContent = 'LKR ' + sum.toFixed(2);
+  }
+
+  /* ── render test list ── */
+  function renderTests() {
+    var container = document.getElementById('rxTestRows');
+    var noTests   = document.getElementById('rxNoTests');
+    if (state.tests.length === 0) {
+      container.innerHTML = '';
+      noTests.hidden = false;
+    } else {
+      noTests.hidden = true;
+      container.innerHTML = state.tests.map(function(t) {
+        return '<div class="rxm-test-row">' +
+          '<span class="rxm-test-icon">&#128300;</span>' +
+          '<span class="rxm-test-name">' + esc(t.test_name) + '</span>' +
+          '<span class="rxm-test-price">LKR ' + Number(t.unit_price || 0).toFixed(2) + '</span>' +
+          '</div>';
+      }).join('');
+    }
+    updateTotal();
+  }
+
+  /* ── date selection ── */
+  function setDate(dateStr) {
+    state.date = dateStr;
+    document.getElementById('rxApptDate').value = dateStr;
+    renderSlots();
+  }
+
+  function todayStr(offsetDays) {
+    var d = new Date();
+    d.setDate(d.getDate() + (offsetDays || 0));
+    return d.toISOString().slice(0, 10);
+  }
+
+  document.getElementById('rxDateBtns').addEventListener('click', function(e) {
+    var btn = e.target.closest('.rxm-date-btn');
+    if (!btn) return;
+
+    document.querySelectorAll('.rxm-date-btn').forEach(function(b){ b.classList.remove('active'); });
+    btn.classList.add('active');
+
+    var picker = document.getElementById('rxDatePicker');
+    if (btn.id === 'rxBtnOther') {
+      picker.style.display = 'block';
+      picker.focus();
+    } else {
+      picker.style.display = 'none';
+      setDate(todayStr(parseInt(btn.getAttribute('data-offset') || '0', 10)));
+    }
+  });
+
+  document.getElementById('rxDatePicker').addEventListener('change', function() {
+    if (this.value) setDate(this.value);
+  });
+
+  /* ── slot rendering ── */
+  function renderSlots() {
+    renderSlotGroup('rxSlotMorning',   slotsMorning);
+    renderSlotGroup('rxSlotAfternoon', slotsAfternoon);
+  }
+
+  function renderSlotGroup(containerId, times) {
+    var host = document.getElementById(containerId);
+    host.innerHTML = '';
+    times.forEach(function(t) {
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'rxm-slot' + (state.time === t ? ' active' : '');
+      btn.textContent = fmtTime(t);
+      btn.disabled = !state.date;
+      btn.onclick = function() {
+        state.time = t;
+        document.getElementById('rxApptTime').value = t + ':00';
+        document.querySelectorAll('.rxm-slot').forEach(function(s){ s.classList.remove('active'); });
+        btn.classList.add('active');
+      };
+      host.appendChild(btn);
+    });
+  }
+
+  /* ── test search ── */
+
+  /* ── open / close ── */
+  window.openRxBookingModal = function(button) {
+    state.requestId = parseInt(button.getAttribute('data-request-id') || '0', 10);
+    state.tests     = JSON.parse(button.getAttribute('data-tests') || '[]');
+    state.date      = '';
+    state.time      = '';
+
+    document.getElementById('rxFromRequest').value      = state.requestId;
+    document.getElementById('rxHomeCollection').value   = button.getAttribute('data-home') || '0';
+    document.getElementById('rxCollectionAddr').value   = button.getAttribute('data-address') || '';
+    document.getElementById('rxApptDate').value         = '';
+    document.getElementById('rxApptTime').value         = '';
+
+    // Clear active date button selection
+    document.querySelectorAll('.rxm-date-btn').forEach(function(b){ b.classList.remove('active'); });
+    document.getElementById('rxDatePicker').style.display = 'none';
+    document.getElementById('rxDatePicker').value = '';
+
+    renderTests();
+    renderSlots();
+
+    var modal = document.getElementById('rxBookingModal');
+    modal.hidden = false;
+    modal.setAttribute('aria-hidden', 'false');
+  };
+
+  window.closeRxBookingModal = function() {
+    var modal = document.getElementById('rxBookingModal');
+    modal.hidden = true;
+    modal.setAttribute('aria-hidden', 'true');
+  };
+
+  document.getElementById('rxBookingModal').addEventListener('click', function(e) {
+    if (e.target === this) closeRxBookingModal();
+  });
+
+  /* ── submit ── */
+  window.submitRxBooking = function() {
+    if (state.tests.length === 0) { alert('Please select at least one test.'); return; }
+    if (!state.date)  { alert('Please select a date.'); return; }
+    if (!state.time)  { alert('Please select a time slot.'); return; }
+
+    var formattedTime = state.time.length === 5 ? state.time + ':00' : state.time;
+
+    closeRxBookingModal();
+
+    if (typeof window.openRxPaymentModal === 'function') {
+      window.openRxPaymentModal({
+        tests:          state.tests,
+        date:           state.date,
+        time:           formattedTime,
+        requestId:      state.requestId,
+        homeCollection: document.getElementById('rxHomeCollection').value === '1',
+        address:        document.getElementById('rxCollectionAddr').value
+      });
+    }
+  };
+})();
+</script>
+
+<script>
+  function setupSectionTabs() {
+    const tabButtons = Array.from(document.querySelectorAll('[data-patient-tab]'));
+    const panels = {
+      appointments: document.getElementById('patientAppointmentsSection'),
+      prescriptions: document.getElementById('patientPrescriptionsSection'),
+      results: document.getElementById('patientResultsSection'),
+      bills: document.getElementById('patientBillsSection')
+    };
+
+    if (!tabButtons.length || !panels.appointments || !panels.prescriptions || !panels.results) {
+      return;
+    }
+
+    const applyTabState = (nextTab) => {
+      const activeTab = Object.prototype.hasOwnProperty.call(panels, nextTab) ? nextTab : 'appointments';
+
+      Object.keys(panels).forEach((key) => {
+        const isActive = key === activeTab;
+        panels[key].classList.toggle('is-active', isActive);
+        panels[key].hidden = !isActive;
+      });
+
+      tabButtons.forEach((button) => {
+        const isActive = (button.getAttribute('data-patient-tab') || '') === activeTab;
+        button.classList.toggle('is-active', isActive);
+        button.setAttribute('aria-selected', isActive ? 'true' : 'false');
+      });
+    };
+
+    tabButtons.forEach((button) => {
+      button.addEventListener('click', () => {
+        applyTabState(button.getAttribute('data-patient-tab') || 'appointments');
+      });
+    });
+
+    applyTabState('appointments');
+  }
+
+  function setupTablePagination(config) {
+    const tableSection = document.querySelector(config.sectionSelector);
+    const showingText = document.getElementById(config.showingTextId);
+    const paginationNode = document.getElementById(config.paginationId);
+
+    if (!tableSection || !showingText || !paginationNode) {
+      return;
+    }
+
+    const tableBody = tableSection.querySelector('tbody');
+    if (!tableBody) {
+      return;
+    }
+
+    const allRows = Array.from(tableBody.querySelectorAll('tr'));
+    const dataRows = allRows.filter((row) => !row.querySelector('.empty'));
+    const emptyRow = allRows.find((row) => row.querySelector('.empty')) || null;
+    const pageSize = Number(config.pageSize || 7);
+    let currentPage = 1;
+
+    const renderPagination = (totalPages) => {
+      if (!dataRows.length || totalPages <= 1) {
+        paginationNode.innerHTML = '';
+        return;
+      }
+
+      const buttons = [];
+      buttons.push(
+        `<button type="button" class="page-btn" data-page="${currentPage - 1}" ${currentPage === 1 ? 'disabled' : ''} aria-label="Previous page">&#8249;</button>`
+      );
+
+      for (let page = 1; page <= totalPages; page += 1) {
+        buttons.push(
+          `<button type="button" class="page-btn${page === currentPage ? ' is-active' : ''}" data-page="${page}">${page}</button>`
+        );
+      }
+
+      buttons.push(
+        `<button type="button" class="page-btn" data-page="${currentPage + 1}" ${currentPage === totalPages ? 'disabled' : ''} aria-label="Next page">&#8250;</button>`
+      );
+
+      paginationNode.innerHTML = buttons.join('');
+    };
+
+    const renderPage = (page) => {
+      if (!dataRows.length) {
+        if (emptyRow) {
+          emptyRow.style.display = '';
+        }
+        showingText.textContent = `Showing 0-0 of 0 ${config.label}`;
+        paginationNode.innerHTML = '';
+        return;
+      }
+
+      const totalItems = dataRows.length;
+      const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+      currentPage = Math.min(Math.max(1, page), totalPages);
+
+      const startIndex = (currentPage - 1) * pageSize;
+      const endIndex = Math.min(startIndex + pageSize, totalItems);
+
+      dataRows.forEach((row, index) => {
+        row.style.display = index >= startIndex && index < endIndex ? '' : 'none';
+      });
+
+      if (emptyRow) {
+        emptyRow.style.display = 'none';
+      }
+
+      showingText.textContent = `Showing ${startIndex + 1}-${endIndex} of ${totalItems} ${config.label}`;
+      renderPagination(totalPages);
+    };
+
+    paginationNode.addEventListener('click', (event) => {
+      const button = event.target.closest('.page-btn');
+      if (!button || button.disabled) {
+        return;
+      }
+
+      const nextPage = Number(button.getAttribute('data-page') || currentPage);
+      renderPage(nextPage);
+    });
+
+    renderPage(1);
+  }
+
   function rowDataFromButton(button) {
     const row = button.closest('tr');
     if (!row) return null;
@@ -646,55 +1434,153 @@ unset($_SESSION['success'], $_SESSION['error']);
       time: row.getAttribute('data-time') || '',
       tests: row.getAttribute('data-tests') || '',
       status: row.getAttribute('data-status') || '',
-      home: row.getAttribute('data-home') || 'No'
+      home: row.getAttribute('data-home') || 'No',
+      address: row.getAttribute('data-address') || ''
     };
   }
 
   function openModal(id) {
     const modal = document.getElementById(id);
-    if (modal) {
-      modal.classList.add('is-open');
-      modal.setAttribute('aria-hidden', 'false');
+    if (!modal) {
+      return;
     }
+
+    modal.classList.add('is-open');
+    modal.setAttribute('aria-hidden', 'false');
   }
 
   function closeModal(id) {
     const modal = document.getElementById(id);
-    if (modal) {
-      modal.classList.remove('is-open');
-      modal.setAttribute('aria-hidden', 'true');
+    if (!modal) {
+      return;
+    }
+
+    modal.classList.remove('is-open');
+    modal.setAttribute('aria-hidden', 'true');
+  }
+
+  const patientEditSlots = ['08:00', '08:30', '09:00', '09:30', '10:00', '10:30', '11:00', '13:00', '13:30', '14:00', '14:30', '15:00', '15:30'];
+
+  function formatAppointmentNumber(value) {
+    const raw = String(value || '').trim();
+    return raw.startsWith('APP-') ? raw : `APP-${raw}`;
+  }
+
+  function normalizePatientTime(value) {
+    const raw = String(value || '').trim().toUpperCase();
+    if (!raw) {
+      return '';
+    }
+
+    if (/^\d{2}:\d{2}:\d{2}$/.test(raw)) {
+      return raw.slice(0, 5);
+    }
+
+    if (/^\d{2}:\d{2}$/.test(raw)) {
+      return raw;
+    }
+
+    return raw;
+  }
+
+  function formatDisplayTime(value) {
+    const normalized = normalizePatientTime(value);
+    const match = normalized.match(/^(\d{2}):(\d{2})$/);
+    if (!match) {
+      return value || '';
+    }
+
+    const hour = Number(match[1]);
+    const minute = match[2];
+    return `${hour % 12 || 12}:${minute} ${hour >= 12 ? 'PM' : 'AM'}`;
+  }
+
+  function setPatientEditAlert(message) {
+    const alertNode = document.getElementById('patientEditAppointmentAlert');
+    if (!alertNode) {
+      return;
+    }
+
+    alertNode.textContent = message || '';
+    alertNode.hidden = !message;
+  }
+
+  function setPatientEditModalOpen(open) {
+    const modal = document.getElementById('patientEditAppointmentModal');
+    if (!modal) {
+      return;
+    }
+
+    modal.classList.toggle('is-open', open);
+    modal.setAttribute('aria-hidden', open ? 'false' : 'true');
+    document.body.style.overflow = open ? 'hidden' : '';
+    if (!open) {
+      setPatientEditAlert('');
     }
   }
 
-  function openEdit(button) {
-    const row = rowDataFromButton(button);
-    if (!row) return;
+  function setPatientDeleteModalOpen(open) {
+    const modal = document.getElementById('patientDeleteAppointmentModal');
+    if (!modal) {
+      return;
+    }
 
-    document.getElementById('editAppointmentId').value = row.id;
-    document.getElementById('editDateInput').value = row.date;
-    document.getElementById('editTimeInput').value = row.time;
-    document.getElementById('editHomeCollection').checked = row.home === 'Yes';
-    document.getElementById('editAddressInput').value = button.closest('tr').getAttribute('data-address') || '';
-    toggleHomeCollectionEdit();
-    openModal('editModal');
+    modal.classList.toggle('is-open', open);
+    modal.setAttribute('aria-hidden', open ? 'false' : 'true');
+    document.body.style.overflow = open ? 'hidden' : '';
+    const alertNode = document.getElementById('patientDeleteAppointmentAlert');
+    if (alertNode) {
+      alertNode.hidden = true;
+      alertNode.textContent = '';
+    }
   }
 
-  function openDelete(button) {
-    const row = rowDataFromButton(button);
-    if (!row) return;
+  function renderPatientEditTimeSlots(selectedTime) {
+    const host = document.getElementById('patientEditTimeSlots');
+    if (!host) {
+      return;
+    }
 
-    document.getElementById('deleteAppointmentId').value = row.id;
-    document.getElementById('deleteDate').textContent = row.date;
-    document.getElementById('deleteTime').textContent = row.time;
-    openModal('deleteModal');
+    const normalizedSelected = normalizePatientTime(selectedTime);
+    host.innerHTML = '';
+
+    patientEditSlots.forEach((slotTime) => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'time-slot' + (normalizedSelected === slotTime ? ' is-selected' : '');
+      button.textContent = formatDisplayTime(slotTime);
+      button.setAttribute('data-time', slotTime);
+      button.addEventListener('click', () => {
+        setPatientEditSelectedTime(slotTime);
+      });
+      host.appendChild(button);
+    });
   }
 
-  function toggleHomeCollectionEdit() {
-    const checkbox = document.getElementById('editHomeCollection');
-    const addressRow = document.getElementById('editAddressRow');
-    const addressInput = document.getElementById('editAddressInput');
+  function setPatientEditSelectedTime(timeValue) {
+    const normalized = normalizePatientTime(timeValue);
+    const hiddenInput = document.getElementById('patientEditTimeInput');
+    const fallbackInput = document.getElementById('patientEditTimeFallback');
 
-    if (!checkbox || !addressRow || !addressInput) return;
+    if (hiddenInput) {
+      hiddenInput.value = normalized;
+    }
+
+    if (fallbackInput) {
+      fallbackInput.value = normalized;
+    }
+
+    renderPatientEditTimeSlots(normalized);
+  }
+
+  function togglePatientEditHomeCollection() {
+    const checkbox = document.getElementById('patientEditHomeCollection');
+    const addressRow = document.getElementById('patientEditAddressRow');
+    const addressInput = document.getElementById('patientEditAddressInput');
+
+    if (!checkbox || !addressRow || !addressInput) {
+      return;
+    }
 
     if (checkbox.checked) {
       addressRow.style.display = 'block';
@@ -706,13 +1592,144 @@ unset($_SESSION['success'], $_SESSION['error']);
     }
   }
 
+  function openEdit(button) {
+    const row = rowDataFromButton(button);
+    if (!row) return;
+
+    if (String(row.status || '').toLowerCase() === 'cancelled') {
+      window.alert('Cancelled appointments cannot be edited.');
+      return;
+    }
+
+    document.getElementById('patientEditAppointmentId').value = row.id;
+    document.getElementById('patientEditAppointmentTitle').textContent = `Edit Appointment #${formatAppointmentNumber(row.id)}`;
+    document.getElementById('patientEditSummaryTitle').textContent = `Appointment #${formatAppointmentNumber(row.id)}`;
+    document.getElementById('patientEditSummaryTests').textContent = row.tests || 'No tests selected';
+    document.getElementById('patientEditSummaryStatus').textContent = row.status || 'Pending';
+    document.getElementById('patientEditDateInput').value = row.date;
+    document.getElementById('patientEditAddressInput').value = row.address || '';
+    document.getElementById('patientEditHomeCollection').checked = row.home === 'Yes';
+    togglePatientEditHomeCollection();
+    setPatientEditSelectedTime(row.time);
+    setPatientEditAlert('');
+    setPatientEditModalOpen(true);
+  }
+
+  function openDelete(button) {
+    const row = rowDataFromButton(button);
+    if (!row) return;
+
+    if (String(row.status || '').toLowerCase() === 'cancelled') {
+      window.alert('This appointment has already been cancelled.');
+      return;
+    }
+
+    document.getElementById('patientDeleteAppointmentId').value = row.id;
+    document.getElementById('patientDeleteAppointmentNumber').textContent = `#${formatAppointmentNumber(row.id)}`;
+    document.getElementById('patientDeleteAppointmentTests').textContent = row.tests || 'No tests selected';
+    document.getElementById('patientDeleteAppointmentSchedule').textContent = `${row.date} • ${formatDisplayTime(row.time)}`;
+    setPatientDeleteModalOpen(true);
+  }
+
   document.addEventListener('DOMContentLoaded', function () {
-    toggleHomeCollectionEdit();
+    setupSectionTabs();
+    setupTablePagination({
+      sectionSelector: 'main .table-card:first-of-type',
+      showingTextId: 'appointmentsShowingText',
+      paginationId: 'appointmentsPagination',
+      label: 'appointments',
+      pageSize: 7
+    });
+    setupTablePagination({
+      sectionSelector: '#prescription-submissions',
+      showingTextId: 'prescriptionsShowingText',
+      paginationId: 'prescriptionsPagination',
+      label: 'requests',
+      pageSize: 7
+    });
+    setupTablePagination({
+      sectionSelector: '#patientBillsSection .table-card',
+      showingTextId: 'billsShowingText',
+      paginationId: 'billsPagination',
+      label: 'bills',
+      pageSize: 7
+    });
+
+    const patientEditClose = document.getElementById('patientEditAppointmentClose');
+    const patientEditCancel = document.getElementById('patientEditAppointmentCancel');
+    const patientEditModal = document.getElementById('patientEditAppointmentModal');
+    const patientEditHomeCollection = document.getElementById('patientEditHomeCollection');
+    const patientEditFallbackTime = document.getElementById('patientEditTimeFallback');
+    const patientEditForm = document.getElementById('patientEditAppointmentForm');
+
+    patientEditClose && patientEditClose.addEventListener('click', () => setPatientEditModalOpen(false));
+    patientEditCancel && patientEditCancel.addEventListener('click', () => setPatientEditModalOpen(false));
+    patientEditHomeCollection && patientEditHomeCollection.addEventListener('change', togglePatientEditHomeCollection);
+    patientEditFallbackTime && patientEditFallbackTime.addEventListener('input', function () {
+      const normalized = normalizePatientTime(this.value);
+      document.getElementById('patientEditTimeInput').value = normalized;
+      renderPatientEditTimeSlots(normalized);
+    });
+
+    patientEditForm && patientEditForm.addEventListener('submit', function (event) {
+      const selectedTime = normalizePatientTime(document.getElementById('patientEditTimeInput').value);
+      const homeCollection = document.getElementById('patientEditHomeCollection').checked;
+      const addressValue = document.getElementById('patientEditAddressInput').value.trim();
+
+      if (!selectedTime) {
+        event.preventDefault();
+        setPatientEditAlert('Please choose a time slot or enter a custom time.');
+        return;
+      }
+
+      if (homeCollection && addressValue === '') {
+        event.preventDefault();
+        setPatientEditAlert('Please provide a collection address for home sample collection.');
+        return;
+      }
+    });
+
+    patientEditModal && patientEditModal.addEventListener('click', function (event) {
+      if (event.target === patientEditModal) {
+        setPatientEditModalOpen(false);
+      }
+    });
+
+    const patientDeleteClose = document.getElementById('patientDeleteAppointmentClose');
+    const patientDeleteCancel = document.getElementById('patientDeleteAppointmentCancel');
+    const patientDeleteModal = document.getElementById('patientDeleteAppointmentModal');
+
+    patientDeleteClose && patientDeleteClose.addEventListener('click', () => setPatientDeleteModalOpen(false));
+    patientDeleteCancel && patientDeleteCancel.addEventListener('click', () => setPatientDeleteModalOpen(false));
+    patientDeleteModal && patientDeleteModal.addEventListener('click', function (event) {
+      if (event.target === patientDeleteModal) {
+        setPatientDeleteModalOpen(false);
+      }
+    });
+  });
+
+  document.addEventListener('keydown', function (event) {
+    if (event.key !== 'Escape') {
+      return;
+    }
+
+    const patientEditModal = document.getElementById('patientEditAppointmentModal');
+    const patientDeleteModal = document.getElementById('patientDeleteAppointmentModal');
+
+    if (patientEditModal && patientEditModal.classList.contains('is-open')) {
+      setPatientEditModalOpen(false);
+    }
+
+    if (patientDeleteModal && patientDeleteModal.classList.contains('is-open')) {
+      setPatientDeleteModalOpen(false);
+    }
   });
 
   document.addEventListener('click', function (event) {
     const modal = event.target.closest('.modal');
-    if (!modal) return;
+    if (!modal) {
+      return;
+    }
 
     if (event.target === modal) {
       modal.classList.remove('is-open');
@@ -721,6 +1738,39 @@ unset($_SESSION['success'], $_SESSION['error']);
   });
 </script>
 <?php require __DIR__ . '/../../../public/partials/footer.php'; ?>
+
+<div id="rxPaymentModal" class="payment-modal" aria-hidden="true">
+  <div class="payment-dialog">
+    <div class="payment-header">
+      <span class="payment-icon-wrap">💳</span>
+      <h2>Complete Payment</h2>
+      <button id="rxBtnCancelPayment" class="payment-close" aria-label="Close">&times;</button>
+    </div>
+    <div class="pm-divider"></div>
+    <div class="pm-section-label">Order Summary</div>
+    <div id="rxPmOrderLines" class="pm-order-lines"></div>
+    <div class="pm-total-row">
+      <span class="pm-total-label">Total</span>
+      <strong id="rxPmTotal" class="pm-total-val">LKR 0.00</strong>
+    </div>
+    <div id="rxPmError" class="pm-error"></div>
+    <button id="rxBtnPayNow" class="btn-pay-now">Pay Now via Payhere</button>
+    <button id="rxBtnCancelPaymentBottom" class="btn-cancel-payment">Cancel</button>
+    <div class="pm-secure-note">🔒 Secured by Payhere</div>
+    <div id="rxPmSpinnerOverlay" class="pm-spinner-overlay">
+      <div class="pm-spinner"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+window.LAB_SYNC_RX_CONFIG = {
+    baseUrl:   '/lab_sync',
+    csrfToken: '<?php echo htmlspecialchars($csrfToken ?? '', ENT_QUOTES, 'UTF-8'); ?>'
+};
+</script>
+<script src="https://www.payhere.lk/lib/payhere.js"></script>
+<script src="/lab_sync/public/js/rxPaymentModal.js"></script>
 <script src="/lab_sync/public/js/showAlert.js"></script>
 </body>
 </html>

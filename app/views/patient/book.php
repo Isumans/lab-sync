@@ -3,10 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>LabSync - Home</title>
-  <link rel="stylesheet" href="/lab_sync/public/css/patient.css" />
+  <title>LabSync - Book a Test</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/lab_sync/public/css/globals.css" />
   <link rel="stylesheet" href="/lab_sync/public/css/nav.css" />
+  <link rel="stylesheet" href="/lab_sync/public/css/footer.css" />
   <link rel="stylesheet" href="/lab_sync/public/book.css" />
+  <link rel="stylesheet" href="/lab_sync/public/paymentModal.css" />
 </head>
 <body>
   <?php require 'C:\xampp\htdocs\lab_sync\public\partials\header.php'; ?>
@@ -21,6 +25,9 @@
   <section class="book-layout">
     <div class="book-main">
       <form id="bookingForm" method="POST" action="/lab_sync/index.php?controller=home&action=bookAppointment">
+        <?php if (!empty($fromRequestId)): ?>
+          <input type="hidden" name="from_request" value="<?php echo htmlspecialchars($fromRequestId); ?>">
+        <?php endif; ?>
         <div class="card book-card tests-card">
           <div class="sec-head">
             <h2 class="sec-title">Select tests</h2>
@@ -37,7 +44,10 @@
               </div>
 
               <?php foreach($tests as $t): ?>
-                  <?php $isChecked = (($selectedTestId ?? 0) === (int)$t['test_id']); ?>
+                  <?php
+                $isChecked = (($selectedTestId ?? 0) === (int)$t['test_id'])
+                    || (!empty($preSelectedTestIds) && in_array((int)$t['test_id'], $preSelectedTestIds, true));
+              ?>
                   <label class="test-row">
                     <span class="test-left">
                       <input
@@ -148,7 +158,7 @@
 
       <div class="sum-actions">
         <div class="sum-note-inline">⏱️ Please arrive 10 minutes before your scheduled time.</div>
-        <button id="btnConfirm" class="btn-confirm" onclick="return validateAndSubmit(event)">Confirm Booking</button>
+        <button id="btnConfirm" class="btn-confirm" onclick="return openPaymentModal(event)">Confirm &amp; Continue Payment</button>
         <button class="btn-back" onclick="history.back()">Back</button>
       </div>
 
@@ -166,7 +176,44 @@
   </section>
 </main>
 
+<div id="paymentModal" class="payment-modal" aria-hidden="true">
+  <div class="payment-dialog">
+    <div class="payment-header">
+      <span class="payment-icon-wrap">💳</span>
+      <h2>Complete Payment</h2>
+      <button id="btnCancelPayment" class="payment-close" aria-label="Close">&times;</button>
+    </div>
+    <div class="pm-divider"></div>
 
+    <div class="pm-section-label">Order Summary</div>
+    <div id="pmOrderLines" class="pm-order-lines"></div>
+
+    <div class="pm-total-row">
+      <span class="pm-total-label">Total</span>
+      <strong id="pmTotal" class="pm-total-val">LKR 0.00</strong>
+    </div>
+
+    <div id="pmError" class="pm-error"></div>
+
+    <button id="btnPayNow" class="btn-pay-now">Pay Now via Payhere</button>
+    <button class="btn-cancel-payment" id="btnCancelPaymentBottom">Cancel</button>
+
+    <div class="pm-secure-note">🔒 Secured by Payhere</div>
+
+    <div id="pmSpinnerOverlay" class="pm-spinner-overlay">
+      <div class="pm-spinner"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Inject config for paymentModal.js
+window.LAB_SYNC_BOOK_CONFIG = {
+    baseUrl: '/lab_sync',
+    csrfToken: '<?php echo htmlspecialchars($csrfToken ?? '', ENT_QUOTES, 'UTF-8'); ?>',
+    fromRequest: <?php echo (int)($fromRequestId ?? 0); ?>
+};
+</script>
 
 <script>
 // slots
@@ -320,5 +367,7 @@ document.getElementById('homeCollectionToggle').addEventListener('change', syncC
 syncCollectionFields();
 </script>
 <?php require 'C:\xampp\htdocs\lab_sync\public\partials\footer.php'; ?>
+<script src="https://www.payhere.lk/lib/payhere.js"></script>
+<script src="/lab_sync/public/js/paymentModal.js"></script>
 </body>
 </html>
