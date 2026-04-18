@@ -79,74 +79,49 @@ class billingController {
         $patientName = $appointment['patient_name'] ?? ('Patient #' . intval($bill['patient_id'] ?? 0));
         $appointmentDate = $appointment['appointment_date'] ?? ($bill['bill_date'] ?? '');
 
-        $vendorAutoload = realpath(__DIR__ . '/../../vendor/autoload.php');
-        if (!$vendorAutoload || !file_exists($vendorAutoload)) {
-            http_response_code(500);
-            echo 'Error: mPDF not installed. Run composer install.';
-            return;
+        $branding  = $this->getInvoiceBranding();
+        $html      = $this->buildInvoicePdfHtml($bill, $patientName, $appointmentDate, $branding);
+        $autoPrint = isset($_GET['auto_print']) && $_GET['auto_print'] === '1';
+
+        if ($autoPrint) {
+            $html = str_replace('</body>', '<script>window.addEventListener("load",function(){window.print();});</script></body>', $html);
         }
 
-        require_once $vendorAutoload;
-
-        try {
-            $branding = $this->getInvoiceBranding();
-            $html = $this->buildInvoicePdfHtml($bill, $patientName, $appointmentDate, $branding);
-
-            $mpdf = new \Mpdf\Mpdf([
-                'mode' => 'utf-8',
-                'format' => 'A4',
-                'margin_left' => 10,
-                'margin_right' => 10,
-                'margin_top' => 10,
-                'margin_bottom' => 10,
-                'tempDir' => sys_get_temp_dir() . '/mpdf',
-            ]);
-
-            $safeBillNo = preg_replace('/[^A-Za-z0-9_-]/', '_', (string) ($bill['bill_number'] ?? 'invoice'));
-            $mpdf->SetTitle('Invoice ' . $safeBillNo);
-            $mpdf->SetAuthor('LabSync');
-            $mpdf->WriteHTML($html);
-
-            // Inline stream opens Chrome's native PDF viewer in a new tab.
-            $mpdf->Output('Invoice_' . $safeBillNo . '.pdf', \Mpdf\Output\Destination::INLINE);
-            return;
-        } catch (\Throwable $ex) {
-            http_response_code(500);
-            echo 'Error generating PDF: ' . htmlspecialchars($ex->getMessage());
-            error_log('Invoice PDF generation error: ' . $ex->getMessage());
-            return;
-        }
+        header('Content-Type: text/html; charset=UTF-8');
+        echo $html;
     }
 
     private function buildInvoicePdfHtml($bill, $patientName, $appointmentDate, $branding = []) {
         $billItems = isset($bill['items']) && is_array($bill['items']) ? $bill['items'] : [];
 
-        $billNumber = htmlspecialchars((string) ($bill['bill_number'] ?? ''));
-        $billDate = htmlspecialchars((string) ($bill['bill_date'] ?? ''));
-        $patientName = htmlspecialchars((string) $patientName);
+        $billNumber      = htmlspecialchars((string) ($bill['bill_number'] ?? ''));
+        $billDate        = htmlspecialchars((string) ($bill['bill_date'] ?? ''));
+        $patientName     = htmlspecialchars((string) $patientName);
         $appointmentDate = htmlspecialchars((string) $appointmentDate);
-        $status = htmlspecialchars((string) ($bill['status'] ?? ''));
+        $status          = htmlspecialchars((string) ($bill['status'] ?? ''));
 
-        $subtotal = number_format(floatval($bill['subtotal'] ?? 0), 2);
-        $discount = number_format(floatval($bill['discount_amount'] ?? 0), 2);
-        $tax = number_format(floatval($bill['tax_amount'] ?? 0), 2);
+        $subtotal   = number_format(floatval($bill['subtotal'] ?? 0), 2);
+        $discount   = number_format(floatval($bill['discount_amount'] ?? 0), 2);
+        $tax        = number_format(floatval($bill['tax_amount'] ?? 0), 2);
         $grandTotal = number_format(floatval($bill['total_amount'] ?? 0), 2);
-        $paid = number_format(floatval($bill['paid_amount'] ?? 0), 2);
-        $balance = number_format(floatval($bill['balance_due'] ?? 0), 2);
-        $labName = htmlspecialchars((string) ($branding['lab_name'] ?? 'LabSync'));
-        $logoHtml = (string) ($branding['logo_html'] ?? '');
-        $labAddress = htmlspecialchars((string) ($branding['address'] ?? 'No: 91 Reid avenue, colombo 07'));
-        $labPhone = htmlspecialchars((string) ($branding['phone'] ?? '+94 77 123 4567'));
-        $labEmail = htmlspecialchars((string) ($branding['email'] ?? 'labsync@gmail.com'));
-        $labAcc = htmlspecialchars((string) ($branding['accreditation'] ?? 'ISO-15189-2023'));
+        $paid       = number_format(floatval($bill['paid_amount'] ?? 0), 2);
+        $balance    = number_format(floatval($bill['balance_due'] ?? 0), 2);
+
+        $labName    = htmlspecialchars((string) ($branding['lab_name'] ?? 'LabSync'));
+        $labAddress = htmlspecialchars((string) ($branding['address'] ?? ''));
+        $labPhone   = htmlspecialchars((string) ($branding['phone'] ?? ''));
+        $labEmail   = htmlspecialchars((string) ($branding['email'] ?? ''));
+        $labAcc     = htmlspecialchars((string) ($branding['accreditation'] ?? ''));
+
+        $logoSrc  = (string) ($branding['logo_src'] ?? '');
+        $logoHtml = $logoSrc !== '' ? "<img src=\"" . htmlspecialchars($logoSrc) . "\" alt=\"Lab Logo\" style=\"width:42px;height:42px;\">" : '';
 
         $rowsHtml = '';
         foreach ($billItems as $item) {
             $name = htmlspecialchars((string) ($item['test_name'] ?? ''));
             $unit = number_format(floatval($item['unit_price'] ?? 0), 2);
-            $qty = intval($item['quantity'] ?? 0);
+            $qty  = intval($item['quantity'] ?? 0);
             $line = number_format(floatval($item['line_total'] ?? 0), 2);
-
             $rowsHtml .= "
                 <tr>
                     <td style='padding:8px;border:1px solid #dee2e6;'>{$name}</td>
@@ -161,22 +136,35 @@ class billingController {
             $rowsHtml = "<tr><td colspan='4' style='padding:10px;border:1px solid #dee2e6;text-align:center;color:#777;'>No bill items</td></tr>";
         }
 
-        return "
+        return <<<HTML
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Invoice {$billNumber}</title>
 <style>
-    body { font-family: Arial, Helvetica, sans-serif; font-size: 10pt; color: #1f2937; }
-    .header { background:#1f4d75; color:#fff; padding:7px 10px; margin-bottom:8px; }
+    @page { size: A4; margin: 10mm; }
+    @media print {
+        .no-print { display: none !important; }
+        body { background: #fff; padding: 0; }
+        .invoice-page { box-shadow: none; margin: 0; max-width: 100%; }
+    }
+    body { font-family: Arial, Helvetica, sans-serif; font-size: 10pt; color: #1f2937; margin: 0; padding: 20px 0 40px; background: #e8e8e8; }
+    .invoice-page { max-width: 794px; margin: 0 auto; background: #fff; box-shadow: 0 2px 12px rgba(0,0,0,0.18); }
+    .invoice-body { padding: 0 0 20px; }
+    .header { background:#1f4d75; color:#fff; padding:7px 10px; }
     .header-table { width:100%; border-collapse:collapse; }
     .header-table td { border:none; vertical-align:middle; }
     .logo-cell { width:58px; }
     .logo-box { width:48px; height:48px; background:#ffffff; border:1px solid #d9e3ed; text-align:center; }
-    .logo-box img { width:42px; height:42px; margin-top:2px; }
     .brand-cell { padding-left:10px; }
     .brand-name { margin:0; font-size:19pt; font-weight:700; letter-spacing:.3px; color:#ffffff; line-height:1.0; }
     .brand-line { margin:2px 0 0; font-size:9pt; color:#d6e5f5; }
     .section-title { background:#1a3a5c; color:#fff; padding:7px 12px; margin-top:12px; font-weight:700; font-size:10pt; }
     .panel { border:1px solid #dee2e6; border-top:none; padding:10px 12px; }
     .info-row { margin:4px 0; }
-    .label { display:inline-block; width:130px; color:#6b7280; font-weight:700; }
+    .lbl { display:inline-block; width:130px; color:#6b7280; font-weight:700; }
     table { width:100%; border-collapse:collapse; }
     thead th { background:#2c5f8a; color:#fff; padding:8px; border:1px solid #1a3a5c; font-size:9.5pt; }
     .totals { width:360px; margin-left:auto; margin-top:12px; border-collapse:collapse; }
@@ -185,51 +173,63 @@ class billingController {
     .totals .v { text-align:right; }
     .grand .k, .grand .v { font-size:11pt; font-weight:800; background:#f3f6fa; }
 </style>
+</head>
+<body>
+<div class="no-print" style="max-width:794px; margin:0 auto 12px; text-align:right;">
+    <button onclick="window.print()" style="padding:6px 16px; background:#1a3a5c; color:#fff; border:none; border-radius:4px; cursor:pointer; font-size:13px;">Print / Save as PDF</button>
+</div>
+<div class="invoice-page">
+<div class="invoice-body">
 
-<div class='header'>
-    <table class='header-table'>
+<div class="header">
+    <table class="header-table">
         <tr>
-            <td class='logo-cell'><div class='logo-box'>{$logoHtml}</div></td>
-            <td class='brand-cell'>
-                <p class='brand-name'>{$labName}</p>
-                <p class='brand-line'>{$labAddress}</p>
-                <p class='brand-line'>Tel: {$labPhone} | Email: {$labEmail} | Accreditation: {$labAcc}</p>
+            <td class="logo-cell"><div class="logo-box">{$logoHtml}</div></td>
+            <td class="brand-cell">
+                <p class="brand-name">{$labName}</p>
+                <p class="brand-line">{$labAddress}</p>
+                <p class="brand-line">Tel: {$labPhone} | Email: {$labEmail} | Accreditation: {$labAcc}</p>
             </td>
         </tr>
     </table>
 </div>
 
-<div class='section-title'>Invoice Details</div>
-<div class='panel'>
-    <div class='info-row'><span class='label'>Bill No</span> {$billNumber}</div>
-    <div class='info-row'><span class='label'>Bill Date</span> {$billDate}</div>
-    <div class='info-row'><span class='label'>Patient</span> {$patientName}</div>
-    <div class='info-row'><span class='label'>Appointment Date</span> {$appointmentDate}</div>
-    <div class='info-row'><span class='label'>Status</span> {$status}</div>
+<div class="section-title">Invoice Details</div>
+<div class="panel">
+    <div class="info-row"><span class="lbl">Bill No</span> {$billNumber}</div>
+    <div class="info-row"><span class="lbl">Bill Date</span> {$billDate}</div>
+    <div class="info-row"><span class="lbl">Patient</span> {$patientName}</div>
+    <div class="info-row"><span class="lbl">Appointment Date</span> {$appointmentDate}</div>
+    <div class="info-row"><span class="lbl">Status</span> {$status}</div>
 </div>
 
-<div class='section-title'>Billable Items</div>
+<div class="section-title">Billable Items</div>
 <table>
     <thead>
         <tr>
-            <th style='text-align:left;'>Test Name</th>
-            <th style='text-align:right;'>Unit Price</th>
-            <th style='text-align:center;'>Qty</th>
-            <th style='text-align:right;'>Total</th>
+            <th style="text-align:left;">Test Name</th>
+            <th style="text-align:right;">Unit Price</th>
+            <th style="text-align:center;">Qty</th>
+            <th style="text-align:right;">Total</th>
         </tr>
     </thead>
     <tbody>{$rowsHtml}</tbody>
 </table>
 
-<table class='totals'>
-    <tr><td class='k'>Subtotal</td><td class='v'>LKR {$subtotal}</td></tr>
-    <tr><td class='k'>Discount</td><td class='v'>LKR {$discount}</td></tr>
-    <tr><td class='k'>Tax</td><td class='v'>LKR {$tax}</td></tr>
-    <tr class='grand'><td class='k'>Grand Total</td><td class='v'>LKR {$grandTotal}</td></tr>
-    <tr><td class='k'>Paid</td><td class='v'>LKR {$paid}</td></tr>
-    <tr><td class='k'>Balance</td><td class='v'>LKR {$balance}</td></tr>
+<table class="totals">
+    <tr><td class="k">Subtotal</td><td class="v">LKR {$subtotal}</td></tr>
+    <tr><td class="k">Discount</td><td class="v">LKR {$discount}</td></tr>
+    <tr><td class="k">Tax</td><td class="v">LKR {$tax}</td></tr>
+    <tr class="grand"><td class="k">Grand Total</td><td class="v">LKR {$grandTotal}</td></tr>
+    <tr><td class="k">Paid</td><td class="v">LKR {$paid}</td></tr>
+    <tr><td class="k">Balance</td><td class="v">LKR {$balance}</td></tr>
 </table>
-        ";
+
+</div>
+</div>
+</body>
+</html>
+HTML;
     }
 
     private function getInvoiceBranding() {
@@ -268,47 +268,18 @@ class billingController {
             $logoPath = '/lab_sync/public/assests/Labsync-3.png';
         }
 
-        $resolvedLogo = $this->resolveLogoFilePath($logoPath);
-        $logoHtml = '';
-        if ($resolvedLogo !== '' && file_exists($resolvedLogo)) {
-            $logoHtml = '<img src="' . $resolvedLogo . '" alt="Lab Logo" style="width:42px;height:42px;">';
-        }
+        $logoSrc = strpos($logoPath, 'uploads/') !== false
+            ? '/lab_sync/public/uploads/' . basename($logoPath)
+            : $logoPath;
 
         return [
-            'lab_name' => $labName,
-            'logo_html' => $logoHtml,
-            'address' => $address,
-            'phone' => $phone,
-            'email' => $email,
+            'lab_name'      => $labName,
+            'logo_src'      => $logoSrc,
+            'address'       => $address,
+            'phone'         => $phone,
+            'email'         => $email,
             'accreditation' => $accreditation,
         ];
-    }
-
-    private function resolveLogoFilePath($logoPath) {
-        $raw = trim((string) $logoPath);
-        if ($raw === '') {
-            return '';
-        }
-
-        $candidate = realpath(__DIR__ . '/../../' . ltrim($raw, '/'));
-        if ($candidate && file_exists($candidate)) {
-            return $candidate;
-        }
-
-        $candidate = realpath(__DIR__ . '/../../public/uploads/' . basename($raw));
-        if ($candidate && file_exists($candidate)) {
-            return $candidate;
-        }
-
-        $docRoot = realpath($_SERVER['DOCUMENT_ROOT'] ?? 'C:/xampp/htdocs');
-        if ($docRoot) {
-            $candidate = $docRoot . str_replace('/', DIRECTORY_SEPARATOR, $raw);
-            if (file_exists($candidate)) {
-                return $candidate;
-            }
-        }
-
-        return '';
     }
 
     private function save($finalize) {
@@ -391,7 +362,7 @@ class billingController {
         ];
 
         if ($finalize) {
-            $response['data']['print_url'] = '/lab_sync/index.php?controller=billingController&action=printInvoice&bill_id=' . intval($saved['bill_id']);
+            $response['data']['print_url'] = '/lab_sync/index.php?controller=billingController&action=printInvoice&bill_id=' . intval($saved['bill_id']) . '&auto_print=1';
         }
 
         echo json_encode($response);

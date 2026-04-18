@@ -5,6 +5,27 @@ if (!isset($_SESSION['user_id'])) {
     exit();
 }
 $role = $_GET['user_role'] ?? '';
+$createStatus = trim((string)($_GET['create_status'] ?? ''));
+
+$statusMap = [
+    'created_emailed' => ['type' => 'success', 'text' => 'Team member account created and onboarding email sent.'],
+    'created_email_skipped' => ['type' => 'warning', 'text' => 'Team member account created, but email sending is disabled.'],
+    'created_email_failed' => ['type' => 'warning', 'text' => 'Team member account created, but onboarding email failed to send.'],
+    'resent_emailed' => ['type' => 'success', 'text' => 'Invite resent successfully and new credentials were emailed.'],
+    'resent_email_skipped' => ['type' => 'warning', 'text' => 'Invite was reset, but email sending is currently disabled.'],
+    'resent_email_failed' => ['type' => 'warning', 'text' => 'Invite was reset, but resend email failed to send.'],
+    'duplicate_email' => ['type' => 'error', 'text' => 'A user with this email already exists.'],
+    'invalid_input' => ['type' => 'error', 'text' => 'Please provide valid user details.'],
+    'invalid_email' => ['type' => 'error', 'text' => 'Please enter a valid email address.'],
+    'invalid_method' => ['type' => 'error', 'text' => 'Invalid request method for user creation.'],
+    'unauthorized' => ['type' => 'error', 'text' => 'Only administrators can create team accounts.'],
+    'user_not_found' => ['type' => 'error', 'text' => 'Selected user was not found.'],
+    'invite_not_eligible' => ['type' => 'error', 'text' => 'Resend invite is allowed only for pending or inactive users.'],
+    'password_reset_failed' => ['type' => 'error', 'text' => 'Unable to reset temporary credentials. Please try again.'],
+    'prepare_failed' => ['type' => 'error', 'text' => 'Unable to create account due to a server error.'],
+    'insert_failed' => ['type' => 'error', 'text' => 'Failed to create user account. Please try again.'],
+    'create_failed' => ['type' => 'error', 'text' => 'Failed to create user account.'],
+];
 
 ?>
 
@@ -37,6 +58,12 @@ $role = $_GET['user_role'] ?? '';
                     $pageActionHtml = '';
                     require __DIR__ . '/../../../public/partials/page-header.php';
                 ?>
+                <?php if (isset($statusMap[$createStatus])): ?>
+                    <?php $status = $statusMap[$createStatus]; ?>
+                    <div class="status-banner status-<?php echo htmlspecialchars($status['type']); ?>" style="margin: 12px 0 16px; padding: 12px 14px; border-radius: 10px; border: 1px solid #d0d7e2; background: #f7f9fc; color: #1f2a44;">
+                        <?php echo htmlspecialchars($status['text']); ?>
+                    </div>
+                <?php endif; ?>
                 <div class="nav-bar-container">
                     <div class="nav-bar-line">
                         <a class="navItem active" onclick="showSection('team', this, event)" href="#">Team</a>

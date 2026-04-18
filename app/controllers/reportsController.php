@@ -129,35 +129,52 @@ class reportsController {
             'message' => 'Report created successfully.'
         ]);
     }
-    public function printReport($role=''){
+    public function printReport($role = '') {
         if (!isset($_SESSION['user_id'])) {
-            // User is not logged in, redirect to login page
             header('Location: ' . route_url('Auth', 'index'));
             exit();
         }
 
         $appointmentId = isset($_GET['appointment_id']) ? intval($_GET['appointment_id']) : 0;
-        if ($appointmentId <= 0) {
+        $testId        = isset($_GET['test_id'])        ? intval($_GET['test_id'])        : 0;
+        $autoPrint     = isset($_GET['auto_print']) && $_GET['auto_print'] === '1';
+
+        // Support ?report_id=X lookup
+        if (($appointmentId <= 0 || $testId <= 0) && isset($_GET['report_id'])) {
+            $reportId = intval($_GET['report_id']);
+            if ($reportId > 0) {
+                $model  = new ReportModel(connect());
+                $report = $model->getReportById($reportId);
+                if ($report) {
+                    $appointmentId = intval($report['appointment_id']);
+                    $testId        = intval($report['test_id']);
+                }
+            }
+        }
+
+        if ($appointmentId <= 0 || $testId <= 0) {
             http_response_code(400);
-            echo 'Invalid appointment ID.';
+            echo '<p>Invalid report parameters.</p>';
             return;
         }
 
-        $model = new ReportModel(connect());
-        $payload = $model->getReportDetailsPayload($appointmentId);
+        require_once __DIR__ . '/../core/pdfGenerator.php';
+        $generator   = new PdfGenerator(connect());
+        $generatedBy = isset($_SESSION['user_id']) ? intval($_SESSION['user_id']) : 0;
+        $html        = $generator->getReportHtml($appointmentId, $testId, $generatedBy);
 
-        if ($payload === null) {
+        if ($html === null) {
             http_response_code(404);
-            echo 'Report details not found.';
+            echo '<p>Report data not found.</p>';
             return;
         }
 
-        $appointment = $payload['appointment'];
-        $tests = $payload['tests'];
-        $billing = $payload['billing'];
-        $summary = $payload['summary'];
+        if ($autoPrint) {
+            $html = str_replace('</body>', '<script>window.addEventListener("load",function(){window.print();});</script></body>', $html);
+        }
 
-        include VIEW_PATH . '/technicians/report_print.php';
+        header('Content-Type: text/html; charset=UTF-8');
+        echo $html;
     }
 
     public function getReportDetails() {
@@ -524,8 +541,13 @@ class reportsController {
 
         echo json_encode([
             'status'  => 'success',
-            'message' => 'PDF generated successfully.',
-            'data'    => $result
+            'message' => 'Report record created successfully.',
+            'data'    => [
+                'report_id'        => $result['report_id'],
+                'reference_number' => $result['reference_number'],
+                'view_url'         => '/lab_sync/index.php?controller=reportsController&action=printReport'
+                                      . '&appointment_id=' . $appointmentId . '&test_id=' . $testId,
+            ]
         ]);
     }
 
@@ -538,47 +560,31 @@ class reportsController {
             header('Location: ' . route_url('Auth', 'index'));
             exit();
         }
-
-        $model = new ReportModel(connect());
-        $pdfPath = $this->resolvePdfPath($model);
-
-        if ($pdfPath === null) {
-            http_response_code(404);
-            echo 'PDF not found.';
-            return;
-        }
-
-        header('Content-Type: application/pdf');
-        header('Content-Disposition: inline; filename="' . basename($pdfPath) . '"');
-        header('Content-Length: ' . filesize($pdfPath));
-        header('Cache-Control: private, max-age=0, must-revalidate');
-        readfile($pdfPath);
+        $appointmentId = isset($_GET['appointment_id']) ? intval($_GET['appointment_id']) : 0;
+        $testId        = isset($_GET['test_id'])        ? intval($_GET['test_id'])        : 0;
+        $reportId      = isset($_GET['report_id'])      ? intval($_GET['report_id'])      : 0;
+        $qs = $reportId > 0
+            ? "report_id={$reportId}"
+            : "appointment_id={$appointmentId}&test_id={$testId}";
+        header('Location: /lab_sync/index.php?controller=reportsController&action=printReport&' . $qs);
         exit();
     }
 
     /**
-     * GET — Force download of the PDF (Content-Disposition: attachment).
+     * GET — Redirect to printReport with auto_print=1 so the browser opens the print dialog.
      */
     public function downloadPdf() {
         if (!isset($_SESSION['user_id'])) {
             header('Location: ' . route_url('Auth', 'index'));
             exit();
         }
-
-        $model = new ReportModel(connect());
-        $pdfPath = $this->resolvePdfPath($model);
-
-        if ($pdfPath === null) {
-            http_response_code(404);
-            echo 'PDF not found.';
-            return;
-        }
-
-        header('Content-Type: application/pdf');
-        header('Content-Disposition: attachment; filename="' . basename($pdfPath) . '"');
-        header('Content-Length: ' . filesize($pdfPath));
-        header('Cache-Control: private, max-age=0, must-revalidate');
-        readfile($pdfPath);
+        $appointmentId = isset($_GET['appointment_id']) ? intval($_GET['appointment_id']) : 0;
+        $testId        = isset($_GET['test_id'])        ? intval($_GET['test_id'])        : 0;
+        $reportId      = isset($_GET['report_id'])      ? intval($_GET['report_id'])      : 0;
+        $qs = $reportId > 0
+            ? "report_id={$reportId}"
+            : "appointment_id={$appointmentId}&test_id={$testId}";
+        header('Location: /lab_sync/index.php?controller=reportsController&action=printReport&' . $qs . '&auto_print=1');
         exit();
     }
 
@@ -621,10 +627,10 @@ class reportsController {
                 'date'           => $row['appointment_date'] ?? '',
                 'generatedAt'    => $row['pdf_generated_at'] ?? '',
                 'status'         => $row['status'] ?? 'AUTHORIZED',
-                'viewUrl'        => '/lab_sync/index.php?controller=reportsController&action=viewPdf&appointment_id='
-                                    . intval($row['appointment_id']) . '&test_id=' . intval($row['test_id']),
-                'downloadUrl'    => '/lab_sync/index.php?controller=reportsController&action=downloadPdf&appointment_id='
-                                    . intval($row['appointment_id']) . '&test_id=' . intval($row['test_id']),
+                'viewUrl'        => '/lab_sync/index.php?controller=reportsController&action=printReport&appointment_id='
+                                    . intval($row['appointment_id']) . '&test_id=' . intval($row['test_id']) . '&auto_print=1',
+                'downloadUrl'    => '/lab_sync/index.php?controller=reportsController&action=printReport&appointment_id='
+                                    . intval($row['appointment_id']) . '&test_id=' . intval($row['test_id']) . '&auto_print=1',
             ];
         }, $rows);
 

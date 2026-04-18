@@ -27,6 +27,19 @@ if (!$isAllowed && !isset($_SESSION['user_id'])) {
     exit();
 }
 
+$mustChangePassword = intval($_SESSION['must_change_password'] ?? 0) === 1;
+if ($mustChangePassword && isset($_SESSION['user_id'])) {
+    $role = (string)($_SESSION['user_role'] ?? '');
+    $isStaff = in_array($role, ['admin', 'receptionist', 'technician'], true);
+    $canBypass = ($controllerName === 'Auth' && $action === 'logout')
+        || ($controllerName === 'userController' && in_array($action, ['user', 'changePassword'], true));
+
+    if ($isStaff && !$canBypass) {
+        header('Location: ' . BASE_URL . '/index.php?controller=userController&action=user&forcePasswordChange=true');
+        exit();
+    }
+}
+
 require_once CONTROLLER_PATH . '/TestCatalog_control.php';
 require_once CONTROLLER_PATH . '/authController.php';
 require_once CONTROLLER_PATH . '/administratorController.php';
@@ -136,6 +149,8 @@ if ($controllerName === 'TestCatalog') {
         $adminController->saveLabConfiguration();
     }elseif($action==='saveGeneralSettings'){
         $adminController->saveGeneralSettings();
+    }elseif($action==='resend_invite'){
+        $adminController->resendInvite($role);
     }
 }
 elseif ($controllerName === 'appointmentsController') {

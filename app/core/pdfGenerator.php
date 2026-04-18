@@ -50,90 +50,45 @@ class PdfGenerator
             return false;
         }
 
-        // ---- 2. build HTML ------------------------------------------------
-        $html = $this->buildHtml($payload);
+        // ---- 2. insert / update reports table ----------------------------
+        $timestamp   = date('Ymd_His');
+        $referenceNo = 'REF-' . $appointmentId . '-' . $testId . '-' . $timestamp;
+        $now         = date('Y-m-d H:i:s');
 
-        // ---- 3. render PDF with mPDF --------------------------------------
-        $vendorAutoload = realpath(__DIR__ . '/../../vendor/autoload.php');
-        if (!$vendorAutoload || !file_exists($vendorAutoload)) {
-            $this->lastError = 'mPDF not installed. Run: composer require mpdf/mpdf';
+        $reportId = $this->upsertReportRow([
+            'appointment_id'    => $appointmentId,
+            'test_id'           => $testId,
+            'reference_number'  => $referenceNo,
+            'pdf_relative_path' => null,
+            'pdf_original_name' => null,
+            'pdf_file_size'     => null,
+            'pdf_generated_at'  => $now,
+            'pdf_generated_by'  => $generatedBy,
+            'report_datetime'   => $now,
+            'status'            => 'AUTHORIZED',
+        ]);
+
+        if ($reportId === false) {
             return false;
         }
-        require_once $vendorAutoload;
 
-        try {
-            $mpdf = new \Mpdf\Mpdf([
-                'mode'          => 'utf-8',
-                'format'        => 'A4',
-                'margin_left'   => 10,
-                'margin_right'  => 10,
-                'margin_top'    => 10,
-                'margin_bottom' => 10,
-                'tempDir'       => sys_get_temp_dir() . '/mpdf',
-            ]);
-            $mpdf->SetTitle('Laboratory Report');
-            $mpdf->SetAuthor($payload['lab']['lab_name'] ?? 'Laboratory');
-            $mpdf->WriteHTML($html);
+        return [
+            'report_id'        => $reportId,
+            'reference_number' => $referenceNo,
+        ];
+    }
 
-            // ---- 4. save PDF file -----------------------------------------
-            $dateFolder  = date('Y') . '/' . date('m');
-            $storageBase = realpath(__DIR__ . '/../../public/reports/pdfs');
-            if (!$storageBase) {
-                // create directory tree
-                $storageBase = realpath(__DIR__ . '/../../public') . '/reports/pdfs';
-                if (!is_dir($storageBase)) {
-                    mkdir($storageBase, 0755, true);
-                }
-            }
-
-            $targetDir = $storageBase . '/' . $dateFolder;
-            if (!is_dir($targetDir)) {
-                mkdir($targetDir, 0755, true);
-            }
-
-            $timestamp = date('Ymd_His');
-            $fileName  = "report_app{$appointmentId}_test{$testId}_{$timestamp}.pdf";
-            $fullPath  = $targetDir . '/' . $fileName;
-            $relativePath = $dateFolder . '/' . $fileName;
-
-            $mpdf->Output($fullPath, \Mpdf\Output\Destination::FILE);
-
-            $fileSize = file_exists($fullPath) ? filesize($fullPath) : 0;
-
-            // ---- 5. insert / update reports table -------------------------
-            $referenceNo = 'REF-' . $appointmentId . '-' . $testId . '-' . $timestamp;
-            $now = date('Y-m-d H:i:s');
-
-            $reportId = $this->upsertReportRow([
-                'appointment_id'   => $appointmentId,
-                'test_id'          => $testId,
-                'reference_number' => $referenceNo,
-                'pdf_relative_path'=> $relativePath,
-                'pdf_original_name'=> $fileName,
-                'pdf_file_size'    => $fileSize,
-                'pdf_generated_at' => $now,
-                'pdf_generated_by' => $generatedBy,
-                'report_datetime'  => $now,
-                'status'           => 'AUTHORIZED',
-            ]);
-
-            if ($reportId === false) {
-                return false;
-            }
-
-            $pdfUrl = '/lab_sync/public/reports/pdfs/' . $relativePath;
-
-            return [
-                'report_id'         => $reportId,
-                'pdf_relative_path' => $relativePath,
-                'pdf_url'           => $pdfUrl,
-            ];
-
-        } catch (\Exception $ex) {
-            $this->lastError = 'PDF generation failed: ' . $ex->getMessage();
-            error_log($this->lastError);
-            return false;
+    /**
+     * Build and return the full HTML report document for browser rendering.
+     * Does not write to the database or disk.
+     */
+    public function getReportHtml($appointmentId, $testId, $generatedBy = 0)
+    {
+        $payload = $this->gatherPayload(intval($appointmentId), intval($testId), intval($generatedBy));
+        if ($payload === null) {
+            return null;
         }
+        return $this->buildHtml($payload);
     }
 
     /* ====================================================================
@@ -149,6 +104,7 @@ class PdfGenerator
         $testMeta    = $this->getTestMeta($testId);
         $techName    = $this->getUserName($generatedBy);
         $authInfo    = $this->getAuthorizationInfo($appointmentId, $testId);
+        $remarks     = $this->getTechnicianRemarks($appointmentId, $testId);
 
         if ($patient === null || $appointment === null) {
             $this->lastError = $this->lastError ?: 'Patient or appointment data not found.';
@@ -163,6 +119,7 @@ class PdfGenerator
             'test'        => $testMeta,
             'techName'    => $techName,
             'authInfo'    => $authInfo,
+            'remarks'     => $remarks,
         ];
     }
 
@@ -309,6 +266,25 @@ class PdfGenerator
         return $row ?: ['authorized_by' => null, 'authorized_at' => null, 'authorized_username' => ''];
     }
 
+    private function getTechnicianRemarks($appointmentId, $testId)
+    {
+        $sql = "
+            SELECT tc.comment_text
+            FROM test_comments tc
+            INNER JOIN test_results tr ON tr.result_id = tc.result_id
+            WHERE tr.appointment_id = ? AND tr.test_id = ?
+            ORDER BY tc.display_order ASC, tc.comment_id ASC
+            LIMIT 1
+        ";
+        $stmt = $this->db->prepare($sql);
+        if (!$stmt) return '';
+        $stmt->bind_param('ii', $appointmentId, $testId);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $row = $result ? $result->fetch_assoc() : null;
+        return $row ? trim((string) $row['comment_text']) : '';
+    }
+
     /* ====================================================================
      * DATABASE — upsert report row
      * ==================================================================== */
@@ -409,6 +385,7 @@ class PdfGenerator
         $results     = $payload['results'];
         $test        = $payload['test'];
         $authInfo    = $payload['authInfo'];
+        $remarks     = $payload['remarks'] ?? '';
 
         $labName      = htmlspecialchars($lab['lab_name'] ?? 'Laboratory');
         $labAddress   = htmlspecialchars($lab['address'] ?? '');
@@ -465,24 +442,12 @@ class PdfGenerator
             }
         }
 
-        // Logo
+        // Logo — use a web-accessible URL so the browser can load it
         $logoHtml = '';
         $logoPath = $lab['logo_path'] ?? '';
         if ($logoPath) {
-            // Convert web path to file system path
-            $logoFile = realpath(__DIR__ . '/../../public/uploads/' . basename($logoPath));
-            if (!$logoFile) {
-                // Try the full relative path
-                $logoFile = realpath(__DIR__ . '/../../' . ltrim($logoPath, '/'));
-            }
-            if (!$logoFile) {
-                // Try from document root
-                $docRoot = realpath($_SERVER['DOCUMENT_ROOT'] ?? 'C:/xampp/htdocs');
-                $logoFile = $docRoot . str_replace('/', DIRECTORY_SEPARATOR, $logoPath);
-            }
-            if ($logoFile && file_exists($logoFile)) {
-                $logoHtml = '<img src="' . $logoFile . '" style="max-height:60px; max-width:120px;">';
-            }
+            $logoSrc  = '/lab_sync/public/uploads/' . basename($logoPath);
+            $logoHtml = '<img src="' . htmlspecialchars($logoSrc) . '" style="max-height:60px; max-width:120px;" alt="Lab Logo">';
         }
 
         // Build results rows
@@ -541,17 +506,43 @@ class PdfGenerator
             $resultsHtml = '<tr><td colspan="5" style="padding:12px; text-align:center; color:#999;">No test results available.</td></tr>';
         }
 
+        $remarksHtml = '';
+        if ($remarks !== '') {
+            $escapedRemarks = nl2br(htmlspecialchars($remarks));
+            $remarksHtml = <<<REMARKS
+    <!-- TECHNICIAN COMMENTS -->
+    <div class="section-header">COMMENTS BY MLT TECHNICIAN</div>
+    <div style="border:1px solid #dee2e6; border-top:none; padding:10px 15px; font-size:9.5pt; color:#212529; background:#fff; min-height:40px;">{$escapedRemarks}</div>
+REMARKS;
+        }
+
         $html = <<<HTML
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Laboratory Report &mdash; {$testPrintName}</title>
 <style>
+    @page { size: A4; margin: 10mm; }
+    @media print {
+        .no-print { display: none !important; }
+        body { background: #fff; padding: 0; }
+        .report-container { box-shadow: none; margin: 0; padding: 0; max-width: 100%; }
+    }
     body {
         font-family: Arial, Helvetica, sans-serif;
         font-size: 10.5pt;
         color: #212529;
         margin: 0;
-        padding: 0;
+        padding: 20px 0 40px;
+        background: #e8e8e8;
     }
     .report-container {
-        width: 100%;
+        max-width: 794px;
+        margin: 0 auto;
+        background: #fff;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.18);
     }
     .header-table {
         width: 100%;
@@ -685,7 +676,11 @@ class PdfGenerator
         border-top: 1px solid #eee;
     }
 </style>
-
+</head>
+<body>
+<div class="no-print" style="max-width:794px; margin:0 auto 12px; text-align:right;">
+    <button onclick="window.print()" style="padding:6px 16px; background:#1a3a5c; color:#fff; border:none; border-radius:4px; cursor:pointer; font-size:13px;">Print / Save as PDF</button>
+</div>
 <div class="report-container">
 
     <!-- HEADER -->
@@ -751,6 +746,8 @@ class PdfGenerator
         </tbody>
     </table>
 
+    {$remarksHtml}
+
     <!-- AUTHORIZATION FOOTER -->
     <div class="footer-section">
         <table class="footer-table">
@@ -776,6 +773,8 @@ class PdfGenerator
     </div>
 
 </div>
+</body>
+</html>
 HTML;
 
         return $html;

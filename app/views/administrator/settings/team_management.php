@@ -91,6 +91,15 @@
                                 </span>
                             </td>
                             <td class="user-actions" style="align-items: center; justify-content: center;">
+                                <?php $isInviteEligible = in_array(strtolower((string)$user['status']), ['inactive', 'pending'], true); ?>
+                                <?php if ($isInviteEligible): ?>
+                                    <form method="POST" action="/lab_sync/index.php?controller=administratorController&action=resend_invite&role=<?php echo htmlspecialchars($role); ?>" class="user-action-form" style="display:inline-block; margin-right:6px;">
+                                        <input type="hidden" name="user_id" value="<?php echo htmlspecialchars($user['user_id']); ?>">
+                                        <input type="hidden" name="role" value="<?php echo htmlspecialchars($user['role']); ?>">
+                                        <input type="hidden" name="status" value="<?php echo htmlspecialchars($user['status']); ?>">
+                                        <button type="submit" class="action-btn-edit" title="Resend Invite" style="padding: 6px 10px; width: auto; border-radius: 8px;">Resend</button>
+                                    </form>
+                                <?php endif; ?>
                                 <form method="POST" action="/lab_sync/index.php?controller=administratorController&action=usersByRole&role=<?php echo htmlspecialchars($role); ?>" class="user-action-form">
                                     <input type="hidden" name="user_id" value="<?php echo htmlspecialchars($user['user_id']); ?>">
                                     <input type="hidden" name="username" value="<?php echo htmlspecialchars($user['username']); ?>">

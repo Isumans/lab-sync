@@ -244,7 +244,7 @@
                 if (downloadBtn) {
                     var downloadUrl = downloadBtn.getAttribute('data-url');
                     if (downloadUrl && downloadUrl !== '#') {
-                        window.location.href = downloadUrl;
+                        window.open(downloadUrl, '_blank', 'noopener');
                     }
                     return;
                 }

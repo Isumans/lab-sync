@@ -1,6 +1,7 @@
 <?php
 class administratorModel {
     private $db;
+    private $columnExistsCache = [];
 
     public function __construct($db) {
         $this->db = $db;
@@ -18,9 +19,68 @@ class administratorModel {
         return $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
     }
     public function createUser($username, $password, $role, $contact_number, $email) {
-        $stmt = $this->db->prepare("INSERT INTO users (username, password, role, contact_number, email) VALUES (?, ?, ?, ?, ?)");
-        $stmt->bind_param("sssss", $username, password_hash($password, PASSWORD_BCRYPT), $role, $contact_number, $email);
-        return $stmt->execute();
+        $username = trim((string)$username);
+        $role = trim((string)$role);
+        $contact_number = trim((string)$contact_number);
+        $email = trim((string)$email);
+        $passwordHash = password_hash((string)$password, PASSWORD_BCRYPT);
+
+        if ($username === '' || $passwordHash === false || $role === '' || $email === '') {
+            return [
+                'success' => false,
+                'error_code' => 'invalid_input',
+                'message' => 'Missing required account fields.',
+            ];
+        }
+
+        $hasMustChangePassword = $this->columnExists('users', 'must_change_password');
+        if ($hasMustChangePassword) {
+            $stmt = $this->db->prepare(
+                "INSERT INTO users (username, password, role, contact_number, email, must_change_password) VALUES (?, ?, ?, ?, ?, 1)"
+            );
+        } else {
+            $stmt = $this->db->prepare(
+                "INSERT INTO users (username, password, role, contact_number, email) VALUES (?, ?, ?, ?, ?)"
+            );
+        }
+
+        if (!$stmt) {
+            return [
+                'success' => false,
+                'error_code' => 'prepare_failed',
+                'message' => 'Failed to prepare user creation query.',
+            ];
+        }
+
+        $stmt->bind_param("sssss", $username, $passwordHash, $role, $contact_number, $email);
+        $ok = $stmt->execute();
+        $errno = (int)$stmt->errno;
+        $error = (string)$stmt->error;
+        $insertId = (int)$stmt->insert_id;
+        $stmt->close();
+
+        if (!$ok) {
+            if ($errno === 1062) {
+                return [
+                    'success' => false,
+                    'error_code' => 'duplicate_email',
+                    'message' => 'A user with this email already exists.',
+                ];
+            }
+
+            return [
+                'success' => false,
+                'error_code' => 'insert_failed',
+                'message' => 'Failed to create user: ' . $error,
+            ];
+        }
+
+        return [
+            'success' => true,
+            'user_id' => $insertId,
+            'error_code' => null,
+            'message' => 'User created successfully.',
+        ];
     }
     public function deleteUser($userId) {
         $stmt = $this->db->prepare("DELETE FROM users WHERE user_id = ?");
@@ -32,6 +92,78 @@ class administratorModel {
         $stmt = $this->db->prepare("UPDATE users SET username = ?, email = ?, role = ?, status = ? WHERE user_id = ?");
         $stmt->bind_param("ssssi", $username, $email, $role, $status, $userId);
         return $stmt->execute();
+    }
+
+    public function getTeamUserById($userId) {
+        $stmt = $this->db->prepare(
+            "SELECT user_id, username, email, role, status FROM users WHERE user_id = ? AND role IN ('admin', 'receptionist', 'technician') LIMIT 1"
+        );
+
+        if (!$stmt) {
+            return null;
+        }
+
+        $stmt->bind_param("i", $userId);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $user = $result ? $result->fetch_assoc() : null;
+        $stmt->close();
+
+        return $user ?: null;
+    }
+
+    public function resetUserTemporaryPassword($userId, $temporaryPassword) {
+        $passwordHash = password_hash((string)$temporaryPassword, PASSWORD_BCRYPT);
+        if ($passwordHash === false) {
+            return [
+                'success' => false,
+                'error_code' => 'password_reset_failed',
+                'message' => 'Failed to generate password hash.',
+            ];
+        }
+
+        $hasMustChangePassword = $this->columnExists('users', 'must_change_password');
+        if ($hasMustChangePassword) {
+            $stmt = $this->db->prepare("UPDATE users SET password = ?, must_change_password = 1 WHERE user_id = ?");
+        } else {
+            $stmt = $this->db->prepare("UPDATE users SET password = ? WHERE user_id = ?");
+        }
+
+        if (!$stmt) {
+            return [
+                'success' => false,
+                'error_code' => 'prepare_failed',
+                'message' => 'Failed to prepare password reset query.',
+            ];
+        }
+
+        $stmt->bind_param("si", $passwordHash, $userId);
+        $ok = $stmt->execute();
+        $error = (string)$stmt->error;
+        $affectedRows = (int)$stmt->affected_rows;
+        $stmt->close();
+
+        if (!$ok) {
+            return [
+                'success' => false,
+                'error_code' => 'password_reset_failed',
+                'message' => 'Failed to reset user password: ' . $error,
+            ];
+        }
+
+        if ($affectedRows < 1) {
+            return [
+                'success' => false,
+                'error_code' => 'user_not_found',
+                'message' => 'No matching user found to reset password.',
+            ];
+        }
+
+        return [
+            'success' => true,
+            'error_code' => null,
+            'message' => 'Temporary password reset successfully.',
+        ];
     }
 
     // ─── Lab Configuration ───────────────────────────────────────────────────
@@ -164,6 +296,21 @@ class administratorModel {
             $data['date_format']
         );
         return $stmt->execute();
+    }
+
+    private function columnExists($tableName, $columnName) {
+        $cacheKey = $tableName . '.' . $columnName;
+        if (isset($this->columnExistsCache[$cacheKey])) {
+            return $this->columnExistsCache[$cacheKey];
+        }
+
+        $table = $this->db->real_escape_string($tableName);
+        $column = $this->db->real_escape_string($columnName);
+        $result = $this->db->query("SHOW COLUMNS FROM `" . $table . "` LIKE '" . $column . "'");
+        $exists = $result && $result->num_rows > 0;
+        $this->columnExistsCache[$cacheKey] = $exists;
+
+        return $exists;
     }
 
 }

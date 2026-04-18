@@ -39,9 +39,17 @@ class AuthController {
                     $ipAddress,
                     $userAgent
                 );
+
+                $mustChangePassword = $model->isPasswordChangeRequired(intval($_SESSION['user_id'] ?? 0));
+                $_SESSION['must_change_password'] = $mustChangePassword ? 1 : 0;
                 
                 // Redirect based on user role
                 $role = $_SESSION['user_role'] ?? '';
+                if (($role === 'admin' || $role === 'receptionist' || $role === 'technician') && $mustChangePassword) {
+                    header('Location: /lab_sync/index.php?controller=userController&action=user&forcePasswordChange=true');
+                    exit;
+                }
+
                 if ($role === 'admin' || $role === 'receptionist' || $role === 'technician') {
                     header('Location: /lab_sync/index.php?controller=home&action=index');
                 } else {

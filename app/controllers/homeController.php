@@ -5,6 +5,7 @@ if (!defined('ROOT_PATH')) {
 
 require_once MODEL_PATH . '/homeModel.php';
 require_once MODEL_PATH . '/billingModel.php';
+require_once MODEL_PATH . '/reportModel.php';
 require_once APP_PATH . '/services/EmailService.php';
 require_once APP_PATH . '/services/SmsService.php';
 require_once 'C:\xampp\htdocs\lab_sync\config\db.php';
@@ -372,6 +373,12 @@ class HomeController {
         if ($patientId > 0) {
             $billingModel = new BillingModel(connect());
             $patientBills = $billingModel->getBillsByPatientId($patientId);
+        }
+
+        $patientReports = [];
+        if ($patientId > 0) {
+            $reportModel = new ReportModel(connect());
+            $patientReports = $reportModel->getAuthorizedReportsByPatient($patientId);
         }
 
         $csrfToken = $this->ensureCsrfToken();
