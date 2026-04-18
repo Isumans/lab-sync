@@ -17,7 +17,7 @@ class EmailService {
         $this->enabled = in_array($enabledValue, ['1', 'true', 'yes', 'on'], true);
     }
 
-    public function sendEmail($toEmail, $toName, $subject, $htmlContent) {
+    public function sendEmail($toEmail, $toName, $subject, $htmlContent): array {
         if (!$this->enabled) {
             return [
                 'status' => 'skipped',
@@ -84,7 +84,7 @@ class EmailService {
         ];
     }
 
-    public function sendAppointmentBookedEmail($email, $recipientName, $payload) {
+    public function sendAppointmentBookedEmail($email, $recipientName, $payload): array {
         $appointment = $this->extractAppointmentData($payload);
 
         $appointmentId = (int)($appointment['appointment_id'] ?? $payload['appointment_id'] ?? 0);
@@ -133,6 +133,49 @@ class EmailService {
                         </div>
                         " . $testDetailsHtml . "
                         <p class='muted'>Please arrive at least 10 minutes before your scheduled time.</p>
+                        <p>Best regards,<br><strong>LabSync Team</strong></p>
+                    </div>
+                </body>
+            </html>
+        ";
+
+        return $this->sendEmail($email, $recipientName, $subject, $htmlContent);
+    }
+
+    public function sendTeamMemberWelcomeEmail($email, $recipientName, array $payload): array {
+        $username = htmlspecialchars((string)($payload['username'] ?? ''));
+        $role = htmlspecialchars((string)($payload['role'] ?? 'staff'));
+        $temporaryPassword = htmlspecialchars((string)($payload['temporary_password'] ?? ''));
+        $loginUrl = htmlspecialchars((string)($payload['login_url'] ?? '/lab_sync/index.php?controller=Auth&action=index'));
+
+        $subject = 'Your LabSync Team Account Credentials';
+        $htmlContent = "
+            <html>
+                <head>
+                    <style>
+                        body { font-family: Arial, sans-serif; color: #243046; line-height: 1.6; }
+                        .header { background: #0f4c81; color: #fff; padding: 16px; text-align: center; }
+                        .content { padding: 18px; }
+                        .box { background: #f4f8fc; border-left: 4px solid #0f4c81; padding: 14px; margin: 16px 0; }
+                        .muted { color: #5a667a; font-size: 13px; }
+                    </style>
+                </head>
+                <body>
+                    <div class='header'>
+                        <h2>Welcome to LabSync</h2>
+                    </div>
+                    <div class='content'>
+                        <p>Dear " . htmlspecialchars((string)($recipientName ?: 'Team Member')) . ",</p>
+                        <p>Your team account has been created by the system administrator.</p>
+                        <div class='box'>
+                            <p><strong>Username:</strong> " . $username . "</p>
+                            <p><strong>Email:</strong> " . htmlspecialchars((string)$email) . "</p>
+                            <p><strong>Role:</strong> " . ucfirst($role) . "</p>
+                            <p><strong>Temporary Password:</strong> " . $temporaryPassword . "</p>
+                        </div>
+                        <p>Please log in using the link below and change your password immediately:</p>
+                        <p><a href='" . $loginUrl . "'>" . $loginUrl . "</a></p>
+                        <p class='muted'>For security, this temporary password is valid until you complete your first password change.</p>
                         <p>Best regards,<br><strong>LabSync Team</strong></p>
                     </div>
                 </body>

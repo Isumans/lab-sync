@@ -696,24 +696,73 @@ unset($_SESSION['success'], $_SESSION['error']);
   </div>
 
   <div id="patientResultsSection" class="tab-panel" role="tabpanel" aria-label="Test results" hidden>
-  <section class="card results-card">
-    <div class="card-head" style="padding: 0 0 12px; border-bottom: 0;">
+  <section class="card table-card">
+    <div class="card-head">
       <h2>Test Results</h2>
     </div>
-    <p class="results-note">Front-end preview section for upcoming backend integration. Your teammate can replace this mock data with real result records.</p>
-    <div class="results-grid">
-      <article class="result-item">
-        <h3>Complete Blood Count (CBC)</h3>
-        <p class="result-meta">Requested Date: 2026-04-02<br>Status: Awaiting Lab Upload<br>Report: Not Available Yet</p>
-      </article>
-      <article class="result-item">
-        <h3>Lipid Profile</h3>
-        <p class="result-meta">Requested Date: 2026-04-05<br>Status: Processing<br>Report: Not Available Yet</p>
-      </article>
-      <article class="result-item">
-        <h3>Vitamin D</h3>
-        <p class="result-meta">Requested Date: 2026-04-09<br>Status: Ready for Delivery<br>Report Button: Disabled (Backend Pending)</p>
-      </article>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Appointment ID</th>
+            <th>Test</th>
+            <th>Report Date</th>
+            <th>Status</th>
+            <th class="th-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <?php
+            $patientReports = is_array($patientReports ?? null) ? $patientReports : [];
+          ?>
+          <?php if (count($patientReports) > 0): ?>
+            <?php foreach ($patientReports as $rep): ?>
+              <?php
+                $appIdFormatted = 'APP-' . str_pad((string)intval($rep['appointment_id']), 4, '0', STR_PAD_LEFT);
+                $reportDate     = '';
+                if (!empty($rep['pdf_generated_at'])) {
+                    try {
+                        $dt = new DateTime($rep['pdf_generated_at']);
+                        $reportDate = $dt->format('d/m/Y H:i');
+                    } catch (Exception $e) {
+                        $reportDate = (string)$rep['pdf_generated_at'];
+                    }
+                }
+                $viewUrl = '/lab_sync/index.php?controller=reportsController&action=printReport'
+                         . '&appointment_id=' . intval($rep['appointment_id'])
+                         . '&test_id=' . intval($rep['test_id'])
+                         . '&auto_print=1';
+              ?>
+              <tr>
+                <td class="cell-strong"><?php echo htmlspecialchars($appIdFormatted); ?></td>
+                <td><?php echo htmlspecialchars((string)($rep['test_name'] ?? '—')); ?></td>
+                <td><?php echo htmlspecialchars($reportDate ?: '—'); ?></td>
+                <td><span class="status-pill confirmed">Authorized</span></td>
+                <td class="td-right">
+                  <div class="actions">
+                    <a href="<?php echo htmlspecialchars($viewUrl); ?>" target="_blank" rel="noopener"
+                       class="action-btn edit" title="View Report" style="text-decoration:none;">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                        <polyline points="10 9 9 9 8 9"></polyline>
+                      </svg>
+                    </a>
+                  </div>
+                </td>
+              </tr>
+            <?php endforeach; ?>
+          <?php else: ?>
+            <tr>
+              <td colspan="5" style="text-align:center; padding:28px; color:#64748b;">
+                No authorized test reports available yet.
+              </td>
+            </tr>
+          <?php endif; ?>
+        </tbody>
+      </table>
     </div>
   </section>
   </div>

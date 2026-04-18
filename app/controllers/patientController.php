@@ -197,7 +197,7 @@ class patientController {
             $errors['contact_no'] = 'Contact number format is invalid.';
         }
 
-        if (!filter_var($email, FILTER_VALIDATE_EMAIL) || strlen($email) > 120) {
+        if ($email !== '' && (!filter_var($email, FILTER_VALIDATE_EMAIL) || strlen($email) > 120)) {
             $errors['email'] = 'Email is invalid.';
         }
 

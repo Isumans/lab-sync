@@ -215,7 +215,8 @@ document.addEventListener('DOMContentLoaded', () => {
     viewBtn.className = 'rd-btn rd-btn-table rd-btn-action-primary js-view-pdf-btn';
     viewBtn.setAttribute('data-appointment-id', String(activeAppointmentId));
     viewBtn.setAttribute('data-test-id', String(activeTestId));
-    viewBtn.textContent = 'View PDF';
+    viewBtn.setAttribute('data-url', `/lab_sync/index.php?controller=reportsController&action=printReport&appointment_id=${activeAppointmentId}&test_id=${activeTestId}&auto_print=1`);
+    viewBtn.textContent = 'View Report';
 
     
 
@@ -253,11 +254,13 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       if (decision === 'authorize') {
-        setAlert('Authorization saved. Generating PDF...');
-        await generatePdf(activeAppointmentId, activeTestId);
+        setAlert('Authorization saved. Saving report...');
+        const pdfData = await generatePdf(activeAppointmentId, activeTestId);
 
-        const viewUrl = `/lab_sync/index.php?controller=reportsController&action=viewPdf&appointment_id=${encodeURIComponent(activeAppointmentId)}&test_id=${encodeURIComponent(activeTestId)}`;
-        setAlertHtml(`Report authorized and PDF generated successfully. <a href="${viewUrl}" target="_blank" rel="noopener">View PDF</a>`, true);
+        const viewUrl = pdfData.view_url
+          ? pdfData.view_url + '&auto_print=1'
+          : `/lab_sync/index.php?controller=reportsController&action=printReport&appointment_id=${encodeURIComponent(activeAppointmentId)}&test_id=${encodeURIComponent(activeTestId)}&auto_print=1`;
+        setAlertHtml(`Report authorized successfully. <a href="${viewUrl}" target="_blank" rel="noopener">View Report</a>`, true);
         updateRowAfterAuthorization();
         return;
       }

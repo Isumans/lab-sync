@@ -4,6 +4,7 @@ if (!defined('ROOT_PATH')) {
 }
 
 require_once MODEL_PATH . '/administratorModel.php';
+require_once APP_PATH . '/services/EmailService.php';
 require_once 'C:\xampp\htdocs\lab_sync\config\db.php';
 
 class administratorController {
@@ -29,25 +30,125 @@ class administratorController {
             include VIEW_PATH . '/administrator/settings.php';
         }
         public function createUser($role) {
-            // Logic to create a new user in the database
-            $role=$_GET['role'] ?? '';
-            $username = $_POST['username'];
-            $password = $_POST['password'];
-            $role = $_POST['role'];
-            $contact_number = $_POST['contact_number'];
-            $email = $_POST['email'];
-            $user=$this->adminModel->createUser($username, $password, $role, $contact_number, $email);
-            if($user){
-                // Redirect back to settings or user list after creation
-                $role = $_POST['role'];
-                header('Location: /lab_sync/index.php?controller=administratorController&action=settings&role=' . urlencode($role));
-            } else{
-                echo "Error creating user.";
+            if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+                header('Location: /lab_sync/index.php?controller=administratorController&action=settings&create_status=invalid_method');
+                exit;
             }
-                
+
+            $sessionRole = (string)($_SESSION['user_role'] ?? '');
+            if ($sessionRole !== 'admin') {
+                header('Location: /lab_sync/index.php?controller=administratorController&action=settings&create_status=unauthorized');
+                exit;
+            }
+
+            $username = trim((string)($_POST['username'] ?? ''));
+            $newUserRole = trim((string)($_POST['role'] ?? ''));
+            $contactNumber = trim((string)($_POST['contact_number'] ?? ''));
+            $email = trim((string)($_POST['email'] ?? ''));
+            $allowedRoles = ['admin', 'receptionist', 'technician'];
+
+            if ($username === '' || $contactNumber === '' || $email === '' || !in_array($newUserRole, $allowedRoles, true)) {
+                header('Location: /lab_sync/index.php?controller=administratorController&action=settings&role=' . urlencode($newUserRole) . '&create_status=invalid_input');
+                exit;
+            }
+
+            if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                header('Location: /lab_sync/index.php?controller=administratorController&action=settings&role=' . urlencode($newUserRole) . '&create_status=invalid_email');
+                exit;
+            }
+
+            $temporaryPassword = $this->generateTemporaryPassword();
+            $createResult = $this->adminModel->createUser($username, $temporaryPassword, $newUserRole, $contactNumber, $email);
+
+            if (!$createResult['success']) {
+                $errorCode = (string)($createResult['error_code'] ?? 'create_failed');
+                header('Location: /lab_sync/index.php?controller=administratorController&action=settings&role=' . urlencode($newUserRole) . '&create_status=' . urlencode($errorCode));
+                exit;
+            }
+
+            $mailer = new EmailService();
+            $mailResult = $mailer->sendTeamMemberWelcomeEmail($email, $username, [
+                'username' => $username,
+                'role' => $newUserRole,
+                'temporary_password' => $temporaryPassword,
+                'login_url' => '/lab_sync/index.php?controller=Auth&action=index',
+            ]);
+
+            $mailStatus = (string)($mailResult['status'] ?? 'error');
+            if ($mailStatus === 'success') {
+                $status = 'created_emailed';
+            } elseif ($mailStatus === 'skipped') {
+                $status = 'created_email_skipped';
+            } else {
+                $status = 'created_email_failed';
+            }
+
+            header('Location: /lab_sync/index.php?controller=administratorController&action=settings&role=' . urlencode($newUserRole) . '&create_status=' . urlencode($status));
+            exit;
 
         // Additional methods for adding, editing, deleting users can be added here
     }
+
+    public function resendInvite($role) {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: /lab_sync/index.php?controller=administratorController&action=settings&create_status=invalid_method');
+            exit;
+        }
+
+        $sessionRole = (string)($_SESSION['user_role'] ?? '');
+        if ($sessionRole !== 'admin') {
+            header('Location: /lab_sync/index.php?controller=administratorController&action=settings&create_status=unauthorized');
+            exit;
+        }
+
+        $userId = (int)($_POST['user_id'] ?? 0);
+        $targetRole = trim((string)($_POST['role'] ?? $role));
+        if ($userId <= 0) {
+            header('Location: /lab_sync/index.php?controller=administratorController&action=settings&role=' . urlencode($targetRole) . '&create_status=invalid_input');
+            exit;
+        }
+
+        $user = $this->adminModel->getTeamUserById($userId);
+        if (!$user) {
+            header('Location: /lab_sync/index.php?controller=administratorController&action=settings&role=' . urlencode($targetRole) . '&create_status=user_not_found');
+            exit;
+        }
+
+        $currentStatus = strtolower(trim((string)($user['status'] ?? '')));
+        if (!in_array($currentStatus, ['inactive', 'pending'], true)) {
+            header('Location: /lab_sync/index.php?controller=administratorController&action=settings&role=' . urlencode((string)$user['role']) . '&create_status=invite_not_eligible');
+            exit;
+        }
+
+        $temporaryPassword = $this->generateTemporaryPassword();
+        $resetResult = $this->adminModel->resetUserTemporaryPassword($userId, $temporaryPassword);
+        if (!$resetResult['success']) {
+            $errorCode = (string)($resetResult['error_code'] ?? 'password_reset_failed');
+            header('Location: /lab_sync/index.php?controller=administratorController&action=settings&role=' . urlencode((string)$user['role']) . '&create_status=' . urlencode($errorCode));
+            exit;
+        }
+
+        $mailer = new EmailService();
+        $mailResult = $mailer->sendTeamMemberWelcomeEmail((string)$user['email'], (string)$user['username'], [
+            'username' => (string)$user['username'],
+            'role' => (string)$user['role'],
+            'temporary_password' => $temporaryPassword,
+            'login_url' => '/lab_sync/index.php?controller=Auth&action=index',
+        ]);
+
+        $mailStatus = (string)($mailResult['status'] ?? 'error');
+        if ($mailStatus === 'success') {
+            $status = 'resent_emailed';
+        } elseif ($mailStatus === 'skipped') {
+            $status = 'resent_email_skipped';
+        } else {
+            $status = 'resent_email_failed';
+        }
+
+        header('Location: /lab_sync/index.php?controller=administratorController&action=settings&role=' . urlencode((string)$user['role']) . '&create_status=' . urlencode($status));
+        exit;
+    }
+
     public function manageUser($role) {
         if (isset($_POST['delete'])) {
             $userId = $_POST['user_id'];
@@ -211,6 +312,19 @@ class administratorController {
 
     private function isValidTimeString($value) {
         return preg_match('/^(?:[01]\d|2[0-3]):[0-5]\d$/', (string)$value) === 1;
+    }
+
+    private function generateTemporaryPassword($length = 12) {
+        $characters = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%';
+        $charactersLength = strlen($characters);
+        $password = '';
+
+        for ($i = 0; $i < $length; $i++) {
+            $index = random_int(0, $charactersLength - 1);
+            $password .= $characters[$index];
+        }
+
+        return $password;
     }
 
     public function getGeneralSettingsSection() {

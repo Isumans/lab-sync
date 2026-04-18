@@ -2,6 +2,7 @@
 class AuthModel {
     private $db;
     private $tableExistsCache = [];
+    private $columnExistsCache = [];
     public function __construct($db) { $this->db = $db; }
 
     public function getUserByUsername($username) {
@@ -96,6 +97,34 @@ class AuthModel {
         return $ok;
     }
 
+    public function isPasswordChangeRequired($userId) {
+        $userId = intval($userId);
+        if ($userId <= 0) {
+            return false;
+        }
+
+        if (!$this->columnExists('users', 'must_change_password')) {
+            return false;
+        }
+
+        $stmt = $this->db->prepare("SELECT must_change_password FROM users WHERE user_id = ? LIMIT 1");
+        if (!$stmt) {
+            return false;
+        }
+
+        $stmt->bind_param('i', $userId);
+        if (!$stmt->execute()) {
+            $stmt->close();
+            return false;
+        }
+
+        $result = $stmt->get_result();
+        $row = $result ? $result->fetch_assoc() : null;
+        $stmt->close();
+
+        return isset($row['must_change_password']) && intval($row['must_change_password']) === 1;
+    }
+
     private function tableExists($tableName) {
         if (isset($this->tableExistsCache[$tableName])) {
             return $this->tableExistsCache[$tableName];
@@ -105,6 +134,21 @@ class AuthModel {
         $result = $this->db->query("SHOW TABLES LIKE '" . $escaped . "'");
         $exists = $result && $result->num_rows > 0;
         $this->tableExistsCache[$tableName] = $exists;
+
+        return $exists;
+    }
+
+    private function columnExists($tableName, $columnName) {
+        $cacheKey = $tableName . '.' . $columnName;
+        if (isset($this->columnExistsCache[$cacheKey])) {
+            return $this->columnExistsCache[$cacheKey];
+        }
+
+        $table = $this->db->real_escape_string($tableName);
+        $column = $this->db->real_escape_string($columnName);
+        $result = $this->db->query("SHOW COLUMNS FROM `" . $table . "` LIKE '" . $column . "'");
+        $exists = $result && $result->num_rows > 0;
+        $this->columnExistsCache[$cacheKey] = $exists;
 
         return $exists;
     }

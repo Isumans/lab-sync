@@ -142,6 +142,9 @@ class userController {
         }
 
         $result = $this->userModel->changePassword(intval($_SESSION['user_id']), $currentPassword, $newPassword);
+        if (!empty($result['ok'])) {
+            $_SESSION['must_change_password'] = 0;
+        }
         $this->setFlash($result['ok'] ? 'success' : 'error', $result['message']);
 
         header('Location: ' . route_url('userController', 'user'));

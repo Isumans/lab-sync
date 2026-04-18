@@ -3,6 +3,7 @@
 class userModel {
     private $db;
     private $tableExistsCache = [];
+    private $columnExistsCache = [];
 
     public function __construct($db) {
         $this->db = $db;
@@ -318,6 +319,15 @@ class userModel {
             return ['ok' => false, 'message' => 'Password update failed.'];
         }
 
+        if ($this->columnExists('users', 'must_change_password')) {
+            $flagStmt = $this->db->prepare("UPDATE users SET must_change_password = 0 WHERE user_id = ?");
+            if ($flagStmt) {
+                $flagStmt->bind_param('i', $userId);
+                $flagStmt->execute();
+                $flagStmt->close();
+            }
+        }
+
         return ['ok' => true, 'message' => 'Password updated successfully.'];
     }
 
@@ -350,6 +360,21 @@ class userModel {
         $result = $this->db->query("SHOW TABLES LIKE '" . $escaped . "'");
         $exists = $result && $result->num_rows > 0;
         $this->tableExistsCache[$tableName] = $exists;
+
+        return $exists;
+    }
+
+    private function columnExists($tableName, $columnName) {
+        $cacheKey = $tableName . '.' . $columnName;
+        if (isset($this->columnExistsCache[$cacheKey])) {
+            return $this->columnExistsCache[$cacheKey];
+        }
+
+        $table = $this->db->real_escape_string($tableName);
+        $column = $this->db->real_escape_string($columnName);
+        $result = $this->db->query("SHOW COLUMNS FROM `" . $table . "` LIKE '" . $column . "'");
+        $exists = $result && $result->num_rows > 0;
+        $this->columnExistsCache[$cacheKey] = $exists;
 
         return $exists;
     }

@@ -1383,6 +1383,17 @@ class ReportModel {
         return $result ? $result->fetch_assoc() : null;
     }
 
+    public function getReportById($reportId)
+    {
+        $sql = "SELECT report_id, appointment_id, test_id FROM reports WHERE report_id = ? LIMIT 1";
+        $stmt = $this->db->prepare($sql);
+        if (!$stmt) return null;
+        $stmt->bind_param('i', $reportId);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        return $result ? $result->fetch_assoc() : null;
+    }
+
     /**
      * Return the absolute file path for a report's PDF.
      */
@@ -1415,7 +1426,7 @@ class ReportModel {
 
         $search = isset($filters['search']) ? trim((string) $filters['search']) : '';
 
-        $where = ["r.status IN ('AUTHORIZED','PRINTED')", "r.pdf_relative_path IS NOT NULL", "r.pdf_relative_path != ''"];
+        $where = ["r.status IN ('AUTHORIZED','PRINTED')"];
         $types = '';
         $params = [];
 
@@ -1478,7 +1489,7 @@ class ReportModel {
         $this->lastError = '';
         $search = isset($filters['search']) ? trim((string) $filters['search']) : '';
 
-        $where = ["r.status IN ('AUTHORIZED','PRINTED')", "r.pdf_relative_path IS NOT NULL", "r.pdf_relative_path != ''"];
+        $where = ["r.status IN ('AUTHORIZED','PRINTED')"];
         $types = '';
         $params = [];
 
@@ -1511,5 +1522,35 @@ class ReportModel {
         $result = $stmt->get_result();
         $row = $result ? $result->fetch_assoc() : null;
         return $row ? intval($row['total']) : 0;
+    }
+
+    public function getAuthorizedReportsByPatient($patientId)
+    {
+        $patientId = intval($patientId);
+        if ($patientId <= 0) return [];
+
+        $sql = "
+            SELECT
+                r.report_id,
+                r.appointment_id,
+                r.test_id,
+                r.reference_number,
+                r.pdf_generated_at,
+                r.status,
+                COALESCE(t.print_name, t.test_name, '') AS test_name,
+                a.appointment_date
+            FROM reports r
+            JOIN appointment a ON a.appointment_id = r.appointment_id
+            JOIN tests t ON t.test_id = r.test_id
+            WHERE a.patient_id = ?
+              AND r.status IN ('AUTHORIZED', 'PRINTED')
+            ORDER BY r.pdf_generated_at DESC, r.report_id DESC
+        ";
+        $stmt = $this->db->prepare($sql);
+        if (!$stmt) return [];
+        $stmt->bind_param('i', $patientId);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        return $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
     }
 }

@@ -31,6 +31,20 @@ class PartnerModel {
 
 
 
+    public function deletePartnerLab($id) {
+        $id = intval($id);
+        if ($id <= 0) return false;
+        // Remove associated test links first to avoid FK constraint issues
+        $stmt = $this->db->prepare("DELETE FROM partner_lab_tests WHERE partner_lab_id = ?");
+        if ($stmt) { $stmt->bind_param("i", $id); $stmt->execute(); $stmt->close(); }
+        $stmt = $this->db->prepare("DELETE FROM partner_labs WHERE id = ?");
+        if (!$stmt) return false;
+        $stmt->bind_param("i", $id);
+        $ok = $stmt->execute();
+        $stmt->close();
+        return $ok && $this->db->affected_rows > 0;
+    }
+
     public function getAllPartnerLabs() {
         $sql = "SELECT p.*, COUNT(plt.test_id) as total_tests 
                 FROM partner_labs p 
@@ -72,4 +86,3 @@ class PartnerModel {
     
 
 }
-?>
