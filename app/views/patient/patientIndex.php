@@ -53,7 +53,7 @@ if ($styleVersion === false) {
       </h1>
 
       <p>
-        Skip the clinic queue. Our certified phlebotomists visit your home, collect your samples, and deliver digital results — all within 24 hours.
+        Skip the clinic queue. Our trained sample-collection team visits your home, collects your samples, and delivers digital results all within 24 hours.
       </p>
 
       <!-- Search bar -->
@@ -95,7 +95,7 @@ if ($styleVersion === false) {
           Our Signature Service
         </p>
         <h2>Lab-Quality Testing,<br>Right at Your Home.</h2>
-        <p>No more waiting rooms. Our trained phlebotomists arrive at a time that suits you, collect your blood or urine sample, and your results appear securely in your dashboard — fast.</p>
+        <p>No more waiting rooms. Our trained collection staff arrive at a time that suits you, collect your blood or urine sample, and your results appear in your dashboard — fast.</p>
         <div class="home-banner-features">
           <span>
             <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>
@@ -103,7 +103,7 @@ if ($styleVersion === false) {
           </span>
           <span>
             <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>
-            Certified phlebotomists
+            Trained collection staff
           </span>
           <span>
             <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>
@@ -145,7 +145,7 @@ if ($styleVersion === false) {
           </div>
         </div>
         <h3>2. We Visit You</h3>
-        <p>Our certified phlebotomist arrives at your home at the scheduled time for a quick, professional collection.</p>
+        <p>Our trained collection staff arrives at your home at the scheduled time for a quick, professional collection.</p>
       </div>
       <div class="step">
         <div class="step-icon-wrap">
@@ -257,7 +257,7 @@ if ($styleVersion === false) {
           </svg>
         </div>
         <h3 class="why-card-title">Certified Labs</h3>
-        <p class="why-card-text">All tests performed in accredited facilities.</p>
+        <p class="why-card-text">Every report follows a quality-check process before release.</p>
       </article>
       <article class="why-card">
         <div class="why-icon">
