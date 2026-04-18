@@ -11,6 +11,7 @@ class ProfileModel {
     }
 
     public function getProfileByUserId($id) {
+        $this->ensureAvatarColumn();
         $stmt = $this->db->prepare(
             "SELECT 
                 u.user_id,
@@ -23,7 +24,8 @@ class ProfileModel {
                 p.email AS patient_email,
                 p.contact_number,
                 p.gender,
-                p.address
+                p.address,
+                COALESCE(p.avatar_path, '') AS avatar_path
              FROM users u
              LEFT JOIN patients p ON p.email = u.email
              WHERE u.user_id = ?
@@ -122,5 +124,23 @@ class ProfileModel {
         $ok = $stmt->execute();
         $stmt->close();
         return $ok;
+    }
+
+    public function updatePatientAvatar($patientId, $avatarPath) {
+        $stmt = $this->db->prepare("UPDATE patients SET avatar_path = ? WHERE patient_id = ?");
+        if (!$stmt) {
+            return false;
+        }
+        $stmt->bind_param("si", $avatarPath, $patientId);
+        $ok = $stmt->execute();
+        $stmt->close();
+        return $ok;
+    }
+
+    private function ensureAvatarColumn() {
+        $result = $this->db->query("SHOW COLUMNS FROM patients LIKE 'avatar_path'");
+        if (!$result || $result->num_rows === 0) {
+            $this->db->query("ALTER TABLE patients ADD COLUMN avatar_path VARCHAR(255) NULL AFTER address");
+        }
     }
 }

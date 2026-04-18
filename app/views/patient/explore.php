@@ -196,7 +196,7 @@
         150+ Certified Tests
       </div>
       <h1>Find Your Test</h1>
-      <p>Comprehensive screenings and panels — all available with home sample collection by our certified phlebotomists.</p>
+      <p>Comprehensive screenings and panels — all available with home sample collection by our trained team.</p>
     </div>
   </section>
 

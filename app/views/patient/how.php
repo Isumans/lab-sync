@@ -78,7 +78,7 @@
     <div class="page-hero-inner">
       <div class="page-eyebrow">Guided Workflow</div>
       <h1>From Booking to<br>Results in 24 Hours</h1>
-      <p>No clinics, no queues. Our certified phlebotomists come to you — here's exactly how it works.</p>
+      <p>No clinics, no queues. Our trained sample-collection staff come to you — here's exactly how it works.</p>
       <div class="step-progress">
         <div class="sp-col"><div class="sp-dot">1</div><span class="sp-label">Choose Test</span></div>
         <div class="sp-line"></div>
@@ -139,9 +139,9 @@
         <div class="ws-content">
           <p class="step-num">Step 03</p>
           <h2>We Come to Your Home</h2>
-          <p>A certified, background-verified phlebotomist arrives at your doorstep. The entire collection takes under 10 minutes. No clinic visit needed.</p>
+          <p>A trained sample-collection staff member arrives at your doorstep. The collection is quick and simple, so no clinic visit is needed.</p>
           <ul class="ws-highlights">
-            <li><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg> Certified &amp; ID-verified phlebotomists</li>
+            <li><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg> Trained &amp; ID-verified sample collection staff</li>
             <li><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg> Sterile equipment, sealed packaging</li>
             <li><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg> Real-time technician tracking</li>
           </ul>
@@ -200,7 +200,7 @@
       </details>
       <details class="faq-item">
         <summary class="faq-q">Is my health data secure? <svg class="faq-icon" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></summary>
-        <p class="faq-a">All data is encrypted using AES-256 at rest and TLS in transit with strict access controls and audit trails.</p>
+        <p class="faq-a">Your health information is kept private in your LabSync account, and access is limited to authorized users only.</p>
       </details>
     </div>
   </section>

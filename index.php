@@ -345,6 +345,8 @@ elseif($controllerName === 'inventoryController'){
         $profileController->viewProfile();
     }elseif($action==='update'){
         $profileController->updateProfile();
+    }elseif($action==='uploadProfilePhoto'){
+        $profileController->uploadProfilePhoto();
     }elseif($action==='changePassword'){
         $profileController->changePassword();
     }

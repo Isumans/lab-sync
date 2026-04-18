@@ -9,6 +9,7 @@ $profileEmail = $patient['patient_email'] ?? $patient['user_email'] ?? '';
 $profileContact = $patient['contact_number'] ?? $patient['user_contact'] ?? '';
 $profileGender = $patient['gender'] ?? '';
 $profileAddress = $patient['address'] ?? '';
+$avatarPath = $patient['avatar_path'] ?? '';
 
 $initials = 'PP';
 $nameParts = preg_split('/\s+/', trim((string)$profileName));
@@ -62,7 +63,24 @@ if (is_array($nameParts)) {
 
     <section class="profile-card">
       <div class="profile-summary">
-        <div class="avatar" aria-hidden="true"><?php echo htmlspecialchars($initials); ?></div>
+        <div class="avatar-wrapper">
+          <div class="avatar-container" id="avatarContainer">
+            <?php if ($avatarPath !== ''): ?>
+              <img src="<?php echo htmlspecialchars($avatarPath); ?>" alt="Profile Photo" class="avatar-image">
+            <?php else: ?>
+              <div class="avatar" aria-hidden="true"><?php echo htmlspecialchars($initials); ?></div>
+            <?php endif; ?>
+            <button type="button" class="avatar-upload-btn" id="uploadAvatarBtn" aria-label="Upload profile photo">
+              <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path d="M12 5v14M5 12h14"/>
+              </svg>
+            </button>
+          </div>
+          <input type="file" id="avatarFileInput" accept="image/*" style="display:none;">
+          <div class="upload-progress" id="uploadProgress" style="display:none;">
+            <div class="progress-bar"></div>
+          </div>
+        </div>
         <div>
           <h2 class="profile-name"><?php echo htmlspecialchars($profileName); ?></h2>
           <p class="profile-role">Patient Account</p>
@@ -138,7 +156,7 @@ if (is_array($nameParts)) {
           </div>
           <div class="field">
             <label for="pfEmail">Email</label>
-            <input id="pfEmail" name="pfEmail" type="email" value="<?php echo htmlspecialchars($profileEmail); ?>" required>
+            <input id="pfEmail" type="email" value="<?php echo htmlspecialchars($profileEmail); ?>" disabled>
           </div>
           <div class="field">
             <label for="pfContact">Contact Number</label>
@@ -210,5 +228,86 @@ if (is_array($nameParts)) {
   </script>
 
   <script src="/lab_sync/public/js/showAlert.js"></script>
+
+  <script>
+    (function () {
+      const uploadBtn = document.getElementById('uploadAvatarBtn');
+      const fileInput = document.getElementById('avatarFileInput');
+      const container = document.getElementById('avatarContainer');
+      const progress = document.getElementById('uploadProgress');
+
+      if (!uploadBtn || !fileInput) return;
+
+      uploadBtn.addEventListener('click', () => {
+        fileInput.click();
+      });
+
+      fileInput.addEventListener('change', async function () {
+        if (!this.files || this.files.length === 0) return;
+
+        const file = this.files[0];
+        if (file.size > 5 * 1024 * 1024) {
+          alert('File too large. Max 5MB.');
+          return;
+        }
+
+        if (!['image/jpeg', 'image/png', 'image/gif', 'image/webp'].includes(file.type)) {
+          alert('Invalid file type. Use JPEG, PNG, GIF, or WebP.');
+          return;
+        }
+
+        const formData = new FormData();
+        formData.append('photo', file);
+
+        progress.style.display = 'block';
+        uploadBtn.disabled = true;
+
+        try {
+          const response = await fetch('/lab_sync/index.php?controller=profile&action=uploadProfilePhoto', {
+            method: 'POST',
+            body: formData,
+          });
+
+          const raw = await response.text();
+          let data = null;
+          try {
+            data = raw ? JSON.parse(raw) : null;
+          } catch (parseError) {
+            alert('Upload failed: Server returned an invalid response.');
+            return;
+          }
+
+          if (!data) {
+            alert('Upload failed: Empty server response.');
+            return;
+          }
+
+          if (data.success && data.avatar_url) {
+            const existingImg = container.querySelector('.avatar-image');
+            if (existingImg) {
+              existingImg.src = data.avatar_url + '?v=' + Date.now();
+            } else {
+              const avatar = container.querySelector('.avatar');
+              if (avatar) avatar.remove();
+              const img = document.createElement('img');
+              img.src = data.avatar_url;
+              img.alt = 'Profile Photo';
+              img.className = 'avatar-image';
+              container.insertBefore(img, uploadBtn);
+            }
+            alert('Profile photo uploaded successfully!');
+          } else {
+            alert('Upload failed: ' + (data.error || 'Unknown error'));
+          }
+        } catch (err) {
+          alert('Upload error: ' + err.message);
+        } finally {
+          progress.style.display = 'none';
+          uploadBtn.disabled = false;
+          fileInput.value = '';
+        }
+      });
+    })();
+  </script>
 </body>
 </html>
