@@ -1359,15 +1359,23 @@ class AppointmentModel {
         }
 
         $safeLimit = max(1, min(50, intval($limit)));
+        $nameCol = $this->resolveFirstExistingColumn('tests', ['test_name', 'name']);
         $categoryCol = $this->resolveFirstExistingColumn('tests', ['category', 'department']);
+        $codeCol = $this->resolveFirstExistingColumn('tests', ['test_code', 'code', 'testid']);
+        $priceCol = $this->resolveFirstExistingColumn('tests', ['price', 'test_price', 'amount']);
+
+        $nameExpr = $nameCol !== null ? "COALESCE(t.{$nameCol}, '')" : "''";
         $categoryExpr = $categoryCol !== null ? "COALESCE(t.{$categoryCol}, '')" : "''";
+        $codeExpr = $codeCol !== null ? "COALESCE(t.{$codeCol}, '')" : "''";
+        $priceExpr = $priceCol !== null ? "COALESCE(t.{$priceCol}, 0)" : '0';
 
         $sql = "
             SELECT
                 t.test_id,
-                COALESCE(t.test_name, '') AS test_name,
+                {$nameExpr} AS test_name,
                 {$categoryExpr} AS category,
-                COALESCE(t.price, 0) AS price
+                {$codeExpr} AS test_code,
+                {$priceExpr} AS price
             FROM tests t
         ";
 
@@ -1375,14 +1383,30 @@ class AppointmentModel {
         $params = [];
         $query = trim((string) $query);
         if ($query !== '') {
-            $sql .= ' WHERE LOWER(COALESCE(t.test_name, \"\")) LIKE ? OR LOWER(' . $categoryExpr . ') LIKE ?';
+            $conditions = [
+                'LOWER(' . $nameExpr . ') LIKE ?',
+                'LOWER(' . $categoryExpr . ') LIKE ?',
+                'CAST(t.test_id AS CHAR) LIKE ?'
+            ];
+
+            if ($codeCol !== null) {
+                $conditions[] = 'LOWER(' . $codeExpr . ') LIKE ?';
+            }
+
+            $sql .= ' WHERE ' . implode(' OR ', $conditions);
             $needle = '%' . strtolower($query) . '%';
-            $types = 'ss';
+            $types = 'sss';
             $params[] = $needle;
             $params[] = $needle;
+            $params[] = '%' . $query . '%';
+
+            if ($codeCol !== null) {
+                $types .= 's';
+                $params[] = $needle;
+            }
         }
 
-        $sql .= ' ORDER BY t.test_name ASC LIMIT ' . $safeLimit;
+        $sql .= ' ORDER BY ' . $nameExpr . ' ASC LIMIT ' . $safeLimit;
 
         $stmt = $this->db->prepare($sql);
         if ($stmt === false) {
@@ -2299,75 +2323,56 @@ class AppointmentModel {
 
     private function getBillingSummary($appointmentId) {
         $summary = [
-            'total_fee' => 0,
-            'payment_status' => '',
-            'reference' => '',
+            'bill_number'     => '',
+            'bill_date'       => '',
+            'subtotal'        => 0,
+            'discount_amount' => 0,
+            'tax_amount'      => 0,
+            'total_amount'    => 0,
+            'paid_amount'     => 0,
+            'balance_due'     => 0,
+            'status'          => '',
         ];
 
-        if (!$this->tableExists('billing')) {
-            $tests = $this->getAppointmentTestsWithStatus($appointmentId);
-            $total = 0;
-            foreach ($tests as $test) {
-                $total += floatval($test['price'] ?? 0);
+        if ($this->tableExists('bills') && $this->columnExists('bills', 'appointment_id')) {
+            $sql = "
+                SELECT
+                    bill_number, bill_date,
+                    subtotal, discount_amount, tax_amount,
+                    total_amount, paid_amount, balance_due,
+                    status
+                FROM bills
+                WHERE appointment_id = ?
+                ORDER BY bill_id DESC
+                LIMIT 1
+            ";
+            $stmt = $this->db->prepare($sql);
+            if ($stmt !== false) {
+                $stmt->bind_param('i', $appointmentId);
+                if ($stmt->execute()) {
+                    $result = $stmt->get_result();
+                    $row = $result ? $result->fetch_assoc() : null;
+                    if ($row) {
+                        foreach (array_keys($summary) as $key) {
+                            if (isset($row[$key])) {
+                                $summary[$key] = $row[$key];
+                            }
+                        }
+                        $stmt->close();
+                        return $summary;
+                    }
+                }
+                $stmt->close();
             }
-            $summary['total_fee'] = $total;
-            return $summary;
         }
 
-        $appointmentFk = $this->resolveFirstExistingColumn('billing', ['appointment_id', 'bill_id']);
-        if ($appointmentFk === null) {
-            return $summary;
+        // Fallback: sum test prices when no bill record exists
+        $tests = $this->getAppointmentTestsWithStatus($appointmentId);
+        $total = 0;
+        foreach ($tests as $test) {
+            $total += floatval($test['price'] ?? 0);
         }
-
-        $totalCol = $this->resolveFirstExistingColumn('billing', ['total_fee', 'total_amount', 'amount']);
-        $statusCol = $this->resolveFirstExistingColumn('billing', ['payment_status', 'status']);
-        $refCol = $this->resolveFirstExistingColumn('billing', ['reference_no', 'reference', 'bill_reference']);
-
-        $totalExpr = $totalCol !== null ? $totalCol : '0';
-        $statusExpr = $statusCol !== null ? $statusCol : "''";
-        $refExpr = $refCol !== null ? $refCol : "''";
-
-        $sql = "
-            SELECT
-                {$totalExpr} AS total_fee,
-                {$statusExpr} AS payment_status,
-                {$refExpr} AS reference
-            FROM billing
-            WHERE {$appointmentFk} = ?
-            ORDER BY 1 DESC
-            LIMIT 1
-        ";
-
-        $stmt = $this->db->prepare($sql);
-        if ($stmt === false) {
-            return $summary;
-        }
-
-        $stmt->bind_param('i', $appointmentId);
-        if (!$stmt->execute()) {
-            $stmt->close();
-            return $summary;
-        }
-
-        $result = $stmt->get_result();
-        $row = $result ? $result->fetch_assoc() : null;
-        $stmt->close();
-        if (!$row) {
-            return $summary;
-        }
-
-        if (isset($row['total_fee']) && is_numeric($row['total_fee'])) {
-            $summary['total_fee'] = floatval($row['total_fee']);
-        }
-
-        if (!empty($row['payment_status'])) {
-            $summary['payment_status'] = strtoupper((string) $row['payment_status']);
-        }
-
-        if (!empty($row['reference'])) {
-            $summary['reference'] = (string) $row['reference'];
-        }
-
+        $summary['total_amount'] = $total;
         return $summary;
     }
 

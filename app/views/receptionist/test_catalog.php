@@ -41,7 +41,6 @@ ob_start();
                                     <option value="test_name">Test Name</option>
                                     <option value="test_id">Test ID</option>
                                     <option value="department">Department</option>
-                                    <option value="lab_id">Lab ID</option>
                                     <option value="price">Price</option>
                                 </select>
                             </div>
@@ -67,7 +66,6 @@ ob_start();
                                 <th class="rd-sortable is-active is-asc" data-sort="test_id" data-direction="asc">Test ID</th>
                                 <th class="rd-sortable" data-sort="test_name" data-direction="asc">Test Name</th>
                                 <th class="rd-sortable" data-sort="department" data-direction="asc">Department</th>
-                                <th class="rd-sortable" data-sort="lab_id" data-direction="asc">Lab # / LIB ID</th>
                                 <th class="rd-sortable rd-th-right" data-sort="price" data-direction="asc">Price</th>
                                 <th class="rd-th-right">Actions</th>
                             </tr>
@@ -80,7 +78,6 @@ ob_start();
                                         data-name="<?php echo htmlspecialchars($package['test_name'] ?? ''); ?>"
                                         data-description="<?php echo htmlspecialchars($package['description'] ?? ''); ?>"
                                         data-department="<?php echo htmlspecialchars($package['department'] ?? $package['category'] ?? ''); ?>"
-                                        data-lib-id="<?php echo htmlspecialchars($package['lab_id'] ?? ''); ?>"
                                         data-price="<?php echo htmlspecialchars($package['price'] ?? ''); ?>">
                                         
                                         <td class="test-id-cell">
@@ -96,10 +93,6 @@ ob_start();
                                             <span class="dept-badge dept-<?php echo strtolower(str_replace(' ', '-', $package['department'] ?? $package['category'] ?? '')); ?>">
                                                 <?php echo htmlspecialchars($package['department'] ?? $package['category'] ?? 'Other'); ?>
                                             </span>
-                                        </td>
-                                        
-                                        <td class="lib-id-cell">
-                                            <span class="lib-id"><?php echo htmlspecialchars($package['lab_id'] ?? 'N/A'); ?></span>
                                         </td>
                                         
                                         <td class="price-cell">
@@ -128,7 +121,7 @@ ob_start();
                                 <?php endforeach; ?>
                             <?php else: ?>
                                 <tr class="rd-empty-row">
-                                    <td colspan="6" style="text-align: center; padding: 40px; color: #999;">
+                                    <td colspan="5" style="text-align: center; padding: 40px; color: #999;">
                                         <div style="font-size: 48px; margin-bottom: 10px;">📋</div>
                                         <div>No tests found in the catalog</div>
                                         <a href="/lab_sync/index.php?controller=TestCatalog&action=add_test" style="color: #1bc47d; text-decoration: none; margin-top: 10px; display: inline-block;">+ Add your first test</a>

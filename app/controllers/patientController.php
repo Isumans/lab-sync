@@ -55,6 +55,71 @@ class patientController {
             }
         }
     }
+
+    public function createPatient($role = '') {
+        header('Content-Type: application/json; charset=UTF-8');
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            echo json_encode([
+                'status' => 'error',
+                'message' => 'Invalid request method.'
+            ]);
+            return;
+        }
+
+        if (!$this->validateCsrfTokenFromRequest()) {
+            http_response_code(403);
+            echo json_encode([
+                'status' => 'error',
+                'message' => 'Security check failed. Please refresh and retry.'
+            ]);
+            return;
+        }
+
+        $patient_name = trim((string)($_POST['patient_name'] ?? ''));
+        $dob = trim((string)($_POST['date_of_birth'] ?? ''));
+        $gender = strtolower(trim((string)($_POST['gender'] ?? '')));
+        $contact_no = trim((string)($_POST['contact_no'] ?? ''));
+        $email = trim((string)($_POST['email'] ?? ''));
+
+        $validation = $this->validatePatientRegistrationWithErrors($patient_name, $dob, $gender, $contact_no, $email);
+        if (!$validation['ok']) {
+            http_response_code(422);
+            echo json_encode([
+                'status' => 'error',
+                'message' => $validation['message'],
+                'errors' => $validation['errors'],
+            ]);
+            return;
+        }
+
+        $conn1 = connect();
+        $model = new patientModel($conn1);
+        $createdPatient = $model->createPatientAndReturn($patient_name, $dob, $gender, $contact_no, $email);
+
+        if (!$createdPatient || !isset($createdPatient['patient_id'])) {
+            http_response_code(500);
+            echo json_encode([
+                'status' => 'error',
+                'message' => 'Error creating patient record.'
+            ]);
+            return;
+        }
+
+        echo json_encode([
+            'status' => 'success',
+            'message' => 'Patient created successfully.',
+            'data' => [
+                'patient_id' => intval($createdPatient['patient_id']),
+                'patient_name' => (string)($createdPatient['patient_name'] ?? ''),
+                'email' => (string)($createdPatient['email'] ?? ''),
+                'contact_number' => (string)($createdPatient['contact_number'] ?? ''),
+                'contact_no' => (string)($createdPatient['contact_number'] ?? ''),
+            ],
+        ]);
+    }
+
     public function edit_patient($role) {
         $role = $_GET['role'] ?? '';
         // Implementation for editing patient details
@@ -104,31 +169,64 @@ class patientController {
     }
 
     private function validatePatientRegistration($patientName, $dob, $gender, $contactNo, $email) {
+        $validation = $this->validatePatientRegistrationWithErrors($patientName, $dob, $gender, $contactNo, $email);
+        return [
+            'ok' => $validation['ok'],
+            'message' => $validation['message'],
+        ];
+    }
+
+    private function validatePatientRegistrationWithErrors($patientName, $dob, $gender, $contactNo, $email) {
+        $errors = [];
+
         if ($patientName === '' || strlen($patientName) > 120) {
-            return ['ok' => false, 'message' => 'Patient name is required and must be at most 120 characters.'];
+            $errors['patient_name'] = 'Patient name is required and must be at most 120 characters.';
         }
 
         if (!$this->isValidDate($dob)) {
-            return ['ok' => false, 'message' => 'Date of birth format is invalid.'];
-        }
-
-        if (strtotime($dob) > time()) {
-            return ['ok' => false, 'message' => 'Date of birth cannot be in the future.'];
+            $errors['date_of_birth'] = 'Date of birth format is invalid.';
+        } elseif (strtotime($dob) > time()) {
+            $errors['date_of_birth'] = 'Date of birth cannot be in the future.';
         }
 
         if (!in_array($gender, ['male', 'female', 'other'], true)) {
-            return ['ok' => false, 'message' => 'Gender value is invalid.'];
+            $errors['gender'] = 'Gender value is invalid.';
         }
 
         if (!$this->isValidPhone($contactNo)) {
-            return ['ok' => false, 'message' => 'Contact number format is invalid.'];
+            $errors['contact_no'] = 'Contact number format is invalid.';
         }
 
         if (!filter_var($email, FILTER_VALIDATE_EMAIL) || strlen($email) > 120) {
-            return ['ok' => false, 'message' => 'Email is invalid.'];
+            $errors['email'] = 'Email is invalid.';
         }
 
-        return ['ok' => true, 'message' => ''];
+        if (!empty($errors)) {
+            $firstError = array_values($errors)[0];
+            return [
+                'ok' => false,
+                'message' => (string)$firstError,
+                'errors' => $errors,
+            ];
+        }
+
+        return [
+            'ok' => true,
+            'message' => '',
+            'errors' => [],
+        ];
+    }
+
+    private function validateCsrfTokenFromRequest() {
+        $sessionToken = (string)($_SESSION['csrf_token'] ?? '');
+        $requestToken = (string)($_POST['csrf_token'] ?? '');
+        if ($requestToken === '') {
+            $requestToken = (string)($_SERVER['HTTP_X_CSRF_TOKEN'] ?? '');
+        }
+
+        return $sessionToken !== ''
+            && $requestToken !== ''
+            && hash_equals($sessionToken, $requestToken);
     }
 
     private function validatePatientUpdate($patientName, $contactNo, $email) {

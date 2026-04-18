@@ -29,7 +29,8 @@ $role = $_GET['user_role'] ?? '';
 
             <!-- Main Body Section -->
             <main class="main-content">
-                <?php
+                <section class="reports-dashboard" aria-label="Reports Dashboard">
+                    <?php
                     $pageTitle = 'Settings';
                     $pageBreadcrumbText = 'Settings->';
                     $pageActionHtml = '';
@@ -55,6 +56,8 @@ $role = $_GET['user_role'] ?? '';
                     <div id="configuration" class="section" style="display:none;"></div>
                     <div id="general" class="section" style="display:none;"></div>
                 </div>
+                </section>
+                
             </main>
         </div>
 

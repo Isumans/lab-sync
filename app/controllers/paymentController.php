@@ -4,6 +4,7 @@ if (!defined('ROOT_PATH')) {
 }
 
 require_once MODEL_PATH . '/homeModel.php';
+require_once MODEL_PATH . '/billingModel.php';
 require_once APP_PATH . '/services/EmailService.php';
 require_once APP_PATH . '/services/SmsService.php';
 require_once __DIR__ . '/../../config/db.php';
@@ -134,6 +135,9 @@ class paymentController {
 
         $this->model->updatePaymentStatus($appointmentId, 'paid', $orderId);
 
+        $billingModel = new BillingModel(connect());
+        $billingModel->createBillFromOnlinePayment($appointmentId, $orderId);
+
         if ($fromRequestId > 0) {
             $this->model->linkAppointmentToRequest($fromRequestId, $appointmentId);
         }
@@ -198,6 +202,8 @@ class paymentController {
             $appointmentId = (int)str_replace('APT-', '', $orderId);
             if ($appointmentId > 0) {
                 $this->model->updatePaymentStatus($appointmentId, 'paid', $orderId);
+                $billingModel = new BillingModel(connect());
+                $billingModel->createBillFromOnlinePayment($appointmentId, $orderId);
             }
         }
 

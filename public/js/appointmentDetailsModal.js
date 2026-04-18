@@ -12,6 +12,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const csrfToken = String(appConfig.csrfToken || document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '');
   const endpoint = baseUrl + '/index.php?controller=appointmentsController&action=getAppointmentDetails';
   const updateStatusEndpoint = baseUrl + '/index.php?controller=appointmentsController&action=updateTestStatus';
+  const viewPdfBase = baseUrl + '/index.php?controller=reportsController&action=viewPdf';
   let activeTrigger = null;
   let currentAppointmentId = null;
 
@@ -156,6 +157,21 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       updateProcToInProgress(appointmentId, testId, procStageButton);
+      return;
+    }
+
+    const printStageButton = event.target.closest('.js-print-stage');
+    if (printStageButton) {
+      event.preventDefault();
+
+      const appointmentId = printStageButton.getAttribute('data-appointment-id');
+      const testId = printStageButton.getAttribute('data-test-id');
+      if (!appointmentId || !testId) {
+        return;
+      }
+
+      const url = `${viewPdfBase}&appointment_id=${encodeURIComponent(appointmentId)}&test_id=${encodeURIComponent(testId)}`;
+      window.open(url, '_blank', 'noopener,noreferrer');
       return;
     }
 

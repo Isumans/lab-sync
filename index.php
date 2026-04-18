@@ -301,6 +301,8 @@ elseif($controllerName === 'inventoryController'){
         $patientsController->register_patient($role);
     }elseif($action==='register'){
         $patientsController->register($role);
+    }elseif($action==='createPatient'){
+        $patientsController->createPatient($role);
     }elseif($action==='edit_patient'){
         $patientsController->edit_patient($role);
     }

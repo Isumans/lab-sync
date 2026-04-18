@@ -302,6 +302,7 @@ body {
 
 .workflow-step.active {
     display: block;
+    background-color: transparent;
 }
 
 @keyframes fadeIn {

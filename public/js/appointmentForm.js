@@ -1,7 +1,9 @@
 // Appointment form test catalog interactivity.
 let selectedTests = {};
-let allTests = [];
-let latestTests = [];
+let latestSearchResults = [];
+let testIndexById = {};
+let testSearchDebounceTimer = null;
+let activeSearchRequestId = 0;
 
 document.addEventListener('DOMContentLoaded', function () {
     const appointmentForm = document.getElementById('createAppointmentForm');
@@ -9,7 +11,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const testCatalogSearch = document.getElementById('test-catalog-search');
     const testCatalogTableBody = document.getElementById('testCatalogTableBody');
-    const prominentTestsCards = document.getElementById('prominentTestsCards');
     const selectedTestsTableBody = document.getElementById('selectedTestsTableBody');
     const timeSlotsContainer = document.querySelector('.time-slots-container');
     const appointmentTimeInput = document.getElementById('appointment-time');
@@ -22,12 +23,16 @@ document.addEventListener('DOMContentLoaded', function () {
     initializeDateDisplay(appointmentDateInput, selectedAppointmentDate);
     initializeTodayDateButton(todayDateButton, appointmentDateInput);
     initializeTimeSlots(timeSlotsContainer, appointmentTimeInput, appointmentDateInput, selectedAppointmentTime);
-    initializeTestActions(testCatalogTableBody, prominentTestsCards, selectedTestsTableBody);
+    initializeTestActions(testCatalogTableBody, selectedTestsTableBody);
     initializeSearch(testCatalogSearch);
     initializeFormSubmit(appointmentForm, appointmentTimeInput);
     initializeCancel(cancelButton);
 
-    loadTestsFromBackend();
+    clearTestCatalogResults();
+    setTestResultsMuted(true);
+    setTestSearchHint('Type at least 3 characters to search for a test.');
+    updateSelectedTestsCount();
+    updateSelectedTestsHiddenInput();
 });
 
 function initializeDateDisplay(appointmentDateInput, selectedAppointmentDate) {
@@ -189,19 +194,9 @@ function getCurrentMinutes() {
     return now.getHours() * 60 + now.getMinutes();
 }
 
-function initializeTestActions(testCatalogTableBody, prominentTestsCards, selectedTestsTableBody) {
+function initializeTestActions(testCatalogTableBody, selectedTestsTableBody) {
     if (testCatalogTableBody) {
         testCatalogTableBody.addEventListener('click', function (e) {
-            const addButton = e.target.closest('button[data-action="add-test"]');
-            if (!addButton) return;
-
-            const testId = addButton.dataset.testId;
-            addTestToSelection(testId);
-        });
-    }
-
-    if (prominentTestsCards) {
-        prominentTestsCards.addEventListener('click', function (e) {
             const addButton = e.target.closest('button[data-action="add-test"]');
             if (!addButton) return;
 
@@ -224,17 +219,78 @@ function initializeTestActions(testCatalogTableBody, prominentTestsCards, select
 function initializeSearch(testCatalogSearch) {
     if (!testCatalogSearch) return;
 
-    testCatalogSearch.addEventListener('input', function () {
-        const searchTerm = this.value.trim().toLowerCase();
-        const filteredTests = allTests.filter(test =>
-            test.name.toLowerCase().includes(searchTerm) ||
-            test.id.toLowerCase().includes(searchTerm) ||
-            test.description.toLowerCase().includes(searchTerm) ||
-            test.category.toLowerCase().includes(searchTerm)
-        );
+    const MIN_QUERY = 3;
+    const DEBOUNCE_MS = 300;
 
-        displayTestCatalog(filteredTests);
+    testCatalogSearch.addEventListener('input', function () {
+        const query = this.value.trim();
+
+        if (testSearchDebounceTimer) {
+            clearTimeout(testSearchDebounceTimer);
+            testSearchDebounceTimer = null;
+        }
+
+        if (query.length < MIN_QUERY) {
+            activeSearchRequestId += 1;
+            latestSearchResults = [];
+            testIndexById = {};
+            clearTestCatalogResults();
+            setTestResultsMuted(true);
+            setTestSearchHint('Type at least ' + MIN_QUERY + ' characters to search for a test.');
+            return;
+        }
+
+        setTestResultsMuted(false);
+        setTestSearchHint('');
+        showSearchState();
+
+        testSearchDebounceTimer = setTimeout(function () {
+            searchTestsFromBackend(query);
+        }, DEBOUNCE_MS);
     });
+}
+
+async function searchTestsFromBackend(query) {
+    const requestId = ++activeSearchRequestId;
+
+    try {
+        const endpoint = '/lab_sync/index.php?controller=appointmentsController&action=searchTests&q=' + encodeURIComponent(query);
+        const res = await fetch(endpoint, { headers: { Accept: 'application/json' } });
+
+        if (requestId !== activeSearchRequestId) {
+            return;
+        }
+
+        if (!res.ok) {
+            throw new Error('Unable to search tests.');
+        }
+
+        const payload = await res.json();
+        if (requestId !== activeSearchRequestId) {
+            return;
+        }
+
+        latestSearchResults = normalizeTestsPayload(payload);
+        rebuildTestIndex(latestSearchResults);
+        setTestResultsMuted(false);
+
+        if (latestSearchResults.length === 0) {
+            showEmptyState('No tests found for your search.');
+            return;
+        }
+
+        displayTestCatalog(latestSearchResults);
+    } catch (error) {
+        if (requestId !== activeSearchRequestId) {
+            return;
+        }
+
+        latestSearchResults = [];
+        testIndexById = {};
+        setTestResultsMuted(true);
+        showEmptyState('Could not load tests from server.');
+        console.error('Failed to search tests for appointment form:', error);
+    }
 }
 
 function initializeFormSubmit(appointmentForm, appointmentTimeInput) {
@@ -280,55 +336,10 @@ function initializeCancel(cancelButton) {
     });
 }
 
-async function loadTestsFromBackend() {
-    const tableBody = document.getElementById('testCatalogTableBody');
-    const prominentTestsCards = document.getElementById('prominentTestsCards');
-
-    if (tableBody) {
-        tableBody.innerHTML = '<tr><td colspan="4" class="empty-state">Loading test catalog...</td></tr>';
-    }
-
-    if (prominentTestsCards) {
-        prominentTestsCards.innerHTML = '<div class="empty-state">Loading latest tests...</div>';
-    }
-
-    try {
-        const [allTestsResponse, topTestsResponse] = await Promise.all([
-            fetch('/lab_sync/index.php?controller=TestCatalog&action=getTestsForAppointment', {
-                headers: { 'Accept': 'application/json' }
-            }),
-            fetch('/lab_sync/index.php?controller=TestCatalog&action=getLatestTestsForAppointment', {
-                headers: { 'Accept': 'application/json' }
-            })
-        ]);
-
-        if (!allTestsResponse.ok || !topTestsResponse.ok) {
-            throw new Error('Unable to fetch test catalog data.');
-        }
-
-        const allTestsPayload = await allTestsResponse.json();
-        const topTestsPayload = await topTestsResponse.json();
-
-        allTests = normalizeTestsPayload(allTestsPayload);
-        latestTests = normalizeTestsPayload(topTestsPayload);
-
-        displayTestCatalog(allTests);
-        renderProminentTests(latestTests);
-    } catch (error) {
-        console.error('Failed to load tests for appointment form:', error);
-
-        if (tableBody) {
-            tableBody.innerHTML = '<tr><td colspan="4" class="empty-state">Could not load tests from server.</td></tr>';
-        }
-
-        if (prominentTestsCards) {
-            prominentTestsCards.innerHTML = '<div class="empty-state">Could not load latest tests.</div>';
-        }
-    }
-}
-
 function normalizeTestsPayload(payload) {
-    const records = Array.isArray(payload) ? payload : (payload && Array.isArray(payload.data) ? payload.data : []);
+    const records = payload && payload.status === 'success' && Array.isArray(payload.data)
+        ? payload.data
+        : (Array.isArray(payload) ? payload : []);
 
     return records
         .map(record => normalizeTestRecord(record))
@@ -336,13 +347,14 @@ function normalizeTestsPayload(payload) {
 }
 
 function normalizeTestRecord(record) {
-    const rawId = record && (record.test_id ?? record.id);
+    const rawId = record && (record.test_id ?? record.id ?? record.test_code ?? record.code);
     const id = rawId === undefined || rawId === null ? '' : String(rawId);
+    const rawCode = record && (record.test_code ?? record.code ?? null);
     const category = (record && record.category ? String(record.category) : 'GENERAL').toUpperCase();
 
     return {
         id,
-        code: 'T-' + id.padStart(4, '0'),
+        code: getTestCodeLabel(rawCode !== null && rawCode !== undefined && String(rawCode).trim() !== '' ? rawCode : id),
         name: record && (record.test_name ?? record.name) ? String(record.test_name ?? record.name) : 'Unnamed Test',
         description: record && record.description ? String(record.description) : 'No description available',
         category,
@@ -355,77 +367,38 @@ function displayTestCatalog(tests) {
     if (!tableBody) return;
 
     if (tests.length === 0) {
-        tableBody.innerHTML = '<tr><td colspan="4" class="empty-state">No tests found</td></tr>';
+        tableBody.innerHTML = '<li class="empty-state">No tests found</li>';
         return;
     }
 
     tableBody.innerHTML = tests.map(test => {
         const isSelected = Boolean(selectedTests[test.id]);
+        const priceText = Number.isFinite(test.price) ? '$' + Number(test.price).toFixed(2) : '—';
+        const categoryClass = escapeHtml(test.category.toLowerCase().replace(/\s+/g, '-'));
         return `
-            <tr data-test-id="${escapeHtml(test.id)}">
-                <td class="test-id">${escapeHtml(test.code)}</td>
-                <td class="test-name-cell">
-                    <div class="test-name-main">${escapeHtml(test.name)}</div>
-                    <div class="test-name-desc">${escapeHtml(test.description)}</div>
-                </td>
-                <td>
-                    <span class="test-category ${escapeHtml(test.category.toLowerCase())}">${escapeHtml(test.category)}</span>
-                </td>
-                <td style="text-align: center;">
-                    <button
-                        type="button"
-                        class="test-action-btn ${isSelected ? 'added' : ''}"
-                        data-action="add-test"
-                        data-test-id="${escapeHtml(test.id)}"
-                        ${isSelected ? 'disabled' : ''}
-                    >
-                        ${isSelected ? 'Added' : '+ Add'}
-                    </button>
-                </td>
-            </tr>
+            <li class="test-result-row" data-test-id="${escapeHtml(test.id)}">
+                <span class="test-code-badge">${escapeHtml(test.code)}</span>
+                <div class="test-result-info">
+                    <span class="test-result-name">${escapeHtml(test.name)}</span>
+                    <span class="test-result-category ${categoryClass}">${escapeHtml(test.category)}</span>
+                </div>
+                <span class="test-result-price">${escapeHtml(priceText)}</span>
+                <button
+                    type="button"
+                    class="test-add-circle-btn ${isSelected ? 'added' : ''}"
+                    data-action="add-test"
+                    data-test-id="${escapeHtml(test.id)}"
+                    ${isSelected ? 'disabled' : ''}
+                    aria-label="Add ${escapeHtml(test.name)}"
+                >+</button>
+            </li>
         `;
     }).join('');
 }
 
-function renderProminentTests(tests) {
-    const cardsContainer = document.getElementById('prominentTestsCards');
-    if (!cardsContainer) return;
-
-    if (tests.length === 0) {
-        cardsContainer.innerHTML = '<div class="empty-state">No prominent tests available.</div>';
-        return;
-    }
-
-    cardsContainer.innerHTML = tests.map(test => {
-        const isSelected = Boolean(selectedTests[test.id]);
-        const priceText = Number.isFinite(test.price) ? 'UGX ' + test.price.toLocaleString() : 'Price not set';
-        return `
-            <article class="prominent-test-card" data-test-id="${escapeHtml(test.id)}">
-                <div class="prominent-test-top">
-                    <span class="prominent-test-id">${escapeHtml(test.code)}</span>
-                    <span class="test-category ${escapeHtml(test.category.toLowerCase())}">${escapeHtml(test.category)}</span>
-                </div>
-                <h5 class="prominent-test-name">${escapeHtml(test.name)}</h5>
-                <p class="prominent-test-desc">${escapeHtml(test.description)}</p>
-                <div class="prominent-test-footer">
-                    <span class="prominent-test-price">${escapeHtml(priceText)}</span>
-                    <button
-                        type="button"
-                        class="test-action-btn ${isSelected ? 'added' : ''}"
-                        data-action="add-test"
-                        data-test-id="${escapeHtml(test.id)}"
-                        ${isSelected ? 'disabled' : ''}
-                    >
-                        ${isSelected ? 'Added' : '+ Add'}
-                    </button>
-                </div>
-            </article>
-        `;
-    }).join('');
-}
 
 function addTestToSelection(testId) {
-    const test = allTests.find(item => item.id === String(testId));
+    const test = testIndexById[String(testId)];
     if (!test) return;
 
     if (selectedTests[test.id]) {
@@ -452,15 +425,16 @@ function refreshSelectableButtons() {
     updateSelectedTestsCount();
     updateSelectedTestsHiddenInput();
 
-    const searchTerm = (document.getElementById('test-catalog-search')?.value || '').trim().toLowerCase();
-    const filteredTests = allTests.filter(test =>
-        test.name.toLowerCase().includes(searchTerm) ||
-        test.id.toLowerCase().includes(searchTerm) ||
-        test.description.toLowerCase().includes(searchTerm) ||
-        test.category.toLowerCase().includes(searchTerm)
-    );
-    displayTestCatalog(filteredTests);
-    renderProminentTests(latestTests);
+    const searchTerm = (document.getElementById('test-catalog-search')?.value || '').trim();
+    if (searchTerm.length >= 3) {
+        setTestResultsMuted(false);
+        displayTestCatalog(latestSearchResults);
+        return;
+    }
+
+    clearTestCatalogResults();
+    setTestResultsMuted(true);
+    setTestSearchHint('Type at least 3 characters to search for a test.');
 }
 
 function updateSelectedTestsDisplay() {
@@ -518,5 +492,59 @@ function escapeHtml(value) {
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#39;');
+}
+
+function rebuildTestIndex(tests) {
+    testIndexById = {};
+    tests.forEach(function (test) {
+        testIndexById[String(test.id)] = test;
+    });
+}
+
+function setTestSearchHint(message) {
+    const hintEl = document.getElementById('test-search-hint');
+    if (!hintEl) return;
+
+    if (!message) {
+        hintEl.textContent = '';
+        hintEl.style.display = 'none';
+        return;
+    }
+
+    hintEl.textContent = message;
+    hintEl.style.display = 'block';
+}
+
+function setTestResultsMuted(isMuted) {
+    const resultsEl = document.getElementById('testCatalogResults');
+    if (!resultsEl) return;
+    resultsEl.classList.toggle('is-muted', Boolean(isMuted));
+}
+
+function clearTestCatalogResults() {
+    const tableBody = document.getElementById('testCatalogTableBody');
+    if (!tableBody) return;
+    tableBody.innerHTML = '';
+}
+
+function showSearchState() {
+    const tableBody = document.getElementById('testCatalogTableBody');
+    if (!tableBody) return;
+    tableBody.innerHTML = '<li class="empty-state">Searching tests...</li>';
+}
+
+function showEmptyState(message) {
+    const tableBody = document.getElementById('testCatalogTableBody');
+    if (!tableBody) return;
+    tableBody.innerHTML = '<li class="empty-state">' + escapeHtml(message || 'No tests found') + '</li>';
+}
+
+function getTestCodeLabel(rawId) {
+    const value = String(rawId || '').trim();
+    if (/^[0-9]+$/.test(value)) {
+        return 'T-' + value.padStart(4, '0');
+    }
+
+    return value.toUpperCase();
 }
 

@@ -61,6 +61,17 @@ class billingController {
             return;
         }
 
+        if (($_SESSION['user_role'] ?? '') === 'patient') {
+            require_once MODEL_PATH . '/homeModel.php';
+            $homeModel      = new HomeModel(connect());
+            $currentPatient = $homeModel->getPatientIdByUserId((int) $_SESSION['user_id']);
+            if ((int) $bill['patient_id'] !== $currentPatient) {
+                http_response_code(403);
+                echo 'Access denied.';
+                return;
+            }
+        }
+
         $appointmentModel = new AppointmentModel(connect());
         $appointmentPayload = $appointmentModel->getAppointmentDetailsPayload(intval($bill['appointment_id']));
         $appointment = $appointmentPayload['appointment'] ?? null;

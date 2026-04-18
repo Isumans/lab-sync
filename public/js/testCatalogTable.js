@@ -37,7 +37,6 @@ function getRowMeta(row) {
         test_id: String(row.dataset.id || '').trim(),
         test_name: String(row.dataset.name || '').trim(),
         department: String(row.dataset.department || '').trim(),
-        lab_id: String(row.dataset.libId || '').trim(),
         price: Number(row.dataset.price || 0)
     };
 }
@@ -107,7 +106,7 @@ function renderTestCatalogTable(dom) {
             return true;
         }
 
-        const searchText = `${item.test_id} ${item.test_name} ${item.department} ${item.lab_id}`.toLowerCase();
+        const searchText = `${item.test_id} ${item.test_name} ${item.department}`.toLowerCase();
         return searchText.includes(query);
     });
 

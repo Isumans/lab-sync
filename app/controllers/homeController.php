@@ -4,6 +4,7 @@ if (!defined('ROOT_PATH')) {
 }
 
 require_once MODEL_PATH . '/homeModel.php';
+require_once MODEL_PATH . '/billingModel.php';
 require_once APP_PATH . '/services/EmailService.php';
 require_once APP_PATH . '/services/SmsService.php';
 require_once 'C:\xampp\htdocs\lab_sync\config\db.php';
@@ -353,6 +354,7 @@ class HomeController {
         $appointments = $this->model->getAllAppointments($patientId);
         $prescriptionRequests = [];
         $requestTests = [];
+        $patientBills = [];
 
         if ($patientId > 0) {
             $prescriptionRequests = $this->model->getPrescriptionRequestsByPatient($patientId, 20);
@@ -365,6 +367,11 @@ class HomeController {
             if (!empty($communicatedIds)) {
                 $requestTests = $this->model->getTestsForRequests($communicatedIds);
             }
+        }
+
+        if ($patientId > 0) {
+            $billingModel = new BillingModel(connect());
+            $patientBills = $billingModel->getBillsByPatientId($patientId);
         }
 
         $csrfToken = $this->ensureCsrfToken();
