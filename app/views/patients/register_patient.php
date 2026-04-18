@@ -48,8 +48,8 @@ $role=$_GET['user_role'] ?? '';
                             </select>
                             <label for="contact_no">Contact Number:</label>
                             <input type="tel" id="contact_no" name="contact_no" maxlength="25" pattern="^[0-9+()\-\s]{7,25}$" title="Use 7-25 characters: digits, space, plus, parentheses, or hyphen." required>
-                            <label for="email">Email:</label>
-                            <input type="email" id="email" name="email" maxlength="120" required>
+                            <label for="email">Email: <span style="font-weight:normal; color:#888;">(Optional)</span></label>
+                            <input type="email" id="email" name="email" maxlength="120">
                             <button type="submit">Register Patient</button>
 
                         </form>

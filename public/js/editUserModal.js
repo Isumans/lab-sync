@@ -8,28 +8,22 @@ class EditUserModal {
     }
 
     init() {
-        // Always wait for DOM to be ready
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', () => this.setupModal());
         } else {
-            // If DOM is already loaded, setup immediately with a small delay
             setTimeout(() => this.setupModal(), 100);
         }
     }
 
     setupModal() {
         try {
-            // Create modal if it doesn't exist
             let modal = document.getElementById('editUserModal');
             if (!modal) {
                 this.createModal();
                 modal = document.getElementById('editUserModal');
             }
             this.modal = modal;
-
-            // Attach event listeners - both document level and element level
             this.attachEventListeners();
-            console.log('Modal setup completed successfully');
         } catch (error) {
             console.error('Error setting up modal:', error);
         }
@@ -37,15 +31,19 @@ class EditUserModal {
 
     createModal() {
         const modalHTML = `
-            <div id="editUserModal" class="modal-overlay">
-                <div class="modal-container">
+            <div id="editUserModal" class="modal-overlay" aria-hidden="true">
+                <div class="modal-container" role="dialog" aria-modal="true" aria-labelledby="editUserModalTitle">
                     <div class="modal-header">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M20 21H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2z"/>
-                            <path d="M16 3v4M8 3v4M3 8h18M3 14h6"/>
-                        </svg>
-                        <h2>Account Information</h2>
+                        <div class="modal-header-title">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+                            </svg>
+                            <h2 id="editUserModalTitle">Account Information</h2>
+                        </div>
+                        <button type="button" class="modal-close" id="editUserClose" aria-label="Close">&times;</button>
                     </div>
+
+                    <div id="editUserAlert" class="modal-alert" role="alert"></div>
 
                     <form id="editUserForm">
                         <!-- Account Information Section -->
@@ -126,21 +124,18 @@ class EditUserModal {
             </div>
         `;
 
-        // Insert modal into the page
         document.body.insertAdjacentHTML('beforeend', modalHTML);
         this.modal = document.getElementById('editUserModal');
     }
 
     attachEventListeners() {
-        // Use event delegation for edit button clicks
         document.addEventListener('click', (e) => {
-            if (e.target.closest('.action-btn-edit')) {
+            if (e.target.closest('.action-btn-edit[data-user-id]')) {
                 e.preventDefault();
                 this.handleEditClick(e);
             }
         });
 
-        // Direct event listeners for modal elements
         const cancelBtn = document.getElementById('cancelBtn');
         if (cancelBtn) {
             cancelBtn.addEventListener('click', (e) => {
@@ -149,20 +144,22 @@ class EditUserModal {
             });
         }
 
-        // Form submission
+        const closeBtn = document.getElementById('editUserClose');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', () => this.closeModal());
+        }
+
         const form = document.getElementById('editUserForm');
         if (form) {
             form.addEventListener('submit', (e) => this.handleFormSubmit(e));
         }
 
-        // Role option radio buttons
         document.addEventListener('change', (e) => {
             if (e.target.name === 'role' && e.target.closest('.role-option')) {
                 this.handleRoleChange(e);
             }
         });
 
-        // Close modal on overlay click
         if (this.modal) {
             this.modal.addEventListener('click', (e) => {
                 if (e.target === this.modal) {
@@ -170,28 +167,27 @@ class EditUserModal {
                 }
             });
         }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && this.modal && this.modal.classList.contains('is-open')) {
+                this.closeModal();
+            }
+        });
     }
 
     handleEditClick(e) {
         e.preventDefault();
 
-        // Get the button element using closest()
         const button = e.target.closest('.action-btn-edit');
         if (!button) return;
 
-        // Get user data from button data attributes
         const userId = button.getAttribute('data-user-id');
         const username = button.getAttribute('data-username');
         const email = button.getAttribute('data-email');
         const role = button.getAttribute('data-role');
         const contactNumber = button.getAttribute('data-contact-number') || '';
 
-        console.log('Opening modal for user:', { userId, username, email, role });
-
-        // Populate modal with user data
         this.populateModalData(userId, username, email, contactNumber, role);
-
-        // Open modal
         this.openModal();
     }
 
@@ -201,23 +197,17 @@ class EditUserModal {
         document.getElementById('email').value = email;
         document.getElementById('contactNumber').value = contactNumber;
 
-        // Set role - Scope to the modal form to avoid selecting hidden inputs in the table
         const modalForm = document.getElementById('editUserForm');
         if (!modalForm) return;
 
         const roleInputs = modalForm.querySelectorAll('input[name="role"]');
         roleInputs.forEach(input => {
-            // Case-insensitive comparison
             const isMatch = input.value.toLowerCase() === role.toLowerCase();
             input.checked = isMatch;
 
             const roleLabel = input.closest('.role-option');
             if (roleLabel) {
-                if (isMatch) {
-                    roleLabel.classList.add('selected');
-                } else {
-                    roleLabel.classList.remove('selected');
-                }
+                roleLabel.classList.toggle('selected', isMatch);
             }
         });
     }
@@ -232,13 +222,27 @@ class EditUserModal {
         }
     }
 
+    showAlert(message, type) {
+        const alertEl = document.getElementById('editUserAlert');
+        if (!alertEl) return;
+        alertEl.textContent = message;
+        alertEl.className = 'modal-alert ' + (type === 'success' ? 'is-success' : 'is-error');
+    }
+
+    hideAlert() {
+        const alertEl = document.getElementById('editUserAlert');
+        if (!alertEl) return;
+        alertEl.textContent = '';
+        alertEl.className = 'modal-alert';
+    }
+
     handleFormSubmit(e) {
         e.preventDefault();
+        this.hideAlert();
 
         const formData = new FormData(document.getElementById('editUserForm'));
         const userId = formData.get('user_id');
 
-        // Create the data object to send
         const data = {
             user_id: userId,
             username: formData.get('username'),
@@ -248,42 +252,40 @@ class EditUserModal {
             action: 'editUser'
         };
 
-        // Send data via AJAX
         fetch(window.location.href, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-            },
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
             body: new URLSearchParams(data)
         })
             .then(response => response.text())
-            .then(result => {
-                // Show success message and close modal
-                alert('User updated successfully!');
-                this.closeModal();
-                // Reload the page to reflect changes
-                location.reload();
+            .then(() => {
+                this.showAlert('User updated successfully.', 'success');
+                setTimeout(() => {
+                    this.closeModal();
+                    location.reload();
+                }, 800);
             })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Error updating user. Please try again.');
+            .catch(() => {
+                this.showAlert('Error updating user. Please try again.', 'error');
             });
     }
 
     openModal() {
         if (this.modal) {
-            this.modal.classList.add('active');
+            this.hideAlert();
+            this.modal.classList.add('is-open');
+            this.modal.setAttribute('aria-hidden', 'false');
             document.body.style.overflow = 'hidden';
         }
     }
 
     closeModal() {
         if (this.modal) {
-            this.modal.classList.remove('active');
-            document.body.style.overflow = 'auto';
+            this.modal.classList.remove('is-open');
+            this.modal.setAttribute('aria-hidden', 'true');
+            document.body.style.overflow = '';
         }
     }
 }
 
-// Initialize modal when DOM is ready
 const editUserModal = new EditUserModal();

@@ -19,6 +19,7 @@ $role = $_GET['user_role'] ?? '';
         <link rel="stylesheet" href="/lab_sync/public/teamStyles.css">
         <link rel="stylesheet" href="/lab_sync/public/partnerLabForm.css">
         <link rel="stylesheet" href="/lab_sync/public/reportsDashboard.css">
+        <link rel="stylesheet" href="/lab_sync/public/settingsDeleteModal.css">
     </head>
     <body>
         <!-- Navigation Bar -->
@@ -61,6 +62,26 @@ $role = $_GET['user_role'] ?? '';
             </main>
         </div>
 
+        <!-- Shared delete confirmation modal (team management + partner labs) -->
+        <div id="settingsDeleteModal" class="settings-delete-modal" aria-hidden="true">
+            <div class="settings-delete-dialog" role="dialog" aria-modal="true" aria-labelledby="settingsDeleteTitle">
+                <div class="settings-delete-header">
+                    <div class="settings-delete-icon" aria-hidden="true">!</div>
+                    <h2 id="settingsDeleteTitle">Delete</h2>
+                    <button type="button" id="settingsDeleteClose" class="settings-delete-close" aria-label="Close delete modal">&times;</button>
+                </div>
+                <p class="settings-delete-copy">Are you sure you want to delete this record? This action cannot be undone.</p>
+                <div id="settingsDeleteAlert" class="settings-delete-alert" hidden></div>
+                <div class="settings-delete-summary">
+                    <div class="summary-label">Name</div>
+                    <div id="settingsDeleteName" class="summary-value">—</div>
+                </div>
+                <button type="button" id="settingsDeleteConfirm" class="settings-delete-confirm-btn">Delete</button>
+                <button type="button" id="settingsDeleteCancel" class="settings-delete-cancel-btn">Cancel</button>
+                <div class="settings-delete-footer-note">SYSTEM: AUTHORIZATION REQUIRED</div>
+            </div>
+        </div>
+
         <script src="/lab_sync/public/js/showSection.js?v=1"></script>
         <script src="/lab_sync/public/js/showAlert.js"></script>
         <script src="/lab_sync/public/js/teamManagement.js"></script>
@@ -68,6 +89,7 @@ $role = $_GET['user_role'] ?? '';
         <script src="/lab_sync/public/js/labConfig.js"></script>
         <script src="/lab_sync/public/js/generalSettings.js"></script>
         <script src="/lab_sync/public/js/partnerLabsFilter.js"></script>
+        <script src="/lab_sync/public/js/settingsDeleteModal.js"></script>
 
     </body>
 </html>

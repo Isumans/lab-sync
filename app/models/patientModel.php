@@ -36,7 +36,8 @@ class patientModel {
             return false;
         }
 
-        $stmt->bind_param("sssss", $patient_name, $dob, $gender, $contact_no, $email);
+        $emailValue = trim((string)$email) !== '' ? $email : null;
+        $stmt->bind_param("sssss", $patient_name, $dob, $gender, $contact_no, $emailValue);
         $ok = $stmt->execute();
         $stmt->close();
         return $ok;
@@ -52,7 +53,8 @@ class patientModel {
             return null;
         }
 
-        $stmt->bind_param("sssss", $patient_name, $dob, $gender, $contact_no, $email);
+        $emailValue = trim((string)$email) !== '' ? $email : null;
+        $stmt->bind_param("sssss", $patient_name, $dob, $gender, $contact_no, $emailValue);
         $ok = $stmt->execute();
         $newPatientId = $ok ? intval($this->db->insert_id) : 0;
         $stmt->close();
@@ -132,7 +134,8 @@ class patientModel {
             return false;
         }
 
-        if (!filter_var(trim((string)$email), FILTER_VALIDATE_EMAIL) || strlen((string)$email) > 120) {
+        $emailTrimmed = trim((string)$email);
+        if ($emailTrimmed !== '' && (!filter_var($emailTrimmed, FILTER_VALIDATE_EMAIL) || strlen($emailTrimmed) > 120)) {
             return false;
         }
 

@@ -361,6 +361,8 @@ elseif($controllerName === 'inventoryController'){
         $partnerLabController->storeLab();
     }elseif($action === 'getPartnerLabsSection'){
         $partnerLabController->getPartnerLabsSection();
+    }elseif($action === 'deleteLab'){
+        $partnerLabController->deleteLab();
     }
 }elseif($controllerName==='userController'){
     $userControllerClass = 'userController';

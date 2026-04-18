@@ -35,7 +35,7 @@ class PartnerLabController {
             $website = trim((string)($_POST['website'] ?? ''));
             $address = trim((string)($_POST['address'] ?? ''));
             
-            $services = isset($_POST['services']) ? $_POST['services'] : [];
+            $services = $_POST['services'] ?? [];
 
             $validation = $this->validatePartnerLabPayload($lab_name, $email, $contact_person, $phone, $website, $address, $services);
             if (!$validation['ok']) {
@@ -65,6 +65,23 @@ class PartnerLabController {
 
        
         }
+        public function deleteLab() {
+            header('Content-Type: application/json; charset=UTF-8');
+            $lab_id = intval($_POST['lab_id'] ?? 0);
+            if ($lab_id <= 0) {
+                http_response_code(400);
+                echo json_encode(['status' => 'error', 'message' => 'Invalid lab ID.']);
+                return;
+            }
+            $ok = $this->partnerModel->deletePartnerLab($lab_id);
+            if ($ok) {
+                echo json_encode(['status' => 'success']);
+            } else {
+                http_response_code(500);
+                echo json_encode(['status' => 'error', 'message' => 'Failed to delete partner lab.']);
+            }
+        }
+
         public function getPartnerLabsSection() {
 
             // Fetch partner labs from the database
@@ -129,5 +146,3 @@ class PartnerLabController {
             ];
         }
 }
-
-?>

@@ -93,12 +93,15 @@
                                             <path d="M8 5C6.34315 5 5 6.34315 5 8C5 9.65685 6.34315 11 8 11C9.65685 11 11 9.65685 11 8C11 6.34315 9.65685 5 8 5Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
                                         </svg>
                                     </button>
-                                    <button type="submit" name="edit" class="action-btn-edit" title="Edit" onclick="showAlertAndSubmit(event,'edit')">
+                                    <a href="/lab_sync/index.php?controller=partnerLabController&action=editLab&lab_id=<?php echo htmlspecialchars((string)($lab['id'] ?? '')); ?>" class="action-btn-edit" title="Edit">
                                         <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                                             <path d="M3 13.5H13M2 11L11.5 1.5C11.8 1.2 12.3 1.2 12.6 1.5L14.5 3.4C14.8 3.7 14.8 4.2 14.5 4.5L5 14H2V11Z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
                                         </svg>
-                                    </button>
-                                    <button type="submit" name="delete" class="action-btn-delete" title="Delete" onclick="showAlertAndSubmit(event,'delete')">
+                                    </a>
+                                    <button type="button" class="action-btn-delete js-settings-delete-btn" title="Delete"
+                                        data-delete-type="lab"
+                                        data-entity-id="<?php echo htmlspecialchars((string)($lab['id'] ?? '')); ?>"
+                                        data-entity-name="<?php echo htmlspecialchars($lab['lab_name']); ?>">
                                         <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                                             <path d="M2 4H14M6.5 7V11M9.5 7V11M3 4L4 13C4 13.5 4.5 14 5 14H11C11.5 14 12 13.5 12 13L13 4M5.5 4V2.5C5.5 2.2 5.7 2 6 2H10C10.3 2 10.5 2.2 10.5 2.5V4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
                                         </svg>
