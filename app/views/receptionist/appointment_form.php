@@ -46,7 +46,7 @@
                 </div>
 
                 <!-- Create New Patient Button -->
-                <button type="button" class="create-new-patient-btn">
+                <button type="button" id="create-new-patient-trigger" class="create-new-patient-btn">
                     + Create New Patient
                 </button>
             </div>
@@ -56,52 +56,34 @@
                 <div class="section-header">
                     <span class="section-icon">🧪</span>
                     <h3>Test Selection</h3>
-                    <span class="selected-tests-badge">SELECTED TESTS: <span id="selectedTestsCount">0</span></span>
+                    <span class="step-indicator">STEP 1 OF 3</span>
                 </div>
 
-                <!-- Search Laboratory Catalog -->
                 <div class="test-search-group">
-                    <label class="test-label">SEARCH LABORATORY CATALOG</label>
                     <div class="test-search-wrapper">
                         <span class="search-icon">🔍</span>
-                        <input type="text" 
-                               id="test-catalog-search" 
-                               class="test-catalog-search" 
-                               placeholder="Find tests by name, code, or category (e.g. 'Glucose', 'L002')..."
+                        <input type="text"
+                               id="test-catalog-search"
+                               class="test-catalog-search"
+                               placeholder="Search by Test Name or ID (e.g. CBC, Metabolic...)"
                                autocomplete="off">
                     </div>
-                </div>
-
-                <div class="prominent-tests-section">
-                    <div class="prominent-tests-header">
-                        <h4>Latest 3 Tests</h4>
-                    </div>
-                    <div id="prominentTestsCards" class="prominent-tests-cards">
-                        <div class="empty-state">Loading latest tests...</div>
-                    </div>
+                    <p id="test-search-hint" class="test-search-validation-msg" style="display:none;"></p>
+                    <label class="search-results-label">SEARCH RESULTS</label>
                 </div>
 
                 <!-- Test Catalog Results -->
                 <div id="testCatalogResults" class="test-catalog-results">
-                    <table class="test-catalog-table">
-                        <thead>
-                            <tr>
-                                <th class="col-test-id">TEST ID</th>
-                                <th class="col-test-name">TEST NAME</th>
-                                <th class="col-category">CATEGORY</th>
-                                <th class="col-action"></th>
-                            </tr>
-                        </thead>
-                        <tbody id="testCatalogTableBody">
-                            <!-- Tests will be loaded here -->
-                        </tbody>
-                    </table>
+                    <ul id="testCatalogTableBody" class="test-results-list">
+                        <!-- Tests loaded via JS -->
+                    </ul>
                 </div>
 
                 <!-- Selected Tests List -->
                 <div id="selectedTestsList" class="selected-tests-list" style="display: none;">
                     <div class="selected-tests-header">
                         <h4>Selected Tests</h4>
+                        <span class="selected-tests-badge">SELECTED: <span id="selectedTestsCount">0</span></span>
                     </div>
                     <table class="selected-tests-table">
                         <thead>
@@ -112,9 +94,7 @@
                                 <th class="col-action"></th>
                             </tr>
                         </thead>
-                        <tbody id="selectedTestsTableBody">
-                            <!-- Selected tests will be shown here -->
-                        </tbody>
+                        <tbody id="selectedTestsTableBody"></tbody>
                     </table>
                 </div>
 
@@ -188,3 +168,75 @@
     </div>
 
 </form>
+
+<div id="createPatientModal" class="appointment-edit-modal create-patient-modal" aria-hidden="true">
+    <div class="appointment-edit-dialog create-patient-dialog" role="dialog" aria-modal="true" aria-labelledby="createPatientTitle">
+        <form id="createPatientModalForm" novalidate>
+            <input type="hidden" id="createPatientCsrf" name="csrf_token" value="<?php echo htmlspecialchars((string)($csrfToken ?? ($_SESSION['csrf_token'] ?? ''))); ?>">
+
+            <div class="appointment-edit-header">
+                <div>
+                    <h2 id="createPatientTitle">Create New Patient</h2>
+                    <p class="appointment-edit-subtitle">REGISTER PATIENT FOR APPOINTMENT</p>
+                </div>
+                <button id="createPatientClose" type="button" class="appointment-edit-close" aria-label="Close create patient modal">&times;</button>
+            </div>
+
+            <div id="createPatientAlert" class="appointment-edit-alert" hidden></div>
+
+            <div class="appointment-edit-body">
+                <section class="edit-section-card">
+                    <div class="edit-section-title">
+                        <span class="section-icon" aria-hidden="true"></span>
+                        <h3>Patient Basic Information</h3>
+                    </div>
+
+                    <div class="create-patient-grid">
+                        <div class="create-patient-field create-patient-field-full">
+                            <label class="edit-label" for="createPatientName">Patient Name</label>
+                            <input type="text" id="createPatientName" name="patient_name" maxlength="120" autocomplete="off" required>
+                            <p class="create-patient-field-error" data-field-error="patient_name"></p>
+                        </div>
+
+                        <div class="create-patient-field">
+                            <label class="edit-label" for="createPatientDob">Date of Birth</label>
+                            <input type="date" id="createPatientDob" name="date_of_birth" required>
+                            <p class="create-patient-field-error" data-field-error="date_of_birth"></p>
+                        </div>
+
+                        <div class="create-patient-field">
+                            <label class="edit-label" for="createPatientGender">Gender</label>
+                            <select id="createPatientGender" name="gender" required>
+                                <option value="">Select Gender</option>
+                                <option value="male">Male</option>
+                                <option value="female">Female</option>
+                                <option value="other">Other</option>
+                            </select>
+                            <p class="create-patient-field-error" data-field-error="gender"></p>
+                        </div>
+
+                        <div class="create-patient-field">
+                            <label class="edit-label" for="createPatientContact">Contact Number</label>
+                            <input type="tel" id="createPatientContact" name="contact_no" maxlength="25" pattern="^[0-9+()\-\s]{7,25}$" autocomplete="off" required>
+                            <p class="create-patient-field-error" data-field-error="contact_no"></p>
+                        </div>
+
+                        <div class="create-patient-field">
+                            <label class="edit-label" for="createPatientEmail">Email Address</label>
+                            <input type="email" id="createPatientEmail" name="email" maxlength="120" autocomplete="off" required>
+                            <p class="create-patient-field-error" data-field-error="email"></p>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <div class="appointment-edit-footer">
+                <button type="button" id="createPatientCancel" class="edit-cancel-btn">Cancel</button>
+                <button type="submit" id="createPatientSubmit" class="edit-submit-btn">
+                    <span aria-hidden="true"></span>
+                    Create Patient
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

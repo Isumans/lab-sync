@@ -79,8 +79,6 @@ class TestCatalogController {
             try {
                 $costPrice = trim((string)($_POST['cost_price'] ?? ''));
                 $discount = trim((string)($_POST['discount'] ?? ''));
-                $printOrder = trim((string)($_POST['print_order'] ?? ''));
-                $decimals = trim((string)($_POST['decimals'] ?? '2'));
                 $partnerHospital = trim((string)($_POST['partner_hospital'] ?? ''));
                 $chargeCost = trim((string)($_POST['charge_cost'] ?? ''));
 
@@ -90,18 +88,13 @@ class TestCatalogController {
 
                 $payload = [
                     'department' => trim((string)($_POST['department'] ?? '')),
-                    'test_code' => trim((string)($_POST['test_code'] ?? '')),
-                    'lab_id' => trim((string)($_POST['lab_id'] ?? '')),
                     'test_name' => trim((string)($_POST['test_name'] ?? '')),
                     'default_unit' => trim((string)($_POST['default_unit'] ?? '')),
                     'print_name' => trim((string)($_POST['print_name'] ?? '')),
                     'description' => trim((string)($_POST['description'] ?? '')),
                     'cost_price' => ($costPrice !== '' && is_numeric($costPrice)) ? (float)$costPrice : null,
                     'discount' => ($discount !== '' && is_numeric($discount)) ? (float)$discount : 0.0,
-                    'print_order' => ($printOrder !== '' && is_numeric($printOrder)) ? (int)$printOrder : 0,
-                    'decimals' => ($decimals !== '' && is_numeric($decimals)) ? (int)$decimals : 2,
                     'is_active' => isset($_POST['is_active']) ? 1 : 0,
-                    'validation_required' => isset($_POST['validation_required']) ? 1 : 0,
                     'external_test_code' => trim((string)($_POST['external_test_code'] ?? '')),
                     'partner_lab_id' => ($partnerHospital !== '' && ctype_digit($partnerHospital)) ? (int)$partnerHospital : null,
                     'charge_cost' => ($chargeCost !== '' && is_numeric($chargeCost)) ? (float)$chargeCost : null,
@@ -111,7 +104,6 @@ class TestCatalogController {
 
                 $errors = [];
                 if ($payload['department'] === '') $errors[] = 'Department is required.';
-                if ($payload['test_code'] === '') $errors[] = 'Test code is required.';
                 if ($payload['test_name'] === '') $errors[] = 'Test name is required.';
                 if ($payload['default_unit'] === '') $errors[] = 'Default unit is required.';
                 if ($payload['print_name'] === '') $errors[] = 'Print name is required.';

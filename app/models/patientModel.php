@@ -32,8 +32,36 @@ class patientModel {
         }
 
         $stmt = $this->db->prepare("INSERT INTO patients (patient_name, date_of_birth, gender, contact_number, email) VALUES (?, ?, ?, ?, ?)");
+        if (!$stmt) {
+            return false;
+        }
+
         $stmt->bind_param("sssss", $patient_name, $dob, $gender, $contact_no, $email);
-        return $stmt->execute();
+        $ok = $stmt->execute();
+        $stmt->close();
+        return $ok;
+    }
+
+    public function createPatientAndReturn($patient_name, $dob, $gender, $contact_no, $email) {
+        if (!$this->isValidPatientRegistration($patient_name, $dob, $gender, $contact_no, $email)) {
+            return null;
+        }
+
+        $stmt = $this->db->prepare("INSERT INTO patients (patient_name, date_of_birth, gender, contact_number, email) VALUES (?, ?, ?, ?, ?)");
+        if (!$stmt) {
+            return null;
+        }
+
+        $stmt->bind_param("sssss", $patient_name, $dob, $gender, $contact_no, $email);
+        $ok = $stmt->execute();
+        $newPatientId = $ok ? intval($this->db->insert_id) : 0;
+        $stmt->close();
+
+        if (!$ok || $newPatientId <= 0) {
+            return null;
+        }
+
+        return $this->getPatientById($newPatientId);
     }
     public function updatePatient($patient_id, $patient_name, $contact_number, $email) {
         if (!$this->isValidPatientUpdate($patient_name, $contact_number, $email)) {
@@ -50,26 +78,32 @@ class patientModel {
         return $stmt->execute();
     }
     public function searchPatients($type, $query) {
-    // $conn = $this->connect();
-        $query = "%" . $this->db->real_escape_string($query) . "%";
+        $query = '%' . trim((string)$query) . '%';
 
         if ($type === 'email') {
-            $stmt = $this->db->prepare("SELECT patient_id AS id, patient_name AS name, email FROM patients WHERE email LIKE ? ORDER BY email ASC");
+            $stmt = $this->db->prepare("SELECT patient_id AS id, patient_name AS name, email FROM patients WHERE email LIKE ? ORDER BY email ASC LIMIT 10");
         } else {
-            $stmt = $this->db->prepare("SELECT patient_id AS id, patient_name AS name, email FROM patients WHERE patient_name LIKE ? ORDER BY patient_name ASC");
+            $stmt = $this->db->prepare("SELECT patient_id AS id, patient_name AS name, email FROM patients WHERE patient_name LIKE ? ORDER BY patient_name ASC LIMIT 10");
+        }
+
+        if (!$stmt) {
+            return [];
         }
 
         $stmt->bind_param('s', $query);
-        $stmt->execute();
+        if (!$stmt->execute()) {
+            $stmt->close();
+            return [];
+        }
+
         $result = $stmt->get_result();
-        
         $patients = [];
-        while ($row = $result->fetch_assoc()) {
+
+        while ($result && ($row = $result->fetch_assoc())) {
             $patients[] = $row;
         }
 
         $stmt->close();
-        // $conn->close();
         return $patients;
     }
 

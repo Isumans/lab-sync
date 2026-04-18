@@ -18,6 +18,7 @@ if (!isset($_SESSION['user_id'])) {
         <link rel="stylesheet" href="/lab_sync/public/styles.css">
         <link rel="stylesheet" href="/lab_sync/public/table.css">
         <link rel="stylesheet" href="/lab_sync/public/dashboardCards.css">
+        <link rel="stylesheet" href="/lab_sync/public/reportsDashboard.css">
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     </head>
     <body>

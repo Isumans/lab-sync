@@ -65,9 +65,22 @@ if (!empty($appointment['date_of_birth'])) {
     }
 }
 
-$paymentStatus = strtoupper((string) ($billing['payment_status'] ?? 'PENDING'));
-$totalFee = isset($billing['total_fee']) && is_numeric($billing['total_fee']) ? number_format((float) $billing['total_fee'], 2) : '0.00';
-$billingRef = $billing['reference'] ?? 'N/A';
+$billNumber    = $billing['bill_number']     ?? ($billing['reference'] ?? 'N/A');
+$billDate      = $billing['bill_date']       ?? '';
+$subtotal      = isset($billing['subtotal'])       && is_numeric($billing['subtotal'])       ? number_format((float)$billing['subtotal'],       2) : null;
+$discountAmt   = isset($billing['discount_amount']) && is_numeric($billing['discount_amount']) ? number_format((float)$billing['discount_amount'], 2) : null;
+$taxAmt        = isset($billing['tax_amount'])      && is_numeric($billing['tax_amount'])      ? number_format((float)$billing['tax_amount'],      2) : null;
+$totalFee      = isset($billing['total_amount'])    && is_numeric($billing['total_amount'])    ? number_format((float)$billing['total_amount'],    2)
+               : (isset($billing['total_fee'])      && is_numeric($billing['total_fee'])       ? number_format((float)$billing['total_fee'],       2) : '0.00');
+$paidAmount    = isset($billing['paid_amount'])     && is_numeric($billing['paid_amount'])     ? number_format((float)$billing['paid_amount'],     2) : null;
+$balanceDue    = isset($billing['balance_due'])     && is_numeric($billing['balance_due'])     ? number_format((float)$billing['balance_due'],     2) : null;
+$paymentStatus = strtoupper((string)($billing['status'] ?? $billing['payment_status'] ?? 'PENDING'));
+$billStatusClass = match($paymentStatus) {
+    'PAID'           => 'paid',
+    'PARTIALLY_PAID' => 'partial',
+    'CANCELLED'      => 'cancelled',
+    default          => 'pending',
+};
 ?>
 <div class="appointment-details-shell">
     <div class="appointment-details-header">
@@ -130,7 +143,19 @@ $billingRef = $billing['reference'] ?? 'N/A';
                                 <?php endif; ?>
                                 <span class="stage <?php echo $status === 'COMPLETED' ? 'is-active' : ''; ?>">Comp.</span>
                                 <span class="stage <?php echo $status === 'AUTHORIZED' ? 'is-active' : ''; ?>">Auth.</span>
-                                <span class="stage <?php echo $status === 'PRINTED' ? 'is-active' : ''; ?>">Print.</span>
+                                <?php if ($status === 'AUTHORIZED' && $testId > 0 && $appointmentId > 0): ?>
+                                    <button
+                                        type="button"
+                                        class="stage stage-print-action js-print-stage"
+                                        data-appointment-id="<?php echo appointmentDetailsEscape($appointmentId); ?>"
+                                        data-test-id="<?php echo appointmentDetailsEscape($testId); ?>"
+                                        aria-label="Open report PDF"
+                                    >
+                                        Print.
+                                    </button>
+                                <?php else: ?>
+                                    <span class="stage <?php echo $status === 'PRINTED' ? 'is-active' : ''; ?>">Print.</span>
+                                <?php endif; ?>
                             </div>
                         </div>
                     <?php endforeach; ?>
@@ -161,16 +186,55 @@ $billingRef = $billing['reference'] ?? 'N/A';
         <section class="appointment-card appointment-billing">
             <h3>Billing Summary</h3>
             <div class="appointment-card-body billing-body">
-                <div>
-                    <span class="label">Total Fee</span>
+                <div class="billing-row">
+                    <span class="label">Bill #</span>
+                    <strong><?php echo appointmentDetailsEscape($billNumber); ?></strong>
+                </div>
+                <?php if (!empty($billDate)): ?>
+                <div class="billing-row">
+                    <span class="label">Bill Date</span>
+                    <strong><?php echo appointmentDetailsEscape($billDate); ?></strong>
+                </div>
+                <?php endif; ?>
+                <?php if ($subtotal !== null): ?>
+                <div class="billing-row">
+                    <span class="label">Subtotal</span>
+                    <span>$<?php echo appointmentDetailsEscape($subtotal); ?></span>
+                </div>
+                <?php endif; ?>
+                <?php if ($discountAmt !== null && (float)str_replace(',', '', $discountAmt) > 0): ?>
+                <div class="billing-row">
+                    <span class="label">Discount</span>
+                    <span>-$<?php echo appointmentDetailsEscape($discountAmt); ?></span>
+                </div>
+                <?php endif; ?>
+                <?php if ($taxAmt !== null && (float)str_replace(',', '', $taxAmt) > 0): ?>
+                <div class="billing-row">
+                    <span class="label">Tax</span>
+                    <span>$<?php echo appointmentDetailsEscape($taxAmt); ?></span>
+                </div>
+                <?php endif; ?>
+                <div class="billing-row billing-total-row">
+                    <span class="label">Total</span>
                     <div class="amount">$<?php echo appointmentDetailsEscape($totalFee); ?></div>
                 </div>
-                <div>
-                    <span class="label">Payment</span>
-                    <div class="pill <?php echo $paymentStatus === 'PAID' ? 'paid' : 'pending'; ?>">
-                        <?php echo appointmentDetailsEscape($paymentStatus); ?>
+                <?php if ($paidAmount !== null): ?>
+                <div class="billing-row">
+                    <span class="label">Paid</span>
+                    <span>$<?php echo appointmentDetailsEscape($paidAmount); ?></span>
+                </div>
+                <?php endif; ?>
+                <?php if ($balanceDue !== null): ?>
+                <div class="billing-row">
+                    <span class="label">Balance Due</span>
+                    <strong>$<?php echo appointmentDetailsEscape($balanceDue); ?></strong>
+                </div>
+                <?php endif; ?>
+                <div class="billing-row">
+                    <span class="label">Status</span>
+                    <div class="pill <?php echo appointmentDetailsEscape($billStatusClass); ?>">
+                        <?php echo appointmentDetailsEscape(str_replace('_', ' ', $paymentStatus)); ?>
                     </div>
-                    <div class="billing-ref">Ref: <?php echo appointmentDetailsEscape($billingRef); ?></div>
                 </div>
             </div>
         </section>

@@ -517,7 +517,7 @@ unset($_SESSION['success'], $_SESSION['error']);
 
 <main class="dashboard-wrap">
   <div class="page-head">
-    <h1>Your Appointments</h1>
+    <h1>Patient Dashboard</h1>
   </div>
 
   <div class="slider-tabs" role="tablist" aria-label="Patient dashboard sections">
@@ -529,6 +529,9 @@ unset($_SESSION['success'], $_SESSION['error']);
     </button>
     <button type="button" class="slider-tab" role="tab" aria-selected="false" data-patient-tab="results">
       Test Results
+    </button>
+    <button type="button" class="slider-tab" role="tab" aria-selected="false" data-patient-tab="bills">
+      Bills
     </button>
   </div>
 
@@ -711,6 +714,88 @@ unset($_SESSION['success'], $_SESSION['error']);
         <h3>Vitamin D</h3>
         <p class="result-meta">Requested Date: 2026-04-09<br>Status: Ready for Delivery<br>Report Button: Disabled (Backend Pending)</p>
       </article>
+    </div>
+  </section>
+  </div>
+
+  <div id="patientBillsSection" class="tab-panel" role="tabpanel" aria-label="Bills" hidden>
+  <section class="card table-card">
+    <div class="card-head">
+      <h2>Bills</h2>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Bill No.</th>
+            <th>Appointment Date</th>
+            <th>Bill Date</th>
+            <th class="th-right">Total</th>
+            <th class="th-right">Paid</th>
+            <th>Status</th>
+            <th class="th-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <?php
+            $patientBills = is_array($patientBills ?? null) ? $patientBills : [];
+            $billStatusClasses = [
+              'PAID'           => 'confirmed',
+              'PARTIALLY_PAID' => 'pending',
+              'PENDING'        => 'pending',
+              'DRAFT'          => 'pending',
+              'CANCELLED'      => 'cancelled',
+            ];
+            $billStatusLabels = [
+              'PAID'           => 'Paid',
+              'PARTIALLY_PAID' => 'Partially Paid',
+              'PENDING'        => 'Pending',
+              'DRAFT'          => 'Draft',
+              'CANCELLED'      => 'Cancelled',
+            ];
+          ?>
+          <?php if (count($patientBills) > 0): ?>
+            <?php foreach ($patientBills as $bill): ?>
+              <?php
+                $billStatus     = strtoupper((string)($bill['status'] ?? 'PENDING'));
+                $statusClass    = $billStatusClasses[$billStatus] ?? 'pending';
+                $statusLabel    = $billStatusLabels[$billStatus]  ?? ucfirst(strtolower($billStatus));
+                $invoiceUrl     = '/lab_sync/index.php?controller=billingController&action=printInvoice&bill_id=' . intval($bill['bill_id']);
+              ?>
+              <tr>
+                <td class="cell-strong"><?php echo htmlspecialchars((string)($bill['bill_number'] ?? '—')); ?></td>
+                <td><?php echo htmlspecialchars((string)($bill['appointment_date'] ?? '—')); ?></td>
+                <td><?php echo htmlspecialchars((string)($bill['bill_date'] ?? '—')); ?></td>
+                <td class="td-right">LKR <?php echo number_format((float)($bill['total_amount'] ?? 0), 2); ?></td>
+                <td class="td-right">LKR <?php echo number_format((float)($bill['paid_amount'] ?? 0), 2); ?></td>
+                <td><span class="status-pill <?php echo htmlspecialchars($statusClass); ?>"><?php echo htmlspecialchars($statusLabel); ?></span></td>
+                <td class="td-right">
+                  <div class="actions">
+                    <a href="<?php echo htmlspecialchars($invoiceUrl); ?>" target="_blank" rel="noopener"
+                       class="action-btn edit" title="View Invoice" style="text-decoration:none;">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                        <polyline points="10 9 9 9 8 9"></polyline>
+                      </svg>
+                    </a>
+                  </div>
+                </td>
+              </tr>
+            <?php endforeach; ?>
+          <?php else: ?>
+            <tr>
+              <td colspan="7" class="empty">No bills yet. Bills will appear here after your payments are processed.</td>
+            </tr>
+          <?php endif; ?>
+        </tbody>
+      </table>
+    </div>
+    <div class="table-footer">
+      <p id="billsShowingText">Showing 0-0 of 0 bills</p>
+      <div class="table-pagination" id="billsPagination"></div>
     </div>
   </section>
   </div>
@@ -1220,7 +1305,8 @@ unset($_SESSION['success'], $_SESSION['error']);
     const panels = {
       appointments: document.getElementById('patientAppointmentsSection'),
       prescriptions: document.getElementById('patientPrescriptionsSection'),
-      results: document.getElementById('patientResultsSection')
+      results: document.getElementById('patientResultsSection'),
+      bills: document.getElementById('patientBillsSection')
     };
 
     if (!tabButtons.length || !panels.appointments || !panels.prescriptions || !panels.results) {
@@ -1559,6 +1645,13 @@ unset($_SESSION['success'], $_SESSION['error']);
       showingTextId: 'prescriptionsShowingText',
       paginationId: 'prescriptionsPagination',
       label: 'requests',
+      pageSize: 7
+    });
+    setupTablePagination({
+      sectionSelector: '#patientBillsSection .table-card',
+      showingTextId: 'billsShowingText',
+      paginationId: 'billsPagination',
+      label: 'bills',
       pageSize: 7
     });
 

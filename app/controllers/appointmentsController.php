@@ -82,16 +82,23 @@ class appointmentsController {
         }
     }
     public function searchPatients() {
-    header('Content-Type: application/json');
-    
-    $type = $_GET['type'] ?? '';
-    $query = $_GET['query'] ?? '';
+    header('Content-Type: application/json; charset=UTF-8');
 
-    // require_once 'C:\xampp\htdocs\lab_sync\app\models\patientModel.php';
+    $type = trim((string)($_GET['type'] ?? 'patient_name'));
+    $query = trim((string)($_GET['query'] ?? ''));
+
+    if (!in_array($type, ['patient_name', 'email'], true)) {
+        $type = 'patient_name';
+    }
+
+    if (mb_strlen($query) < 3) {
+        echo json_encode([]);
+        return;
+    }
+
     $model1 = new patientModel(connect());
-
     $results = $model1->searchPatients($type, $query);
-    echo json_encode($results);
+    echo json_encode(is_array($results) ? $results : []);
 }
 
 public function createAppointment($role = '') {
@@ -401,6 +408,15 @@ public function searchTests() {
     }
 
     $query = isset($_GET['q']) ? trim((string) $_GET['q']) : '';
+    if (mb_strlen($query) < 3) {
+        echo json_encode([
+            'status' => 'success',
+            'message' => 'Please type at least 3 characters to search tests.',
+            'data' => []
+        ]);
+        return;
+    }
+
     $model = new AppointmentModel(connect());
     $tests = $model->searchTestsCatalog($query, 20);
 
