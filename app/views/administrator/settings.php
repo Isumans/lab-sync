@@ -119,6 +119,7 @@ $statusMap = [
         <script src="/lab_sync/public/js/labConfig.js"></script>
         <script src="/lab_sync/public/js/generalSettings.js"></script>
         <script src="/lab_sync/public/js/partnerLabsFilter.js"></script>
+        <script src="/lab_sync/public/js/onlineSlots.js?v=2"></script>
         <script src="/lab_sync/public/js/settingsDeleteModal.js"></script>
 
     </body>

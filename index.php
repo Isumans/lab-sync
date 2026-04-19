@@ -353,6 +353,8 @@ elseif($controllerName === 'inventoryController'){
     $homeController->submitPrescriptionHelp();
 }elseif($action==="edit_appointment"){
         $homeController->edit_appointment();
+}elseif($action==="getAppointmentDetails"){
+    $homeController->getAppointmentDetails();
 }elseif($action==="about"){
         include VIEW_PATH .'/patient/about.php';
 }elseif($action==="getAvailableSlots"){

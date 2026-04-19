@@ -1,94 +1,177 @@
 (function () {
-    // Tab switching
-    document.querySelectorAll('.slots-tab-btn').forEach(function (btn) {
-        btn.addEventListener('click', function () {
-            document.querySelectorAll('.slots-tab-btn').forEach(function (b) { b.classList.remove('active'); });
-            document.querySelectorAll('.slots-tab-panel').forEach(function (p) { p.classList.remove('active'); });
-            btn.classList.add('active');
-            var panel = document.getElementById('panel-' + btn.dataset.tab);
-            if (panel) panel.classList.add('active');
-        });
-    });
+    function formatTimeLabel(timeValue) {
+        var parts = String(timeValue || '').split(':');
+        if (parts.length < 2) {
+            return String(timeValue || '');
+        }
 
-    // Delegate toggle / delete clicks on the whole section
-    document.addEventListener('click', function (e) {
-        var toggleBtn = e.target.closest('.btn-slot-toggle');
-        var deleteBtn = e.target.closest('.btn-slot-delete');
-        if (toggleBtn) handleToggle(toggleBtn);
-        if (deleteBtn) handleDelete(deleteBtn);
-    });
+        var hour = parseInt(parts[0], 10);
+        var min = parts[1] || '00';
+        if (isNaN(hour)) {
+            return String(timeValue || '');
+        }
+
+        var suffix = hour >= 12 ? 'PM' : 'AM';
+        var displayHour = hour % 12;
+        if (displayHour === 0) {
+            displayHour = 12;
+        }
+
+        var hh = displayHour < 10 ? '0' + displayHour : String(displayHour);
+        return hh + ':' + min + ' ' + suffix;
+    }
 
     function showMsg(text, type) {
         var el = document.getElementById('online-slots-msg');
-        if (!el) return;
+        if (!el) {
+            return;
+        }
+
         el.textContent = text;
         el.className = 'slots-msg ' + type;
-        el.style.display = 'block';
-        clearTimeout(el._t);
-        el._t = setTimeout(function () { el.style.display = 'none'; }, 4000);
+
+        if (el._msgTimer) {
+            clearTimeout(el._msgTimer);
+        }
+
+        el._msgTimer = setTimeout(function () {
+            el.className = 'slots-msg';
+            el.textContent = '';
+        }, 4200);
+    }
+
+    function updateDayView(root, dayKey) {
+        root.setAttribute('data-active-day', dayKey);
+
+        root.querySelectorAll('.slots-day-tab').forEach(function (tab) {
+            var isActive = tab.getAttribute('data-tab') === dayKey;
+            tab.classList.toggle('is-active', isActive);
+            tab.setAttribute('aria-selected', isActive ? 'true' : 'false');
+        });
+
+        root.querySelectorAll('.slots-day-panel').forEach(function (panel) {
+            panel.classList.toggle('is-active', panel.getAttribute('data-panel') === dayKey);
+        });
+
+        var selectedTab = root.querySelector('.slots-day-tab.is-active');
+        var dayText = selectedTab ? selectedTab.textContent.trim() : 'Mon - Fri';
+
+        var currentDay = root.querySelector('#slots-current-day');
+        if (currentDay) {
+            currentDay.textContent = dayText;
+        }
+
+        var dayField = root.querySelector('#slots-day-group');
+        if (dayField) {
+            dayField.value = dayKey;
+        }
     }
 
     function buildSlotRow(slot) {
-        var start = slot.start_time.substring(0, 5);
-        var end   = slot.end_time.substring(0, 5);
-        var badgeCls = slot.is_active == 1 ? 'badge-active' : 'badge-inactive';
-        var badgeTxt = slot.is_active == 1 ? 'Active' : 'Inactive';
         var tr = document.createElement('tr');
-        tr.dataset.slotId = slot.id;
-        tr.innerHTML =
-            '<td>' + start + '</td>' +
-            '<td>' + end + '</td>' +
-            '<td>' + slot.max_patients + '</td>' +
-            '<td><span class="slot-badge ' + badgeCls + '">' + badgeTxt + '</span></td>' +
-            '<td class="slot-actions">' +
-                '<button class="btn-slot-toggle" data-id="' + slot.id + '" title="Toggle active">' +
-                    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>' +
-                '</button>' +
-                '<button class="btn-slot-delete" data-id="' + slot.id + '" title="Delete slot">' +
-                    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>' +
-                '</button>' +
-            '</td>';
+        tr.setAttribute('data-slot-id', String(slot.id));
+
+        var statusClass = Number(slot.is_active) === 1 ? 'is-active' : 'is-inactive';
+        var statusText = Number(slot.is_active) === 1 ? 'Active' : 'Inactive';
+
+        tr.innerHTML = [
+            '<td class="slots-time">' + formatTimeLabel(slot.start_time) + '</td>',
+            '<td class="slots-time">' + formatTimeLabel(slot.end_time) + '</td>',
+            '<td>',
+            '   <div class="slots-capacity-wrap">',
+            '       <div class="slots-capacity-bar"><span style="width:100%;"></span></div>',
+            '       <div class="slots-capacity-text">0 / ' + Number(slot.max_patients) + '</div>',
+            '   </div>',
+            '</td>',
+            '<td><span class="slots-status-badge ' + statusClass + '">' + statusText + '</span></td>',
+            '<td class="slots-actions-cell">',
+            '   <button type="button" class="slots-action-btn btn-slot-toggle" data-id="' + Number(slot.id) + '" title="Toggle slot status">',
+            '       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v6m0 0l-3-3m3 3l3-3"/><path d="M5 19h14"/></svg>',
+            '   </button>',
+            '   <button type="button" class="slots-action-btn btn-slot-delete" data-id="' + Number(slot.id) + '" title="Delete slot">',
+            '       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16"/><path d="M9 7V5h6v2"/><path d="M8 7l1 12h6l1-12"/></svg>',
+            '   </button>',
+            '</td>'
+        ].join('');
+
         return tr;
     }
 
-    window.addSlot = function (e, dayGroup) {
-        e.preventDefault();
-        var form = e.target;
-        var fd = new FormData(form);
-        fd.append('day_group', dayGroup);
+    function ensureEmptyRow(tbody) {
+        if (tbody.querySelectorAll('tr').length === 0) {
+            tbody.innerHTML = '<tr class="slots-empty-row"><td colspan="5">No slots configured for this day yet.</td></tr>';
+        }
+    }
 
-        fetch('/lab_sync/index.php?controller=administratorController&action=saveOnlineSlot', {
-            method: 'POST',
-            body: fd
-        })
-        .then(function (r) { return r.json(); })
-        .then(function (res) {
-            if (res.success) {
-                var tbody = document.getElementById('slots-body-' + dayGroup);
-                // Remove "no slots" placeholder row if present
-                var noRow = tbody.querySelector('.no-slots-row');
-                if (noRow) noRow.remove();
+    function removeEmptyRow(tbody) {
+        var row = tbody.querySelector('.slots-empty-row');
+        if (row) {
+            row.remove();
+        }
+    }
 
-                var slot = {
-                    id: res.id,
-                    start_time: form.querySelector('[name="start_time"]').value + ':00',
-                    end_time:   form.querySelector('[name="end_time"]').value   + ':00',
-                    max_patients: form.querySelector('[name="max_patients"]').value,
-                    is_active: 1
-                };
-                tbody.appendChild(buildSlotRow(slot));
-                form.reset();
-                form.querySelector('[name="max_patients"]').value = 4;
-                showMsg('Slot added successfully.', 'success');
-            } else {
-                showMsg(res.message || 'Failed to add slot.', 'error');
-            }
-        })
-        .catch(function () { showMsg('Network error. Please try again.', 'error'); });
-    };
+    function onAddSlotSubmit(root, form) {
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();
 
-    function handleToggle(btn) {
-        var id = btn.dataset.id;
+            var dayGroupField = form.querySelector('#slots-day-group');
+            var dayGroup = dayGroupField ? dayGroupField.value : 'mon_fri';
+            var payload = new FormData(form);
+
+            fetch('/lab_sync/index.php?controller=administratorController&action=saveOnlineSlot', {
+                method: 'POST',
+                body: payload
+            })
+                .then(function (res) { return res.json(); })
+                .then(function (res) {
+                    if (!res || !res.success) {
+                        showMsg((res && res.message) || 'Failed to add slot.', 'error');
+                        return;
+                    }
+
+                    var tbody = root.querySelector('#slots-body-' + dayGroup);
+                    if (!tbody) {
+                        showMsg('Slot added but table could not refresh.', 'error');
+                        return;
+                    }
+
+                    removeEmptyRow(tbody);
+
+                    var slot = {
+                        id: res.id,
+                        start_time: (form.querySelector('[name="start_time"]').value || '') + ':00',
+                        end_time: (form.querySelector('[name="end_time"]').value || '') + ':00',
+                        max_patients: form.querySelector('[name="max_patients"]').value || '20',
+                        is_active: 1
+                    };
+
+                    tbody.appendChild(buildSlotRow(slot));
+                    form.reset();
+
+                    var dayGroupReset = form.querySelector('#slots-day-group');
+                    if (dayGroupReset) {
+                        dayGroupReset.value = dayGroup;
+                    }
+
+                    var maxInput = form.querySelector('[name="max_patients"]');
+                    if (maxInput) {
+                        maxInput.value = '20';
+                    }
+
+                    showMsg('Slot added successfully.', 'success');
+                })
+                .catch(function () {
+                    showMsg('Network error. Please try again.', 'error');
+                });
+        });
+    }
+
+    function handleToggle(root, btn) {
+        var id = btn.getAttribute('data-id');
+        if (!id) {
+            return;
+        }
+
         var fd = new FormData();
         fd.append('id', id);
 
@@ -96,28 +179,48 @@
             method: 'POST',
             body: fd
         })
-        .then(function (r) { return r.json(); })
-        .then(function (res) {
-            if (res.success) {
+            .then(function (res) { return res.json(); })
+            .then(function (res) {
+                if (!res || !res.success) {
+                    showMsg((res && res.message) || 'Failed to toggle slot.', 'error');
+                    return;
+                }
+
                 var tr = btn.closest('tr');
-                var badge = tr.querySelector('.slot-badge');
-                if (res.is_active == 1) {
-                    badge.className = 'slot-badge badge-active';
+                if (!tr) {
+                    return;
+                }
+
+                var badge = tr.querySelector('.slots-status-badge');
+                if (!badge) {
+                    return;
+                }
+
+                if (Number(res.is_active) === 1) {
+                    badge.className = 'slots-status-badge is-active';
                     badge.textContent = 'Active';
                 } else {
-                    badge.className = 'slot-badge badge-inactive';
+                    badge.className = 'slots-status-badge is-inactive';
                     badge.textContent = 'Inactive';
                 }
-            } else {
-                showMsg(res.message || 'Failed to toggle slot.', 'error');
-            }
-        })
-        .catch(function () { showMsg('Network error.', 'error'); });
+
+                showMsg('Slot status updated.', 'success');
+            })
+            .catch(function () {
+                showMsg('Network error. Please try again.', 'error');
+            });
     }
 
-    function handleDelete(btn) {
-        if (!confirm('Delete this time slot? This cannot be undone.')) return;
-        var id = btn.dataset.id;
+    function handleDelete(root, btn) {
+        var id = btn.getAttribute('data-id');
+        if (!id) {
+            return;
+        }
+
+        if (!window.confirm('Delete this slot? This action cannot be undone.')) {
+            return;
+        }
+
         var fd = new FormData();
         fd.append('id', id);
 
@@ -125,20 +228,76 @@
             method: 'POST',
             body: fd
         })
-        .then(function (r) { return r.json(); })
-        .then(function (res) {
-            if (res.success) {
-                var tr = btn.closest('tr');
-                var tbody = tr.parentElement;
-                tr.remove();
-                if (tbody.querySelectorAll('tr').length === 0) {
-                    tbody.innerHTML = '<tr class="no-slots-row"><td colspan="5" style="text-align:center;color:#888;padding:18px;">No slots defined yet.</td></tr>';
+            .then(function (res) { return res.json(); })
+            .then(function (res) {
+                if (!res || !res.success) {
+                    showMsg((res && res.message) || 'Failed to delete slot.', 'error');
+                    return;
                 }
+
+                var row = btn.closest('tr');
+                if (!row) {
+                    return;
+                }
+
+                var tbody = row.parentElement;
+                row.remove();
+                ensureEmptyRow(tbody);
                 showMsg('Slot deleted.', 'success');
-            } else {
-                showMsg(res.message || 'Failed to delete slot.', 'error');
-            }
-        })
-        .catch(function () { showMsg('Network error.', 'error'); });
+            })
+            .catch(function () {
+                showMsg('Network error. Please try again.', 'error');
+            });
     }
+
+    function bindRowActions(root) {
+        root.addEventListener('click', function (e) {
+            var toggleBtn = e.target.closest('.btn-slot-toggle');
+            if (toggleBtn && root.contains(toggleBtn)) {
+                handleToggle(root, toggleBtn);
+                return;
+            }
+
+            var deleteBtn = e.target.closest('.btn-slot-delete');
+            if (deleteBtn && root.contains(deleteBtn)) {
+                handleDelete(root, deleteBtn);
+            }
+        });
+    }
+
+    function bindTabs(root) {
+        root.querySelectorAll('.slots-day-tab').forEach(function (tab) {
+            tab.addEventListener('click', function () {
+                var dayKey = tab.getAttribute('data-tab') || 'mon_fri';
+                updateDayView(root, dayKey);
+            });
+        });
+    }
+
+    function initOnlineSlots() {
+        var root = document.getElementById('online-slots-root');
+        if (!root || root.dataset.initialized === '1') {
+            return;
+        }
+
+        root.dataset.initialized = '1';
+
+        var form = root.querySelector('#online-slot-create-form');
+        if (form) {
+            onAddSlotSubmit(root, form);
+        }
+
+        bindTabs(root);
+        bindRowActions(root);
+
+        var firstTab = root.querySelector('.slots-day-tab.is-active');
+        var activeDay = firstTab ? firstTab.getAttribute('data-tab') : 'mon_fri';
+        updateDayView(root, activeDay || 'mon_fri');
+    }
+
+    window.initOnlineSlots = initOnlineSlots;
+
+    document.addEventListener('DOMContentLoaded', function () {
+        initOnlineSlots();
+    });
 })();

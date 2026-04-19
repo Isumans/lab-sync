@@ -238,6 +238,10 @@ class HomeModel {
 
         $this->db->begin_transaction();
         try {
+            if (!$this->isOnlineSlotCapacityAvailableForUpdate((string)$data['appointment_date'], (string)$data['appointment_time'])) {
+                throw new Exception($this->getLastError() ?: 'Selected slot is no longer available.');
+            }
+
             $data['test_id'] = (int)$cleanIds[0];
             $appointmentId = $this->createAppointment($data);
             if (!$appointmentId) {
@@ -271,6 +275,184 @@ class HomeModel {
             $this->setLastError($e->getMessage());
             return false;
         }
+    }
+
+    public function isOnlineSlotCapacityAvailable(string $date, string $time): bool {
+        if (!$this->hasTable('online_booking_slots')) {
+            $this->setLastError('Online slot configuration is unavailable.');
+            return false;
+        }
+
+        $dayGroup = $this->resolveDayGroupFromDate($date);
+        if ($dayGroup === null) {
+            $this->setLastError('Invalid appointment date.');
+            return false;
+        }
+
+        $slotStmt = $this->db->prepare(
+            "SELECT id, max_patients, is_active
+             FROM online_booking_slots
+             WHERE day_group = ? AND start_time = ?
+             LIMIT 1"
+        );
+        if (!$slotStmt) {
+            $this->setLastError('Failed to validate slot availability.');
+            return false;
+        }
+
+        $slotStmt->bind_param('ss', $dayGroup, $time);
+        if (!$slotStmt->execute()) {
+            $this->setLastError('Failed to validate slot availability.');
+            $slotStmt->close();
+            return false;
+        }
+
+        $slotResult = $slotStmt->get_result();
+        $slotRow = $slotResult ? $slotResult->fetch_assoc() : null;
+        $slotStmt->close();
+
+        if (!$slotRow) {
+            $this->setLastError('Selected slot is not available for this date.');
+            return false;
+        }
+
+        if ((int)$slotRow['is_active'] !== 1) {
+            $this->setLastError('Selected slot is currently inactive.');
+            return false;
+        }
+
+        $countStmt = $this->db->prepare(
+            "SELECT COUNT(*) AS booked_count
+             FROM appointment
+             WHERE appointment_date = ?
+               AND appointment_time = ?
+               AND LOWER(COALESCE(method, '')) = 'online'
+               AND LOWER(COALESCE(status, 'pending')) <> 'cancelled'"
+        );
+        if (!$countStmt) {
+            $this->setLastError('Failed to verify slot capacity.');
+            return false;
+        }
+
+        $countStmt->bind_param('ss', $date, $time);
+        if (!$countStmt->execute()) {
+            $this->setLastError('Failed to verify slot capacity.');
+            $countStmt->close();
+            return false;
+        }
+
+        $countResult = $countStmt->get_result();
+        $countRow = $countResult ? $countResult->fetch_assoc() : ['booked_count' => 0];
+        $countStmt->close();
+
+        $bookedCount = (int)($countRow['booked_count'] ?? 0);
+        $maxPatients = (int)$slotRow['max_patients'];
+
+        if ($bookedCount >= $maxPatients) {
+            $this->setLastError('This slot has reached its booking limit for the selected day.');
+            return false;
+        }
+
+        return true;
+    }
+
+    private function isOnlineSlotCapacityAvailableForUpdate(string $date, string $time): bool {
+        if (!$this->hasTable('online_booking_slots')) {
+            $this->setLastError('Online slot configuration is unavailable.');
+            return false;
+        }
+
+        $dayGroup = $this->resolveDayGroupFromDate($date);
+        if ($dayGroup === null) {
+            $this->setLastError('Invalid appointment date.');
+            return false;
+        }
+
+        $slotStmt = $this->db->prepare(
+            "SELECT id, max_patients, is_active
+             FROM online_booking_slots
+             WHERE day_group = ? AND start_time = ?
+             LIMIT 1
+             FOR UPDATE"
+        );
+        if (!$slotStmt) {
+            $this->setLastError('Failed to validate slot availability.');
+            return false;
+        }
+
+        $slotStmt->bind_param('ss', $dayGroup, $time);
+        if (!$slotStmt->execute()) {
+            $this->setLastError('Failed to validate slot availability.');
+            $slotStmt->close();
+            return false;
+        }
+
+        $slotResult = $slotStmt->get_result();
+        $slotRow = $slotResult ? $slotResult->fetch_assoc() : null;
+        $slotStmt->close();
+
+        if (!$slotRow) {
+            $this->setLastError('Selected slot is not available for this date.');
+            return false;
+        }
+
+        if ((int)$slotRow['is_active'] !== 1) {
+            $this->setLastError('Selected slot is currently inactive.');
+            return false;
+        }
+
+        $countStmt = $this->db->prepare(
+            "SELECT COUNT(*) AS booked_count
+             FROM appointment
+             WHERE appointment_date = ?
+               AND appointment_time = ?
+               AND LOWER(COALESCE(method, '')) = 'online'
+               AND LOWER(COALESCE(status, 'pending')) <> 'cancelled'
+             FOR UPDATE"
+        );
+        if (!$countStmt) {
+            $this->setLastError('Failed to verify slot capacity.');
+            return false;
+        }
+
+        $countStmt->bind_param('ss', $date, $time);
+        if (!$countStmt->execute()) {
+            $this->setLastError('Failed to verify slot capacity.');
+            $countStmt->close();
+            return false;
+        }
+
+        $countResult = $countStmt->get_result();
+        $countRow = $countResult ? $countResult->fetch_assoc() : ['booked_count' => 0];
+        $countStmt->close();
+
+        $bookedCount = (int)($countRow['booked_count'] ?? 0);
+        $maxPatients = (int)$slotRow['max_patients'];
+
+        if ($bookedCount >= $maxPatients) {
+            $this->setLastError('This slot has reached its booking limit for the selected day.');
+            return false;
+        }
+
+        return true;
+    }
+
+    private function resolveDayGroupFromDate(string $date): ?string {
+        $timestamp = strtotime($date);
+        if ($timestamp === false) {
+            return null;
+        }
+
+        $day = (int)date('N', $timestamp);
+        if ($day >= 1 && $day <= 5) {
+            return 'mon_fri';
+        }
+
+        if ($day === 6) {
+            return 'sat';
+        }
+
+        return 'sun';
     }
 
     public function hasTimeSlotConflict($appointmentDate, $appointmentTime) {
@@ -659,13 +841,13 @@ class HomeModel {
             ? "COALESCE(NULLIF(a.status, ''), 'Pending')"
             : "'Pending'";
 
-        $totalField = $this->hasTable('appointment_items')
-            ? "COALESCE((SELECT SUM(ai.line_total) FROM appointment_items ai WHERE ai.appointment_id = a.appointment_id), t.price, 0)"
-            : "COALESCE(t.price, 0)";
+        $summaryField = $this->buildAppointmentTestsSummaryExpr('a');
+        $totalField = $this->buildAppointmentTotalExpr('a');
 
         $query = "
             SELECT
                 a.*,
+                " . $summaryField . " AS tests_summary,
                 t.test_name,
                 t.price AS test_price,
                 COALESCE(a.home_collection, 0) AS home_collection,
@@ -696,6 +878,241 @@ class HomeModel {
         $stmt->close();
 
         return $appointments;
+    }
+
+    public function getPatientAppointmentDetailsPayload($appointmentId, $patientId) {
+        $appointmentId = intval($appointmentId);
+        $patientId = intval($patientId);
+
+        if ($appointmentId <= 0 || $patientId <= 0) {
+            return null;
+        }
+
+        $statusField = $this->hasAppointmentColumn('status')
+            ? "COALESCE(NULLIF(a.status, ''), 'Pending')"
+            : "'Pending'";
+
+        $summaryField = $this->buildAppointmentTestsSummaryExpr('a');
+        $totalField = $this->buildAppointmentTotalExpr('a');
+
+        $sql = "
+            SELECT
+                a.*,
+                " . $statusField . " AS appointment_status,
+                COALESCE(a.home_collection, 0) AS home_collection,
+                COALESCE(a.collection_address, '') AS collection_address,
+                " . $summaryField . " AS tests_summary,
+                " . $totalField . " AS total_price,
+                COALESCE(p.patient_name, '') AS patient_name,
+                COALESCE(p.contact_number, '') AS contact_number,
+                COALESCE(p.gender, '') AS gender,
+                p.date_of_birth
+            FROM appointment a
+            LEFT JOIN patients p ON p.patient_id = a.patient_id
+            WHERE a.appointment_id = ? AND a.patient_id = ?
+            LIMIT 1
+        ";
+
+        $stmt = $this->db->prepare($sql);
+        if (!$stmt) {
+            $this->setLastError('Prepare failed: ' . $this->db->error);
+            return null;
+        }
+
+        $stmt->bind_param('ii', $appointmentId, $patientId);
+        if (!$stmt->execute()) {
+            $this->setLastError('Execute failed: ' . $stmt->error);
+            $stmt->close();
+            return null;
+        }
+
+        $result = $stmt->get_result();
+        $appointment = $result ? $result->fetch_assoc() : null;
+        $stmt->close();
+
+        if (!$appointment) {
+            return null;
+        }
+
+        return [
+            'appointment' => $appointment,
+            'tests' => $this->getAppointmentTestsWithStatus($appointmentId),
+            'billing' => [
+                'total_amount' => isset($appointment['total_price']) ? (float)$appointment['total_price'] : 0.0,
+                'status' => 'PENDING',
+            ],
+        ];
+    }
+
+    private function buildAppointmentTestsSummaryExpr($appointmentAlias) {
+        $hasTestsTable = $this->hasTable('tests');
+
+        if ($hasTestsTable && $this->hasTable('appointment_tests')) {
+            return "COALESCE((
+                SELECT GROUP_CONCAT(DISTINCT COALESCE(t1.test_name, CONCAT('Test #', at1.test_id)) ORDER BY COALESCE(t1.test_name, '') SEPARATOR ', ')
+                FROM appointment_tests at1
+                LEFT JOIN tests t1 ON t1.test_id = at1.test_id
+                WHERE at1.appointment_id = {$appointmentAlias}.appointment_id
+            ), '')";
+        }
+
+        if ($hasTestsTable && $this->hasTable('appointment_items')) {
+            return "COALESCE((
+                SELECT GROUP_CONCAT(DISTINCT COALESCE(ti.test_name, CONCAT('Test #', ai.test_id)) ORDER BY COALESCE(ti.test_name, '') SEPARATOR ', ')
+                FROM appointment_items ai
+                LEFT JOIN tests ti ON ti.test_id = ai.test_id
+                WHERE ai.appointment_id = {$appointmentAlias}.appointment_id
+            ), '')";
+        }
+
+        if ($hasTestsTable) {
+            return "COALESCE(t.test_name, '')";
+        }
+
+        return "''";
+    }
+
+    private function buildAppointmentTotalExpr($appointmentAlias) {
+        $hasTestsTable = $this->hasTable('tests');
+
+        if ($this->hasTable('appointment_items')) {
+            return "COALESCE((SELECT SUM(ai.line_total) FROM appointment_items ai WHERE ai.appointment_id = {$appointmentAlias}.appointment_id), COALESCE(t.price, 0), 0)";
+        }
+
+        if ($hasTestsTable && $this->hasTable('appointment_tests')) {
+            return "COALESCE((
+                SELECT SUM(COALESCE(t2.price, 0))
+                FROM appointment_tests at2
+                LEFT JOIN tests t2 ON t2.test_id = at2.test_id
+                WHERE at2.appointment_id = {$appointmentAlias}.appointment_id
+            ), COALESCE(t.price, 0), 0)";
+        }
+
+        return "COALESCE(t.price, 0)";
+    }
+
+    private function getAppointmentTestsWithStatus($appointmentId) {
+        $appointmentId = intval($appointmentId);
+        if ($appointmentId <= 0) {
+            return [];
+        }
+
+        $hasTestsTable = $this->hasTable('tests');
+
+        if ($this->hasTable('appointment_tests')) {
+            $categoryExpr = $hasTestsTable && $this->hasTableColumn('tests', 'category')
+                ? 'COALESCE(t.category, \"\")'
+                : ($hasTestsTable && $this->hasTableColumn('tests', 'department')
+                    ? 'COALESCE(t.department, \"\")'
+                    : '\"\"');
+
+            $sql = "
+                SELECT
+                    at.test_id,
+                    " . ($hasTestsTable ? "COALESCE(t.test_name, '')" : "''") . " AS test_name,
+                    {$categoryExpr} AS category,
+                    UPPER(COALESCE(at.status, 'PENDING')) AS status
+                FROM appointment_tests at
+                " . ($hasTestsTable ? 'LEFT JOIN tests t ON t.test_id = at.test_id' : '') . "
+                WHERE at.appointment_id = ?
+                ORDER BY test_name ASC, at.test_id ASC
+            ";
+
+            $stmt = $this->db->prepare($sql);
+            if (!$stmt) {
+                $this->setLastError('Prepare failed: ' . $this->db->error);
+                return [];
+            }
+
+            $stmt->bind_param('i', $appointmentId);
+            if (!$stmt->execute()) {
+                $this->setLastError('Execute failed: ' . $stmt->error);
+                $stmt->close();
+                return [];
+            }
+
+            $result = $stmt->get_result();
+            $rows = $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
+            $stmt->close();
+            return $rows;
+        }
+
+        if ($this->hasTable('appointment_items')) {
+            $categoryExpr = $hasTestsTable && $this->hasTableColumn('tests', 'category')
+                ? 'COALESCE(t.category, \"\")'
+                : ($hasTestsTable && $this->hasTableColumn('tests', 'department')
+                    ? 'COALESCE(t.department, \"\")'
+                    : '\"\"');
+
+            $sql = "
+                SELECT
+                    ai.test_id,
+                    " . ($hasTestsTable ? "COALESCE(t.test_name, '')" : "''") . " AS test_name,
+                    {$categoryExpr} AS category,
+                    'PENDING' AS status
+                FROM appointment_items ai
+                " . ($hasTestsTable ? 'LEFT JOIN tests t ON t.test_id = ai.test_id' : '') . "
+                WHERE ai.appointment_id = ?
+                ORDER BY test_name ASC, ai.test_id ASC
+            ";
+
+            $stmt = $this->db->prepare($sql);
+            if (!$stmt) {
+                $this->setLastError('Prepare failed: ' . $this->db->error);
+                return [];
+            }
+
+            $stmt->bind_param('i', $appointmentId);
+            if (!$stmt->execute()) {
+                $this->setLastError('Execute failed: ' . $stmt->error);
+                $stmt->close();
+                return [];
+            }
+
+            $result = $stmt->get_result();
+            $rows = $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
+            $stmt->close();
+            return $rows;
+        }
+
+        $sql = "
+            SELECT
+                a.test_id,
+                " . ($hasTestsTable ? "COALESCE(t.test_name, '')" : "''") . " AS test_name,
+                " . ($hasTestsTable && $this->hasTableColumn('tests', 'category')
+                    ? 'COALESCE(t.category, \"\")'
+                    : ($hasTestsTable && $this->hasTableColumn('tests', 'department')
+                        ? 'COALESCE(t.department, \"\")'
+                        : '\"\"')) . " AS category,
+                'PENDING' AS status
+            FROM appointment a
+            " . ($hasTestsTable ? 'LEFT JOIN tests t ON t.test_id = a.test_id' : '') . "
+            WHERE a.appointment_id = ?
+            LIMIT 1
+        ";
+
+        $stmt = $this->db->prepare($sql);
+        if (!$stmt) {
+            $this->setLastError('Prepare failed: ' . $this->db->error);
+            return [];
+        }
+
+        $stmt->bind_param('i', $appointmentId);
+        if (!$stmt->execute()) {
+            $this->setLastError('Execute failed: ' . $stmt->error);
+            $stmt->close();
+            return [];
+        }
+
+        $result = $stmt->get_result();
+        $row = $result ? $result->fetch_assoc() : null;
+        $stmt->close();
+
+        if (!$row || intval($row['test_id'] ?? 0) <= 0) {
+            return [];
+        }
+
+        return [$row];
     }
 
     public function updateAppointment($appointment_id, $appointment_time, $appointment_date, $patientId = null, $homeCollection = null, $collectionAddress = null) {

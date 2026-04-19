@@ -294,9 +294,9 @@ class HomeController {
             exit;
         }
 
-        $hasConflict = $this->model->hasTimeSlotConflict($date, $time);
-        if ($hasConflict) {
-            $_SESSION['error'] = 'Selected slot is already taken. Please choose a different date or time.';
+        $slotAvailable = $this->model->isOnlineSlotCapacityAvailable($date, $time);
+        if (!$slotAvailable) {
+            $_SESSION['error'] = $this->model->getLastError() ?: 'Selected slot is no longer available. Please choose another slot.';
             header('Location: ' . route_url('home', 'book'));
             exit;
         }
@@ -384,6 +384,49 @@ class HomeController {
         $csrfToken = $this->ensureCsrfToken();
         include VIEW_PATH . '/patient/dashboard.php';
     }
+
+    public function getAppointmentDetails() {
+        header('Content-Type: text/html; charset=UTF-8');
+
+        if (!isset($_SESSION['user_id'])) {
+            http_response_code(401);
+            echo '<div class="appointment-details-error">Unauthorized request.</div>';
+            return;
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
+            http_response_code(405);
+            echo '<div class="appointment-details-error">Invalid request method.</div>';
+            return;
+        }
+
+        $appointmentId = isset($_GET['appointment_id']) ? intval($_GET['appointment_id']) : 0;
+        if ($appointmentId <= 0) {
+            http_response_code(400);
+            echo '<div class="appointment-details-error">Invalid appointment ID.</div>';
+            return;
+        }
+
+        $patientId = (int)$this->model->getPatientIdByUserId($_SESSION['user_id']);
+        if ($patientId <= 0) {
+            http_response_code(403);
+            echo '<div class="appointment-details-error">Unable to identify patient profile.</div>';
+            return;
+        }
+
+        $payload = $this->model->getPatientAppointmentDetailsPayload($appointmentId, $patientId);
+        if ($payload === null) {
+            http_response_code(404);
+            echo '<div class="appointment-details-error">Appointment details not found.</div>';
+            return;
+        }
+
+        $appointment = $payload['appointment'];
+        $tests = $payload['tests'];
+        $billing = $payload['billing'];
+        include VIEW_PATH . '/patient/get_appointment_details.php';
+    }
+
     public function edit_appointment() {
 
     if (!isset($_SESSION['user_id'])) {
