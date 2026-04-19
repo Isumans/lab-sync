@@ -246,6 +246,144 @@ class TestCatalogController {
 
         return $partnerLabs;
     }
+    public function getTestDetails() {
+        if (($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '') !== 'XMLHttpRequest') {
+            http_response_code(400);
+            exit;
+        }
+        $testId = (int)($_GET['test_id'] ?? 0);
+        if ($testId <= 0) {
+            http_response_code(400);
+            echo '<div class="test-catalog-view-error"><h3>Invalid test ID.</h3></div>';
+            exit;
+        }
+        $model = new TestCatalog($this->db);
+        $data  = $model->getFullTestById($testId);
+        if ($data === null) {
+            http_response_code(404);
+            echo '<div class="test-catalog-view-error"><h3>Test not found.</h3></div>';
+            exit;
+        }
+        $test  = $data['test'];
+        $units = $data['units'];
+        include VIEW_PATH . '/receptionist/get_test_details.php';
+        exit;
+    }
+
+    public function getTestEditData() {
+        header('Content-Type: application/json');
+        if (($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '') !== 'XMLHttpRequest') {
+            http_response_code(400);
+            echo json_encode(['status' => 'error', 'message' => 'Bad request.']);
+            exit;
+        }
+        $testId = (int)($_GET['test_id'] ?? 0);
+        if ($testId <= 0) {
+            http_response_code(400);
+            echo json_encode(['status' => 'error', 'message' => 'Invalid test ID.']);
+            exit;
+        }
+        $model = new TestCatalog($this->db);
+        $data  = $model->getTestEditData($testId);
+        if ($data === null) {
+            http_response_code(404);
+            echo json_encode(['status' => 'error', 'message' => 'Test not found.']);
+            exit;
+        }
+        echo json_encode(['status' => 'success', 'data' => $data]);
+        exit;
+    }
+
+    public function updateTestAjax() {
+        header('Content-Type: application/json');
+        if (($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '') !== 'XMLHttpRequest') {
+            http_response_code(400);
+            echo json_encode(['status' => 'error', 'message' => 'Bad request.']);
+            exit;
+        }
+        if (!$this->validateCsrfHeader()) {
+            http_response_code(403);
+            echo json_encode(['status' => 'error', 'message' => 'CSRF validation failed.']);
+            exit;
+        }
+        $body   = json_decode(file_get_contents('php://input'), true);
+        $testId = (int)($body['test_id'] ?? 0);
+        if ($testId <= 0) {
+            http_response_code(400);
+            echo json_encode(['status' => 'error', 'message' => 'Invalid test ID.']);
+            exit;
+        }
+        $testName = trim((string)($body['test_name'] ?? ''));
+        if ($testName === '') {
+            http_response_code(422);
+            echo json_encode(['status' => 'error', 'message' => 'Test name is required.']);
+            exit;
+        }
+        $costPrice = max(0.0, (float)($body['cost_price'] ?? 0));
+        $discount  = min(100.0, max(0.0, (float)($body['discount'] ?? 0)));
+        $price     = $costPrice - ($costPrice * $discount / 100);
+
+        $fields = [
+            'test_name'       => $testName,
+            'department'      => trim((string)($body['department'] ?? '')),
+            'default_unit'    => trim((string)($body['default_unit'] ?? '')),
+            'print_name'      => trim((string)($body['print_name'] ?? '')),
+            'description'     => trim((string)($body['description'] ?? '')),
+            'cost_price'      => $costPrice,
+            'discount'        => $discount,
+            'price'           => $price,
+            'is_active'       => (int)(bool)($body['is_active'] ?? 1),
+            'report_comments' => trim((string)($body['report_comments'] ?? '')),
+        ];
+
+        $model   = new TestCatalog($this->db);
+        $success = $model->updateTestFull($testId, $fields);
+        if ($success) {
+            echo json_encode(['status' => 'success', 'message' => 'Test updated successfully.']);
+        } else {
+            http_response_code(500);
+            echo json_encode(['status' => 'error', 'message' => $model->getLastError() ?: 'Failed to update test.']);
+        }
+        exit;
+    }
+
+    public function deleteTestAjax() {
+        header('Content-Type: application/json');
+        if (($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '') !== 'XMLHttpRequest') {
+            http_response_code(400);
+            echo json_encode(['status' => 'error', 'message' => 'Bad request.']);
+            exit;
+        }
+        if (!$this->validateCsrfHeader()) {
+            http_response_code(403);
+            echo json_encode(['status' => 'error', 'message' => 'CSRF validation failed.']);
+            exit;
+        }
+        $body   = json_decode(file_get_contents('php://input'), true);
+        $testId = (int)($body['test_id'] ?? 0);
+        if ($testId <= 0) {
+            http_response_code(400);
+            echo json_encode(['status' => 'error', 'message' => 'Invalid test ID.']);
+            exit;
+        }
+        $model   = new TestCatalog($this->db);
+        $success = $model->deleteTest($testId);
+        if ($success) {
+            echo json_encode(['status' => 'success', 'message' => 'Test deleted successfully.']);
+        } else {
+            http_response_code(500);
+            echo json_encode(['status' => 'error', 'message' => 'Failed to delete test.']);
+        }
+        exit;
+    }
+
+    private function validateCsrfHeader(): bool {
+        $sessionToken = $_SESSION['csrf_token'] ?? '';
+        if ($sessionToken === '') { return false; }
+        $headerToken = $_SERVER['HTTP_X_CSRF_TOKEN'] ?? '';
+        return hash_equals($sessionToken, $headerToken);
+    }
+
     public function edit_test($role) {
         $role = $_GET['role'] ?? '';
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {

@@ -139,6 +139,123 @@ class TestCatalog {
         return $stmt->execute();
     }
 
+    public function getFullTestById(int $id): ?array {
+        $stmt = $this->db->prepare("SELECT * FROM tests WHERE test_id = ?");
+        if (!$stmt) { return null; }
+        $stmt->bind_param("i", $id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $test = $result ? $result->fetch_assoc() : null;
+        if (!$test) { return null; }
+
+        $stmt2 = $this->db->prepare(
+            "SELECT * FROM test_units WHERE test_id = ? ORDER BY display_order ASC, unit_index ASC"
+        );
+        $units = [];
+        if ($stmt2) {
+            $stmt2->bind_param("i", $id);
+            $stmt2->execute();
+            $res2 = $stmt2->get_result();
+            while ($unit = $res2->fetch_assoc()) {
+                $unitId = (int)$unit['unit_id'];
+                $stmt3 = $this->db->prepare(
+                    "SELECT * FROM test_reference_ranges WHERE unit_id = ? ORDER BY display_order ASC, range_index ASC"
+                );
+                $ranges = [];
+                if ($stmt3) {
+                    $stmt3->bind_param("i", $unitId);
+                    $stmt3->execute();
+                    $res3 = $stmt3->get_result();
+                    while ($range = $res3->fetch_assoc()) {
+                        $ranges[] = $range;
+                    }
+                }
+                $unit['ranges'] = $ranges;
+                $units[] = $unit;
+            }
+        }
+
+        return ['test' => $test, 'units' => $units];
+    }
+
+    public function getTestEditData(int $id): ?array {
+        $stmt = $this->db->prepare("SELECT * FROM tests WHERE test_id = ?");
+        if (!$stmt) { return null; }
+        $stmt->bind_param("i", $id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $row = $result ? $result->fetch_assoc() : null;
+        if (!$row) { return null; }
+
+        $discountCol = $this->resolveFirstExistingColumn('tests', ['discount_percent', 'discount']);
+        $discount = $discountCol !== null ? (float)($row[$discountCol] ?? 0) : 0.0;
+
+        return [
+            'test_id'        => (int)$row['test_id'],
+            'test_name'      => $row['test_name'] ?? '',
+            'department'     => $row['department'] ?? $row['category'] ?? '',
+            'default_unit'   => $row['default_unit'] ?? '',
+            'print_name'     => $row['print_name'] ?? '',
+            'description'    => $row['description'] ?? '',
+            'cost_price'     => (float)($row['cost_price'] ?? 0),
+            'discount'       => $discount,
+            'price'          => (float)($row['price'] ?? 0),
+            'is_active'      => (int)($row['is_active'] ?? 1),
+            'report_comments'=> $row['report_comments'] ?? '',
+            'test_code'      => $row['test_code'] ?? '',
+        ];
+    }
+
+    public function updateTestFull(int $id, array $fields): bool {
+        $discountCol = $this->resolveFirstExistingColumn('tests', ['discount_percent', 'discount']);
+
+        $candidates = [
+            'test_name'       => $fields['test_name'],
+            'department'      => $fields['department'],
+            'category'        => $fields['department'],
+            'default_unit'    => $fields['default_unit'],
+            'print_name'      => $fields['print_name'],
+            'description'     => $fields['description'],
+            'cost_price'      => $fields['cost_price'],
+            'price'           => $fields['price'],
+            'is_active'       => $fields['is_active'],
+            'report_comments' => $fields['report_comments'],
+        ];
+        if ($discountCol !== null) {
+            $candidates[$discountCol] = $fields['discount'];
+        }
+
+        $setParts = [];
+        $values   = [];
+        foreach ($candidates as $column => $value) {
+            if ($this->columnExists('tests', $column)) {
+                $setParts[] = "{$column} = ?";
+                $values[]   = $value;
+            }
+        }
+
+        if (empty($setParts)) {
+            $this->lastError = 'No updatable columns found in tests table.';
+            return false;
+        }
+
+        $sql  = "UPDATE tests SET " . implode(', ', $setParts) . " WHERE test_id = ?";
+        $stmt = $this->db->prepare($sql);
+        if ($stmt === false) {
+            $this->lastError = 'Failed to prepare updateTestFull statement.';
+            return false;
+        }
+
+        $values[] = $id;
+        $types    = '';
+        foreach ($values as $v) { $types .= $this->getParamType($v); }
+
+        $params = [$types];
+        foreach ($values as $index => $v) { $params[] = &$values[$index]; }
+        call_user_func_array([$stmt, 'bind_param'], $params);
+        return $stmt->execute();
+    }
+
     public function getLastError() {
         return $this->lastError;
     }

@@ -226,6 +226,41 @@ class inventoryModel {
         return mysqli_fetch_all($result, MYSQLI_ASSOC);
     }
 
+    public function searchInventoryItems($search = '', $limit = 10) {
+        $this->lastError = '';
+        $safeLimit = max(1, min(50, intval($limit)));
+        $keyword = trim((string) $search);
+
+        if ($keyword === '') {
+            $query = "SELECT inventory_id, item_name FROM inventory WHERE deleted_date IS NULL OR deleted_date = '0000-00-00' ORDER BY item_name ASC LIMIT ?";
+            $stmt = mysqli_prepare($this->db, $query);
+            if (!$stmt) {
+                $this->lastError = 'Prepare failed in searchInventoryItems: ' . mysqli_error($this->db);
+                error_log($this->lastError);
+                return [];
+            }
+            mysqli_stmt_bind_param($stmt, 'i', $safeLimit);
+        } else {
+            $query = "SELECT inventory_id, item_name FROM inventory WHERE (item_name LIKE CONCAT('%', ?, '%')) AND (deleted_date IS NULL OR deleted_date = '0000-00-00') ORDER BY item_name ASC LIMIT ?";
+            $stmt = mysqli_prepare($this->db, $query);
+            if (!$stmt) {
+                $this->lastError = 'Prepare failed in searchInventoryItems: ' . mysqli_error($this->db);
+                error_log($this->lastError);
+                return [];
+            }
+            mysqli_stmt_bind_param($stmt, 'si', $keyword, $safeLimit);
+        }
+
+        if (!mysqli_stmt_execute($stmt)) {
+            $this->lastError = 'Execute failed in searchInventoryItems: ' . mysqli_stmt_error($stmt);
+            error_log($this->lastError);
+            return [];
+        }
+
+        $result = mysqli_stmt_get_result($stmt);
+        return $result ? mysqli_fetch_all($result, MYSQLI_ASSOC) : [];
+    }
+
     public function searchSuppliers($search = '', $limit = 20) {
         $this->lastError = '';
         if (!$this->tableExists('suppliers')) {

@@ -47,7 +47,6 @@ if (!isset($_SESSION['user_id'])) {
                                 <option value="all">All Statuses</option>
                                 <option value="paid_in_full">Paid in Full</option>
                                 <option value="unpaid">Unpaid</option>
-                                <option value="partially_paid">Partially Paid</option>
                                 <option value="claim_submitted">Claim Submitted</option>
                             </select>
                         </div>

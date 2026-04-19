@@ -2,7 +2,10 @@
 $pageTitle = 'Test Catalog';
 $extraStyles = '<link rel="stylesheet" href="/lab_sync/public/teamStyles.css">'
     . '<link rel="stylesheet" href="/lab_sync/public/reportsDashboard.css">'
-    . '<link rel="stylesheet" href="/lab_sync/public/testCatalogTable.css">';
+    . '<link rel="stylesheet" href="/lab_sync/public/testCatalogTable.css">'
+    . '<link rel="stylesheet" href="/lab_sync/public/testCatalogViewModal.css">'
+    . '<link rel="stylesheet" href="/lab_sync/public/testCatalogEditModal.css">'
+    . '<link rel="stylesheet" href="/lab_sync/public/testCatalogDeleteModal.css">';
 $role = $_GET['role'] ?? '';
 // Start output buffering
 ob_start();
@@ -100,18 +103,28 @@ ob_start();
                                         </td>
                                         
                                         <td class="actions-cell rd-th-right">
-                                            <button type="button" class="action-btn-view" title="View Details" onclick="viewTest(this)">
+                                            <button type="button"
+                                                class="action-btn-view js-view-test-btn"
+                                                title="View Details"
+                                                data-test-id="<?php echo htmlspecialchars($package['test_id'] ?? ''); ?>">
                                                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                                                     <path d="M1 8C1 8 3.5 2 8 2C12.5 2 15 8 15 8C15 8 12.5 14 8 14C3.5 14 1 8 1 8Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
                                                     <path d="M8 5C6.34315 5 5 6.34315 5 8C5 9.65685 6.34315 11 8 11C9.65685 11 11 9.65685 11 8C11 6.34315 9.65685 5 8 5Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
                                                 </svg>
                                             </button>
-                                            <button type="button" class="action-btn-edit" title="Edit">
+                                            <button type="button"
+                                                class="action-btn-edit js-edit-test-btn"
+                                                title="Edit"
+                                                data-test-id="<?php echo htmlspecialchars($package['test_id'] ?? ''); ?>">
                                                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                                                     <path d="M3 13.5H13M2 11L11.5 1.5C11.8 1.2 12.3 1.2 12.6 1.5L14.5 3.4C14.8 3.7 14.8 4.2 14.5 4.5L5 14H2V11Z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
                                                 </svg>
                                             </button>
-                                            <button type="button" class="action-btn-delete" title="Delete">
+                                            <button type="button"
+                                                class="action-btn-delete js-delete-test-btn"
+                                                title="Delete"
+                                                data-test-id="<?php echo htmlspecialchars($package['test_id'] ?? ''); ?>"
+                                                data-test-name="<?php echo htmlspecialchars($package['test_name'] ?? ''); ?>">
                                                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                                                     <path d="M2 4H14M6.5 7V11M9.5 7V11M3 4L4 13C4 13.5 4.5 14 5 14H11C11.5 14 12 13.5 12 13L13 4M5.5 4V2.5C5.5 2.2 5.7 2 6 2H10C10.3 2 10.5 2.2 10.5 2.5V4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
                                                 </svg>
@@ -146,56 +159,147 @@ ob_start();
 
                 </div>
 
-        <!-- Edit Test Modal -->
-        <style>
-        #editTestModal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background: rgba(0,0,0,0.4); }
-        #editTestModal .modal-content { background: #fff; margin: 6% auto; padding: 20px; border-radius: 6px; width: 92%; max-width: 600px; }
-        #editTestModal .close { float: right; font-size: 24px; font-weight: bold; cursor: pointer; }
-        #editTestForm .form-row { margin-bottom: 10px; }
-        #editTestForm label { display: block; font-weight: 600; margin-bottom: 4px; }
-        #editTestForm input[type=text], #editTestForm input[type=number] { width: 100%; padding: 8px; box-sizing: border-box; }
-        </style>
+        <?php
+        $csrfToken = $_SESSION['csrf_token'] ?? '';
+        if (empty($csrfToken)) {
+            $csrfToken = bin2hex(random_bytes(24));
+            $_SESSION['csrf_token'] = $csrfToken;
+        }
+        ?>
+        <script>
+        window.LAB_SYNC_CONFIG = {
+            baseUrl: '/lab_sync',
+            csrfToken: '<?php echo htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8'); ?>'
+        };
+        </script>
 
-        <div id="editTestModal">
-            <div class="modal-content">
-                <span id="editTestModalClose" class="close">&times;</span>
-                <h3>Edit Test</h3>
-                <form id="editTestForm" method="post" action="/lab_sync/index.php?controller=TestCatalog&action=edit_test&role=<?php echo urlencode($role); ?>">
-                    <input type="hidden" name="test_id" value="" />
-                    <div class="form-row">
-                        <label for="test_name">Test Name</label>
-                        <input type="text" id="test_name" name="test_name" required />
+        <!-- View Test Modal -->
+        <div id="testCatalogViewModal" class="test-catalog-view-modal" aria-hidden="true">
+            <div class="test-catalog-view-dialog" role="dialog" aria-modal="true" aria-labelledby="testCatalogViewTitle">
+                <div class="test-catalog-view-topbar">
+                    <div id="testCatalogViewTitle" class="test-catalog-view-title">Test Details</div>
+                    <button id="testCatalogViewClose" class="test-catalog-view-close" type="button" aria-label="Close details">&times;</button>
+                </div>
+                <div id="testCatalogViewBody" class="test-catalog-view-body"></div>
+            </div>
+        </div>
+
+        <!-- Edit Test Modal -->
+        <div id="testCatalogEditModal" class="test-catalog-edit-modal" aria-hidden="true">
+            <div class="test-catalog-edit-dialog" role="dialog" aria-modal="true" aria-labelledby="editTestCatalogTitle">
+                <form id="editTestCatalogForm" novalidate>
+                    <input type="hidden" id="editTestId" name="test_id" value="">
+
+                    <div class="test-catalog-edit-header">
+                        <div>
+                            <h2 id="editTestCatalogTitle">Edit Test</h2>
+                            <p class="test-catalog-edit-subtitle">TEST CATALOG UPDATE</p>
+                        </div>
+                        <button id="editTestCatalogClose" type="button" class="test-catalog-edit-close" aria-label="Close edit modal">&times;</button>
                     </div>
-                    <div class="form-row">
-                        <label for="category">Category</label>
-                        <input type="text" id="category" name="category" />
+
+                    <div id="editTestCatalogAlert" class="tc-edit-alert" hidden></div>
+
+                    <div class="test-catalog-edit-body">
+
+                        <div class="tc-edit-section">
+                            <div class="tc-edit-section-title">Test Identity</div>
+                            <div class="tc-edit-grid-2">
+                                <div class="tc-edit-row">
+                                    <label class="tc-edit-label" for="editTcTestName">Test Name *</label>
+                                    <input type="text" id="editTcTestName" name="test_name" class="tc-edit-input" required>
+                                </div>
+                                <div class="tc-edit-row">
+                                    <label class="tc-edit-label" for="editTcPrintName">Print Name</label>
+                                    <input type="text" id="editTcPrintName" name="print_name" class="tc-edit-input">
+                                </div>
+                                <div class="tc-edit-row">
+                                    <label class="tc-edit-label" for="editTcDepartment">Department</label>
+                                    <select id="editTcDepartment" name="department" class="tc-edit-select">
+                                        <option value="">-- Select --</option>
+                                        <option value="biochemistry">Biochemistry</option>
+                                        <option value="hematology">Hematology</option>
+                                        <option value="immunology">Immunology</option>
+                                        <option value="microbiology">Microbiology</option>
+                                        <option value="radiology">Radiology</option>
+                                    </select>
+                                </div>
+                                <div class="tc-edit-row">
+                                    <label class="tc-edit-label" for="editTcDefaultUnit">Default Unit</label>
+                                    <input type="text" id="editTcDefaultUnit" name="default_unit" class="tc-edit-input">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="tc-edit-section">
+                            <div class="tc-edit-section-title">Pricing</div>
+                            <div class="tc-edit-grid-2">
+                                <div class="tc-edit-row">
+                                    <label class="tc-edit-label" for="editTcCostPrice">Cost Price</label>
+                                    <input type="number" id="editTcCostPrice" name="cost_price" class="tc-edit-input" min="0" step="0.01">
+                                </div>
+                                <div class="tc-edit-row">
+                                    <label class="tc-edit-label" for="editTcDiscount">Discount (%)</label>
+                                    <input type="number" id="editTcDiscount" name="discount" class="tc-edit-input" min="0" max="100" step="0.01">
+                                </div>
+                            </div>
+                            <p id="editTcPricePreview" class="tc-price-preview">Calculated price: <strong>$0.00</strong></p>
+                        </div>
+
+                        <div class="tc-edit-section">
+                            <div class="tc-edit-section-title">Status &amp; Notes</div>
+                            <div class="tc-edit-row">
+                                <label class="tc-edit-label" for="editTcIsActive">Status</label>
+                                <select id="editTcIsActive" name="is_active" class="tc-edit-select">
+                                    <option value="1">Active</option>
+                                    <option value="0">Inactive</option>
+                                </select>
+                            </div>
+                            <div class="tc-edit-row">
+                                <label class="tc-edit-label" for="editTcDescription">Description</label>
+                                <textarea id="editTcDescription" name="description" class="tc-edit-textarea" rows="3"></textarea>
+                            </div>
+                            <div class="tc-edit-row">
+                                <label class="tc-edit-label" for="editTcReportComments">Report Comments</label>
+                                <textarea id="editTcReportComments" name="report_comments" class="tc-edit-textarea" rows="3"></textarea>
+                            </div>
+                            <p class="tc-units-note">To edit units &amp; reference ranges, use the <a href="/lab_sync/index.php?controller=TestCatalog&action=add_test">Add Test</a> workflow.</p>
+                        </div>
+
                     </div>
-                    <div class="form-row">
-                        <label for="price">Price</label>
-                        <input type="text" id="price" name="price" />
-                    </div>
-                    <div class="actions">
-                        <button type="button" id="cancelEditTest">Cancel</button>
-                        <button type="submit" name="edit" value="1">Save changes</button>
-                        <button type="submit" name="delete" value="1" style="margin-left:8px; background:#c33; color:#fff;">Delete</button>
+
+                    <div class="test-catalog-edit-footer">
+                        <button type="button" id="editTestCatalogCancel" class="tc-edit-cancel-btn">Cancel</button>
+                        <button type="submit" id="editTestCatalogSubmit" class="tc-edit-submit-btn">Save Changes</button>
                     </div>
                 </form>
             </div>
         </div>
 
-        <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const modal = document.getElementById('editTestModal');
-            const closeBtn = document.getElementById('editTestModalClose');
-            const cancelBtn = document.getElementById('cancelEditTest');
-
-            closeBtn.addEventListener('click', function () { modal.style.display = 'none'; });
-            cancelBtn.addEventListener('click', function () { modal.style.display = 'none'; });
-            window.addEventListener('click', function (e) { if (e.target === modal) modal.style.display = 'none'; });
-        });
-        </script>
+        <!-- Delete Test Modal -->
+        <div id="testCatalogDeleteModal" class="test-catalog-delete-modal" aria-hidden="true">
+            <div class="test-catalog-delete-dialog" role="dialog" aria-modal="true" aria-labelledby="tcDeleteTitle">
+                <div class="tc-delete-header">
+                    <div class="tc-delete-icon" aria-hidden="true">!</div>
+                    <h2 id="tcDeleteTitle">Delete Test</h2>
+                    <button type="button" id="testCatalogDeleteClose" class="tc-delete-close" aria-label="Close delete modal">&times;</button>
+                </div>
+                <p class="tc-delete-copy">Are you sure you want to delete this test? This action cannot be undone.</p>
+                <div id="tcDeleteAlert" class="tc-delete-alert" hidden></div>
+                <div class="tc-delete-summary">
+                    <div class="summary-label">TEST NAME</div>
+                    <div id="tcDeleteTestName" class="summary-value">Unknown Test</div>
+                </div>
+                <button type="button" id="testCatalogDeleteConfirm" class="tc-delete-confirm-btn">Delete Test</button>
+                <button type="button" id="testCatalogDeleteCancel" class="tc-delete-cancel-btn">Cancel</button>
+                <div class="tc-delete-footer-note">SYSTEM: AUTHORIZATION REQUIRED</div>
+            </div>
+        </div>
                 
-                <script src="/lab_sync/public/js/testCatalogTable.js"></script>              
+                <script src="/lab_sync/public/js/testCatalogTable.js"></script>
+                <script src="/lab_sync/public/js/testCatalogViewModal.js"></script>
+                <script src="/lab_sync/public/js/testCatalogEditModal.js"></script>
+                <script src="/lab_sync/public/js/testCatalogDeleteModal.js"></script>
 <?php
 $content = ob_get_clean();
 require VIEW_PATH . DIRECTORY_SEPARATOR . 'layouts' . DIRECTORY_SEPARATOR . 'main_layout.php';

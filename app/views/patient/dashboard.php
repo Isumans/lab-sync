@@ -1042,10 +1042,9 @@ unset($_SESSION['success'], $_SESSION['error']);
 
           <div class="rxm-sched-row">
             <h4 class="rxm-sched-label">SELECT TIME SLOT</h4>
-            <div class="rxm-slot-label">Morning</div>
-            <div id="rxSlotMorning" class="rxm-slot-rail"></div>
-            <div class="rxm-slot-label">Afternoon</div>
-            <div id="rxSlotAfternoon" class="rxm-slot-rail"></div>
+            <div id="rxSlotsLoading" style="display:none;font-size:12px;color:#8b9ab0;padding:4px 0;">Loading slots...</div>
+            <div id="rxSlotsEmpty"   style="display:none;font-size:12px;color:#8b9ab0;padding:4px 0;">No slots available for this day.</div>
+            <div id="rxSlotGrid" class="rxm-slot-rail"></div>
           </div>
         </section>
 
@@ -1178,9 +1177,6 @@ unset($_SESSION['success'], $_SESSION['error']);
     ? String(window.LAB_SYNC_CONFIG.baseUrl).replace(/\/$/, '')
     : '/lab_sync';
 
-  var slotsMorning   = ['08:00','08:30','09:00','09:30','10:00','10:30','11:00'];
-  var slotsAfternoon = ['13:00','13:30','14:00','14:30','15:00','15:30'];
-
   var state = {
     requestId: 0,
     tests: [],           // [{test_id, test_name, unit_price}]
@@ -1263,27 +1259,52 @@ unset($_SESSION['success'], $_SESSION['error']);
 
   /* ── slot rendering ── */
   function renderSlots() {
-    renderSlotGroup('rxSlotMorning',   slotsMorning);
-    renderSlotGroup('rxSlotAfternoon', slotsAfternoon);
-  }
+    var grid    = document.getElementById('rxSlotGrid');
+    var loading = document.getElementById('rxSlotsLoading');
+    var empty   = document.getElementById('rxSlotsEmpty');
 
-  function renderSlotGroup(containerId, times) {
-    var host = document.getElementById(containerId);
-    host.innerHTML = '';
-    times.forEach(function(t) {
-      var btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'rxm-slot' + (state.time === t ? ' active' : '');
-      btn.textContent = fmtTime(t);
-      btn.disabled = !state.date;
-      btn.onclick = function() {
-        state.time = t;
-        document.getElementById('rxApptTime').value = t + ':00';
-        document.querySelectorAll('.rxm-slot').forEach(function(s){ s.classList.remove('active'); });
-        btn.classList.add('active');
-      };
-      host.appendChild(btn);
-    });
+    grid.innerHTML = '';
+    state.time = '';
+    document.getElementById('rxApptTime').value = '';
+
+    if (!state.date) {
+      loading.style.display = 'none';
+      empty.style.display   = 'none';
+      return;
+    }
+
+    loading.style.display = 'block';
+    empty.style.display   = 'none';
+
+    fetch(BASE + '/index.php?controller=home&action=getAvailableSlots&date=' + encodeURIComponent(state.date))
+      .then(function(r) { return r.json(); })
+      .then(function(slots) {
+        loading.style.display = 'none';
+        grid.innerHTML = '';
+        if (!slots || slots.length === 0) {
+          empty.style.display = 'block';
+          return;
+        }
+        slots.forEach(function(slot) {
+          var btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'rxm-slot';
+          btn.textContent = slot.start_time + ' – ' + slot.end_time;
+          btn.disabled = !slot.available;
+          if (!slot.available) btn.style.opacity = '0.4';
+          btn.onclick = function() {
+            state.time = slot.start_time;
+            document.getElementById('rxApptTime').value = slot.start_time + ':00';
+            document.querySelectorAll('.rxm-slot').forEach(function(s){ s.classList.remove('active'); });
+            btn.classList.add('active');
+          };
+          grid.appendChild(btn);
+        });
+      })
+      .catch(function() {
+        loading.style.display = 'none';
+        empty.style.display = 'block';
+      });
   }
 
   /* ── test search ── */
@@ -1508,7 +1529,7 @@ unset($_SESSION['success'], $_SESSION['error']);
     modal.setAttribute('aria-hidden', 'true');
   }
 
-  const patientEditSlots = ['08:00', '08:30', '09:00', '09:30', '10:00', '10:30', '11:00', '13:00', '13:30', '14:00', '14:30', '15:00', '15:30'];
+  // Slot list is now dynamic — fetched from the server per date
 
   function formatAppointmentNumber(value) {
     const raw = String(value || '').trim();
@@ -1586,24 +1607,42 @@ unset($_SESSION['success'], $_SESSION['error']);
 
   function renderPatientEditTimeSlots(selectedTime) {
     const host = document.getElementById('patientEditTimeSlots');
-    if (!host) {
+    if (!host) return;
+
+    const date = document.getElementById('patientEditDateInput').value;
+    const normalizedSelected = normalizePatientTime(selectedTime);
+
+    host.innerHTML = '<span style="font-size:12px;color:#8b9ab0;">Loading slots...</span>';
+
+    if (!date) {
+      host.innerHTML = '';
       return;
     }
 
-    const normalizedSelected = normalizePatientTime(selectedTime);
-    host.innerHTML = '';
-
-    patientEditSlots.forEach((slotTime) => {
-      const button = document.createElement('button');
-      button.type = 'button';
-      button.className = 'time-slot' + (normalizedSelected === slotTime ? ' is-selected' : '');
-      button.textContent = formatDisplayTime(slotTime);
-      button.setAttribute('data-time', slotTime);
-      button.addEventListener('click', () => {
-        setPatientEditSelectedTime(slotTime);
+    fetch('/lab_sync/index.php?controller=home&action=getAvailableSlots&date=' + encodeURIComponent(date))
+      .then(r => r.json())
+      .then(slots => {
+        host.innerHTML = '';
+        if (!slots || slots.length === 0) {
+          host.innerHTML = '<span style="font-size:12px;color:#8b9ab0;">No slots available for this day.</span>';
+          return;
+        }
+        slots.forEach(slot => {
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.className = 'time-slot' + (normalizedSelected === slot.start_time ? ' is-selected' : '');
+          button.textContent = slot.start_time + ' – ' + slot.end_time;
+          button.setAttribute('data-time', slot.start_time);
+          button.disabled = !slot.available;
+          button.addEventListener('click', () => {
+            setPatientEditSelectedTime(slot.start_time);
+          });
+          host.appendChild(button);
+        });
+      })
+      .catch(() => {
+        host.innerHTML = '<span style="font-size:12px;color:#c00;">Failed to load slots.</span>';
       });
-      host.appendChild(button);
-    });
   }
 
   function setPatientEditSelectedTime(timeValue) {
@@ -1714,6 +1753,12 @@ unset($_SESSION['success'], $_SESSION['error']);
     patientEditClose && patientEditClose.addEventListener('click', () => setPatientEditModalOpen(false));
     patientEditCancel && patientEditCancel.addEventListener('click', () => setPatientEditModalOpen(false));
     patientEditHomeCollection && patientEditHomeCollection.addEventListener('change', togglePatientEditHomeCollection);
+
+    const patientEditDateInput = document.getElementById('patientEditDateInput');
+    patientEditDateInput && patientEditDateInput.addEventListener('change', function () {
+      const currentTime = normalizePatientTime(document.getElementById('patientEditTimeInput').value);
+      renderPatientEditTimeSlots(currentTime);
+    });
     patientEditFallbackTime && patientEditFallbackTime.addEventListener('input', function () {
       const normalized = normalizePatientTime(this.value);
       document.getElementById('patientEditTimeInput').value = normalized;

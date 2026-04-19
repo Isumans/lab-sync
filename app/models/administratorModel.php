@@ -298,6 +298,75 @@ class administratorModel {
         return $stmt->execute();
     }
 
+    // ── Online Booking Slots ──────────────────────────────────────────────────
+
+    public function getAllOnlineSlots(): array {
+        $result = $this->db->query(
+            "SELECT * FROM online_booking_slots ORDER BY FIELD(day_group,'mon_fri','sat','sun'), start_time"
+        );
+        $slots = ['mon_fri' => [], 'sat' => [], 'sun' => []];
+        if ($result) {
+            while ($row = $result->fetch_assoc()) {
+                $slots[$row['day_group']][] = $row;
+            }
+        }
+        return $slots;
+    }
+
+    public function addOnlineSlot(array $data): array {
+        $dayGroup  = $data['day_group'];
+        $startTime = $data['start_time'];
+        $endTime   = $data['end_time'];
+        $maxPat    = (int)$data['max_patients'];
+
+        if (!in_array($dayGroup, ['mon_fri', 'sat', 'sun'])) {
+            return ['success' => false, 'message' => 'Invalid day group.'];
+        }
+        if (!$this->isValidTime($startTime) || !$this->isValidTime($endTime)) {
+            return ['success' => false, 'message' => 'Invalid time format.'];
+        }
+        if (strtotime($endTime) <= strtotime($startTime)) {
+            return ['success' => false, 'message' => 'End time must be after start time.'];
+        }
+        if ($maxPat < 1 || $maxPat > 100) {
+            return ['success' => false, 'message' => 'Max patients must be between 1 and 100.'];
+        }
+
+        $stmt = $this->db->prepare(
+            "INSERT INTO online_booking_slots (day_group, start_time, end_time, max_patients)
+             VALUES (?, ?, ?, ?)"
+        );
+        $stmt->bind_param('sssi', $dayGroup, $startTime, $endTime, $maxPat);
+        if ($stmt->execute()) {
+            return ['success' => true, 'id' => $stmt->insert_id];
+        }
+        if ($this->db->errno === 1062) {
+            return ['success' => false, 'message' => 'A slot with this start time already exists for that day group.'];
+        }
+        return ['success' => false, 'message' => 'Failed to save slot.'];
+    }
+
+    public function deleteOnlineSlot(int $id): bool {
+        $stmt = $this->db->prepare("DELETE FROM online_booking_slots WHERE id = ?");
+        $stmt->bind_param('i', $id);
+        return $stmt->execute() && $stmt->affected_rows > 0;
+    }
+
+    public function toggleOnlineSlot(int $id): array {
+        $stmt = $this->db->prepare(
+            "UPDATE online_booking_slots SET is_active = NOT is_active WHERE id = ?"
+        );
+        $stmt->bind_param('i', $id);
+        if ($stmt->execute() && $stmt->affected_rows > 0) {
+            $res = $this->db->query("SELECT is_active FROM online_booking_slots WHERE id = $id");
+            $row = $res->fetch_assoc();
+            return ['success' => true, 'is_active' => (int)$row['is_active']];
+        }
+        return ['success' => false, 'message' => 'Slot not found.'];
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+
     private function columnExists($tableName, $columnName) {
         $cacheKey = $tableName . '.' . $columnName;
         if (isset($this->columnExistsCache[$cacheKey])) {

@@ -456,6 +456,39 @@ class HomeController {
     exit();
 }
 
+    public function getAvailableSlots() {
+        header('Content-Type: application/json');
+        $date = trim($_GET['date'] ?? '');
+        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $date) || !strtotime($date)) {
+            echo json_encode(['error' => 'Invalid date.']);
+            return;
+        }
+
+        // Determine day group from date
+        $dow = (int)date('N', strtotime($date)); // 1=Mon ... 7=Sun
+        if ($dow >= 1 && $dow <= 5) {
+            $dayGroup = 'mon_fri';
+        } elseif ($dow === 6) {
+            $dayGroup = 'sat';
+        } else {
+            $dayGroup = 'sun';
+        }
+
+        $slots = $this->model->getAvailableSlotsForDate($date, $dayGroup);
+
+        // Format times as HH:MM for the frontend
+        $formatted = [];
+        foreach ($slots as $s) {
+            $formatted[] = [
+                'id'          => (int)$s['id'],
+                'start_time'  => substr($s['start_time'], 0, 5),
+                'end_time'    => substr($s['end_time'],   0, 5),
+                'available'   => (bool)$s['available'],
+            ];
+        }
+        echo json_encode($formatted);
+    }
+
 }
 
 ?>

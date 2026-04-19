@@ -27,19 +27,6 @@ if (!$isAllowed && !isset($_SESSION['user_id'])) {
     exit();
 }
 
-$mustChangePassword = intval($_SESSION['must_change_password'] ?? 0) === 1;
-if ($mustChangePassword && isset($_SESSION['user_id'])) {
-    $role = (string)($_SESSION['user_role'] ?? '');
-    $isStaff = in_array($role, ['admin', 'receptionist', 'technician'], true);
-    $canBypass = ($controllerName === 'Auth' && $action === 'logout')
-        || ($controllerName === 'userController' && in_array($action, ['user', 'changePassword'], true));
-
-    if ($isStaff && !$canBypass) {
-        header('Location: ' . BASE_URL . '/index.php?controller=userController&action=user&forcePasswordChange=true');
-        exit();
-    }
-}
-
 require_once CONTROLLER_PATH . '/TestCatalog_control.php';
 require_once CONTROLLER_PATH . '/authController.php';
 require_once CONTROLLER_PATH . '/administratorController.php';
@@ -54,18 +41,18 @@ require_once CONTROLLER_PATH . '/billingController.php';
 require_once CONTROLLER_PATH . '/financesController.php';
 require_once CONTROLLER_PATH . '/userController.php';
 require_once CONTROLLER_PATH . '/paymentController.php';
+require_once CONTROLLER_PATH . '/dashboardController.php';
+require_once CONTROLLER_PATH . '/navbarSearchController.php';
 // require_once 'C:\xampp\htdocs\lab_sync\app\controllers\appointmentsController.php';
 require_once __DIR__ . '/config/db.php';
 $controllerName = $_GET['controller'] ?? 'home'; // Default to 'home' controller
-// $controllerName = 'TestCatalog'; 
-// This should be set based 
-// on your routing logic
 
 if ($controllerName === 'dashboard') {
-    $action = $_GET['action'] ?? 'index'; // or your desired default
-    // include 'C:\xampp\htdocs\lab_sync\app\views\administrator\admin_dash.php';
-    if($action === 'index'){
-        include VIEW_PATH . '/administrator/admin_dash.php';
+    $action = $_GET['action'] ?? 'index';
+    if ($action === 'index') {
+        $dashController = new dashboardController();
+        $role = $_SESSION['user_role'] ?? '';
+        $dashController->index($role);
     }
 }
 
@@ -95,6 +82,14 @@ if ($controllerName === 'TestCatalog') {
         $Testcontroller->index($role);
         // include 'C:\xampp\htdocs\lab_sync\app\views\receptionist\test_catalog.php';
 
+    } elseif ($action === 'getTestDetails') {
+        $Testcontroller->getTestDetails();
+    } elseif ($action === 'getTestEditData') {
+        $Testcontroller->getTestEditData();
+    } elseif ($action === 'updateTestAjax') {
+        $Testcontroller->updateTestAjax();
+    } elseif ($action === 'deleteTestAjax') {
+        $Testcontroller->deleteTestAjax();
     }elseif ($action === 'login_open') {
         include VIEW_PATH . '/auth/dash_login.php';
     }elseif($action==='createAppointment'){
@@ -151,6 +146,14 @@ if ($controllerName === 'TestCatalog') {
         $adminController->saveGeneralSettings();
     }elseif($action==='resend_invite'){
         $adminController->resendInvite($role);
+    }elseif($action==='getOnlineSlotsSection'){
+        $adminController->getOnlineSlotsSection();
+    }elseif($action==='saveOnlineSlot'){
+        $adminController->saveOnlineSlot();
+    }elseif($action==='deleteOnlineSlot'){
+        $adminController->deleteOnlineSlot();
+    }elseif($action==='toggleOnlineSlot'){
+        $adminController->toggleOnlineSlot();
     }
 }
 elseif ($controllerName === 'appointmentsController') {
@@ -352,6 +355,8 @@ elseif($controllerName === 'inventoryController'){
         $homeController->edit_appointment();
 }elseif($action==="about"){
         include VIEW_PATH .'/patient/about.php';
+}elseif($action==="getAvailableSlots"){
+        $homeController->getAvailableSlots();
 }
 }elseif($controllerName==='profile'){
     $action = $_GET['action'] ?? 'view'; // or your desired default
@@ -396,8 +401,17 @@ elseif($controllerName === 'inventoryController'){
         $userController->toggleTwoFactor();
     }elseif($action === 'revokeSession'){
         $userController->revokeSession();
+    }elseif($action === 'dismissPasswordPrompt'){
+        $userController->dismissPasswordPrompt();
     }else {
         echo "404 Not Found";
+    }
+}
+elseif ($controllerName === 'navbarSearch') {
+    $navbarSearchController = new navbarSearchController();
+    $action = $_GET['action'] ?? 'search';
+    if ($action === 'search') {
+        $navbarSearchController->search();
     }
 }
 elseif ($controllerName === 'payment') {
