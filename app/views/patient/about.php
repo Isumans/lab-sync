@@ -137,13 +137,13 @@
     <div class="mission-inner">
       <div>
         <p class="section-label">Who We Are</p>
-        <h2 class="section-title">A Patient-First Team of Clinicians & Engineers</h2>
+        <h2 class="section-title">A Patient-First Team You Can Trust</h2>
         <p class="section-body">We're on a mission to make diagnostics accessible, transparent, and stress-free. From booking to results, LabSync keeps you in complete control of your health journey.</p>
         <ul class="check-list">
           <li><svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg> Online booking with instant confirmations</li>
           <li><svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg> Results available within 24–48 hours</li>
-          <li><svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg> Bank-grade encryption &amp; secure sharing</li>
-          <li><svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg> Accredited partner laboratories</li>
+          <li><svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg> Your reports stay private in your LabSync account</li>
+          <li><svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg> Consistent quality checks for every test</li>
         </ul>
       </div>
       <div class="mission-img">
@@ -166,8 +166,8 @@
           <div class="value-icon">
             <svg width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24"><path d="M12 3l7 3v6c0 4.97-3.38 8.5-7 9-3.62-.5-7-4.03-7-9V6l7-3Z" stroke-linejoin="round"/><path d="M9.5 12.5l2 2 3.5-4" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </div>
-          <h3 class="value-title">Privacy by Design</h3>
-          <p class="value-text">All health data is encrypted at rest and in transit with granular access controls.</p>
+          <h3 class="value-title">Your Data, Kept Private</h3>
+          <p class="value-text">Your reports are protected inside your account and shown only to authorized users.</p>
         </div>
         <div class="value-card">
           <div class="value-icon">
@@ -181,7 +181,7 @@
             <svg width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24"><circle cx="12" cy="9" r="4"/><path d="M10 13l-3 8 5-3 5 3-3-8" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </div>
           <h3 class="value-title">Accuracy You Trust</h3>
-          <p class="value-text">Every test processed by accredited labs with robust quality assurance workflows.</p>
+          <p class="value-text">Every test follows quality-check workflows before results are released.</p>
         </div>
         <div class="value-card">
           <div class="value-icon">
@@ -199,20 +199,20 @@
     <div class="security-inner">
       <div class="security-card">
         <div class="sc-left">
-          <h2>Accreditation &amp; Security</h2>
-          <p>LabSync partners only with accredited facilities, and we follow rigorous security practices at every layer of our system.</p>
+          <h2>Quality &amp; Data Protection</h2>
+          <p>We follow clear quality processes and practical protections to keep your medical information private.</p>
           <ul class="sc-list">
-            <li><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg> Accredited partner labs (ISO/IEC 15189 where applicable)</li>
-            <li><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg> AES-256 encryption at rest, TLS in transit</li>
-            <li><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg> Granular consent management &amp; audit trails</li>
-            <li><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg> Regular security reviews and automated backups</li>
+            <li><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg> Every report goes through quality checks before release</li>
+            <li><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg> Your dashboard is protected with account login controls</li>
+            <li><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg> Report access is limited to authorized staff and the patient</li>
+            <li><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg> You control when to download or share your report</li>
           </ul>
         </div>
         <div class="sc-right">
           <div class="shield-wrap">
             <svg width="56" height="56" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M12 3l7 3v6c0 4.97-3.38 8.5-7 9-3.62-.5-7-4.03-7-9V6l7-3Z" stroke-linejoin="round"/><path d="M9.5 12.5l2 2 3.5-4" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </div>
-          <p class="shield-label">Security First</p>
+          <p class="shield-label">Privacy Matters</p>
         </div>
       </div>
     </div>

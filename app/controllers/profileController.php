@@ -39,13 +39,14 @@ class ProfileController {
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $name = trim($_POST['pfName'] ?? '');
-            $email1 = trim($_POST['pfEmail'] ?? '');
+            // Patients are not allowed to change email from profile edit.
+            $email1 = (string)$email;
             $contact_number = trim($_POST['pfContact'] ?? '');
             $gender = trim($_POST['pfGender'] ?? '');
             $address = trim($_POST['pfAddress'] ?? '');
 
-            if ($name === '' || $email1 === '') {
-                $_SESSION['error'] = 'Name and email are required.';
+            if ($name === '') {
+                $_SESSION['error'] = 'Name is required.';
                 header('Location: /lab_sync/index.php?controller=profile&action=view');
                 exit();
             }
@@ -71,8 +72,6 @@ class ProfileController {
             }
 
             if ($model->updateUser($userId, $name, $email1, $contact_number)) {
-                // Update session email if changed
-                $_SESSION['email'] = $email1;
                 $_SESSION['success'] = 'Profile updated successfully.';
             } else {
                 $_SESSION['error'] = 'Failed to update profile.';
@@ -83,6 +82,74 @@ class ProfileController {
         }
 
         header('Location: /lab_sync/index.php?controller=profile&action=view');
+        exit();
+    }
+
+    public function uploadProfilePhoto() {
+        header('Content-Type: application/json');
+        while (ob_get_level() > 0) {
+            ob_end_clean();
+        }
+        
+        $userId = (int)($_SESSION['user_id'] ?? 0);
+        if ($userId <= 0) {
+            http_response_code(401);
+            echo json_encode(['success' => false, 'error' => 'Unauthorized']);
+            exit();
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !isset($_FILES['photo'])) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'error' => 'No file provided']);
+            exit();
+        }
+
+        $file = $_FILES['photo'];
+        $maxSize = 5 * 1024 * 1024; // 5MB
+        $allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+
+        if ($file['size'] > $maxSize) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'error' => 'File too large. Max 5MB']);
+            exit();
+        }
+
+        if (!in_array($file['type'], $allowedTypes)) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'error' => 'Invalid file type']);
+            exit();
+        }
+
+        if (!is_dir(__DIR__ . '/../../public/uploads/profiles')) {
+            mkdir(__DIR__ . '/../../public/uploads/profiles', 0777, true);
+        }
+
+        $ext = pathinfo($file['name'], PATHINFO_EXTENSION);
+        $filename = 'profile_' . $userId . '_' . time() . '.' . $ext;
+        $filepath = __DIR__ . '/../../public/uploads/profiles/' . $filename;
+        $publicPath = '/lab_sync/public/uploads/profiles/' . $filename;
+
+        if (!move_uploaded_file($file['tmp_name'], $filepath)) {
+            http_response_code(500);
+            echo json_encode(['success' => false, 'error' => 'Upload failed']);
+            exit();
+        }
+
+        try {
+            $model = new ProfileModel($this->db);
+            $patient = $model->getProfileByUserId($userId);
+            $patientId = $patient['patient_id'] ?? null;
+
+            if ($patientId) {
+                $model->updatePatientAvatar($patientId, $publicPath);
+                echo json_encode(['success' => true, 'avatar_url' => $publicPath]);
+            } else {
+                echo json_encode(['success' => false, 'error' => 'Patient not found']);
+            }
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['success' => false, 'error' => 'Database error: ' . $e->getMessage()]);
+        }
         exit();
     }
 

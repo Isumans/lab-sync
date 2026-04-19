@@ -25,6 +25,7 @@ class AuthController {
                 session_regenerate_id(true);
                 $_SESSION['user_id'] = $user['user_id'] ?? $user['id'] ?? null;
                 $_SESSION['email'] = $user['email'] ?? '';
+                $_SESSION['username'] = $user['username'] ?? '';
                 $_SESSION['user_role'] = $user['role'] ?? '';
                 $_SESSION['session_token'] = bin2hex(random_bytes(32));
 
