@@ -1,0 +1,182 @@
+/* =====================================================
+   Test Catalog — Delete Modal
+   ===================================================== */
+
+.test-catalog-delete-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 1500;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background: rgba(15, 23, 42, 0.48);
+    padding: 20px;
+}
+
+.test-catalog-delete-modal.is-open {
+    display: flex;
+}
+
+.test-catalog-delete-dialog {
+    width: min(500px, 100%);
+    border-radius: 14px;
+    background: #fff;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+    border: 1px solid #d8e2ea;
+    padding: 0;
+    overflow: hidden;
+}
+
+/* Header */
+.tc-delete-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 20px;
+    background: #fff8f7;
+    border-bottom: 1px solid #f5c6c2;
+}
+
+.tc-delete-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #fdecea;
+    border: 2px solid #e74c3c;
+    color: #e74c3c;
+    font-size: 18px;
+    font-weight: 900;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.tc-delete-header h2 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 700;
+    color: #1a2e3b;
+    flex: 1;
+}
+
+.tc-delete-close {
+    background: none;
+    border: none;
+    font-size: 22px;
+    line-height: 1;
+    color: #6b8a9a;
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: 4px;
+    transition: color 0.15s, background 0.15s;
+}
+
+.tc-delete-close:hover {
+    color: #c0392b;
+    background: #fdecea;
+}
+
+/* Body */
+.tc-delete-copy {
+    margin: 0;
+    padding: 16px 20px 10px;
+    font-size: 14px;
+    color: #3a5060;
+    line-height: 1.6;
+}
+
+/* Alert */
+.tc-delete-alert {
+    margin: 0 20px 10px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    background: #fdecea;
+    color: #a93226;
+    border: 1px solid #f5c6c2;
+}
+
+/* Summary */
+.tc-delete-summary {
+    margin: 4px 20px 16px;
+    padding: 12px 16px;
+    background: #f6f9fc;
+    border: 1px solid #dce8ef;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.tc-delete-summary .summary-label {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #7a9aab;
+}
+
+.tc-delete-summary .summary-value {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1a2e3b;
+}
+
+/* Buttons */
+.tc-delete-confirm-btn {
+    display: block;
+    width: calc(100% - 40px);
+    margin: 0 20px 10px;
+    padding: 11px;
+    background: #e74c3c;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 700;
+    color: #fff;
+    cursor: pointer;
+    transition: background 0.15s, opacity 0.15s;
+}
+
+.tc-delete-confirm-btn:hover {
+    background: #c0392b;
+}
+
+.tc-delete-confirm-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.tc-delete-cancel-btn {
+    display: block;
+    width: calc(100% - 40px);
+    margin: 0 20px 16px;
+    padding: 11px;
+    background: #fff;
+    border: 1px solid #cdd9e2;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #4a6475;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.tc-delete-cancel-btn:hover {
+    background: #f0f5fa;
+}
+
+/* Footer note */
+.tc-delete-footer-note {
+    padding: 10px 20px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #b0c5d2;
+    text-align: center;
+    border-top: 1px solid #edf2f7;
+    background: #f6f9fc;
+}

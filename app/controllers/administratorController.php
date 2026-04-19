@@ -352,6 +352,46 @@ class administratorController {
             'message' => $ok ? 'General settings saved successfully.' : 'Failed to save. Please try again.',
         ]);
     }
+
+    // ── Online Booking Slots ──────────────────────────────────────────────────
+
+    public function getOnlineSlotsSection() {
+        $slots = $this->adminModel->getAllOnlineSlots();
+        include VIEW_PATH . '/administrator/settings/online_slots.php';
+    }
+
+    public function saveOnlineSlot() {
+        header('Content-Type: application/json');
+        $data = [
+            'day_group'    => trim($_POST['day_group']    ?? ''),
+            'start_time'   => trim($_POST['start_time']   ?? ''),
+            'end_time'     => trim($_POST['end_time']     ?? ''),
+            'max_patients' => trim($_POST['max_patients'] ?? ''),
+        ];
+        $result = $this->adminModel->addOnlineSlot($data);
+        echo json_encode($result);
+    }
+
+    public function deleteOnlineSlot() {
+        header('Content-Type: application/json');
+        $id = (int)($_POST['id'] ?? 0);
+        if ($id < 1) {
+            echo json_encode(['success' => false, 'message' => 'Invalid slot ID.']);
+            return;
+        }
+        $ok = $this->adminModel->deleteOnlineSlot($id);
+        echo json_encode(['success' => $ok, 'message' => $ok ? 'Slot deleted.' : 'Slot not found.']);
+    }
+
+    public function toggleOnlineSlot() {
+        header('Content-Type: application/json');
+        $id = (int)($_POST['id'] ?? 0);
+        if ($id < 1) {
+            echo json_encode(['success' => false, 'message' => 'Invalid slot ID.']);
+            return;
+        }
+        echo json_encode($this->adminModel->toggleOnlineSlot($id));
+    }
 }
 
 ?>

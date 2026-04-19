@@ -88,14 +88,10 @@
 
             <div>
               <label class="label">Time slot</label>
-              <div class="slot-group">
-                <div class="slot-period">Morning</div>
-                <div id="gridMorning" class="slot-rail"></div>
-              </div>
-
-              <div class="slot-group">
-                <div class="slot-period">Afternoon</div>
-                <div id="gridAfternoon" class="slot-rail"></div>
+              <div id="slotsContainer">
+                <div id="slotsLoading" style="display:none;color:#888;font-size:13px;padding:6px 0;">Loading available slots...</div>
+                <div id="slotsEmpty"   style="display:none;color:#888;font-size:13px;padding:6px 0;">No slots available for this day.</div>
+                <div id="gridSlots" class="slot-rail"></div>
               </div>
             </div>
 
@@ -217,34 +213,61 @@ window.LAB_SYNC_BOOK_CONFIG = {
 
 <script>
 // slots
-const slotsMorning = ['08:00','08:30','09:00','09:30','10:00','10:30','11:00'];
-const slotsAfternoon = ['13:00','13:30','14:00','14:30','15:00','15:30'];
 let selectedSlot = null;
 
-function makeSlots(hostId, times){
-  const host = document.getElementById(hostId);
-  host.innerHTML = '';
-  const dateValue = document.getElementById('date').value;
-  const slotsDisabled = !dateValue;
-  times.forEach(t=>{
-    const b = document.createElement('button');
-    b.className = 'slot';
-    b.type = 'button'; // Prevent form submission on slot click
-    b.textContent = t;
-    b.disabled = slotsDisabled;
-    b.onclick = ()=>{
-      if (b.disabled) return;
-      document.querySelectorAll('.slot').forEach(s=>s.classList.remove('active'));
-      b.classList.add('active');
-      selectedSlot = t;
-      document.getElementById('selectedTime').value = t;
-      updateSummary();
-    };
-    host.appendChild(b);
-  });
+function renderSlotButton(slot) {
+  const b = document.createElement('button');
+  b.className = 'slot';
+  b.type = 'button';
+  b.textContent = slot.start_time + ' – ' + slot.end_time;
+  b.disabled = !slot.available;
+  if (!slot.available) b.classList.add('slot-full');
+  b.onclick = () => {
+    if (b.disabled) return;
+    document.querySelectorAll('.slot').forEach(s => s.classList.remove('active'));
+    b.classList.add('active');
+    selectedSlot = slot.start_time;
+    document.getElementById('selectedTime').value = slot.start_time + ':00';
+    updateSummary();
+  };
+  return b;
 }
 
-function renderSlots(){ makeSlots('gridMorning', slotsMorning); makeSlots('gridAfternoon', slotsAfternoon); }
+function renderSlots() {
+  const grid    = document.getElementById('gridSlots');
+  const loading = document.getElementById('slotsLoading');
+  const empty   = document.getElementById('slotsEmpty');
+  const date    = document.getElementById('date').value;
+
+  grid.innerHTML = '';
+  selectedSlot = null;
+  document.getElementById('selectedTime').value = '';
+
+  if (!date) {
+    empty.style.display   = 'none';
+    loading.style.display = 'none';
+    return;
+  }
+
+  loading.style.display = 'block';
+  empty.style.display   = 'none';
+
+  fetch('/lab_sync/index.php?controller=home&action=getAvailableSlots&date=' + encodeURIComponent(date))
+    .then(r => r.json())
+    .then(slots => {
+      loading.style.display = 'none';
+      grid.innerHTML = '';
+      if (!slots || slots.length === 0) {
+        empty.style.display = 'block';
+        return;
+      }
+      slots.forEach(slot => grid.appendChild(renderSlotButton(slot)));
+    })
+    .catch(() => {
+      loading.style.display = 'none';
+      empty.style.display = 'block';
+    });
+}
 
 const prep = {
   'Full Blood Count (FBC)' : 'No special preparation required.',
@@ -341,9 +364,7 @@ function validateAndSubmit(event) {
       return false;
     }
     
-    // Format time to HH:MM:SS
-    const formattedTime = time + ':00';
-    document.getElementById('selectedTime').value = formattedTime;
+    // selectedTime is already set to HH:MM:SS by the slot click handler
     
     if (confirm('Confirm appointment booking?')) {
         document.getElementById('bookingForm').submit();
@@ -355,8 +376,6 @@ function validateAndSubmit(event) {
 
 renderSlots(); onTestChange();
 document.getElementById('date').addEventListener('input', () => {
-  selectedSlot = null;
-  document.getElementById('selectedTime').value = '';
   renderSlots();
   updateSummary();
 });

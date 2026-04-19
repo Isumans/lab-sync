@@ -297,8 +297,19 @@
         }
 
         if (isSettlementOnlyMode() && actionName !== "finalizeBill") {
-            formMessage.textContent = "Draft save is disabled for partially paid bills. Use Save & Print to record payment.";
-            return Promise.reject(new Error("Draft disabled in partial mode."));
+            formMessage.textContent = "Draft save is not allowed. Please pay the full remaining balance to settle this bill.";
+            return Promise.reject(new Error("Draft disabled in settlement mode."));
+        }
+
+        if (actionName === "finalizeBill") {
+            var enteredAmt = toNonNegativeNumber(amountTenderedInput.value, 0);
+            var totalDueAmt = Number(focusTotalDue.textContent || 0);
+            var prevPaidAmt = isSettlementOnlyMode() ? Math.max(0, Number(boot.paid_amount || 0)) : 0;
+            var remainingAmt = Math.max(0, totalDueAmt - prevPaidAmt);
+            if (enteredAmt > 0 && enteredAmt < remainingAmt - 0.001) {
+                formMessage.textContent = "Partial payments are not allowed. Please pay the full amount (LKR " + money(remainingAmt) + ") or leave blank to save as pending.";
+                return Promise.reject(new Error("Partial payment not allowed."));
+            }
         }
 
         var endpoint = "/lab_sync/index.php?controller=billingController&action=" + encodeURIComponent(actionName);
@@ -385,8 +396,8 @@
         });
 
         if (isSettlementOnlyMode()) {
-            formMessage.textContent = "Partial payment mode: only payment fields are editable.";
-        } else if (formMessage.textContent === "Partial payment mode: only payment fields are editable.") {
+            formMessage.textContent = "Balance outstanding: please pay the full remaining balance to settle this bill.";
+        } else if (formMessage.textContent === "Balance outstanding: please pay the full remaining balance to settle this bill.") {
             formMessage.textContent = "";
         }
     }

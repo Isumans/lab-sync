@@ -113,6 +113,8 @@ class userController {
     public function changePassword() {
         $this->ensureStaffSession();
         $this->validateCsrfOrFail();
+        $wasForcedChange = intval($_SESSION['must_change_password'] ?? 0) === 1;
+        $isLandingFlow = intval($_POST['from_landing'] ?? 0) === 1;
 
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             header('Location: ' . route_url('userController', 'user'));
@@ -125,29 +127,82 @@ class userController {
 
         if ($currentPassword === '' || $newPassword === '' || $confirmPassword === '') {
             $this->setFlash('error', 'Please complete all password fields.');
-            header('Location: ' . route_url('userController', 'user'));
+            if ($isLandingFlow) {
+                header('Location: /lab_sync/index.php?controller=home&action=index&passwordChangeError=' . urlencode('Please complete all password fields.'));
+            } else {
+                header('Location: ' . route_url('userController', 'user'));
+            }
             exit();
         }
 
         if (strlen($newPassword) < 8) {
             $this->setFlash('error', 'New password must contain at least 8 characters.');
-            header('Location: ' . route_url('userController', 'user'));
+            if ($isLandingFlow) {
+                header('Location: /lab_sync/index.php?controller=home&action=index&passwordChangeError=' . urlencode('New password must contain at least 8 characters.'));
+            } else {
+                header('Location: ' . route_url('userController', 'user'));
+            }
             exit();
         }
 
         if ($newPassword !== $confirmPassword) {
             $this->setFlash('error', 'New password and confirmation do not match.');
-            header('Location: ' . route_url('userController', 'user'));
+            if ($isLandingFlow) {
+                header('Location: /lab_sync/index.php?controller=home&action=index&passwordChangeError=' . urlencode('New password and confirmation do not match.'));
+            } else {
+                header('Location: ' . route_url('userController', 'user'));
+            }
             exit();
         }
 
         $result = $this->userModel->changePassword(intval($_SESSION['user_id']), $currentPassword, $newPassword);
         if (!empty($result['ok'])) {
             $_SESSION['must_change_password'] = 0;
+            unset($_SESSION['password_change_prompt_dismissed']);
+
+            if ($wasForcedChange) {
+                $_SESSION = [];
+                if (ini_get("session.use_cookies")) {
+                    $params = session_get_cookie_params();
+                    setcookie(session_name(), '', time() - 42000,
+                        $params["path"], $params["domain"],
+                        $params["secure"], $params["httponly"]
+                    );
+                }
+                session_destroy();
+                header('Location: /lab_sync/index.php?controller=Auth&action=index&passwordChanged=true');
+                exit();
+            }
         }
         $this->setFlash($result['ok'] ? 'success' : 'error', $result['message']);
 
-        header('Location: ' . route_url('userController', 'user'));
+        if ($isLandingFlow && empty($result['ok'])) {
+            header('Location: /lab_sync/index.php?controller=home&action=index&passwordChangeError=' . urlencode((string)$result['message']));
+        } else {
+            header('Location: ' . route_url('userController', 'user'));
+        }
+        exit();
+    }
+
+    public function dismissPasswordPrompt() {
+        $this->ensureStaffSession();
+        $this->validateCsrfOrFail();
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('HTTP/1.1 405 Method Not Allowed');
+            echo json_encode(['ok' => false, 'message' => 'Method not allowed']);
+            exit();
+        }
+
+        if (intval($_SESSION['must_change_password'] ?? 0) !== 1) {
+            header('Content-Type: application/json');
+            echo json_encode(['ok' => true]);
+            exit();
+        }
+
+        $_SESSION['password_change_prompt_dismissed'] = 1;
+        header('Content-Type: application/json');
+        echo json_encode(['ok' => true]);
         exit();
     }
 

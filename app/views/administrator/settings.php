@@ -74,15 +74,18 @@ $statusMap = [
 
                         <a class="navItem" onclick="showSection('general', this, event)" href="#">General Settings</a>
 
+                        <a class="navItem" onclick="showSection('online-slots', this, event)" href="#">Online Slots</a>
+
                     </div>
                 </div>
-                
-                
+
+
                 <div id="content-area" class="content-area" >
                     <?php require __DIR__ . '/settings/team_management.php'; ?>
                     <div id="partner-labs" class="section" style="display:none;"></div>
                     <div id="configuration" class="section" style="display:none;"></div>
                     <div id="general" class="section" style="display:none;"></div>
+                    <div id="online-slots" class="section" style="display:none;"></div>
                 </div>
                 </section>
                 
@@ -109,7 +112,7 @@ $statusMap = [
             </div>
         </div>
 
-        <script src="/lab_sync/public/js/showSection.js?v=1"></script>
+        <script src="/lab_sync/public/js/showSection.js?v=2"></script>
         <script src="/lab_sync/public/js/showAlert.js"></script>
         <script src="/lab_sync/public/js/teamManagement.js"></script>
         <script src="/lab_sync/public/js/editUserModal.js?v=2"></script>

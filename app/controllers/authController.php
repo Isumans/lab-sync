@@ -43,16 +43,20 @@ class AuthController {
 
                 $mustChangePassword = $model->isPasswordChangeRequired(intval($_SESSION['user_id'] ?? 0));
                 $_SESSION['must_change_password'] = $mustChangePassword ? 1 : 0;
+                if ($mustChangePassword) {
+                    $_SESSION['password_change_prompt_dismissed'] = 0;
+                } else {
+                    unset($_SESSION['password_change_prompt_dismissed']);
+                }
+
+                if (empty($_SESSION['csrf_token'])) {
+                    $_SESSION['csrf_token'] = bin2hex(random_bytes(24));
+                }
                 
                 // Redirect based on user role
                 $role = $_SESSION['user_role'] ?? '';
-                if (($role === 'admin' || $role === 'receptionist' || $role === 'technician') && $mustChangePassword) {
-                    header('Location: /lab_sync/index.php?controller=userController&action=user&forcePasswordChange=true');
-                    exit;
-                }
-
                 if ($role === 'admin' || $role === 'receptionist' || $role === 'technician') {
-                    header('Location: /lab_sync/index.php?controller=home&action=index');
+                    header('Location: /lab_sync/index.php?controller=dashboard&action=index');
                 } else {
                     // Patients land on the public home/index page first.
                     header('Location: /lab_sync/index.php');

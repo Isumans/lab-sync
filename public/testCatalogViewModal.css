@@ -1,0 +1,340 @@
+/* =====================================================
+   Test Catalog — View Modal
+   ===================================================== */
+
+.test-catalog-view-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 1400;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background: rgba(15, 23, 42, 0.45);
+    padding: 20px;
+}
+
+.test-catalog-view-modal.is-open {
+    display: flex;
+}
+
+.test-catalog-view-dialog {
+    width: min(1020px, 100%);
+    max-height: 92vh;
+    overflow: hidden;
+    border-radius: 14px;
+    background: #fff;
+    box-shadow: 0 24px 70px rgba(0, 0, 0, 0.22);
+    border: 1px solid #d7e2ea;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Topbar */
+.test-catalog-view-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 20px;
+    border-bottom: 1px solid #dce8ef;
+    flex-shrink: 0;
+    background: #f6f9fc;
+    border-radius: 14px 14px 0 0;
+}
+
+.test-catalog-view-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: #1a2e3b;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+}
+
+.test-catalog-view-close {
+    background: none;
+    border: none;
+    font-size: 22px;
+    line-height: 1;
+    color: #6b8a9a;
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: 4px;
+    transition: color 0.15s, background 0.15s;
+}
+
+.test-catalog-view-close:hover {
+    color: #c0392b;
+    background: #fdecea;
+}
+
+/* Scrollable body */
+.test-catalog-view-body {
+    padding: 20px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+/* Loading / error states */
+.test-catalog-view-loading,
+.test-catalog-view-error {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 48px 20px;
+    color: #5a7c94;
+    text-align: center;
+}
+
+.test-catalog-view-error h3 {
+    color: #c0392b;
+    margin: 0 0 6px;
+}
+
+.test-catalog-view-error p {
+    margin: 0;
+    font-size: 14px;
+}
+
+.spinner {
+    width: 36px;
+    height: 36px;
+    border: 3px solid #dce8ef;
+    border-top-color: #1aaadf;
+    border-radius: 50%;
+    animation: tcSpin 0.7s linear infinite;
+}
+
+@keyframes tcSpin {
+    to { transform: rotate(360deg); }
+}
+
+/* ---- Content inside get_test_details.php ---- */
+
+.test-details-shell {
+    font-family: inherit;
+}
+
+.test-details-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 18px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid #e4ecf3;
+}
+
+.test-details-title {
+    margin: 0 0 4px;
+    font-size: 20px;
+    font-weight: 700;
+    color: #1a2e3b;
+}
+
+.test-details-sub {
+    margin: 0;
+    font-size: 12px;
+    color: #7a9aab;
+    letter-spacing: 0.04em;
+}
+
+.test-active-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.test-active-badge.is-active {
+    background: #d4f5e4;
+    color: #1a7a4a;
+    border: 1px solid #a8e6c3;
+}
+
+.test-active-badge.is-inactive {
+    background: #f0f0f0;
+    color: #666;
+    border: 1px solid #ddd;
+}
+
+/* Grid of info cards */
+.test-details-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 18px;
+}
+
+.test-detail-card {
+    border: 1px solid #dce8ef;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.test-detail-card--full {
+    grid-column: 1 / -1;
+}
+
+.test-detail-card-title {
+    margin: 0;
+    padding: 10px 14px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: #5a7c94;
+    background: #f0f5fa;
+    border-bottom: 1px solid #dce8ef;
+}
+
+.detail-list {
+    padding: 10px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.detail-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    font-size: 13px;
+}
+
+.detail-label {
+    color: #7a9aab;
+    font-size: 12px;
+    flex-shrink: 0;
+}
+
+.detail-row strong {
+    color: #1a2e3b;
+    text-align: right;
+    word-break: break-word;
+}
+
+.price-highlight {
+    color: #22a06b;
+    font-size: 15px;
+}
+
+.detail-text {
+    margin: 0;
+    padding: 10px 14px;
+    font-size: 13px;
+    color: #3a5060;
+    line-height: 1.6;
+}
+
+/* Units section */
+.test-units-section {
+    border-top: 1px solid #e4ecf3;
+    padding-top: 16px;
+    margin-top: 4px;
+}
+
+.test-units-heading {
+    margin: 0 0 12px;
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #5a7c94;
+}
+
+.test-unit-block {
+    border: 1px solid #e4ecf3;
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 12px;
+}
+
+.unit-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: #f6f9fc;
+    border-bottom: 1px solid #e4ecf3;
+}
+
+.unit-value-badge {
+    font-weight: 700;
+    color: #1a2e3b;
+    font-size: 13px;
+}
+
+.unit-name-label {
+    color: #5a7c94;
+    font-size: 12px;
+}
+
+.unit-default-tag {
+    margin-left: auto;
+    background: #d4f5e4;
+    color: #1a7a4a;
+    border: 1px solid #a8e6c3;
+    border-radius: 10px;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.ranges-table-wrap {
+    overflow-x: auto;
+}
+
+.ranges-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+}
+
+.ranges-table th,
+.ranges-table td {
+    padding: 7px 12px;
+    border-bottom: 1px solid #edf2f7;
+    text-align: left;
+    white-space: nowrap;
+}
+
+.ranges-table th {
+    background: #f0f5fa;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #5a7c94;
+}
+
+.ranges-table tr:last-child td {
+    border-bottom: none;
+}
+
+.no-ranges-note,
+.no-units-note {
+    margin: 0;
+    padding: 10px 14px;
+    color: #9ab0bb;
+    font-size: 13px;
+    font-style: italic;
+}
+
+@media (max-width: 860px) {
+    .test-details-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .test-detail-card--full {
+        grid-column: 1;
+    }
+}

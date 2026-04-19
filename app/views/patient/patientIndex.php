@@ -7,6 +7,18 @@ $styleVersion = @filemtime(__DIR__ . '/../../../public/css/nav.css');
 if ($styleVersion === false) {
   $styleVersion = time();
 }
+
+$staffNeedsPasswordChange = false;
+$passwordPromptDismissed = false;
+$csrfToken = (string)($_SESSION['csrf_token'] ?? '');
+$passwordChangeError = trim((string)($_GET['passwordChangeError'] ?? ''));
+
+$role = (string)($_SESSION['user_role'] ?? '');
+$isStaff = in_array($role, ['admin', 'receptionist', 'technician'], true);
+if ($isStaff && intval($_SESSION['must_change_password'] ?? 0) === 1) {
+  $staffNeedsPasswordChange = true;
+  $passwordPromptDismissed = intval($_SESSION['password_change_prompt_dismissed'] ?? 0) === 1;
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -22,6 +34,123 @@ if ($styleVersion === false) {
   <link rel="stylesheet" href="/lab_sync/public/css/nav.css?v=<?= $styleVersion ?>" />
   <link rel="stylesheet" href="/lab_sync/public/css/home.css?v=<?= $styleVersion ?>" />
   <link rel="stylesheet" href="/lab_sync/public/css/footer.css?v=<?= $styleVersion ?>" />
+  <style>
+    .first-login-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.55);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+      padding: 16px;
+    }
+
+    .first-login-modal.is-open {
+      display: flex;
+    }
+
+    .first-login-modal-dialog {
+      width: min(560px, 100%);
+      background: #ffffff;
+      border-radius: 14px;
+      border: 1px solid #d7deea;
+      box-shadow: 0 12px 28px rgba(15, 23, 42, 0.24);
+      overflow: hidden;
+    }
+
+    .first-login-modal-header {
+      padding: 16px 18px;
+      border-bottom: 1px solid #e5eaf3;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .first-login-modal-title {
+      margin: 0;
+      font-size: 1.1rem;
+      color: #1f2b5b;
+      font-weight: 700;
+    }
+
+    .first-login-modal-close {
+      background: transparent;
+      border: none;
+      font-size: 1.35rem;
+      line-height: 1;
+      color: #4b5563;
+      cursor: pointer;
+    }
+
+    .first-login-modal-body {
+      padding: 18px;
+      color: #1f2b5b;
+    }
+
+    .first-login-instruction {
+      margin: 0 0 14px;
+      font-size: 0.96rem;
+    }
+
+    .first-login-error {
+      margin: 0 0 12px;
+      background: #fee2e2;
+      color: #9f1239;
+      border: 1px solid #fecaca;
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 0.9rem;
+    }
+
+    .first-login-form-grid {
+      display: grid;
+      gap: 12px;
+    }
+
+    .first-login-form-grid label {
+      display: grid;
+      gap: 6px;
+      font-size: 0.9rem;
+      color: #334155;
+      font-weight: 600;
+    }
+
+    .first-login-form-grid input {
+      border: 1px solid #cfd8e3;
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 0.94rem;
+    }
+
+    .first-login-modal-footer {
+      padding: 14px 18px;
+      border-top: 1px solid #e5eaf3;
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    .first-login-btn {
+      border: none;
+      border-radius: 8px;
+      padding: 10px 14px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+
+    .first-login-btn-secondary {
+      background: #eef2f7;
+      color: #1f2b5b;
+    }
+
+    .first-login-btn-primary {
+      background: #1f2b5b;
+      color: #fff;
+    }
+  </style>
 </head>
 <body>
   <?php require_once __DIR__ . '/../../../public/partials/header.php'; ?>
@@ -328,7 +457,56 @@ if ($styleVersion === false) {
   </section>
 
 
+  <?php if ($staffNeedsPasswordChange): ?>
+    <div
+      id="firstLoginPasswordModal"
+      class="first-login-modal <?php echo $passwordPromptDismissed ? '' : 'is-open'; ?>"
+      data-open="<?php echo $passwordPromptDismissed ? '0' : '1'; ?>"
+      data-csrf="<?php echo htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8'); ?>"
+      data-dismiss-url="/lab_sync/index.php?controller=userController&action=dismissPasswordPrompt"
+      data-force-required="1"
+    >
+      <div class="first-login-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="firstLoginModalTitle">
+        <div class="first-login-modal-header">
+          <h3 id="firstLoginModalTitle" class="first-login-modal-title">Change Your Temporary Password</h3>
+          <button type="button" id="firstLoginModalClose" class="first-login-modal-close" aria-label="Close">&times;</button>
+        </div>
+        <div class="first-login-modal-body">
+          <p class="first-login-instruction">You are signed in with a temporary password. Set a new password now to secure your account. If you close this, a reminder stays in the notification bell.</p>
+          <?php if ($passwordChangeError !== ''): ?>
+            <p class="first-login-error"><?php echo htmlspecialchars($passwordChangeError, ENT_QUOTES, 'UTF-8'); ?></p>
+          <?php endif; ?>
+
+          <form method="post" action="/lab_sync/index.php?controller=userController&action=changePassword" class="first-login-form-grid">
+            <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8'); ?>">
+            <input type="hidden" name="from_landing" value="1">
+
+            <label>
+              Current Password
+              <input type="password" name="current_password" required autocomplete="current-password">
+            </label>
+            <label>
+              New Password
+              <input type="password" name="new_password" required minlength="8" autocomplete="new-password">
+            </label>
+            <label>
+              Confirm New Password
+              <input type="password" name="confirm_password" required minlength="8" autocomplete="new-password">
+            </label>
+
+            <div class="first-login-modal-footer">
+              <button type="button" id="firstLoginMaybeLater" class="first-login-btn first-login-btn-secondary">Maybe Later</button>
+              <button type="submit" class="first-login-btn first-login-btn-primary">Change Password</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  <?php endif; ?>
+
+
   <?php require_once __DIR__ . '/../../../public/partials/footer.php'; ?>
+  <script src="/lab_sync/public/js/firstLoginPasswordPrompt.js"></script>
 
 </body>
 </html>

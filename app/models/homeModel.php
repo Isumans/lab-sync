@@ -1066,6 +1066,34 @@ class HomeModel {
         $stmt->close();
         return (float)($row['total'] ?? 0.0);
     }
+
+    // ── Online Booking Slots ──────────────────────────────────────────────────
+
+    public function getAvailableSlotsForDate(string $date, string $dayGroup): array {
+        $stmt = $this->db->prepare(
+            "SELECT s.id, s.start_time, s.end_time, s.max_patients,
+                (SELECT COUNT(*) FROM appointment a
+                 WHERE a.appointment_time = s.start_time
+                   AND a.appointment_date = ?
+                   AND a.method = 'online'
+                   AND LOWER(COALESCE(a.status,'pending')) <> 'cancelled'
+                ) AS booked_count
+             FROM online_booking_slots s
+             WHERE s.day_group = ? AND s.is_active = 1
+             ORDER BY s.start_time"
+        );
+        if (!$stmt) return [];
+        $stmt->bind_param('ss', $date, $dayGroup);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $slots = [];
+        while ($row = $result->fetch_assoc()) {
+            $row['available'] = ((int)$row['booked_count'] < (int)$row['max_patients']);
+            $slots[] = $row;
+        }
+        $stmt->close();
+        return $slots;
+    }
 }
 
 ?>

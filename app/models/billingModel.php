@@ -128,10 +128,10 @@ class BillingModel {
 
         $itemsInput = isset($input['items']) && is_array($input['items']) ? $input['items'] : [];
 
-        // PARTIALLY_PAID bills are settlement-only: no item, subtotal, tax, or discount changes.
+        // Existing partially-paid bills must be settled in full.
         if ($existing && $existingStatus === 'PARTIALLY_PAID') {
             if (!$finalize) {
-                $this->lastError = 'Draft save is not allowed for partially paid bills.';
+                $this->lastError = 'Draft save is not allowed. Please pay the full remaining balance to settle this bill.';
                 return null;
             }
 
@@ -140,15 +140,20 @@ class BillingModel {
             $alreadyPaid = $this->toMoney($existing['paid_amount'] ?? 0);
             $remaining = max(0, round($totalAmount - $alreadyPaid, 2));
 
-            $paymentToApply = min($amountTendered, $remaining);
-            if ($paymentToApply <= 0) {
+            if ($amountTendered <= 0) {
                 $this->lastError = 'Enter a payment amount greater than zero.';
                 return null;
             }
 
-            $newPaidAmount = min($totalAmount, round($alreadyPaid + $paymentToApply, 2));
-            $newBalance = max(0, round($totalAmount - $newPaidAmount, 2));
-            $newStatus = $newBalance > 0 ? 'PARTIALLY_PAID' : 'PAID';
+            if ($amountTendered < $remaining) {
+                $this->lastError = 'Partial payments are not allowed. Please pay the full remaining balance of LKR ' . number_format($remaining, 2) . '.';
+                return null;
+            }
+
+            $paymentToApply = $remaining;
+            $newPaidAmount = $totalAmount;
+            $newBalance = 0.0;
+            $newStatus = 'PAID';
 
             $userId = intval($userId);
             if ($userId <= 0) {
@@ -223,12 +228,15 @@ class BillingModel {
         $paidAmount = round($paymentToApply, 2);
         $balanceDue = max(0, round($totalAmount - $paidAmount, 2));
 
+        if ($finalize && $paidAmount > 0 && $balanceDue > 0) {
+            $this->lastError = 'Partial payments are not allowed. Please pay the full amount (LKR ' . number_format($totalAmount, 2) . ') or save without payment.';
+            return null;
+        }
+
         $status = 'DRAFT';
         if ($finalize) {
             if ($paidAmount <= 0) {
                 $status = 'PENDING';
-            } elseif ($balanceDue > 0) {
-                $status = 'PARTIALLY_PAID';
             } else {
                 $status = 'PAID';
             }

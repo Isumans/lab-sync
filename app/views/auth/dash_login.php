@@ -50,6 +50,13 @@
                         <p style="margin: 5px 0 0 0; font-size: 0.9rem;">You must log in to access this feature. Please enter your credentials below.</p>
                     </div>
                 <?php endif; ?>
+
+                <?php if (isset($_GET['passwordChanged']) && $_GET['passwordChanged'] === 'true'): ?>
+                    <div class="info-banner" style="background-color: #ecfdf5; border-left: 4px solid #10b981; padding: 12px; margin-bottom: 20px; border-radius: 4px; color: #047857;">
+                        <strong>Password Updated</strong>
+                        <p style="margin: 5px 0 0 0; font-size: 0.9rem;">Your password has been changed successfully. Please sign in again with the new password.</p>
+                    </div>
+                <?php endif; ?>
                 
                 <form action="/lab_sync/index.php?controller=Auth&action=login" method="POST" onsubmit="return validateForm()">
                     <div class="input-group">

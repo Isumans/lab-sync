@@ -3,9 +3,10 @@ function showSection(sectionId, tabElement, event) {
 
     // Mapping of section IDs to their corresponding controller actions
     const sectionUrls = {
-        'partner-labs': '/lab_sync/index.php?controller=partnerLabController&action=getPartnerLabsSection',
+        'partner-labs':  '/lab_sync/index.php?controller=partnerLabController&action=getPartnerLabsSection',
         'configuration': '/lab_sync/index.php?controller=administratorController&action=getLabConfigurationSection',
-        'general': '/lab_sync/index.php?controller=administratorController&action=getGeneralSettingsSection'
+        'general':       '/lab_sync/index.php?controller=administratorController&action=getGeneralSettingsSection',
+        'online-slots':  '/lab_sync/index.php?controller=administratorController&action=getOnlineSlotsSection'
     };
 
     const sectionElement = document.getElementById(sectionId);

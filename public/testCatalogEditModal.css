@@ -1,0 +1,263 @@
+/* =====================================================
+   Test Catalog — Edit Modal
+   ===================================================== */
+
+.test-catalog-edit-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 1450;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background: rgba(15, 23, 42, 0.45);
+    padding: 20px;
+}
+
+.test-catalog-edit-modal.is-open {
+    display: flex;
+}
+
+.test-catalog-edit-dialog {
+    width: min(780px, 100%);
+    max-height: 92vh;
+    overflow: hidden;
+    border-radius: 14px;
+    background: #fff;
+    box-shadow: 0 24px 70px rgba(0, 0, 0, 0.22);
+    border: 1px solid #d7e2ea;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Form takes full height of dialog */
+#editTestCatalogForm {
+    display: flex;
+    flex-direction: column;
+    max-height: 92vh;
+    overflow: hidden;
+}
+
+/* Header */
+.test-catalog-edit-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 16px 20px;
+    border-bottom: 1px solid #dce8ef;
+    flex-shrink: 0;
+    background: #f6f9fc;
+    border-radius: 14px 14px 0 0;
+}
+
+.test-catalog-edit-header h2 {
+    margin: 0 0 2px;
+    font-size: 16px;
+    font-weight: 700;
+    color: #1a2e3b;
+}
+
+.test-catalog-edit-subtitle {
+    margin: 0;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: #7a9aab;
+}
+
+.test-catalog-edit-close {
+    background: none;
+    border: none;
+    font-size: 22px;
+    line-height: 1;
+    color: #6b8a9a;
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: 4px;
+    transition: color 0.15s, background 0.15s;
+    flex-shrink: 0;
+}
+
+.test-catalog-edit-close:hover {
+    color: #c0392b;
+    background: #fdecea;
+}
+
+/* Alert */
+.tc-edit-alert {
+    margin: 12px 20px 0;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    background: #fdecea;
+    color: #a93226;
+    border: 1px solid #f5c6c2;
+}
+
+.tc-edit-alert.success {
+    background: #d4f5e4;
+    color: #1a7a4a;
+    border-color: #a8e6c3;
+}
+
+/* Scrollable body */
+.test-catalog-edit-body {
+    overflow-y: auto;
+    padding: 16px 20px;
+    flex: 1;
+}
+
+/* Section cards */
+.tc-edit-section {
+    border: 1px solid #e1ebf3;
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-bottom: 14px;
+}
+
+.tc-edit-section-title {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #5a7c94;
+    margin-bottom: 12px;
+}
+
+/* Two-column grid */
+.tc-edit-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+/* Form rows and labels */
+.tc-edit-row {
+    margin-bottom: 12px;
+}
+
+.tc-edit-row:last-child {
+    margin-bottom: 0;
+}
+
+.tc-edit-label {
+    display: block;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #4a6475;
+    margin-bottom: 5px;
+}
+
+/* Inputs */
+.tc-edit-input,
+.tc-edit-select,
+.tc-edit-textarea {
+    width: 100%;
+    padding: 9px 12px;
+    border: 1px solid #cdd9e2;
+    border-radius: 8px;
+    font-size: 14px;
+    color: #1a2e3b;
+    background: #fff;
+    box-sizing: border-box;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    font-family: inherit;
+}
+
+.tc-edit-input:focus,
+.tc-edit-select:focus,
+.tc-edit-textarea:focus {
+    outline: none;
+    border-color: #1aaadf;
+    box-shadow: 0 0 0 3px rgba(26, 170, 223, 0.15);
+}
+
+.tc-edit-textarea {
+    resize: vertical;
+    min-height: 72px;
+}
+
+/* Price preview */
+.tc-price-preview {
+    margin: 6px 0 0;
+    font-size: 12px;
+    color: #5a7c94;
+}
+
+.tc-price-preview strong {
+    color: #22a06b;
+    font-size: 14px;
+}
+
+/* Units note */
+.tc-units-note {
+    margin: 4px 0 0;
+    font-size: 12px;
+    color: #9ab0bb;
+    font-style: italic;
+}
+
+.tc-units-note a {
+    color: #1aaadf;
+    text-decoration: none;
+}
+
+/* Sticky footer */
+.test-catalog-edit-footer {
+    padding: 12px 20px;
+    border-top: 1px solid #dce8ef;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    flex-shrink: 0;
+    background: #f6f9fc;
+    border-radius: 0 0 14px 14px;
+}
+
+.tc-edit-cancel-btn {
+    padding: 9px 20px;
+    background: #fff;
+    border: 1px solid #cdd9e2;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #4a6475;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+}
+
+.tc-edit-cancel-btn:hover {
+    background: #f0f5fa;
+    border-color: #b0c5d2;
+}
+
+.tc-edit-submit-btn {
+    padding: 9px 22px;
+    background: #1bc47d;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #fff;
+    cursor: pointer;
+    transition: background 0.15s, opacity 0.15s;
+}
+
+.tc-edit-submit-btn:hover {
+    background: #17a86a;
+}
+
+.tc-edit-submit-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+@media (max-width: 640px) {
+    .tc-edit-grid-2 {
+        grid-template-columns: 1fr;
+    }
+}
