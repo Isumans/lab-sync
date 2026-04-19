@@ -5,14 +5,15 @@ $extraStyles = '<link rel="stylesheet" href="/lab_sync/public/teamStyles.css">'
     . '<link rel="stylesheet" href="/lab_sync/public/testCatalogTable.css">'
     . '<link rel="stylesheet" href="/lab_sync/public/testCatalogViewModal.css">'
     . '<link rel="stylesheet" href="/lab_sync/public/testCatalogEditModal.css">'
-    . '<link rel="stylesheet" href="/lab_sync/public/testCatalogDeleteModal.css">';
+    . '<link rel="stylesheet" href="/lab_sync/public/testCatalogDeleteModal.css">'
+    .'<link rel="stylesheet" href="/lab_sync/public/reportsDashboard.css">';
 $role = $_GET['role'] ?? '';
 // Start output buffering
 ob_start();
 ?>
                 
     
-                <div class="Tmain-content">
+                <div class="reports-dashboard">
                     <?php
                         $pageBreadcrumbText = 'Test-Catalog->';
                         $pageActionHtml = '<a class="add-user-button" href="/lab_sync/index.php?controller=TestCatalog&action=add_test">+ Add New Test</a>';

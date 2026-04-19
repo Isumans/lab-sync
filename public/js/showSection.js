@@ -33,6 +33,9 @@ function showSection(sectionId, tabElement, event) {
                 if (sectionId === 'partner-labs' && typeof initPartnerLabsFilter === 'function') {
                     initPartnerLabsFilter();
                 }
+                if (sectionId === 'online-slots' && typeof initOnlineSlots === 'function') {
+                    initOnlineSlots();
+                }
             })
             .catch(error => {
                 console.error('Error loading section:', error);

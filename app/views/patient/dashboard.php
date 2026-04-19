@@ -20,6 +20,7 @@ unset($_SESSION['success'], $_SESSION['error']);
   <link rel="stylesheet" href="/lab_sync/public/paymentModal.css" />
   <link rel="stylesheet" href="/lab_sync/public/appointmentEditModal.css" />
   <link rel="stylesheet" href="/lab_sync/public/appointmentDeleteModal.css" />
+  <link rel="stylesheet" href="/lab_sync/public/appointmentDetailsModal.css" />
   <style>
     :root {
       --primary-color: #3DBDEC;
@@ -553,9 +554,9 @@ unset($_SESSION['success'], $_SESSION['error']);
       <table>
         <thead>
           <tr>
+            <th>Appointment ID</th>
             <th>Date</th>
             <th>Time</th>
-            <th>Tests</th>
             <th>Status</th>
             <th>Home Collection</th>
             <th class="th-right">Actions</th>
@@ -572,6 +573,7 @@ unset($_SESSION['success'], $_SESSION['error']);
                 $status = (string)($appointment['appointment_status'] ?? 'Pending');
                 $homeCollection = !empty($appointment['home_collection']);
                 $statusClass = strtolower($status);
+                $appointmentRef = 'APP-' . str_pad((string)$id, 4, '0', STR_PAD_LEFT);
               ?>
               <tr
                 data-id="<?php echo htmlspecialchars((string)$id); ?>"
@@ -582,13 +584,16 @@ unset($_SESSION['success'], $_SESSION['error']);
                 data-address="<?php echo htmlspecialchars((string)($appointment['collection_address'] ?? '')); ?>"
                 data-home="<?php echo $homeCollection ? 'Yes' : 'No'; ?>"
               >
+                <td class="cell-strong"><?php echo htmlspecialchars($appointmentRef); ?></td>
                 <td class="cell-strong"><?php echo htmlspecialchars($date); ?></td>
                 <td><?php echo htmlspecialchars($time); ?></td>
-                <td class="tests-cell" title="<?php echo htmlspecialchars($testsSummary); ?>"><?php echo htmlspecialchars($testsSummary); ?></td>
                 <td><span class="status-pill <?php echo htmlspecialchars($statusClass); ?>"><?php echo htmlspecialchars($status); ?></span></td>
                 <td><span class="home-badge <?php echo $homeCollection ? '' : 'no'; ?>"><?php echo $homeCollection ? 'Yes' : 'No'; ?></span></td>
                 <td class="td-right">
                   <div class="actions">
+                    <button type="button" class="action-btn edit" title="View" onclick="openView(this)">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                    </button>
                     <button type="button" class="action-btn edit" title="Edit" onclick="openEdit(this)">
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"></path></svg>
                     </button>
@@ -850,22 +855,13 @@ unset($_SESSION['success'], $_SESSION['error']);
   </div>
 </main>
 
-<div class="modal" id="viewModal" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-head">
-      <h3>Appointment Details</h3>
-      <button class="modal-close" type="button" onclick="closeModal('viewModal')">&times;</button>
+<div id="appointmentDetailsModal" class="appointment-details-modal" aria-hidden="true">
+  <div class="appointment-details-dialog" role="dialog" aria-modal="true" aria-labelledby="appointmentDetailsTitle">
+    <div class="appointment-details-topbar">
+      <div id="appointmentDetailsTitle" class="appointment-details-title">Appointment Details</div>
+      <button id="appointmentDetailsClose" class="appointment-details-close" type="button" aria-label="Close details">&times;</button>
     </div>
-    <div class="modal-body">
-      <div class="modal-row"><label>Date</label><p id="viewDate">-</p></div>
-      <div class="modal-row"><label>Time</label><p id="viewTime">-</p></div>
-      <div class="modal-row"><label>Tests</label><p id="viewTests">-</p></div>
-      <div class="modal-row"><label>Status</label><p id="viewStatus">-</p></div>
-      <div class="modal-row"><label>Home Collection</label><p id="viewHome">-</p></div>
-      <div class="modal-actions">
-        <button type="button" class="btn secondary" onclick="closeModal('viewModal')">Close</button>
-      </div>
-    </div>
+    <div id="appointmentDetailsBody" class="appointment-details-body"></div>
   </div>
 </div>
 
@@ -1509,6 +1505,84 @@ unset($_SESSION['success'], $_SESSION['error']);
     };
   }
 
+  function patientAppointmentDetailsConfig() {
+    var base = (window.LAB_SYNC_CONFIG && window.LAB_SYNC_CONFIG.baseUrl)
+      ? String(window.LAB_SYNC_CONFIG.baseUrl).replace(/\/$/, '')
+      : '/lab_sync';
+
+    return {
+      endpoint: base + '/index.php?controller=home&action=getAppointmentDetails'
+    };
+  }
+
+  function openPatientDetailsModal() {
+    const modal = document.getElementById('appointmentDetailsModal');
+    if (!modal) {
+      return;
+    }
+
+    modal.classList.add('is-open');
+    modal.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closePatientDetailsModal() {
+    const modal = document.getElementById('appointmentDetailsModal');
+    const body = document.getElementById('appointmentDetailsBody');
+    if (!modal) {
+      return;
+    }
+
+    modal.classList.remove('is-open');
+    modal.setAttribute('aria-hidden', 'true');
+    if (body) {
+      body.innerHTML = '';
+    }
+    document.body.style.overflow = '';
+  }
+
+  function openView(button) {
+    const row = rowDataFromButton(button);
+    if (!row || !row.id) {
+      return;
+    }
+
+    const body = document.getElementById('appointmentDetailsBody');
+    if (!body) {
+      return;
+    }
+
+    body.innerHTML = '<div class="appointment-details-loading"><div class="spinner" aria-hidden="true"></div><p>Loading appointment details...</p></div>';
+    openPatientDetailsModal();
+
+    const config = patientAppointmentDetailsConfig();
+    fetch(config.endpoint + '&appointment_id=' + encodeURIComponent(row.id), {
+      method: 'GET',
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest'
+      }
+    })
+      .then(function (response) {
+        if (!response.ok) {
+          return response.text().then(function (text) {
+            throw new Error(text || ('Request failed with status ' + response.status));
+          });
+        }
+        return response.text();
+      })
+      .then(function (html) {
+        if (!html || !html.trim()) {
+          throw new Error('The server returned an empty response.');
+        }
+        body.innerHTML = html;
+      })
+      .catch(function (error) {
+        body.innerHTML = '<div class="appointment-details-error-state"><h3>Unable to load details</h3><p>' +
+          String(error && error.message ? error.message : 'A network error occurred.') +
+          '</p></div>';
+      });
+  }
+
   function openModal(id) {
     const modal = document.getElementById(id);
     if (!modal) {
@@ -1792,12 +1866,21 @@ unset($_SESSION['success'], $_SESSION['error']);
     const patientDeleteClose = document.getElementById('patientDeleteAppointmentClose');
     const patientDeleteCancel = document.getElementById('patientDeleteAppointmentCancel');
     const patientDeleteModal = document.getElementById('patientDeleteAppointmentModal');
+    const detailsModal = document.getElementById('appointmentDetailsModal');
+    const detailsClose = document.getElementById('appointmentDetailsClose');
 
     patientDeleteClose && patientDeleteClose.addEventListener('click', () => setPatientDeleteModalOpen(false));
     patientDeleteCancel && patientDeleteCancel.addEventListener('click', () => setPatientDeleteModalOpen(false));
     patientDeleteModal && patientDeleteModal.addEventListener('click', function (event) {
       if (event.target === patientDeleteModal) {
         setPatientDeleteModalOpen(false);
+      }
+    });
+
+    detailsClose && detailsClose.addEventListener('click', closePatientDetailsModal);
+    detailsModal && detailsModal.addEventListener('click', function (event) {
+      if (event.target === detailsModal) {
+        closePatientDetailsModal();
       }
     });
   });
@@ -1809,6 +1892,7 @@ unset($_SESSION['success'], $_SESSION['error']);
 
     const patientEditModal = document.getElementById('patientEditAppointmentModal');
     const patientDeleteModal = document.getElementById('patientDeleteAppointmentModal');
+    const detailsModal = document.getElementById('appointmentDetailsModal');
 
     if (patientEditModal && patientEditModal.classList.contains('is-open')) {
       setPatientEditModalOpen(false);
@@ -1816,6 +1900,10 @@ unset($_SESSION['success'], $_SESSION['error']);
 
     if (patientDeleteModal && patientDeleteModal.classList.contains('is-open')) {
       setPatientDeleteModalOpen(false);
+    }
+
+    if (detailsModal && detailsModal.classList.contains('is-open')) {
+      closePatientDetailsModal();
     }
   });
 

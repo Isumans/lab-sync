@@ -331,6 +331,9 @@ class administratorModel {
         if ($maxPat < 1 || $maxPat > 100) {
             return ['success' => false, 'message' => 'Max patients must be between 1 and 100.'];
         }
+        if ($this->hasOverlappingOnlineSlot($dayGroup, $startTime, $endTime)) {
+            return ['success' => false, 'message' => 'This slot overlaps an existing slot in the selected day group.'];
+        }
 
         $stmt = $this->db->prepare(
             "INSERT INTO online_booking_slots (day_group, start_time, end_time, max_patients)
@@ -344,6 +347,33 @@ class administratorModel {
             return ['success' => false, 'message' => 'A slot with this start time already exists for that day group.'];
         }
         return ['success' => false, 'message' => 'Failed to save slot.'];
+    }
+
+    private function hasOverlappingOnlineSlot(string $dayGroup, string $startTime, string $endTime): bool {
+        $stmt = $this->db->prepare(
+            "SELECT id
+             FROM online_booking_slots
+             WHERE day_group = ?
+               AND ? < end_time
+               AND ? > start_time
+             LIMIT 1"
+        );
+
+        if (!$stmt) {
+            return false;
+        }
+
+        $stmt->bind_param('sss', $dayGroup, $startTime, $endTime);
+        if (!$stmt->execute()) {
+            $stmt->close();
+            return false;
+        }
+
+        $result = $stmt->get_result();
+        $hasOverlap = $result && $result->num_rows > 0;
+        $stmt->close();
+
+        return $hasOverlap;
     }
 
     public function deleteOnlineSlot(int $id): bool {

@@ -93,3 +93,433 @@
     border: 1px solid #7dd3fc;
 }
 
+.slots-config-shell {
+    --slots-accent: #37b5e8;
+    --slots-bg: #edf3f9;
+    --slots-card: #ffffff;
+    --slots-muted: #70839a;
+    --slots-border: #dbe4ee;
+    --slots-ink: #1d2a3a;
+    background: radial-gradient(circle at top right, #f9fcff 0%, var(--slots-bg) 52%, #e9f0f8 100%);
+    border: 1px solid var(--slots-border);
+    border-radius: 18px;
+    padding: 20px;
+}
+
+.slots-config-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+}
+
+.slots-config-head h3 {
+    margin: 0;
+    font-size: clamp(1.3rem, 2.5vw, 1.8rem);
+    line-height: 1.2;
+    color: var(--slots-ink);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+}
+
+.slots-config-head p {
+    margin: 4px 0 0;
+    color: var(--slots-muted);
+    font-size: 0.92rem;
+}
+
+.slots-day-tabs {
+    display: inline-flex;
+    gap: 8px;
+    background: #f2f7fc;
+    padding: 6px;
+    border-radius: 12px;
+    border: 1px solid var(--slots-border);
+}
+
+.slots-day-tab {
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: #68839b;
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    padding: 7px 12px;
+    cursor: pointer;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.slots-day-tab.is-active {
+    background: #fff;
+    color: #2376ad;
+    box-shadow: 0 8px 14px rgba(44, 117, 167, 0.15);
+}
+
+.slots-msg {
+    display: none;
+    border-radius: 10px;
+    padding: 10px 12px;
+    margin-bottom: 14px;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.slots-msg.success {
+    display: block;
+    background: #daf8eb;
+    border: 1px solid #95e2c0;
+    color: #126341;
+}
+
+.slots-msg.error {
+    display: block;
+    background: #fee5e5;
+    border: 1px solid #f3b5b5;
+    color: #8a1f1f;
+}
+
+.slots-layout-grid {
+    display: grid;
+    gap: 18px;
+    grid-template-columns: minmax(0, 1fr) 300px;
+}
+
+.slots-panel {
+    background: var(--slots-card);
+    border: 1px solid var(--slots-border);
+    border-radius: 14px;
+    padding: 14px;
+    box-shadow: 0 10px 30px rgba(19, 45, 70, 0.05);
+}
+
+.slots-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.slots-panel-header h4 {
+    margin: 0;
+    font-size: 0.96rem;
+    color: var(--slots-ink);
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.slots-pill {
+    font-size: 0.68rem;
+    padding: 5px 8px;
+    border-radius: 999px;
+    color: #4f6680;
+    border: 1px solid var(--slots-border);
+    background: #f4f8fc;
+}
+
+.slots-day-panel {
+    display: none;
+}
+
+.slots-day-panel.is-active {
+    display: block;
+}
+
+.slots-grid-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.slots-grid-table th,
+.slots-grid-table td {
+    border-bottom: 1px solid #edf2f8;
+    text-align: left;
+    padding: 10px 8px;
+}
+
+.slots-grid-table th {
+    color: #7d8fa4;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-weight: 800;
+}
+
+.slots-grid-table td {
+    color: #2f4156;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.slots-time {
+    font-weight: 800;
+    color: #24405c;
+}
+
+.slots-capacity-wrap {
+    min-width: 102px;
+}
+
+.slots-capacity-bar {
+    width: 100%;
+    height: 6px;
+    border-radius: 999px;
+    background: #e6eef7;
+    overflow: hidden;
+}
+
+.slots-capacity-bar span {
+    display: block;
+    height: 100%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #23a6dd, #46d0ff);
+}
+
+.slots-capacity-text {
+    margin-top: 5px;
+    font-size: 0.74rem;
+    color: #7088a2;
+}
+
+.slots-status-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    padding: 3px 10px;
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+}
+
+.slots-status-badge.is-active {
+    color: #0f6f4d;
+    background: #d8f8e8;
+}
+
+.slots-status-badge.is-inactive {
+    color: #6d7d8e;
+    background: #eff2f6;
+}
+
+.slots-actions-cell {
+    display: flex;
+    gap: 8px;
+}
+
+.slots-action-btn {
+    border: 1px solid var(--slots-border);
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    background: #fff;
+    color: #587087;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.slots-action-btn svg {
+    width: 16px;
+    height: 16px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.slots-action-btn:hover {
+    color: #1069a5;
+    border-color: #9dd0eb;
+    background: #f3fbff;
+}
+
+.btn-slot-delete:hover {
+    color: #a72626;
+    border-color: #efb0b0;
+    background: #fff2f2;
+}
+
+.slots-empty-row td {
+    text-align: center;
+    color: #6f8093;
+    padding: 24px 10px;
+}
+
+.slots-form-panel {
+    background: linear-gradient(180deg, #ffffff 0%, #f7fbff 100%);
+}
+
+.slots-form-meta {
+    margin: 0 0 12px;
+    font-size: 0.82rem;
+    color: #6f8499;
+}
+
+.slots-create-form {
+    display: grid;
+    gap: 12px;
+}
+
+.slots-field {
+    display: grid;
+    gap: 6px;
+}
+
+.slots-field span {
+    color: #72859b;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-weight: 800;
+}
+
+.slots-field input {
+    border: 1px solid #d8e4f0;
+    background: #ffffff;
+    border-radius: 10px;
+    height: 40px;
+    padding: 0 10px;
+    color: #203246;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.slots-field input:focus {
+    outline: none;
+    border-color: #91d4f1;
+    box-shadow: 0 0 0 3px rgba(55, 181, 232, 0.12);
+}
+
+.slots-submit-btn {
+    border: 0;
+    border-radius: 10px;
+    height: 42px;
+    color: #fff;
+    background: linear-gradient(90deg, #1ea8dc, #39c0ef);
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.slots-submit-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 18px rgba(47, 160, 206, 0.3);
+}
+
+.slots-insight-grid {
+    margin-top: 16px;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 12px;
+}
+
+.slots-insight-card {
+    border-radius: 12px;
+    border: 1px solid var(--slots-border);
+    padding: 12px;
+    min-height: 108px;
+}
+
+.slots-insight-card h5 {
+    margin: 0 0 8px;
+    color: #2d4a66;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.slots-insight-card p {
+    margin: 0;
+    font-size: 0.8rem;
+    line-height: 1.45;
+    color: #496681;
+}
+
+.slots-insight-card small {
+    display: block;
+    margin-top: 8px;
+    color: #7d94aa;
+    font-size: 0.72rem;
+}
+
+.tip-card {
+    background: linear-gradient(150deg, #f8fdff 0%, #e5f5ff 100%);
+}
+
+.load-card {
+    background: linear-gradient(150deg, #113b5f 0%, #0a2f4f 100%);
+}
+
+.load-card h5,
+.load-card p {
+    color: #d2ecff;
+}
+
+.slots-load-bar {
+    margin: 9px 0;
+    height: 8px;
+    width: 100%;
+    border-radius: 999px;
+    background: rgba(163, 212, 241, 0.25);
+    overflow: hidden;
+}
+
+.slots-load-bar span {
+    display: block;
+    height: 100%;
+    width: 58%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #34c1f2, #8ce7ff);
+}
+
+.status-card {
+    background: linear-gradient(145deg, #0f2742 0%, #143456 72%);
+}
+
+.status-card h5,
+.status-card p,
+.status-card small {
+    color: #d6ebff;
+}
+
+@media (max-width: 1100px) {
+    .slots-layout-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .slots-insight-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+@media (max-width: 760px) {
+    .slots-config-shell {
+        padding: 14px;
+    }
+
+    .slots-day-tabs {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .slots-grid-table th,
+    .slots-grid-table td {
+        padding: 8px 6px;
+        font-size: 0.74rem;
+    }
+
+    .slots-insight-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
