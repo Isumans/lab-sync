@@ -9,6 +9,7 @@
     var searchInput = null;
     var statusInput = null;
     var testTypeInput = null;
+    var sortOrderInput = null;
     var dateFromInput = null;
     var dateToInput = null;
     var clearBtn = null;
@@ -35,6 +36,7 @@
         searchInput = document.getElementById("rdSearch");
         statusInput = document.getElementById("rdStatus");
         testTypeInput = document.getElementById("rdTestType");
+        sortOrderInput = document.getElementById("rdSortOrder");
         dateFromInput = document.getElementById("rdDateFrom");
         dateToInput = document.getElementById("rdDateTo");
         clearBtn = document.getElementById("rdClearBtn");
@@ -81,6 +83,7 @@
             search: (getValue(searchInput, "") || "").trim(),
             status: (getValue(statusInput, "all") || "all").toLowerCase(),
             test_type: (getValue(testTypeInput, "all") || "all").toLowerCase(),
+            sort_order: (getValue(sortOrderInput, "newest") || "newest").toLowerCase(),
             from_date: getValue(dateFromInput, ""),
             to_date: getValue(dateToInput, "")
         };
@@ -104,6 +107,7 @@
             search: filters.search,
             status: filters.status,
             test_type: filters.test_type,
+            sort_order: filters.sort_order,
             from_date: filters.from_date,
             to_date: filters.to_date
         });
@@ -222,6 +226,9 @@
         if (testTypeInput) {
             testTypeInput.value = "all";
         }
+        if (sortOrderInput) {
+            sortOrderInput.value = "newest";
+        }
         if (dateFromInput) {
             dateFromInput.value = "";
         }
@@ -250,7 +257,7 @@
             });
         }
 
-        [statusInput, testTypeInput, dateFromInput, dateToInput].forEach(function (node) {
+        [statusInput, testTypeInput, sortOrderInput, dateFromInput, dateToInput].forEach(function (node) {
             if (node) {
                 node.addEventListener("change", function () {
                     currentPage = 1;

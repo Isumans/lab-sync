@@ -57,8 +57,9 @@ class paymentController {
             exit;
         }
 
-        if ($this->model->hasTimeSlotConflict($date, $time)) {
-            echo json_encode(['status' => 'error', 'message' => 'Selected slot is already taken. Please choose a different time.']);
+        if (!$this->model->isOnlineSlotCapacityAvailable($date, $time)) {
+            $message = $this->model->getLastError() ?: 'Selected slot is no longer available. Please choose a different time.';
+            echo json_encode(['status' => 'error', 'message' => $message]);
             exit;
         }
 

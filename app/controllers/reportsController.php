@@ -34,6 +34,7 @@ class reportsController {
             'search' => isset($_GET['search']) ? trim((string) $_GET['search']) : '',
             'status' => isset($_GET['status']) ? trim(strtolower((string) $_GET['status'])) : 'all',
             'test_type' => isset($_GET['test_type']) ? trim(strtolower((string) $_GET['test_type'])) : 'all',
+            'sort_order' => isset($_GET['sort_order']) ? trim(strtolower((string) $_GET['sort_order'])) : 'newest',
             'from_date' => isset($_GET['from_date']) ? trim((string) $_GET['from_date']) : '',
             'to_date' => isset($_GET['to_date']) ? trim((string) $_GET['to_date']) : '',
         ];

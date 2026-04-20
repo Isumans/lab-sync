@@ -15,10 +15,11 @@ class ReportModel {
         $offset = ($page - 1) * $perPage;
 
         list($baseSql, $types, $params) = $this->buildBaseReportsSql($filters);
+        $orderBy = $this->resolveReportsOrderBy($filters);
         $sql = "
             SELECT *
             FROM ({$baseSql}) report_rows
-            ORDER BY appointment_date DESC, appointment_time DESC, appointment_id DESC
+            ORDER BY {$orderBy}
             LIMIT ? OFFSET ?
         ";
 
@@ -60,6 +61,15 @@ class ReportModel {
         $result = $stmt->get_result();
         $row = $result ? $result->fetch_assoc() : null;
         return $row && isset($row['total_rows']) ? intval($row['total_rows']) : 0;
+    }
+
+    private function resolveReportsOrderBy($filters) {
+        $sortOrder = isset($filters['sort_order']) ? strtolower(trim((string)$filters['sort_order'])) : 'newest';
+        if ($sortOrder === 'oldest') {
+            return 'appointment_id ASC';
+        }
+
+        return 'appointment_id DESC';
     }
 
     public function getReportDetailsPayload($appointmentId) {

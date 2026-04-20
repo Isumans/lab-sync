@@ -368,7 +368,18 @@ class administratorController {
             'end_time'     => trim($_POST['end_time']     ?? ''),
             'max_patients' => trim($_POST['max_patients'] ?? ''),
         ];
+
+        if ($data['day_group'] === '' || $data['start_time'] === '' || $data['end_time'] === '' || $data['max_patients'] === '') {
+            echo json_encode(['success' => false, 'message' => 'Please fill all slot fields.']);
+            return;
+        }
+
         $result = $this->adminModel->addOnlineSlot($data);
+        if (!is_array($result) || !array_key_exists('success', $result)) {
+            echo json_encode(['success' => false, 'message' => 'Unexpected slot save response.']);
+            return;
+        }
+
         echo json_encode($result);
     }
 
