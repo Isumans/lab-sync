@@ -58,42 +58,6 @@
       line-height: 1.7; max-width: 38rem; margin: 0 auto 2rem;
     }
 
-    /* ---- Search / Filter bar ---- */
-    .filter-bar {
-      background: #fff;
-      border-bottom: 1px solid var(--neutral-200);
-      padding: 1.25rem 1.5rem;
-      position: sticky; top: 5rem; z-index: 40;
-      box-shadow: 0 2px 12px rgba(10,25,47,.06);
-    }
-    .filter-inner {
-      max-width: 1100px; margin: 0 auto;
-      display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;
-    }
-    .search-wrap {
-      position: relative; flex: 1; min-width: 200px;
-    }
-    .search-wrap svg { position: absolute; left: 0.9rem; top: 50%; transform: translateY(-50%); color: var(--neutral-400); }
-    .search-wrap input {
-      width: 100%; padding: 0.7rem 1rem 0.7rem 2.75rem;
-      border: 1px solid var(--neutral-300); border-radius: var(--radius-sm);
-      font-size: 0.9rem; font-family: var(--font-body);
-      background: var(--bg-100); color: var(--neutral-700);
-      outline: none; transition: border-color .2s, box-shadow .2s;
-    }
-    .search-wrap input:focus { border-color: var(--primary-400); box-shadow: 0 0 0 3px rgba(0,180,216,.12); }
-    .filter-chips { display: flex; gap: 0.5rem; flex-wrap: wrap; }
-    .chip {
-      padding: 0.45rem 1rem; border-radius: 9999px;
-      border: 1px solid var(--neutral-300); background: #fff;
-      font-size: 0.8rem; font-weight: 600; color: var(--neutral-600);
-      cursor: pointer; transition: all .2s;
-    }
-    .chip:hover, .chip.active {
-      background: var(--primary-500); color: #fff; border-color: var(--primary-500);
-    }
-    .results-count { margin-left: auto; font-size: 0.8rem; color: var(--neutral-400); font-weight: 500; white-space: nowrap; }
-
     /* ---- Test Grid ---- */
     .tests-section { padding: 3rem 1.5rem 5rem; }
     .tests-inner { max-width: 1100px; margin: 0 auto; }
@@ -153,13 +117,10 @@
     }
     .btn-book:hover { background: var(--primary-600); }
 
-    /* Empty / hidden via JS */
-    .test-card.hidden { display: none; }
     .no-results {
       grid-column: 1 / -1; text-align: center; padding: 4rem 0;
-      display: none;
+      display: block;
     }
-    .no-results.visible { display: block; }
     .no-results svg { color: var(--neutral-300); margin-bottom: 1rem; }
     .no-results p { color: var(--neutral-400); font-size: 0.975rem; }
 
@@ -200,32 +161,13 @@
     </div>
   </section>
 
-  <!-- FILTER BAR -->
-  <div class="filter-bar">
-    <div class="filter-inner">
-      <div class="search-wrap">
-        <svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-        <input type="text" id="searchInput" placeholder="Search tests (e.g., CBC, Vitamin D, Lipid)…">
-      </div>
-      <div class="filter-chips" id="filterChips">
-        <button class="chip active" data-cat="all">All</button>
-        <button class="chip" data-cat="blood">Blood Tests</button>
-        <button class="chip" data-cat="hormone">Hormones</button>
-        <button class="chip" data-cat="vitamin">Vitamins</button>
-        <button class="chip" data-cat="metabolic">Metabolic</button>
-        <button class="chip" data-cat="organ">Organ Function</button>
-      </div>
-      <span class="results-count" id="resultsCount"></span>
-    </div>
-  </div>
-
   <!-- TESTS GRID -->
   <section class="tests-section">
     <div class="tests-inner">
       <div class="catalog-grid" id="catalogGrid">
 
         <?php foreach ($tests as $t): ?>
-        <article class="test-card" data-cat="<?= htmlspecialchars($t['category'] ?? 'blood') ?>" data-name="<?= htmlspecialchars(strtolower($t['test_name'])) ?>">
+        <article class="test-card">
           <div class="test-card-top">
             <div class="test-icon">
               <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M9 3h6M10 3v5l-5.5 8.7A3 3 0 0 0 7 21h10a3 3 0 0 0 2.5-4.7L14 8V3" stroke-linecap="round"/></svg>
@@ -246,10 +188,12 @@
         </article>
         <?php endforeach; ?>
 
-        <div class="no-results" id="noResults">
-          <svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-          <p>No tests matched your search. Try a different keyword or category.</p>
-        </div>
+        <?php if (count($tests) === 0): ?>
+          <div class="no-results" id="noResults">
+            <svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <p>No tests matched your search. Try a different keyword.</p>
+          </div>
+        <?php endif; ?>
 
       </div>
     </div>
@@ -285,37 +229,6 @@
   <?php require_once __DIR__ . '/../../../public/partials/footer.php'; ?>
 
   <script>
-    // --- Filter & Search ---
-    const cards   = document.querySelectorAll('.test-card');
-    const chips   = document.querySelectorAll('.chip[data-cat]');
-    const search  = document.getElementById('searchInput');
-    const noRes   = document.getElementById('noResults');
-    const countEl = document.getElementById('resultsCount');
-    let activeCat = 'all';
-
-    function filterCards() {
-      const q = search.value.toLowerCase().trim();
-      let visible = 0;
-      cards.forEach(c => {
-        const catMatch  = activeCat === 'all' || c.dataset.cat === activeCat;
-        const nameMatch = !q || c.dataset.name.includes(q);
-        const show = catMatch && nameMatch;
-        c.classList.toggle('hidden', !show);
-        if (show) visible++;
-      });
-      noRes.classList.toggle('visible', visible === 0);
-      countEl.textContent = visible + ' test' + (visible !== 1 ? 's' : '');
-    }
-
-    chips.forEach(btn => btn.addEventListener('click', () => {
-      chips.forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      activeCat = btn.dataset.cat;
-      filterCards();
-    }));
-    search.addEventListener('input', filterCards);
-    filterCards(); // initial count
-
     // --- Modal ---
     function openTestModal(name, desc, prep, dur, bookUrl) {
       document.getElementById('mTitle').textContent = name;

@@ -506,9 +506,83 @@ unset($_SESSION['success'], $_SESSION['error']);
     .btn.danger { background: #c53d3d; color: #fff; }
 
     @media (max-width: 720px) {
-      .dashboard-wrap { padding: 18px 14px 34px; }
-      .action-btn { width: 56px; height: 56px; }
-      .action-btn svg { width: 22px; height: 22px; }
+      .dashboard-wrap {
+        padding: calc(5rem + 14px) 14px 34px;
+      }
+
+      .page-head {
+        margin-bottom: 14px;
+      }
+
+      .slider-tabs {
+        display: flex;
+        width: 100%;
+        overflow-x: auto;
+        white-space: nowrap;
+        padding: 5px;
+        scrollbar-width: thin;
+      }
+
+      .slider-tab {
+        flex: 0 0 auto;
+        padding: 10px 14px;
+        font-size: 0.9rem;
+      }
+
+      .card-head {
+        padding: 14px;
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .flash {
+        margin-left: 14px;
+        margin-right: 14px;
+      }
+
+      thead th,
+      tbody td {
+        padding: 12px 14px;
+      }
+
+      .actions {
+        justify-content: flex-start;
+        min-width: 0;
+        flex-wrap: wrap;
+      }
+
+      .action-btn {
+        width: 42px;
+        height: 42px;
+      }
+
+      .action-btn svg {
+        width: 18px;
+        height: 18px;
+      }
+
+      .modal-actions {
+        flex-direction: column;
+      }
+
+      .modal-actions .btn {
+        width: 100%;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .dashboard-wrap {
+        padding-left: 12px;
+        padding-right: 12px;
+      }
+
+      .slider-tab {
+        font-size: 0.85rem;
+      }
+
+      .card-head h2 {
+        font-size: 0.98rem;
+      }
     }
   </style>
 </head>

@@ -372,3 +372,116 @@
   .summary{position:static}
   .selection-float{position:static}
 }
+
+@media (max-width:640px){
+  .book-wrap{
+    padding:calc(5rem + 16px) 14px 40px;
+  }
+
+  .book-head{
+    margin-bottom:12px;
+  }
+
+  .book-title{
+    font-size:1.7rem;
+  }
+
+  .book-sub{
+    font-size:.95rem;
+  }
+
+  .sec-head,
+  .details-body,
+  .sum-head,
+  .sum-body,
+  .sum-items,
+  .sum-total,
+  .sum-actions,
+  .sum-note{
+    padding-left:14px;
+    padding-right:14px;
+  }
+
+  .sec-head{
+    flex-direction:column;
+    align-items:flex-start;
+  }
+
+  .selection-float{
+    flex-direction:column;
+    align-items:flex-start;
+  }
+
+  .test-list{
+    padding:10px 10px 4px;
+    max-height:none;
+  }
+
+  .test-row{
+    align-items:flex-start;
+    gap:8px;
+  }
+
+  .test-left{
+    flex:1;
+    min-width:0;
+    align-items:flex-start;
+  }
+
+  .test-name{
+    white-space:normal;
+    overflow:visible;
+    text-overflow:clip;
+    line-height:1.4;
+  }
+
+  .test-price{
+    font-size:12px;
+    padding-top:1px;
+  }
+
+  .slot-rail{
+    display:grid;
+    grid-template-columns:repeat(2, minmax(0,1fr));
+  }
+
+  .slot{
+    width:100%;
+    min-width:0;
+    padding:0 8px;
+  }
+
+  .home-toggle{
+    align-items:flex-start;
+  }
+
+  .vv{
+    max-width:55%;
+  }
+
+  .sum-item{
+    flex-direction:column;
+    align-items:flex-start;
+  }
+
+  .btn-confirm,
+  .btn-back{
+    width:100%;
+  }
+}
+
+@media (max-width:420px){
+  .slot-rail{
+    grid-template-columns:1fr;
+  }
+
+  .kv{
+    flex-direction:column;
+    align-items:flex-start;
+  }
+
+  .vv{
+    max-width:100%;
+    text-align:left;
+  }
+}
