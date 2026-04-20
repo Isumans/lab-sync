@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function showAlert(message) {
         if (!alertEl) { return; }
-        alertEl.textContent = message || 'Delete request failed.';
+        alertEl.textContent = message || 'Archive request failed.';
         alertEl.hidden = false;
     }
 
@@ -42,7 +42,7 @@ document.addEventListener('DOMContentLoaded', function () {
         selectedTestId = null;
         if (confirmBtn) {
             confirmBtn.disabled = false;
-            confirmBtn.textContent = 'Delete Test';
+            confirmBtn.textContent = 'Archive Test';
         }
         hideAlert();
         if (activeTrigger) { activeTrigger.focus(); }
@@ -62,7 +62,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         confirmBtn.disabled = true;
-        confirmBtn.textContent = 'Deleting\u2026';
+        confirmBtn.textContent = 'Archiving\u2026';
         hideAlert();
 
         fetch(deleteEndpoint, {
@@ -77,7 +77,7 @@ document.addEventListener('DOMContentLoaded', function () {
         .then(function (r) {
             return r.json().then(function (payload) {
                 if (!r.ok || !payload || payload.status !== 'success') {
-                    throw new Error((payload && payload.message) ? payload.message : 'Unable to delete test.');
+                    throw new Error((payload && payload.message) ? payload.message : 'Unable to archive test.');
                 }
                 return payload;
             });
@@ -87,9 +87,9 @@ document.addEventListener('DOMContentLoaded', function () {
             window.location.reload();
         })
         .catch(function (err) {
-            showAlert(err.message || 'Unable to delete test.');
+            showAlert(err.message || 'Unable to archive test.');
             confirmBtn.disabled = false;
-            confirmBtn.textContent = 'Delete Test';
+            confirmBtn.textContent = 'Archive Test';
         });
     }
 
