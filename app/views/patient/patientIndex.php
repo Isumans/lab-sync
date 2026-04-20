@@ -397,61 +397,6 @@ if ($isStaff && intval($_SESSION['must_change_password'] ?? 0) === 1) {
   </section>
 
 
-  <!-- =============================================
-       HEALTH TRENDS (Blog)
-       ============================================= -->
-  <section class="blog-section">
-    <div class="container" style="max-width:1100px">
-      <div class="section-header-row">
-        <div>
-          <h2 style="font-family:var(--font-heading);font-size:clamp(1.75rem,4vw,2.5rem);font-weight:800;color:var(--tertiary-900);letter-spacing:-0.02em;margin-bottom:0.25rem;">Health Trends</h2>
-          <p style="color:var(--neutral-500);">Insights and education from our clinical experts.</p>
-        </div>
-        <a href="index.php?controller=blog&action=index" class="view-all">
-          View all articles
-          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
-        </a>
-      </div>
-
-      <div class="blog-grid">
-        <div class="blog-card">
-          <div class="blog-img">
-            <img src="https://images.unsplash.com/photo-1505576399279-565b52d4ac71?auto=format&fit=crop&w=600&q=80" alt="Heart Health">
-            <span class="blog-chip">Cardiology</span>
-          </div>
-          <div class="blog-body">
-            <p class="blog-meta">Oct 12, 2023 · 5 min read</p>
-            <h3 class="blog-title">Understanding Your Lipid Panel Results</h3>
-            <p class="blog-excerpt">A comprehensive guide to decoding your cholesterol levels and what they mean for your long-term heart health.</p>
-          </div>
-        </div>
-        <div class="blog-card">
-          <div class="blog-img">
-            <img src="https://images.unsplash.com/photo-1512069772995-ec65ed45afd6?auto=format&fit=crop&w=600&q=80" alt="Vitamins">
-            <span class="blog-chip">Nutrition</span>
-          </div>
-          <div class="blog-body">
-            <p class="blog-meta">Oct 08, 2023 · 4 min read</p>
-            <h3 class="blog-title">The Importance of Vitamin D in Winter</h3>
-            <p class="blog-excerpt">Why seasonal changes affect your vitamin levels and how a simple blood test can help you optimise your immunity.</p>
-          </div>
-        </div>
-        <div class="blog-card">
-          <div class="blog-img">
-            <img src="https://images.unsplash.com/photo-1579684385127-1ef15d508118?auto=format&fit=crop&w=600&q=80" alt="Lab Tech">
-            <span class="blog-chip">Technology</span>
-          </div>
-          <div class="blog-body">
-            <p class="blog-meta">Oct 01, 2023 · 6 min read</p>
-            <h3 class="blog-title">How Automation is Speeding Up Diagnostics</h3>
-            <p class="blog-excerpt">Inside the modern lab: how robotics and AI are ensuring your test results are delivered faster and more accurately.</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-
   <?php if ($staffNeedsPasswordChange): ?>
     <div
       id="firstLoginPasswordModal"
