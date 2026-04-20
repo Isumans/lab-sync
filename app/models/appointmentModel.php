@@ -289,6 +289,9 @@ class AppointmentModel {
         $hasTestId = $this->hasAppointmentColumn('test_id');
         $hasHomeCollection = $this->hasAppointmentColumn('home_collection');
         $hasCollectionAddress = $this->hasAppointmentColumn('collection_address');
+        $hasBillsTable = $this->hasTable('bills');
+        $hasBillsAppointmentId = $hasBillsTable && $this->hasTableColumn('bills', 'appointment_id');
+        $hasBillsBillId = $hasBillsTable && $this->hasTableColumn('bills', 'bill_id');
         $patientProjection = $this->buildPatientProjectionSql('p');
         $notDeletedClause = $this->buildNotDeletedClause('a');
 
@@ -312,6 +315,14 @@ class AppointmentModel {
             $itemCountField = "1";
         }
 
+        if ($hasBillsAppointmentId && $hasBillsBillId) {
+            $billIdField = 'latest_bill.bill_id';
+            $billsJoinSql = 'LEFT JOIN (SELECT appointment_id, MAX(bill_id) AS bill_id FROM bills GROUP BY appointment_id) latest_bill ON latest_bill.appointment_id = a.appointment_id';
+        } else {
+            $billIdField = 'NULL';
+            $billsJoinSql = '';
+        }
+
         $whereParts = [$notDeletedClause];
         if ($method !== '*') {
             $operator = $includeMethodMatch ? '=' : '<>';
@@ -325,6 +336,7 @@ class AppointmentModel {
                 {$patientProjection},
                 t.test_name,
                 t.price AS test_price,
+                {$billIdField} AS bill_id,
                 {$homeCollectionField} AS home_collection,
                 {$collectionAddressField} AS collection_address,
                 " . $statusField . " AS appointment_status,
@@ -334,6 +346,7 @@ class AppointmentModel {
             FROM appointment a
             LEFT JOIN patients p ON p.patient_id = a.patient_id
             {$testsJoinSql}
+            {$billsJoinSql}
             {$whereClause}
             ORDER BY a.appointment_date DESC, a.appointment_time DESC
         ";
