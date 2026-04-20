@@ -175,7 +175,7 @@ $bootstrap = [
 
                             <div class="billing-focus-bar">
                                 <div>
-                                    <span>Total Due</span>
+                                    <span>Total</span>
                                     <strong id="focusTotalDue">0.00</strong>
                                 </div>
                                 <div>

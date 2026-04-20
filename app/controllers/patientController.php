@@ -155,13 +155,14 @@ class patientController {
                     echo "Error updating patient.";
                 }
             } elseif (isset($_POST['delete'])) {
-                $success = $model->deletePatient($patient_id);
+                $actorUserId = intval($_SESSION['user_id'] ?? 0);
+                $success = $model->deletePatient($patient_id, $actorUserId > 0 ? $actorUserId : null);
                 if ($success) {
                     header("Location: /lab_sync/index.php?controller=patientController&action=index&role=" . urlencode($role));
                     exit;
 
                 } else {
-                    echo "Error deleting patient.";
+                    echo "Error archiving patient.";
                 }
             }
             

@@ -45,7 +45,7 @@ if (!function_exists('inventoryDetailsFormatMoney')) {
             return inventoryDetailsEscape($value);
         }
 
-        return '$' . number_format((float) $value, 2);
+        return 'LKR ' . number_format((float) $value, 2);
     }
 }
 

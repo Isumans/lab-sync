@@ -10,13 +10,25 @@ if (($_SESSION['user_role'] ?? '') !== 'receptionist') {
 
 $appointmentChangePrefix = $appointmentChangePct >= 0 ? '+' : '';
 
-$densityRows = [
-    'MOR' => intval($appointmentDensity['MOR'] ?? 0),
-    'LUN' => intval($appointmentDensity['LUN'] ?? 0),
-    'AFT' => intval($appointmentDensity['AFT'] ?? 0),
-    'EVE' => intval($appointmentDensity['EVE'] ?? 0),
-];
-$densityMax = max(1, ...array_values($densityRows));
+$densityRows = [];
+if (isset($appointmentDensityRows) && is_array($appointmentDensityRows)) {
+    foreach ($appointmentDensityRows as $row) {
+        if (!is_array($row)) {
+            continue;
+        }
+
+        $densityRows[] = [
+            'label' => (string)($row['label'] ?? ''),
+            'count' => intval($row['count'] ?? 0),
+            'max_patients' => intval($row['max_patients'] ?? 0),
+        ];
+    }
+}
+
+$densityMax = 1;
+foreach ($densityRows as $row) {
+    $densityMax = max($densityMax, intval($row['count'] ?? 0));
+}
 
 $statusLabels = ['Confirmed', 'Completed', 'In-Progress', 'Cancelled'];
 $statusValues = [
@@ -109,16 +121,24 @@ $chartPayload = [
 
                     <div class="rt-main-grid">
                         <article class="rt-panel rt-density-panel">
-                            <h3 class="rt-panel-title">Appointment Density (8AM-5PM)</h3>
+                            <h3 class="rt-panel-title">Appointment Density (Online Slots Today)</h3>
                             <div class="rt-density-list">
-                                <?php foreach ($densityRows as $slot => $count): ?>
-                                    <?php $width = $densityMax > 0 ? intval(round(($count / $densityMax) * 100)) : 0; ?>
-                                    <div class="rt-density-row">
-                                        <span class="rt-density-slot"><?php echo $slot; ?></span>
-                                        <div class="rt-density-track"><span class="rt-density-fill" style="width: <?php echo $width; ?>%;"></span></div>
-                                        <span class="rt-density-value"><?php echo str_pad((string) $count, 2, '0', STR_PAD_LEFT); ?></span>
-                                    </div>
-                                <?php endforeach; ?>
+                                <?php if (empty($densityRows)): ?>
+                                    <p class="rt-empty">No online slots configured for today.</p>
+                                <?php else: ?>
+                                    <?php foreach ($densityRows as $row): ?>
+                                        <?php
+                                            $slotLabel = htmlspecialchars((string)($row['label'] ?? ''));
+                                            $count = intval($row['count'] ?? 0);
+                                            $width = $densityMax > 0 ? intval(round(($count / $densityMax) * 100)) : 0;
+                                        ?>
+                                        <div class="rt-density-row">
+                                            <span class="rt-density-slot"><?php echo $slotLabel; ?></span>
+                                            <div class="rt-density-track"><span class="rt-density-fill" style="width: <?php echo $width; ?>%;"></span></div>
+                                            <span class="rt-density-value"><?php echo str_pad((string)$count, 2, '0', STR_PAD_LEFT); ?></span>
+                                        </div>
+                                    <?php endforeach; ?>
+                                <?php endif; ?>
                             </div>
                         </article>
 

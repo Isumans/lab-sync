@@ -289,6 +289,9 @@ class AppointmentModel {
         $hasTestId = $this->hasAppointmentColumn('test_id');
         $hasHomeCollection = $this->hasAppointmentColumn('home_collection');
         $hasCollectionAddress = $this->hasAppointmentColumn('collection_address');
+        $hasBillsTable = $this->hasTable('bills');
+        $hasBillsAppointmentId = $hasBillsTable && $this->hasTableColumn('bills', 'appointment_id');
+        $hasBillsBillId = $hasBillsTable && $this->hasTableColumn('bills', 'bill_id');
         $patientProjection = $this->buildPatientProjectionSql('p');
         $notDeletedClause = $this->buildNotDeletedClause('a');
 
@@ -312,6 +315,14 @@ class AppointmentModel {
             $itemCountField = "1";
         }
 
+        if ($hasBillsAppointmentId && $hasBillsBillId) {
+            $billIdField = 'latest_bill.bill_id';
+            $billsJoinSql = 'LEFT JOIN (SELECT appointment_id, MAX(bill_id) AS bill_id FROM bills GROUP BY appointment_id) latest_bill ON latest_bill.appointment_id = a.appointment_id';
+        } else {
+            $billIdField = 'NULL';
+            $billsJoinSql = '';
+        }
+
         $whereParts = [$notDeletedClause];
         if ($method !== '*') {
             $operator = $includeMethodMatch ? '=' : '<>';
@@ -325,6 +336,7 @@ class AppointmentModel {
                 {$patientProjection},
                 t.test_name,
                 t.price AS test_price,
+                {$billIdField} AS bill_id,
                 {$homeCollectionField} AS home_collection,
                 {$collectionAddressField} AS collection_address,
                 " . $statusField . " AS appointment_status,
@@ -334,6 +346,7 @@ class AppointmentModel {
             FROM appointment a
             LEFT JOIN patients p ON p.patient_id = a.patient_id
             {$testsJoinSql}
+            {$billsJoinSql}
             {$whereClause}
             ORDER BY a.appointment_date DESC, a.appointment_time DESC
         ";
@@ -923,7 +936,7 @@ class AppointmentModel {
         $eventNote = trim((string)($payload['note'] ?? ''));
 
         $placeholders = implode(',', array_fill(0, count($testIds), '?'));
-        $testSql = "SELECT test_id, COALESCE(price, 0) AS price FROM tests WHERE test_id IN ({$placeholders})";
+        $testSql = "SELECT test_id, COALESCE(price, 0) AS price FROM tests WHERE test_id IN ({$placeholders}) AND " . $this->buildTestNotDeletedClause('tests');
         $testStmt = $this->db->prepare($testSql);
         if ($testStmt === false) {
             $this->lastError = 'Prepare failed while loading tests: ' . $this->db->error;
@@ -1267,7 +1280,7 @@ class AppointmentModel {
     }
 
     public function getAllTests() {
-        $result = $this->db->query("SELECT test_id, test_name, price FROM tests ORDER BY test_name ASC");
+        $result = $this->db->query("SELECT test_id, test_name, price FROM tests WHERE " . $this->buildTestNotDeletedClause('tests') . " ORDER BY test_name ASC");
         return $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
     }
 
@@ -1393,7 +1406,7 @@ class AppointmentModel {
                 $conditions[] = 'LOWER(' . $codeExpr . ') LIKE ?';
             }
 
-            $sql .= ' WHERE ' . implode(' OR ', $conditions);
+            $sql .= ' WHERE (' . $this->buildTestNotDeletedClause('t') . ') AND (' . implode(' OR ', $conditions) . ')';
             $needle = '%' . strtolower($query) . '%';
             $types = 'sss';
             $params[] = $needle;
@@ -1404,6 +1417,8 @@ class AppointmentModel {
                 $types .= 's';
                 $params[] = $needle;
             }
+        } else {
+            $sql .= ' WHERE ' . $this->buildTestNotDeletedClause('t');
         }
 
         $sql .= ' ORDER BY ' . $nameExpr . ' ASC LIMIT ' . $safeLimit;
@@ -2228,6 +2243,24 @@ class AppointmentModel {
         return implode(' AND ', $parts);
     }
 
+    private function buildTestNotDeletedClause($alias = 'tests') {
+        $parts = [];
+
+        if ($this->columnExists('tests', 'deleted_at')) {
+            $parts[] = "{$alias}.deleted_at IS NULL";
+        }
+
+        if ($this->columnExists('tests', 'deleted_by')) {
+            $parts[] = "{$alias}.deleted_by IS NULL";
+        }
+
+        if (empty($parts)) {
+            return '1 = 1';
+        }
+
+        return implode(' AND ', $parts);
+    }
+
     private function getAppointmentTestsWithStatus($appointmentId) {
         $appointmentId = intval($appointmentId);
         if ($appointmentId <= 0) {
@@ -2333,7 +2366,7 @@ class AppointmentModel {
         $categoryCol = $this->resolveFirstExistingColumn('tests', ['category', 'department']);
         $categoryExpr = $categoryCol !== null ? "COALESCE(t.{$categoryCol}, '')" : "''";
 
-        $testStmt = $this->db->prepare("SELECT t.test_id, COALESCE(t.test_name, '') AS test_name, {$categoryExpr} AS category, COALESCE(t.price, 0) AS price FROM tests t WHERE t.test_id = ? LIMIT 1");
+        $testStmt = $this->db->prepare("SELECT t.test_id, COALESCE(t.test_name, '') AS test_name, {$categoryExpr} AS category, COALESCE(t.price, 0) AS price FROM tests t WHERE t.test_id = ? AND " . $this->buildTestNotDeletedClause('t') . " LIMIT 1");
         if ($testStmt === false) {
             return [];
         }

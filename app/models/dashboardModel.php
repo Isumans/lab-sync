@@ -343,6 +343,85 @@ class DashboardModel {
         return $density;
     }
 
+    public function getTodayOnlineSlotDensity(): array {
+        if (!$this->tableExists('online_booking_slots')) {
+            return [];
+        }
+
+        $slotIdColumn = $this->resolveColumn('online_booking_slots', ['id']);
+        if ($slotIdColumn === null) {
+            return [];
+        }
+
+        $timeSlotColumn = $this->resolveColumn('appointment', ['time_slot_id']);
+        $statusColumn = $this->resolveColumn('appointment', ['status']);
+        $methodColumn = $this->resolveColumn('appointment', ['method']);
+
+        if ($methodColumn === null) {
+            return [];
+        }
+
+        $dayGroup = $this->resolveDayGroupFromDate(date('Y-m-d'));
+        $slotMatchExpr = $timeSlotColumn !== null
+            ? "a.{$timeSlotColumn} = s.{$slotIdColumn}"
+            : "TIME(a.appointment_time) = s.start_time";
+
+        $statusFilterExpr = $statusColumn !== null
+            ? "AND LOWER(COALESCE(a.{$statusColumn}, '')) <> 'cancelled'"
+            : '';
+
+        $stmt = $this->db->prepare(
+            "SELECT
+                s.start_time,
+                s.end_time,
+                s.max_patients,
+                COUNT(a.appointment_id) AS booked_count
+             FROM online_booking_slots s
+             LEFT JOIN appointment a
+               ON DATE(a.appointment_date) = CURDATE()
+              AND LOWER(COALESCE(a.{$methodColumn}, '')) = 'online'
+              {$statusFilterExpr}
+              AND {$slotMatchExpr}
+             WHERE s.day_group = ?
+               AND COALESCE(s.is_active, 1) = 1
+             GROUP BY s.{$slotIdColumn}, s.start_time, s.end_time, s.max_patients
+             ORDER BY s.start_time ASC"
+        );
+
+        if (!$stmt) {
+            return [];
+        }
+
+        $stmt->bind_param('s', $dayGroup);
+        if (!$stmt->execute()) {
+            $stmt->close();
+            return [];
+        }
+
+        $result = $stmt->get_result();
+        if (!$result) {
+            $stmt->close();
+            return [];
+        }
+
+        $rows = [];
+        while ($row = $result->fetch_assoc()) {
+            $startTime = (string)($row['start_time'] ?? '');
+            $endTime = (string)($row['end_time'] ?? '');
+
+            $rows[] = [
+                'label' => $this->formatTimeRangeLabel($startTime, $endTime),
+                'count' => intval($row['booked_count'] ?? 0),
+                'max_patients' => intval($row['max_patients'] ?? 0),
+                'start_time' => $startTime,
+                'end_time' => $endTime,
+            ];
+        }
+
+        $stmt->close();
+        return $rows;
+    }
+
     public function getTodayAppointmentStatusSnapshot(): array {
         $counts = [
             'confirmed' => 0,
@@ -777,6 +856,35 @@ class DashboardModel {
     }
 
     // ── Private helpers ──────────────────────────────────────────────────────
+
+    private function resolveDayGroupFromDate(string $date): string {
+        $timestamp = strtotime($date);
+        if ($timestamp === false) {
+            return 'mon_fri';
+        }
+
+        $day = intval(date('N', $timestamp));
+        if ($day === 6) {
+            return 'sat';
+        }
+
+        if ($day === 7) {
+            return 'sun';
+        }
+
+        return 'mon_fri';
+    }
+
+    private function formatTimeRangeLabel(string $startTime, string $endTime): string {
+        $startTimestamp = strtotime($startTime);
+        $endTimestamp = strtotime($endTime);
+
+        if ($startTimestamp === false || $endTimestamp === false) {
+            return substr($startTime, 0, 5) . ' - ' . substr($endTime, 0, 5);
+        }
+
+        return date('h:i A', $startTimestamp) . ' - ' . date('h:i A', $endTimestamp);
+    }
 
     private function resolveColumn(string $table, array $candidates): ?string {
         foreach ($candidates as $col) {

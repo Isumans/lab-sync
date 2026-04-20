@@ -373,7 +373,7 @@ function displayTestCatalog(tests) {
 
     tableBody.innerHTML = tests.map(test => {
         const isSelected = Boolean(selectedTests[test.id]);
-        const priceText = Number.isFinite(test.price) ? '$' + Number(test.price).toFixed(2) : '—';
+        const priceText = Number.isFinite(test.price) ? 'LKR ' + Number(test.price).toFixed(2) : '—';
         const categoryClass = escapeHtml(test.category.toLowerCase().replace(/\s+/g, '-'));
         return `
             <li class="test-result-row" data-test-id="${escapeHtml(test.id)}">

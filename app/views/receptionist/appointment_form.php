@@ -30,7 +30,7 @@
                        class="patient-search-input" 
                        id="patient-search" 
                        name="patient_search" 
-                       placeholder="Start typing patient name (e.g. John Doe)..." 
+                       placeholder="Start typing patient name (e.g. sanju samson)..." 
                        autocomplete="off">
                 
                 <div id="patient-suggestions" class="patient-suggestions"></div>
@@ -206,7 +206,6 @@
                                 <option value="">Select Gender</option>
                                 <option value="male">Male</option>
                                 <option value="female">Female</option>
-                                <option value="other">Other</option>
                             </select>
                             <p class="create-patient-field-error" data-field-error="gender"></p>
                         </div>

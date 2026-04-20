@@ -198,8 +198,8 @@ function adminInventorySeverity(int $qty, int $reorder): string {
 
                             <div class="ad-staff-totals">
                                 <div><strong><?php echo intval($staffActiveTotal); ?></strong><span>Active</span></div>
-                                <div><strong><?php echo intval($staffPendingTotal); ?></strong><span>Pending</span></div>
-                                <div><strong><?php echo intval($staffOffTotal); ?></strong><span>Off</span></div>
+                                <!-- <div><strong><?php echo intval($staffPendingTotal); ?></strong><span>Pending</span></div> -->
+                                <!-- <div><strong><?php echo intval($staffOffTotal); ?></strong><span>Off</span></div> -->
                             </div>
                         </article>
 

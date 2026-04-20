@@ -372,13 +372,14 @@ class TestCatalogController {
             echo json_encode(['status' => 'error', 'message' => 'Invalid test ID.']);
             exit;
         }
-        $model   = new TestCatalog($this->db);
-        $success = $model->deleteTest($testId);
+        $model = new TestCatalog($this->db);
+        $actorUserId = intval($_SESSION['user_id'] ?? 0);
+        $success = $model->deleteTest($testId, $actorUserId > 0 ? $actorUserId : null);
         if ($success) {
-            echo json_encode(['status' => 'success', 'message' => 'Test deleted successfully.']);
+            echo json_encode(['status' => 'success', 'message' => 'Test archived successfully.']);
         } else {
             http_response_code(500);
-            echo json_encode(['status' => 'error', 'message' => 'Failed to delete test.']);
+            echo json_encode(['status' => 'error', 'message' => $model->getLastError() ?: 'Failed to archive test.']);
         }
         exit;
     }
@@ -427,14 +428,15 @@ class TestCatalogController {
                     header("Location: /lab_sync/index.php?controller=TestCatalog&action=index&role=" . urlencode($role));
                     exit;
                 }
-                $success = $model2->deleteTest((int)$testId);
+                $actorUserId = intval($_SESSION['user_id'] ?? 0);
+                $success = $model2->deleteTest((int)$testId, $actorUserId > 0 ? $actorUserId : null);
                 if ($success) {
-                    $_SESSION['flash'] = ['type' => 'success', 'message' => 'Test deleted successfully.'];
+                    $_SESSION['flash'] = ['type' => 'success', 'message' => 'Test archived successfully.'];
                     header("Location: /lab_sync/index.php?controller=TestCatalog&action=index&role=" . urlencode($role));
                     exit;
 
                 } else {
-                    $_SESSION['flash'] = ['type' => 'error', 'message' => 'Error deleting test.'];
+                    $_SESSION['flash'] = ['type' => 'error', 'message' => $model2->getLastError() ?: 'Error archiving test.'];
                     header("Location: /lab_sync/index.php?controller=TestCatalog&action=index&role=" . urlencode($role));
                     exit;
                 }

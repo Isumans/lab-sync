@@ -202,7 +202,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <strong>${test.test_name}</strong>
         <div><span>${test.category || 'General'}</span></div>
       </div>
-      <span>$${Number(test.price || 0).toFixed(2)}</span>
+      <span>LKR ${Number(test.price || 0).toFixed(2)}</span>
     `;
     return button;
   };

@@ -3,8 +3,32 @@ class PartnerModel {
     private $db;
     public function __construct($db) { $this->db = $db; }
     public function getAllTests() {
-        $result = $this->db->query("SELECT * FROM tests");
+        $result = $this->db->query("SELECT * FROM tests WHERE " . $this->buildTestNotDeletedClause('tests'));
         return $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
+    }
+
+    private function hasTestColumn($columnName) {
+        $safeColumn = $this->db->real_escape_string($columnName);
+        $result = $this->db->query("SHOW COLUMNS FROM tests LIKE '{$safeColumn}'");
+        return $result && $result->num_rows > 0;
+    }
+
+    private function buildTestNotDeletedClause($alias = 'tests') {
+        $parts = [];
+
+        if ($this->hasTestColumn('deleted_at')) {
+            $parts[] = "{$alias}.deleted_at IS NULL";
+        }
+
+        if ($this->hasTestColumn('deleted_by')) {
+            $parts[] = "{$alias}.deleted_by IS NULL";
+        }
+
+        if (empty($parts)) {
+            return '1 = 1';
+        }
+
+        return implode(' AND ', $parts);
     }
 
     public function createPartnerLab($lab_name, $email, $contact_person, $phone, $website, $address) {

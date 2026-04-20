@@ -282,18 +282,18 @@ ob_start();
             <div class="test-catalog-delete-dialog" role="dialog" aria-modal="true" aria-labelledby="tcDeleteTitle">
                 <div class="tc-delete-header">
                     <div class="tc-delete-icon" aria-hidden="true">!</div>
-                    <h2 id="tcDeleteTitle">Delete Test</h2>
+                    <h2 id="tcDeleteTitle">Archive Test</h2>
                     <button type="button" id="testCatalogDeleteClose" class="tc-delete-close" aria-label="Close delete modal">&times;</button>
                 </div>
-                <p class="tc-delete-copy">Are you sure you want to delete this test? This action cannot be undone.</p>
+                <p class="tc-delete-copy">Are you sure you want to archive this test? It will be hidden from active test selections.</p>
                 <div id="tcDeleteAlert" class="tc-delete-alert" hidden></div>
                 <div class="tc-delete-summary">
                     <div class="summary-label">TEST NAME</div>
                     <div id="tcDeleteTestName" class="summary-value">Unknown Test</div>
                 </div>
-                <button type="button" id="testCatalogDeleteConfirm" class="tc-delete-confirm-btn">Delete Test</button>
+                <button type="button" id="testCatalogDeleteConfirm" class="tc-delete-confirm-btn">Archive Test</button>
                 <button type="button" id="testCatalogDeleteCancel" class="tc-delete-cancel-btn">Cancel</button>
-                <div class="tc-delete-footer-note">SYSTEM: AUTHORIZATION REQUIRED</div>
+                <div class="tc-delete-footer-note">SYSTEM: AUTHORIZATION REQUIRED • ARCHIVE ACTION</div>
             </div>
         </div>
                 

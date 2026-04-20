@@ -82,7 +82,7 @@ class TestCatalog {
     }
 
     public function getTestById($id) {
-        $stmt = $this->db->prepare("SELECT * FROM tests WHERE test_id = ?");
+        $stmt = $this->db->prepare("SELECT * FROM tests WHERE test_id = ? AND " . $this->buildTestNotDeletedClause('tests'));
         $stmt->bind_param("i", $id);
         $stmt->execute();
         $result = $stmt->get_result();
@@ -111,7 +111,7 @@ class TestCatalog {
             return false;
         }
 
-        $sql = "UPDATE tests SET " . implode(', ', $setParts) . " WHERE test_id = ?";
+        $sql = "UPDATE tests SET " . implode(', ', $setParts) . " WHERE test_id = ? AND " . $this->buildTestNotDeletedClause('tests');
         $stmt = $this->db->prepare($sql);
         if ($stmt === false) {
             $this->lastError = 'Failed to prepare updateTest statement.';
@@ -133,14 +133,60 @@ class TestCatalog {
         return $stmt->execute();
     }
 
-    public function deleteTest($id) {
-        $stmt = $this->db->prepare("DELETE FROM tests WHERE test_id = ?");
-        $stmt->bind_param("i", $id);
+    public function deleteTest($id, $actorUserId = null) {
+        $id = intval($id);
+        $actorUserId = is_numeric($actorUserId) ? intval($actorUserId) : null;
+
+        if ($id <= 0) {
+            $this->lastError = 'Invalid test ID.';
+            return false;
+        }
+
+        $hasDeletedAt = $this->columnExists('tests', 'deleted_at');
+        $hasDeletedBy = $this->columnExists('tests', 'deleted_by');
+        if (!$hasDeletedAt && !$hasDeletedBy) {
+            $this->lastError = 'Soft delete columns are missing for tests.';
+            return false;
+        }
+
+        $setParts = [];
+        $types = '';
+        $values = [];
+
+        if ($hasDeletedAt) {
+            $setParts[] = 'deleted_at = NOW()';
+        }
+
+        if ($hasDeletedBy) {
+            if ($actorUserId !== null && $actorUserId > 0) {
+                $setParts[] = 'deleted_by = ?';
+                $types .= 'i';
+                $values[] = $actorUserId;
+            } else {
+                $setParts[] = 'deleted_by = NULL';
+            }
+        }
+
+        $sql = 'UPDATE tests SET ' . implode(', ', $setParts) . ' WHERE test_id = ? AND ' . $this->buildTestNotDeletedClause('tests');
+        $stmt = $this->db->prepare($sql);
+        if ($stmt === false) {
+            $this->lastError = 'Failed to prepare deleteTest statement.';
+            return false;
+        }
+
+        $types .= 'i';
+        $values[] = $id;
+
+        $params = [$types];
+        foreach ($values as $index => $value) {
+            $params[] = &$values[$index];
+        }
+        call_user_func_array([$stmt, 'bind_param'], $params);
         return $stmt->execute();
     }
 
     public function getFullTestById(int $id): ?array {
-        $stmt = $this->db->prepare("SELECT * FROM tests WHERE test_id = ?");
+        $stmt = $this->db->prepare("SELECT * FROM tests WHERE test_id = ? AND " . $this->buildTestNotDeletedClause('tests'));
         if (!$stmt) { return null; }
         $stmt->bind_param("i", $id);
         $stmt->execute();
@@ -179,7 +225,7 @@ class TestCatalog {
     }
 
     public function getTestEditData(int $id): ?array {
-        $stmt = $this->db->prepare("SELECT * FROM tests WHERE test_id = ?");
+        $stmt = $this->db->prepare("SELECT * FROM tests WHERE test_id = ? AND " . $this->buildTestNotDeletedClause('tests'));
         if (!$stmt) { return null; }
         $stmt->bind_param("i", $id);
         $stmt->execute();
@@ -239,7 +285,7 @@ class TestCatalog {
             return false;
         }
 
-        $sql  = "UPDATE tests SET " . implode(', ', $setParts) . " WHERE test_id = ?";
+        $sql  = "UPDATE tests SET " . implode(', ', $setParts) . " WHERE test_id = ? AND " . $this->buildTestNotDeletedClause('tests');
         $stmt = $this->db->prepare($sql);
         if ($stmt === false) {
             $this->lastError = 'Failed to prepare updateTestFull statement.';
@@ -270,7 +316,7 @@ class TestCatalog {
             return false;
         }
 
-        $sql = "SELECT test_id FROM tests WHERE LOWER(TRIM(test_name)) = LOWER(TRIM(?))";
+        $sql = "SELECT test_id FROM tests WHERE LOWER(TRIM(test_name)) = LOWER(TRIM(?)) AND " . $this->buildTestNotDeletedClause('tests');
         if ($excludeTestId !== null && $excludeTestId > 0) {
             $sql .= " AND test_id <> ?";
         }
@@ -319,6 +365,8 @@ class TestCatalog {
             $priceExpr = '0';
         }
 
+        $notDeletedClause = $this->buildTestNotDeletedClause('tests');
+
         $sql = "
             SELECT
                 test_id,
@@ -328,6 +376,7 @@ class TestCatalog {
                 {$priceExpr} AS price,
                 {$descriptionExpr} AS description
             FROM tests
+            WHERE {$notDeletedClause}
             ORDER BY {$orderBy}
         ";
 
@@ -572,6 +621,24 @@ class TestCatalog {
         }
 
         return null;
+    }
+
+    private function buildTestNotDeletedClause($alias = 'tests') {
+        $parts = [];
+
+        if ($this->columnExists('tests', 'deleted_at')) {
+            $parts[] = "{$alias}.deleted_at IS NULL";
+        }
+
+        if ($this->columnExists('tests', 'deleted_by')) {
+            $parts[] = "{$alias}.deleted_by IS NULL";
+        }
+
+        if (empty($parts)) {
+            return '1 = 1';
+        }
+
+        return implode(' AND ', $parts);
     }
 
 

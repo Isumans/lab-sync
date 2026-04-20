@@ -58,6 +58,24 @@ class HomeModel {
         return self::$tableColumnCache[$cacheKey];
     }
 
+    private function buildTestNotDeletedClause($alias = 'tests') {
+        $parts = [];
+
+        if ($this->hasTableColumn('tests', 'deleted_at')) {
+            $parts[] = "{$alias}.deleted_at IS NULL";
+        }
+
+        if ($this->hasTableColumn('tests', 'deleted_by')) {
+            $parts[] = "{$alias}.deleted_by IS NULL";
+        }
+
+        if (empty($parts)) {
+            return '1 = 1';
+        }
+
+        return implode(' AND ', $parts);
+    }
+
     private function ensureHomeCollectionColumns() {
         $alterStatements = [];
 
@@ -112,7 +130,7 @@ class HomeModel {
     }
 
     public function getAllTests() {
-        $result = $this->db->query("SELECT * FROM tests");
+        $result = $this->db->query("SELECT * FROM tests WHERE " . $this->buildTestNotDeletedClause('tests'));
         return $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
     }
 
@@ -211,7 +229,7 @@ class HomeModel {
 
         $placeholders = implode(',', array_fill(0, count($cleanIds), '?'));
         $types = str_repeat('i', count($cleanIds));
-        $priceStmt = $this->db->prepare("SELECT test_id, price FROM tests WHERE test_id IN ($placeholders)");
+        $priceStmt = $this->db->prepare("SELECT test_id, price FROM tests WHERE test_id IN ($placeholders) AND " . $this->buildTestNotDeletedClause('tests'));
         if (!$priceStmt) {
             $this->setLastError('Failed to prepare price lookup: ' . $this->db->error);
             return false;
@@ -1602,7 +1620,7 @@ class HomeModel {
         if (empty($cleanIds)) return 0.0;
 
         $placeholders = implode(',', array_fill(0, count($cleanIds), '?'));
-        $stmt = $this->db->prepare("SELECT SUM(price) AS total FROM tests WHERE test_id IN ($placeholders)");
+        $stmt = $this->db->prepare("SELECT SUM(price) AS total FROM tests WHERE test_id IN ($placeholders) AND " . $this->buildTestNotDeletedClause('tests'));
         if (!$stmt) return 0.0;
 
         $stmt->bind_param(str_repeat('i', count($cleanIds)), ...$cleanIds);

@@ -124,18 +124,6 @@ $themeMode = (string)($profileData['theme_mode'] ?? 'System');
                             <h3>Account Security</h3>
                         </div>
 
-                        <form method="POST" action="/lab_sync/index.php?controller=userController&action=toggleTwoFactor" class="security-box">
-                            <input type="hidden" name="csrf_token" value="<?php echo profileEsc($csrfToken); ?>">
-                            <div>
-                                <h4>Two-Factor Authentication</h4>
-                                <p>Add an extra layer of account security.</p>
-                                <span class="recommend-pill">Recommended</span>
-                            </div>
-                            <label class="switch">
-                                <input type="checkbox" name="enable_2fa" value="1" <?php echo $twofaEnabled ? 'checked' : ''; ?> onchange="this.form.submit()">
-                                <span class="slider"></span>
-                            </label>
-                        </form>
 
                         <h4 class="sub-title">Active Sessions</h4>
                         <div class="session-list">

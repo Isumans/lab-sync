@@ -156,7 +156,7 @@
 
     function billingActionHtml(item) {
         var appointmentId = Number(item.appointment_id || 0);
-        var billExists = Boolean(item.bill_id);
+        var billExists = Number(item.bill_id || 0) > 0;
         var label = billExists ? 'View Bill' : 'Create Bill';
         var href = '/lab_sync/index.php?controller=billingController&action=Register_billing&appointment_id=' + encodeURIComponent(String(appointmentId));
 
