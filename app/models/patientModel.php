@@ -8,12 +8,12 @@ class patientModel {
     }
 
     public function getAllPatients() {
-        $result = $this->db->query("SELECT * FROM patients");
+        $result = $this->db->query("SELECT * FROM patients WHERE " . $this->buildPatientNotDeletedClause() . " ORDER BY patient_id DESC");
         return $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
     }
 
     public function getPatientById($patient_id) {
-        $stmt = $this->db->prepare("SELECT patient_id, patient_name, email, contact_number FROM patients WHERE patient_id = ? LIMIT 1");
+        $stmt = $this->db->prepare("SELECT patient_id, patient_name, email, contact_number FROM patients WHERE patient_id = ? AND " . $this->buildPatientNotDeletedClause() . " LIMIT 1");
         $stmt->bind_param("i", $patient_id);
         if (!$stmt->execute()) {
             $stmt->close();
@@ -70,22 +70,56 @@ class patientModel {
             return false;
         }
 
-        $stmt = $this->db->prepare("UPDATE patients SET patient_name = ?, contact_number = ?, email = ? WHERE patient_id = ?");
+        $stmt = $this->db->prepare("UPDATE patients SET patient_name = ?, contact_number = ?, email = ? WHERE patient_id = ? AND " . $this->buildPatientNotDeletedClause());
         $stmt->bind_param("sssi", $patient_name, $contact_number, $email, $patient_id);
         return $stmt->execute();
     }
-    public function deletePatient($patient_id) {
-        $stmt = $this->db->prepare("DELETE FROM patients WHERE patient_id = ?");
-        $stmt->bind_param("i", $patient_id);
+    public function deletePatient($patient_id, $actorUserId = null) {
+        $patient_id = intval($patient_id);
+        $actorUserId = is_numeric($actorUserId) ? intval($actorUserId) : null;
+
+        if ($patient_id <= 0) {
+            return false;
+        }
+
+        $hasDeletedAt = $this->columnExists('patients', 'deleted_at');
+        $hasDeletedBy = $this->columnExists('patients', 'deleted_by');
+        if (!$hasDeletedAt && !$hasDeletedBy) {
+            return false;
+        }
+
+        $setParts = [];
+        $types = '';
+        $params = [];
+
+        if ($hasDeletedAt) {
+            $setParts[] = 'deleted_at = NOW()';
+        }
+
+        if ($hasDeletedBy) {
+            $setParts[] = 'deleted_by = ?';
+            $types .= 'i';
+            $params[] = ($actorUserId !== null && $actorUserId > 0) ? $actorUserId : null;
+        }
+
+        $sql = "UPDATE patients SET " . implode(', ', $setParts) . " WHERE patient_id = ? AND " . $this->buildPatientNotDeletedClause();
+        $stmt = $this->db->prepare($sql);
+        if (!$stmt) {
+            return false;
+        }
+
+        $types .= 'i';
+        $params[] = $patient_id;
+        $stmt->bind_param($types, ...$params);
         return $stmt->execute();
     }
     public function searchPatients($type, $query) {
         $query = '%' . trim((string)$query) . '%';
 
         if ($type === 'email') {
-            $stmt = $this->db->prepare("SELECT patient_id AS id, patient_name AS name, email FROM patients WHERE email LIKE ? ORDER BY email ASC LIMIT 10");
+            $stmt = $this->db->prepare("SELECT patient_id AS id, patient_name AS name, email FROM patients WHERE email LIKE ? AND " . $this->buildPatientNotDeletedClause() . " ORDER BY email ASC LIMIT 10");
         } else {
-            $stmt = $this->db->prepare("SELECT patient_id AS id, patient_name AS name, email FROM patients WHERE patient_name LIKE ? ORDER BY patient_name ASC LIMIT 10");
+            $stmt = $this->db->prepare("SELECT patient_id AS id, patient_name AS name, email FROM patients WHERE patient_name LIKE ? AND " . $this->buildPatientNotDeletedClause() . " ORDER BY patient_name ASC LIMIT 10");
         }
 
         if (!$stmt) {
@@ -140,6 +174,32 @@ class patientModel {
         }
 
         return true;
+    }
+
+    private function buildPatientNotDeletedClause() {
+        $parts = [];
+
+        if ($this->columnExists('patients', 'deleted_at')) {
+            $parts[] = 'deleted_at IS NULL';
+        }
+
+        if ($this->columnExists('patients', 'deleted_by')) {
+            $parts[] = 'deleted_by IS NULL';
+        }
+
+        if (empty($parts)) {
+            return '1 = 1';
+        }
+
+        return implode(' AND ', $parts);
+    }
+
+    private function columnExists($tableName, $columnName) {
+        $tableName = $this->db->real_escape_string($tableName);
+        $columnName = $this->db->real_escape_string($columnName);
+        $sql = "SHOW COLUMNS FROM {$tableName} LIKE '{$columnName}'";
+        $result = $this->db->query($sql);
+        return $result && $result->num_rows > 0;
     }
 
 }

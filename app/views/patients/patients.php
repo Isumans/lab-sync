@@ -213,11 +213,11 @@ if (is_array($patients)) {
         <div class="appointment-delete-dialog" role="dialog" aria-modal="true" aria-labelledby="patientAdminDeleteTitle">
             <div class="appointment-delete-header">
                 <span class="delete-icon-wrap" aria-hidden="true">!</span>
-                <h2 id="patientAdminDeleteTitle">Delete Patient</h2>
+                <h2 id="patientAdminDeleteTitle">Archive Patient</h2>
                 <button type="button" class="appointment-delete-close" id="patientAdminDeleteClose" aria-label="Close">&times;</button>
             </div>
 
-            <p class="appointment-delete-copy">This will permanently remove the patient record from the system.</p>
+            <p class="appointment-delete-copy">This will archive the patient record and hide it from the Patients section.</p>
             <div class="appointment-delete-alert" id="patientAdminDeleteAlert" hidden></div>
 
             <div class="appointment-delete-summary">
@@ -233,11 +233,11 @@ if (is_array($patients)) {
 
             <form id="deletePatientForm" method="post" action="/lab_sync/index.php?controller=patientController&action=edit_patient&role=<?php echo urlencode($role); ?>">
                 <input type="hidden" name="patient_id" id="patientAdminDeletePatientId" value="">
-                <button type="submit" name="delete" value="1" class="delete-confirm-btn" id="patientAdminDeleteConfirm">Delete Patient</button>
+                <button type="submit" name="delete" value="1" class="delete-confirm-btn" id="patientAdminDeleteConfirm">Archive Patient</button>
                 <button type="button" class="delete-cancel-btn" id="patientAdminDeleteCancel">Keep Patient</button>
             </form>
 
-            <div class="appointment-delete-footer-note">Permanent Delete • Action Cannot Be Undone</div>
+            <div class="appointment-delete-footer-note">Archive Action • Hidden From Patients List</div>
         </div>
     </div>
 
