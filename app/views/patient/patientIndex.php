@@ -186,16 +186,18 @@ if ($isStaff && intval($_SESSION['must_change_password'] ?? 0) === 1) {
       </p>
 
       <!-- Search bar -->
-      <div class="hero-search glass-card">
+      <form class="hero-search glass-card" method="get" action="/lab_sync/index.php">
+        <input type="hidden" name="controller" value="home">
+        <input type="hidden" name="action" value="explore">
         <div class="hero-search-wrap">
           <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-          <input type="text" placeholder="Search test e.g., CBC, Lipid Panel, Vitamin D…">
+          <input type="text" name="q" placeholder="Search test e.g., CBC, Lipid Panel, Vitamin D..." aria-label="Search tests">
         </div>
-        <button class="btn-search" onclick="location.href='/lab_sync/index.php?controller=home&action=explore'">
-          Book Home Visit
+        <button type="submit" class="btn-search">
+          Search Tests
           <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
         </button>
-      </div>
+      </form>
     </div>
   </section>
 
@@ -299,14 +301,7 @@ if ($isStaff && intval($_SESSION['must_change_password'] ?? 0) === 1) {
     </div>
 
     <?php
-    $tests = [
-      ['name'=>'Full Blood Count (FBC)',     'desc'=>'Comprehensive blood health analysis',    'icon'=>'drop'],
-      ['name'=>'Lipid Profile',              'desc'=>'Heart health and cholesterol screening', 'icon'=>'heart'],
-      ['name'=>'Fasting Blood Sugar (FBS)',  'desc'=>'Diabetes screening and monitoring',      'icon'=>'bolt'],
-      ['name'=>'Thyroid Panel (TSH/T3/T4)', 'desc'=>'Complete thyroid hormone analysis',      'icon'=>'wave'],
-      ['name'=>'Liver Function Test (LFT)',  'desc'=>'Liver health assessment',                'icon'=>'beaker'],
-      ['name'=>'Kidney Function Test (KFT)','desc'=>'Kidney health evaluation',               'icon'=>'beaker'],
-    ];
+    $featuredTests = isset($featuredTests) && is_array($featuredTests) ? $featuredTests : [];
 
     function ft_icon($id){
       $s = 'stroke="currentColor" stroke-width="1.8"';
@@ -320,15 +315,15 @@ if ($isStaff && intval($_SESSION['must_change_password'] ?? 0) === 1) {
     ?>
 
     <div class="featured-grid">
-      <?php foreach ($tests as $t): ?>
+      <?php foreach ($featuredTests as $t): ?>
         <article class="featured-card">
           <div class="ft-icon"><?= ft_icon($t['icon']) ?></div>
           <div class="ft-body">
             <h3 class="ft-title"><?= htmlspecialchars($t['name']) ?></h3>
             <p class="ft-desc"><?= htmlspecialchars($t['desc']) ?></p>
             <div class="ft-cta">
-              <a class="pill-btn" href="/lab_sync/index.php?controller=booking&action=create&test=<?= urlencode($t['name']) ?>">
-                Book Home Visit
+              <a class="pill-btn" href="/lab_sync/index.php?controller=home&action=book&test=<?= (int)($t['id'] ?? 0) ?>">
+                Book Test
               </a>
               <span class="home-tag">
                 <svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>

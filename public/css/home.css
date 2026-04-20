@@ -432,6 +432,42 @@
   .why-grid { grid-template-columns: repeat(2, 1fr); }
 }
 @media (max-width: 768px) {
+  .hero {
+    padding: 7rem 1rem 4.5rem;
+  }
+  .hero p {
+    font-size: 1rem;
+    margin-bottom: 1.75rem;
+  }
+  .home-visit-pill,
+  .hero-badge {
+    max-width: 100%;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .hero-search {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 0.75rem;
+    gap: 0.75rem;
+  }
+  .hero-search .btn-search {
+    width: 100%;
+    justify-content: center;
+    padding: 0.95rem 1.1rem;
+  }
+  .home-banner {
+    padding: 2.5rem 1rem;
+  }
+  .how-section,
+  .featured-section,
+  .why-section,
+  .blog-section {
+    padding: 4rem 1rem;
+  }
+  .section-header {
+    margin-bottom: 2.5rem;
+  }
   .trust-bar .container { grid-template-columns: repeat(2, 1fr); }
   .steps-grid { grid-template-columns: 1fr; }
   .steps-grid::before { display: none; }
@@ -441,6 +477,46 @@
   .blog-section .section-header-row { flex-direction: column; align-items: flex-start; gap: 0.75rem; }
 }
 @media (max-width: 480px) {
+  .hero {
+    padding-top: 6.5rem;
+  }
+  .hero h1 {
+    font-size: 2rem;
+  }
+  .home-visit-pill {
+    font-size: 0.72rem;
+    padding: 0.4rem 0.75rem;
+  }
+  .hero-search-wrap {
+    min-width: 0;
+  }
+  .hero-search input {
+    font-size: 0.95rem;
+    padding: 0.8rem 0.9rem 0.8rem 2.5rem;
+  }
   .trust-bar .container { grid-template-columns: 1fr 1fr; gap: 1rem; }
   .trust-item { border-right: none; }
+  .trust-item .num {
+    font-size: 2rem;
+  }
+  .featured-card {
+    padding: 1.1rem;
+    align-items: flex-start;
+  }
+  .ft-cta {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.65rem;
+  }
+  .pill-btn {
+    width: 100%;
+    text-align: center;
+    justify-content: center;
+  }
+  .why-grid {
+    grid-template-columns: 1fr;
+  }
+  .blog-body {
+    padding: 1.1rem;
+  }
 }

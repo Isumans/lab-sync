@@ -68,8 +68,13 @@
                         <input class="input1" type="password" id="password" name="password" placeholder="••••••••••" required>
                         <span class="error-text" id="passwordError"></span>
                     </div>
-                    
-                    <a href="#" class="reset-password-link">Reset Password</a>
+
+                    <div class="input-group">
+                        <label for="confirm_password">Confirm Password</label>
+                        <input class="input1" type="password" id="confirm_password" name="confirm_password" required>
+                        <span class="error-text" id="confirmPasswordError"></span>
+                    </div>
+
                     <button type="submit" class="login-button">Sign-Up</button>
                 </form>
                 
@@ -82,6 +87,7 @@
                     document.getElementById('emailError').textContent = '';
                     document.getElementById('contactError').textContent = '';
                     document.getElementById('passwordError').textContent = '';
+                    document.getElementById('confirmPasswordError').textContent = '';
                     
                     // Validate Name (letters and spaces only)
                     const name = document.getElementById('name').value.trim();
@@ -126,6 +132,16 @@
                         isValid = false;
                     } else if (password.length < 8) {
                         document.getElementById('passwordError').textContent = 'Password must be at least 8 characters long.';
+                        isValid = false;
+                    }
+
+                    // Validate Confirm Password
+                    const confirmPassword = document.getElementById('confirm_password').value;
+                    if (!confirmPassword) {
+                        document.getElementById('confirmPasswordError').textContent = 'Please confirm your password.';
+                        isValid = false;
+                    } else if (password !== confirmPassword) {
+                        document.getElementById('confirmPasswordError').textContent = 'Passwords do not match.';
                         isValid = false;
                     }
                     

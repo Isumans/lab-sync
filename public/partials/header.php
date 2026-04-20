@@ -46,7 +46,7 @@ if ($patientInitial === '') {
 
       <nav class="nav-links">
         <a href="index.php?controller=home&action=explore">Tests</a>
-        <a href="index.php?controller=blog&action=index">Health Updates</a>
+        <a href="index.php?controller=home&action=about">About</a>
         <a href="index.php?controller=home&action=how">How it works</a>
         <?php if (isset($user_id) && $user_role === 'patient'): ?>
           <a href="/lab_sync/index.php?controller=home&action=dashboard">Dashboard</a>

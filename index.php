@@ -328,7 +328,7 @@ elseif($controllerName === 'inventoryController'){
     $homeController = new homeController(); 
     $action = $_GET['action'] ?? 'index'; // or your desired default
     if($action==='index'){
-        include VIEW_PATH . '/patient/patientIndex.php';
+        $homeController->index();
     }elseif($action==='appointment_options'){
     $homeController->appointmentOptions();
     }elseif($action==='explore'){

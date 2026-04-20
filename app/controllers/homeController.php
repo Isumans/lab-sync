@@ -24,7 +24,95 @@ class HomeController {
 
     public function index() {
         $data = $this->model->getData();
-        include VIEW_PATH . '/patient/home.php';
+        $featuredOrder = [
+            'Full Blood Count (FBC)',
+            'Lipid Profile',
+            'Fasting Blood Sugar (FBS)',
+            'Thyroid Panel (TSH/T3/T4)',
+            'Liver Function Test (LFT)',
+            'Kidney Function Test (KFT)',
+        ];
+
+        $iconMap = [
+            'Full Blood Count (FBC)' => 'drop',
+            'Lipid Profile' => 'heart',
+            'Fasting Blood Sugar (FBS)' => 'bolt',
+            'Thyroid Panel (TSH/T3/T4)' => 'wave',
+            'Liver Function Test (LFT)' => 'beaker',
+            'Kidney Function Test (KFT)' => 'beaker',
+        ];
+
+        $descriptionMap = [
+            'Full Blood Count (FBC)' => 'Comprehensive blood health analysis',
+            'Lipid Profile' => 'Heart health and cholesterol screening',
+            'Fasting Blood Sugar (FBS)' => 'Diabetes screening and monitoring',
+            'Thyroid Panel (TSH/T3/T4)' => 'Complete thyroid hormone analysis',
+            'Liver Function Test (LFT)' => 'Liver health assessment',
+            'Kidney Function Test (KFT)' => 'Kidney health evaluation',
+        ];
+
+        $allTests = $this->model->getAllTests();
+        $testsByName = [];
+        foreach ($allTests as $test) {
+            $name = trim((string)($test['test_name'] ?? ''));
+            if ($name !== '') {
+                $testsByName[$name] = $test;
+            }
+        }
+
+        $featuredTests = [];
+        $usedTestIds = [];
+        foreach ($featuredOrder as $testName) {
+            if (!isset($testsByName[$testName])) {
+                continue;
+            }
+
+            $test = $testsByName[$testName];
+            $testId = (int)($test['test_id'] ?? 0);
+            if ($testId <= 0) {
+                continue;
+            }
+
+            $featuredTests[] = [
+                'id' => $testId,
+                'name' => trim((string)($test['test_name'] ?? $testName)),
+                'desc' => $descriptionMap[$testName] ?? trim((string)($test['description'] ?? '')),
+                'icon' => $iconMap[$testName] ?? 'beaker',
+            ];
+            $usedTestIds[$testId] = true;
+        }
+
+        $fallbackIcons = ['drop', 'heart', 'bolt', 'wave', 'beaker', 'beaker'];
+        foreach ($allTests as $test) {
+            if (count($featuredTests) >= 6) {
+                break;
+            }
+
+            $testId = (int)($test['test_id'] ?? 0);
+            if ($testId <= 0 || isset($usedTestIds[$testId])) {
+                continue;
+            }
+
+            $testName = trim((string)($test['test_name'] ?? ''));
+            if ($testName === '') {
+                continue;
+            }
+
+            $description = trim((string)($test['description'] ?? ''));
+            if ($description === '') {
+                $description = 'Comprehensive diagnostic screening available for booking.';
+            }
+
+            $featuredTests[] = [
+                'id' => $testId,
+                'name' => $testName,
+                'desc' => $description,
+                'icon' => $fallbackIcons[count($featuredTests) % count($fallbackIcons)],
+            ];
+            $usedTestIds[$testId] = true;
+        }
+
+        include VIEW_PATH . '/patient/patientIndex.php';
     }
      public function explore(){
         include VIEW_PATH . '/patient/explore.php';
@@ -38,11 +126,14 @@ class HomeController {
             $email = trim($_POST['email'] ?? '');
             $contact_number = trim($_POST['contact_number'] ?? '');
             $password = $_POST['password'] ?? '';
+            $confirmPassword = $_POST['confirm_password'] ?? '';
             $role = 'patient';
 
             // validate minimal inputs (optional, add more validation as needed)
-            if ($name === '' || $email === '' || $password === '') {
+            if ($name === '' || $email === '' || $password === '' || $confirmPassword === '') {
                 $error = 'Please fill all required fields.';
+            } elseif ($password !== $confirmPassword) {
+                $error = 'Password and confirm password do not match.';
             } else {
                 // prepare and check for existing user (use IF, not while)
                 $checkUserStmt = $this->db->prepare("SELECT user_id FROM users WHERE email = ? LIMIT 1");
@@ -77,8 +168,23 @@ class HomeController {
         include VIEW_PATH . '/auth/patient_signup.php';
     }
     public function getTests(){
-
         $tests = $this->model->getAllTests();
+        $query = trim((string)($_GET['q'] ?? ''));
+
+        if ($query !== '') {
+            $needle = function_exists('mb_strtolower') ? mb_strtolower($query, 'UTF-8') : strtolower($query);
+            $tests = array_values(array_filter($tests, function ($test) use ($needle) {
+                $name = trim((string)($test['test_name'] ?? ''));
+                $description = trim((string)($test['description'] ?? ''));
+                $category = trim((string)($test['category'] ?? ''));
+
+                $haystack = $name . ' ' . $description . ' ' . $category;
+                $haystack = function_exists('mb_strtolower') ? mb_strtolower($haystack, 'UTF-8') : strtolower($haystack);
+
+                return strpos($haystack, $needle) !== false;
+            }));
+        }
+
         include VIEW_PATH . '/patient/explore.php';
     }
 

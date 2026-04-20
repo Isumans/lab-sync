@@ -54,6 +54,17 @@
     @media (max-width: 900px) {
       .path-grid { grid-template-columns: 1fr; }
     }
+
+    @media (max-width: 560px) {
+      .wrap { padding: 7rem 1rem 2.5rem; }
+      .path-card { padding: 1.15rem; }
+      .path-card p { min-height: 0; }
+      .path-btn {
+        display: block;
+        width: 100%;
+        text-align: center;
+      }
+    }
   </style>
 </head>
 <body>

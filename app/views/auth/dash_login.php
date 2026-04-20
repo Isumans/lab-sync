@@ -71,7 +71,6 @@
                         <span class="error-text" id="passwordError"></span>
                     </div>
                     
-                    <a href="#" class="reset-password-link">Reset Password</a>
                     <button type="submit" class="login-button">Login</button>
                 </form>
                 

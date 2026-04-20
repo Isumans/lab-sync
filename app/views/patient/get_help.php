@@ -114,6 +114,23 @@ unset($_SESSION['success'], $_SESSION['error']);
     @media (max-width: 760px) {
       .grid { grid-template-columns: 1fr; }
     }
+
+    @media (max-width: 560px) {
+      .wrap { padding: 7rem 1rem 2.5rem; }
+      .form-box,
+      .cta-box { padding: 1rem; }
+      .actions {
+        flex-direction: column;
+      }
+      .btn {
+        width: 100%;
+        text-align: center;
+      }
+      .toggle-row {
+        width: 100%;
+        align-items: flex-start;
+      }
+    }
   </style>
 </head>
 <body>
