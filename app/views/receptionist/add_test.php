@@ -137,9 +137,9 @@ $workflowScriptVersion = file_exists($workflowScriptPath) ? (string)filemtime($w
                                         </div>
 
                                         <div class="form-group">
-                                            <label for="cost-price">COST PRICE (USD)</label>
+                                            <label for="cost-price">COST PRICE (LKR)</label>
                                             <div class="input-wrapper">
-                                                <span class="currency">$</span>
+                                                <span class="currency">LKR</span>
                                                 <input type="number" id="cost-price" name="cost_price" placeholder="0.00" step="0.01" required>
                                             </div>
                                         </div>

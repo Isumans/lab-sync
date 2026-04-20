@@ -72,9 +72,7 @@
             numeric = 0;
         }
 
-        return numeric.toLocaleString("en-US", {
-            style: "currency",
-            currency: "USD",
+        return "LKR " + numeric.toLocaleString("en-US", {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2
         });

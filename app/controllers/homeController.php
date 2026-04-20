@@ -479,16 +479,9 @@ class HomeController {
     }
 
     elseif (isset($_POST['delete'])) {
-        if (!$appointmentId) {
-            $_SESSION['error'] = 'Invalid appointment ID';
-            header('Location: ' . route_url('home', 'dashboard'));
-            exit();
-        }
-
-        $result = $this->model->deleteAppointment($appointmentId, $patientId);
-        if ($result) {
-            $_SESSION['success'] = 'Appointment cancelled successfully';
-        }
+        $_SESSION['error'] = 'Appointment cancellation is not available from the patient dashboard.';
+        header('Location: ' . route_url('home', 'dashboard'));
+        exit();
     }
 
     if (!$result) {

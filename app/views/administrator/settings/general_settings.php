@@ -8,7 +8,7 @@ $password_policy = $s['password_policy']        ?? '60';
 $session_timeout = isset($s['session_timeout']) ? (int)$s['session_timeout'] : 15;
 $language        = $s['language']               ?? 'en_US';
 $timezone        = $s['timezone']               ?? 'America/New_York';
-$currency        = $s['currency']               ?? 'USD';
+$currency        = $s['currency']               ?? 'LKR';
 $date_format     = $s['date_format']            ?? 'dd/mm/yyyy';
 
 // Helpers
@@ -118,12 +118,7 @@ function chk($val) { return $val ? 'checked' : ''; }
             <div class="config-group">
                 <label for="currency">Currency Format</label>
                 <select id="currency" name="currency">
-                    <option value="USD" <?= sel($currency, 'USD') ?>>USD ($)</option>
-                    <option value="EUR" <?= sel($currency, 'EUR') ?>>EUR (€)</option>
-                    <option value="GBP" <?= sel($currency, 'GBP') ?>>GBP (£)</option>
-                    <option value="CAD" <?= sel($currency, 'CAD') ?>>CAD ($)</option>
-                    <option value="AUD" <?= sel($currency, 'AUD') ?>>AUD ($)</option>
-                    <option value="INR" <?= sel($currency, 'INR') ?>>INR (₹)</option>
+                    <option value="LKR" <?= sel($currency, 'LKR') ?>>LKR</option>
                 </select>
             </div>
 

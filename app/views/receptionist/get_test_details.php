@@ -57,11 +57,11 @@ $tcIsActive   = (int)($test['is_active'] ?? 1);
             <div class="detail-list">
                 <div class="detail-row">
                     <span class="detail-label">Price</span>
-                    <strong class="price-highlight">$<?= number_format((float)($test['price'] ?? 0), 2) ?></strong>
+                    <strong class="price-highlight">LKR <?= number_format((float)($test['price'] ?? 0), 2) ?></strong>
                 </div>
                 <div class="detail-row">
                     <span class="detail-label">Cost Price</span>
-                    <strong>$<?= number_format((float)($test['cost_price'] ?? 0), 2) ?></strong>
+                    <strong>LKR <?= number_format((float)($test['cost_price'] ?? 0), 2) ?></strong>
                 </div>
                 <div class="detail-row">
                     <span class="detail-label">Discount</span>

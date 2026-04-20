@@ -21,6 +21,8 @@ unset($_SESSION['inventory_create_error'], $_SESSION['inventory_create_success']
     <link rel="stylesheet" href="/lab_sync/public/styles.css">
     <link rel="stylesheet" href="/lab_sync/public/settingStyles.css">
     <link rel="stylesheet" href="/lab_sync/public/inventoryStyles.css?v=20260414-1">
+    <link rel="stylesheet" href="/lab_sync/public/reportsDashboard.css">
+
 </head>
 <body>
     <?php require 'C:\xampp\htdocs\lab_sync\public\navbar.php'; ?>
@@ -28,7 +30,8 @@ unset($_SESSION['inventory_create_error'], $_SESSION['inventory_create_success']
         <?php require 'C:\xampp\htdocs\lab_sync\public\sidebar.php'; ?>
 
         <main class="main-content">
-            <?php
+            <section class="reports-dashboard" aria-label="Inventory create">
+                     <?php
                 $pageTitle = 'Inventory';
                 $pageBreadcrumbText = 'Inventory->Create New Item';
                 $pageActionHtml = '<a class="add-user-button" href="/lab_sync/index.php?controller=inventoryController&action=index">Back to Inventory</a>';
@@ -141,7 +144,7 @@ unset($_SESSION['inventory_create_error'], $_SESSION['inventory_create_success']
                         </div>
 
                         <div class="inv-create-grid-single">
-                            <label for="unit_cost">Cost Per Unit (USD)</label>
+                            <label for="unit_cost">Cost Per Unit (LKR)</label>
                             <input type="number" id="unit_cost" name="unit_cost" min="0" step="0.01" placeholder="0.00">
                         </div>
                     </article>
@@ -149,7 +152,7 @@ unset($_SESSION['inventory_create_error'], $_SESSION['inventory_create_success']
 
                     <article class="inv-create-card inv-create-summary-card">
                         <h3>Registration Summary</h3>
-                        <p>Intake Value: <strong id="summaryIntakeValue">$0.00</strong></p>
+                        <p>Intake Value: <strong id="summaryIntakeValue">LKR 0.00</strong></p>
                         <p>Compliance: <strong id="summaryCompliance" class="is-incomplete">Incomplete</strong></p>
                     </article>
 
@@ -159,6 +162,9 @@ unset($_SESSION['inventory_create_error'], $_SESSION['inventory_create_success']
                     </div>
                 </aside>
             </form>
+            
+            </section>
+       
         </main>
     </div>
 
@@ -205,7 +211,7 @@ unset($_SESSION['inventory_create_error'], $_SESSION['inventory_create_success']
                     </select>
                 </div>
                 <div class="inv-source-field">
-                    <label>Unit Cost (USD)</label>
+                    <label>Unit Cost (LKR)</label>
                     <input type="number" name="source_unit_cost[]" class="inv-source-unit-cost" min="0" step="0.01" placeholder="0.00">
                 </div>
                 <div class="inv-source-field inv-source-primary-wrap">

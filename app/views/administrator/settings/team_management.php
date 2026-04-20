@@ -10,25 +10,7 @@
         </div>
 
         <!-- Stats Cards -->
-        <div class="team-stats-grid">
-            <div class="stat-card-team">
-                <div class="stat-label-team">TOTAL STAFF</div>
-                <div class="stat-value-team"><?php echo count($users) ?? 0; ?></div>
-                <div class="stat-change">+2 this month</div>
-            </div>
-
-            <div class="stat-card-team">
-                <div class="stat-label-team">ACTIVE NOW</div>
-                <div class="stat-value-team" style="color: #10b981;"><?php echo count(array_filter($users, fn($u) => $u['status'] === 'Active')) ?? 0; ?></div>
-                <div class="stat-change" style="color: #10b981;">● Real-time</div>
-            </div>
-
-            <div class="stat-card-team">
-                <div class="stat-label-team">PENDING INVITES</div>
-                <div class="stat-value-team" style="color: #f97316;"><?php echo count(array_filter($users, fn($u) => $u['status'] === 'Inactive')) ?? 0; ?></div>
-                <div class="stat-change">Expires in 48h</div>
-            </div>
-        </div>
+        
     </div>
 
     

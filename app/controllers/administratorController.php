@@ -342,7 +342,7 @@ class administratorController {
             'session_timeout' => (int)($_POST['session_timeout'] ?? 15),
             'language'        => trim($_POST['language']         ?? 'en_US'),
             'timezone'        => trim($_POST['timezone']         ?? 'America/New_York'),
-            'currency'        => trim($_POST['currency']         ?? 'USD'),
+            'currency'        => 'LKR',
             'date_format'     => trim($_POST['date_format']      ?? 'dd/mm/yyyy'),
         ];
 

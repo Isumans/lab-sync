@@ -38,9 +38,32 @@ class DashboardModel {
         );
     }
 
+    public function getPatientGrowthPercentage(): int {
+        $thisWeek = $this->scalar(
+            "SELECT COUNT(*) FROM patients WHERE created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)"
+        );
+        $previousWeek = $this->scalar(
+            "SELECT COUNT(*) FROM patients
+             WHERE created_at >= DATE_SUB(NOW(), INTERVAL 14 DAY)
+               AND created_at < DATE_SUB(NOW(), INTERVAL 7 DAY)"
+        );
+
+        if ($previousWeek <= 0) {
+            return $thisWeek > 0 ? 100 : 0;
+        }
+
+        return intval(round((($thisWeek - $previousWeek) / $previousWeek) * 100));
+    }
+
     public function countAppointmentsToday(): int {
         return $this->scalar(
             "SELECT COUNT(*) FROM appointment WHERE DATE(appointment_date) = CURDATE()"
+        );
+    }
+
+    public function countAppointmentsYesterday(): int {
+        return $this->scalar(
+            "SELECT COUNT(*) FROM appointment WHERE DATE(appointment_date) = DATE_SUB(CURDATE(), INTERVAL 1 DAY)"
         );
     }
 
@@ -73,6 +96,25 @@ class DashboardModel {
         return $this->scalar(
             "SELECT COUNT(*) FROM bills WHERE status IN ('PENDING','PARTIALLY_PAID')"
         );
+    }
+
+    public function getUnpaidBillsOutstandingAmount(): float {
+        if (!$this->tableExists('bills')) return 0.0;
+
+        $result = $this->db->query(
+            "SELECT COALESCE(SUM(
+                CASE
+                    WHEN balance_due > 0 THEN balance_due
+                    ELSE total_amount
+                END
+            ), 0) AS total_outstanding
+            FROM bills
+            WHERE status IN ('PENDING','PARTIALLY_PAID')"
+        );
+
+        if (!$result) return 0.0;
+        $row = $result->fetch_assoc();
+        return $row ? floatval($row['total_outstanding'] ?? 0) : 0.0;
     }
 
     public function getStaffCounts(): array {
@@ -130,6 +172,64 @@ class DashboardModel {
                 $counts[$row['status']] = intval($row['cnt']);
             }
         }
+        return $counts;
+    }
+
+    public function getTestStatusBreakdown(): array {
+        $counts = [
+            'pending' => 0,
+            'in_progress' => 0,
+            'completed' => 0,
+            'authenticated' => 0,
+        ];
+
+        if (!$this->tableExists('appointment_tests')) {
+            $result = $this->db->query(
+                "SELECT UPPER(COALESCE(status, '')) AS st, COUNT(*) AS cnt
+                 FROM appointment
+                 GROUP BY UPPER(COALESCE(status, ''))"
+            );
+            if ($result) {
+                while ($row = $result->fetch_assoc()) {
+                    $status = $row['st'] ?? '';
+                    $cnt = intval($row['cnt'] ?? 0);
+                    if (in_array($status, ['PENDING', 'SCHEDULED'], true)) {
+                        $counts['pending'] += $cnt;
+                    } elseif (in_array($status, ['IN_PROGRESS', 'IN PROGRESS'], true)) {
+                        $counts['in_progress'] += $cnt;
+                    } elseif ($status === 'COMPLETED') {
+                        $counts['completed'] += $cnt;
+                    } elseif (in_array($status, ['AUTHENTICATED', 'AUTHORIZED', 'PRINTED'], true)) {
+                        $counts['authenticated'] += $cnt;
+                    }
+                }
+            }
+            return $counts;
+        }
+
+        $result = $this->db->query(
+            "SELECT UPPER(COALESCE(status, '')) AS st, COUNT(*) AS cnt
+             FROM appointment_tests
+             GROUP BY UPPER(COALESCE(status, ''))"
+        );
+
+        if ($result) {
+            while ($row = $result->fetch_assoc()) {
+                $status = $row['st'] ?? '';
+                $cnt = intval($row['cnt'] ?? 0);
+
+                if ($status === 'PENDING') {
+                    $counts['pending'] += $cnt;
+                } elseif ($status === 'IN_PROGRESS') {
+                    $counts['in_progress'] += $cnt;
+                } elseif ($status === 'COMPLETED') {
+                    $counts['completed'] += $cnt;
+                } elseif (in_array($status, ['AUTHENTICATED', 'AUTHORIZED', 'PRINTED'], true)) {
+                    $counts['authenticated'] += $cnt;
+                }
+            }
+        }
+
         return $counts;
     }
 
@@ -212,6 +312,190 @@ class DashboardModel {
         return $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
     }
 
+    public function getTodayAppointmentDensity(): array {
+        $density = [
+            'MOR' => 0,
+            'LUN' => 0,
+            'AFT' => 0,
+            'EVE' => 0,
+        ];
+
+        $result = $this->db->query(
+            "SELECT
+                SUM(CASE WHEN TIME(a.appointment_time) < '12:00:00' THEN 1 ELSE 0 END) AS mor,
+                SUM(CASE WHEN TIME(a.appointment_time) >= '12:00:00' AND TIME(a.appointment_time) < '14:00:00' THEN 1 ELSE 0 END) AS lun,
+                SUM(CASE WHEN TIME(a.appointment_time) >= '14:00:00' AND TIME(a.appointment_time) < '17:00:00' THEN 1 ELSE 0 END) AS aft,
+                SUM(CASE WHEN TIME(a.appointment_time) >= '17:00:00' THEN 1 ELSE 0 END) AS eve
+            FROM appointment a
+            WHERE DATE(a.appointment_date) = CURDATE()"
+        );
+
+        if ($result) {
+            $row = $result->fetch_assoc();
+            if ($row) {
+                $density['MOR'] = intval($row['mor'] ?? 0);
+                $density['LUN'] = intval($row['lun'] ?? 0);
+                $density['AFT'] = intval($row['aft'] ?? 0);
+                $density['EVE'] = intval($row['eve'] ?? 0);
+            }
+        }
+
+        return $density;
+    }
+
+    public function getTodayAppointmentStatusSnapshot(): array {
+        $counts = [
+            'confirmed' => 0,
+            'completed' => 0,
+            'in_progress' => 0,
+            'cancelled' => 0,
+        ];
+
+        $result = $this->db->query(
+            "SELECT UPPER(COALESCE(status, '')) AS st, COUNT(*) AS cnt
+             FROM appointment
+             WHERE DATE(appointment_date) = CURDATE()
+             GROUP BY UPPER(COALESCE(status, ''))"
+        );
+
+        if (!$result) {
+            return $counts;
+        }
+
+        while ($row = $result->fetch_assoc()) {
+            $status = $row['st'] ?? '';
+            $cnt = intval($row['cnt'] ?? 0);
+
+            if (in_array($status, ['CONFIRMED', 'SCHEDULED'], true)) {
+                $counts['confirmed'] += $cnt;
+                continue;
+            }
+
+            if ($status === 'COMPLETED') {
+                $counts['completed'] += $cnt;
+                continue;
+            }
+
+            if (in_array($status, ['IN_PROGRESS', 'IN PROGRESS'], true)) {
+                $counts['in_progress'] += $cnt;
+                continue;
+            }
+
+            if ($status === 'CANCELLED') {
+                $counts['cancelled'] += $cnt;
+            }
+        }
+
+        return $counts;
+    }
+
+    public function getTodayAppointmentTypeSplit(): array {
+        $types = [
+            'physical' => 0,
+            'online_scheduled' => 0,
+            'online_home_visit' => 0,
+        ];
+
+        $homeCollectionColumn = $this->resolveColumn('appointment', ['home_collection']);
+        $homeCollectionExpr = $homeCollectionColumn !== null
+            ? "COALESCE(a.{$homeCollectionColumn}, 0)"
+            : '0';
+
+        $result = $this->db->query(
+            "SELECT
+                SUM(CASE
+                    WHEN LOWER(COALESCE(a.method, '')) = 'physical' THEN 1
+                    ELSE 0
+                END) AS physical_count,
+                SUM(CASE
+                    WHEN LOWER(COALESCE(a.method, '')) = 'online' AND {$homeCollectionExpr} = 1 THEN 1
+                    ELSE 0
+                END) AS online_home_count,
+                SUM(CASE
+                    WHEN LOWER(COALESCE(a.method, '')) = 'online' AND {$homeCollectionExpr} = 0 THEN 1
+                    WHEN LOWER(COALESCE(a.method, '')) = 'call' THEN 1
+                    ELSE 0
+                END) AS online_scheduled_count
+             FROM appointment a
+             WHERE DATE(a.appointment_date) = CURDATE()"
+        );
+
+        if ($result) {
+            $row = $result->fetch_assoc();
+            if ($row) {
+                $types['physical'] = intval($row['physical_count'] ?? 0);
+                $types['online_home_visit'] = intval($row['online_home_count'] ?? 0);
+                $types['online_scheduled'] = intval($row['online_scheduled_count'] ?? 0);
+            }
+        }
+
+        return $types;
+    }
+
+    public function getTopOrderedTestsToday(int $limit = 4): array {
+        $limit = max(1, min(10, $limit));
+
+        if ($this->tableExists('appointment_items')) {
+            $quantityColumn = $this->resolveColumn('appointment_items', ['quantity']);
+            $quantityExpr = $quantityColumn !== null
+                ? "COALESCE(ai.{$quantityColumn}, 1)"
+                : '1';
+
+            $result = $this->db->query(
+                "SELECT
+                    ai.test_id,
+                    COALESCE(t.test_name, CONCAT('Test #', ai.test_id)) AS test_name,
+                    SUM({$quantityExpr}) AS total_orders
+                 FROM appointment_items ai
+                 INNER JOIN appointment a ON a.appointment_id = ai.appointment_id
+                 LEFT JOIN tests t ON t.test_id = ai.test_id
+                 WHERE DATE(a.appointment_date) = CURDATE()
+                 GROUP BY ai.test_id, COALESCE(t.test_name, CONCAT('Test #', ai.test_id))
+                 ORDER BY total_orders DESC, test_name ASC
+                 LIMIT {$limit}"
+            );
+
+            if ($result) {
+                return $result->fetch_all(MYSQLI_ASSOC);
+            }
+        }
+
+        if ($this->tableExists('appointment_tests')) {
+            $result = $this->db->query(
+                "SELECT
+                    at2.test_id,
+                    COALESCE(t.test_name, CONCAT('Test #', at2.test_id)) AS test_name,
+                    COUNT(*) AS total_orders
+                 FROM appointment_tests at2
+                 INNER JOIN appointment a ON a.appointment_id = at2.appointment_id
+                 LEFT JOIN tests t ON t.test_id = at2.test_id
+                 WHERE DATE(a.appointment_date) = CURDATE()
+                 GROUP BY at2.test_id, COALESCE(t.test_name, CONCAT('Test #', at2.test_id))
+                 ORDER BY total_orders DESC, test_name ASC
+                 LIMIT {$limit}"
+            );
+
+            if ($result) {
+                return $result->fetch_all(MYSQLI_ASSOC);
+            }
+        }
+
+        $result = $this->db->query(
+            "SELECT
+                a.test_id,
+                COALESCE(t.test_name, CONCAT('Test #', a.test_id)) AS test_name,
+                COUNT(*) AS total_orders
+             FROM appointment a
+             LEFT JOIN tests t ON t.test_id = a.test_id
+             WHERE DATE(a.appointment_date) = CURDATE()
+             GROUP BY a.test_id, COALESCE(t.test_name, CONCAT('Test #', a.test_id))
+             ORDER BY total_orders DESC, test_name ASC
+             LIMIT {$limit}"
+        );
+
+        return $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
+    }
+
     // ── Technician metrics ───────────────────────────────────────────────────
 
     public function countReportsPendingEntry(): int {
@@ -245,6 +529,208 @@ class DashboardModel {
              WHERE status IN ('AUTHORIZED','PRINTED')
                AND DATE({$authorizedAtCol}) = CURDATE()"
         );
+    }
+
+    public function getPendingEntryDayComparison(): array {
+        $totals = [
+            'today' => 0,
+            'yesterday' => 0,
+            'delta' => 0,
+        ];
+
+        if ($this->tableExists('appointment_tests')) {
+            $result = $this->db->query(
+                "SELECT
+                    SUM(CASE WHEN DATE(a.appointment_date) = CURDATE() THEN 1 ELSE 0 END) AS today_count,
+                    SUM(CASE WHEN DATE(a.appointment_date) = DATE_SUB(CURDATE(), INTERVAL 1 DAY) THEN 1 ELSE 0 END) AS yesterday_count
+                 FROM appointment_tests at2
+                 INNER JOIN appointment a ON a.appointment_id = at2.appointment_id
+                 WHERE at2.status IN ('PENDING', 'IN_PROGRESS')"
+            );
+
+            if ($result) {
+                $row = $result->fetch_assoc();
+                $totals['today'] = intval($row['today_count'] ?? 0);
+                $totals['yesterday'] = intval($row['yesterday_count'] ?? 0);
+            }
+        } else {
+            $result = $this->db->query(
+                "SELECT
+                    SUM(CASE WHEN DATE(a.appointment_date) = CURDATE() THEN 1 ELSE 0 END) AS today_count,
+                    SUM(CASE WHEN DATE(a.appointment_date) = DATE_SUB(CURDATE(), INTERVAL 1 DAY) THEN 1 ELSE 0 END) AS yesterday_count
+                 FROM appointment a
+                 WHERE UPPER(COALESCE(a.status, '')) NOT IN ('COMPLETED', 'CANCELLED')"
+            );
+
+            if ($result) {
+                $row = $result->fetch_assoc();
+                $totals['today'] = intval($row['today_count'] ?? 0);
+                $totals['yesterday'] = intval($row['yesterday_count'] ?? 0);
+            }
+        }
+
+        $totals['delta'] = $totals['today'] - $totals['yesterday'];
+        return $totals;
+    }
+
+    public function getTechnicianWorkflowBreakdown(): array {
+        $breakdown = [
+            'data_entry' => 0,
+            'review' => 0,
+            'authorized' => 0,
+            'total_active' => 0,
+        ];
+
+        if (!$this->tableExists('appointment_tests')) {
+            $result = $this->db->query(
+                "SELECT UPPER(COALESCE(a.status, '')) AS st, COUNT(*) AS cnt
+                 FROM appointment a
+                 GROUP BY UPPER(COALESCE(a.status, ''))"
+            );
+
+            if ($result) {
+                while ($row = $result->fetch_assoc()) {
+                    $status = $row['st'] ?? '';
+                    $count = intval($row['cnt'] ?? 0);
+
+                    if (in_array($status, ['PENDING', 'SCHEDULED', 'IN_PROGRESS', 'IN PROGRESS'], true)) {
+                        $breakdown['data_entry'] += $count;
+                        continue;
+                    }
+
+                    if ($status === 'COMPLETED') {
+                        $breakdown['review'] += $count;
+                        continue;
+                    }
+
+                    if (in_array($status, ['AUTHORIZED', 'AUTHENTICATED', 'PRINTED'], true)) {
+                        $breakdown['authorized'] += $count;
+                    }
+                }
+            }
+
+            $breakdown['total_active'] = $breakdown['data_entry'] + $breakdown['review'] + $breakdown['authorized'];
+            return $breakdown;
+        }
+
+        $result = $this->db->query(
+            "SELECT UPPER(COALESCE(status, '')) AS st, COUNT(*) AS cnt
+             FROM appointment_tests
+             GROUP BY UPPER(COALESCE(status, ''))"
+        );
+
+        if ($result) {
+            while ($row = $result->fetch_assoc()) {
+                $status = $row['st'] ?? '';
+                $count = intval($row['cnt'] ?? 0);
+
+                if (in_array($status, ['PENDING', 'IN_PROGRESS'], true)) {
+                    $breakdown['data_entry'] += $count;
+                    continue;
+                }
+
+                if ($status === 'COMPLETED') {
+                    $breakdown['review'] += $count;
+                    continue;
+                }
+
+                if (in_array($status, ['AUTHORIZED', 'AUTHENTICATED', 'PRINTED'], true)) {
+                    $breakdown['authorized'] += $count;
+                }
+            }
+        }
+
+        $breakdown['total_active'] = $breakdown['data_entry'] + $breakdown['review'] + $breakdown['authorized'];
+        return $breakdown;
+    }
+
+    public function getTechnicianTestVolumeByCategory(int $limit = 4): array {
+        $limit = max(1, min(10, $limit));
+        $categoryColumn = $this->resolveColumn('tests', ['department', 'category']);
+        $categoryExpr = $categoryColumn !== null
+            ? "COALESCE(NULLIF(TRIM(t.{$categoryColumn}), ''), 'Uncategorized')"
+            : "'Uncategorized'";
+
+        if ($this->tableExists('appointment_tests')) {
+            $result = $this->db->query(
+                "SELECT
+                    {$categoryExpr} AS category_name,
+                    COUNT(*) AS total_volume
+                 FROM appointment_tests at2
+                 INNER JOIN appointment a ON a.appointment_id = at2.appointment_id
+                 LEFT JOIN tests t ON t.test_id = at2.test_id
+                 WHERE DATE(a.appointment_date) = CURDATE()
+                   AND UPPER(COALESCE(at2.status, '')) IN ('COMPLETED', 'AUTHORIZED', 'AUTHENTICATED', 'PRINTED')
+                 GROUP BY {$categoryExpr}
+                 ORDER BY total_volume DESC, category_name ASC
+                 LIMIT {$limit}"
+            );
+
+            if ($result) {
+                return $result->fetch_all(MYSQLI_ASSOC);
+            }
+        }
+
+        $result = $this->db->query(
+            "SELECT
+                {$categoryExpr} AS category_name,
+                COUNT(*) AS total_volume
+             FROM appointment a
+             LEFT JOIN tests t ON t.test_id = a.test_id
+             WHERE DATE(a.appointment_date) = CURDATE()
+               AND UPPER(COALESCE(a.status, '')) IN ('COMPLETED', 'AUTHORIZED', 'AUTHENTICATED', 'PRINTED')
+             GROUP BY {$categoryExpr}
+             ORDER BY total_volume DESC, category_name ASC
+             LIMIT {$limit}"
+        );
+
+        return $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
+    }
+
+    public function getCriticalInventoryLevels(int $limit = 4): array {
+        $limit = max(1, min(12, $limit));
+        $rows = [];
+
+        $result = $this->db->query(
+            "SELECT i.item_name, i.quantity, i.reorder_level
+             FROM inventory i
+             WHERE i.reorder_level > 0
+             ORDER BY (i.quantity / i.reorder_level) ASC, i.item_name ASC
+             LIMIT {$limit}"
+        );
+
+        if (!$result) {
+            return $rows;
+        }
+
+        while ($row = $result->fetch_assoc()) {
+            $quantity = intval($row['quantity'] ?? 0);
+            $reorderLevel = max(1, intval($row['reorder_level'] ?? 0));
+            $ratio = (int) round(($quantity / $reorderLevel) * 100);
+            $ratio = max(0, min(140, $ratio));
+
+            $severity = 'healthy';
+            if ($ratio <= 35) {
+                $severity = 'critical';
+            } elseif ($ratio <= 80) {
+                $severity = 'warning';
+            }
+
+            $rows[] = [
+                'item_name' => $row['item_name'] ?? 'Inventory item',
+                'quantity' => $quantity,
+                'reorder_level' => $reorderLevel,
+                'ratio_percent' => $ratio,
+                'severity' => $severity,
+            ];
+        }
+
+        return $rows;
+    }
+
+    public function getTechnicianCompletedTarget(): int {
+        $target = intval(getenv('TECHNICIAN_COMPLETED_TARGET') ?: 100);
+        return $target > 0 ? $target : 100;
     }
 
     public function getLowStockItems(int $limit = 8): array {

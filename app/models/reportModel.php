@@ -567,6 +567,78 @@ class ReportModel {
         }
     }
 
+    public function getAuthorizedTestNotificationPayload($appointmentId, $testId) {
+        $this->lastError = '';
+        $appointmentId = intval($appointmentId);
+        $testId = intval($testId);
+
+        if ($appointmentId <= 0 || $testId <= 0) {
+            $this->lastError = 'Invalid appointment or test ID.';
+            return null;
+        }
+
+        $payload = $this->getReportDetailsPayload($appointmentId);
+        if ($payload === null || !is_array($payload['appointment'] ?? null)) {
+            $this->lastError = 'Report details not found.';
+            return null;
+        }
+
+        $appointment = $payload['appointment'];
+        $patientId = intval($appointment['patient_id'] ?? 0);
+        $patientName = trim((string)($appointment['patient_name'] ?? ''));
+        $contactNumber = trim((string)($appointment['contact_number'] ?? ''));
+
+        $testName = '';
+        $tests = is_array($payload['tests'] ?? null) ? $payload['tests'] : [];
+        foreach ($tests as $row) {
+            if (intval($row['test_id'] ?? 0) === $testId) {
+                $testName = trim((string)($row['test_name'] ?? ''));
+                break;
+            }
+        }
+
+        if ($testName === '' && $this->tableExists('tests')) {
+            $stmt = $this->db->prepare('SELECT COALESCE(test_name, "") AS test_name FROM tests WHERE test_id = ? LIMIT 1');
+            if ($stmt !== false) {
+                $stmt->bind_param('i', $testId);
+                if ($stmt->execute()) {
+                    $result = $stmt->get_result();
+                    $row = $result ? $result->fetch_assoc() : null;
+                    if ($row) {
+                        $testName = trim((string)($row['test_name'] ?? ''));
+                    }
+                }
+                $stmt->close();
+            }
+        }
+
+        $email = '';
+        if ($patientId > 0 && $this->tableExists('patients') && $this->columnExists('patients', 'email')) {
+            $emailSql = 'SELECT COALESCE(email, "") AS email FROM patients WHERE patient_id = ? LIMIT 1';
+            $emailStmt = $this->db->prepare($emailSql);
+            if ($emailStmt !== false) {
+                $emailStmt->bind_param('i', $patientId);
+                if ($emailStmt->execute()) {
+                    $emailResult = $emailStmt->get_result();
+                    $emailRow = $emailResult ? $emailResult->fetch_assoc() : null;
+                    if ($emailRow) {
+                        $email = trim((string)($emailRow['email'] ?? ''));
+                    }
+                }
+                $emailStmt->close();
+            }
+        }
+
+        return [
+            'appointment_id' => $appointmentId,
+            'test_id' => $testId,
+            'patient_name' => $patientName,
+            'contact_number' => $contactNumber,
+            'email' => $email,
+            'test_name' => $testName !== '' ? $testName : 'Selected test',
+        ];
+    }
+
     public function getLastError() {
         return $this->lastError;
     }

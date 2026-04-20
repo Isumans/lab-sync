@@ -1,0 +1,469 @@
+.admin-ops-dashboard {
+    padding: 22px 16px 30px;
+}
+
+.ad-kicker {
+    margin: 0;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: #5d7790;
+}
+
+.ad-page-title {
+    margin: 6px 0 18px;
+    font-size: clamp(1.65rem, 3.2vw, 2.4rem);
+    font-weight: 800;
+    line-height: 1.1;
+    color: #0f1b2a;
+}
+
+.ad-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px;
+    margin-bottom: 16px;
+}
+
+.ad-stat-card,
+.ad-panel {
+    background: #ffffff;
+    border: 1px solid #e6edf5;
+    border-radius: 14px;
+    box-shadow: 0 4px 12px rgba(16, 38, 63, 0.06);
+}
+
+.ad-stat-card {
+    padding: 14px 16px;
+}
+
+.ad-stat-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.ad-stat-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    font-size: 0.72rem;
+    font-weight: 800;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.ad-icon-patients {
+    background: #e3f4fe;
+    color: #1698d5;
+}
+
+.ad-icon-appointments {
+    background: #ecf8ff;
+    color: #1791cc;
+}
+
+.ad-icon-payments {
+    background: #ffe7e7;
+    color: #de4747;
+}
+
+.ad-icon-reports {
+    background: #edf2f8;
+    color: #5d758f;
+}
+
+.ad-stat-badge {
+    padding: 3px 9px;
+    border-radius: 999px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+}
+
+.ad-badge-soft {
+    background: #e4f5ff;
+    color: #2f94c7;
+}
+
+.ad-badge-neutral {
+    background: #edf3f9;
+    color: #607a95;
+}
+
+.ad-badge-danger {
+    background: #ffe9e9;
+    color: #dc3d3d;
+}
+
+.ad-stat-label {
+    margin: 0 0 4px;
+    color: #678099;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.ad-stat-value {
+    margin: 0;
+    color: #0f1b2a;
+    font-size: clamp(1.5rem, 2.6vw, 2.05rem);
+    font-weight: 800;
+    line-height: 1;
+}
+
+.ad-stat-sub {
+    margin: 6px 0 0;
+    font-size: 0.76rem;
+    color: #748aa0;
+    font-weight: 600;
+}
+
+.ad-main-grid {
+    display: grid;
+    grid-template-columns: 1.9fr 1fr;
+    gap: 14px;
+    margin-bottom: 14px;
+}
+
+.ad-bottom-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.ad-panel {
+    padding: 16px;
+}
+
+.ad-panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+}
+
+.ad-panel-title {
+    margin: 0 0 14px;
+    font-size: 0.96rem;
+    line-height: 1.25;
+    font-weight: 800;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: #26384a;
+    border-bottom: 1px solid #e7eef5;
+    padding-bottom: 8px;
+}
+
+.ad-panel-header .ad-panel-title {
+    margin: 0;
+    border-bottom: 0;
+    padding-bottom: 0;
+}
+
+.ad-legend-inline {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 0.72rem;
+    color: #5e768d;
+    font-weight: 700;
+}
+
+.ad-legend-inline span {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.ad-legend-inline i {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+}
+
+.ad-chart-wrap {
+    position: relative;
+    height: 240px;
+}
+
+.ad-donut-wrap {
+    position: relative;
+    width: 180px;
+    height: 180px;
+    margin: 6px auto 12px;
+}
+
+.ad-donut-center {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.ad-donut-center strong {
+    color: #122437;
+    font-size: 1.7rem;
+    line-height: 1;
+}
+
+.ad-donut-center span {
+    color: #748a9f;
+    font-size: 0.67rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.ad-legend-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.ad-legend-list li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    color: #274057;
+    font-size: 0.82rem;
+    font-weight: 700;
+}
+
+.ad-legend-meta {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    color: #5f788f;
+}
+
+.ad-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 999px;
+    display: inline-block;
+}
+
+.ad-staff-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.ad-staff-row {
+    display: grid;
+    grid-template-columns: 28px 1fr 84px;
+    gap: 10px;
+    align-items: center;
+}
+
+.ad-staff-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    font-size: 0.72rem;
+    font-weight: 800;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #e3f4fe;
+    color: #1698d5;
+}
+
+.ad-staff-main {
+    display: flex;
+    flex-direction: column;
+}
+
+.ad-staff-name {
+    color: #2f465f;
+    font-size: 0.86rem;
+    font-weight: 700;
+}
+
+.ad-staff-meta {
+    color: #6f859a;
+    font-size: 0.72rem;
+    font-weight: 600;
+}
+
+.ad-staff-track {
+    height: 8px;
+    border-radius: 999px;
+    background: #e6edf4;
+    overflow: hidden;
+}
+
+.ad-staff-track span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, #58c7f2, #2b9fd4);
+}
+
+.ad-staff-totals {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    border-top: 1px solid #e8eef5;
+    margin-top: 14px;
+    padding-top: 12px;
+}
+
+.ad-staff-totals div {
+    text-align: center;
+}
+
+.ad-staff-totals strong {
+    display: block;
+    color: #1f3448;
+    font-size: 1.2rem;
+    font-weight: 800;
+}
+
+.ad-staff-totals span {
+    color: #6f859a;
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 700;
+}
+
+.ad-alert-title {
+    margin: 0 0 12px;
+    color: #dc3d3d;
+    font-size: 0.72rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.ad-stock-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.ad-stock-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 0;
+    border-bottom: 1px solid #eef3f8;
+}
+
+.ad-stock-name {
+    color: #2f465f;
+    font-size: 0.82rem;
+    font-weight: 700;
+}
+
+.ad-stock-qty {
+    font-size: 0.78rem;
+    font-weight: 700;
+}
+
+.ad-stock-row.is-critical .ad-stock-qty {
+    color: #dc3d3d;
+}
+
+.ad-stock-row.is-warning .ad-stock-qty {
+    color: #e28d14;
+}
+
+.ad-stock-row.is-ok .ad-stock-qty {
+    color: #2f9b6e;
+}
+
+.ad-outline-btn {
+    margin-top: 12px;
+    display: inline-flex;
+    width: 100%;
+    justify-content: center;
+    align-items: center;
+    min-height: 40px;
+    border: 1px solid #c9daea;
+    border-radius: 10px;
+    color: #2d86bb;
+    text-decoration: none;
+    font-size: 0.84rem;
+    font-weight: 700;
+}
+
+.ad-outline-btn:hover {
+    background: #f2f8fe;
+}
+
+.ad-action-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.ad-action-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    min-height: 52px;
+    border: 1px solid #dae4ef;
+    border-radius: 10px;
+    background: #f9fbfe;
+    color: #264057;
+    text-decoration: none;
+    font-size: 0.83rem;
+    font-weight: 700;
+    transition: transform 0.16s ease, box-shadow 0.16s ease;
+}
+
+.ad-action-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 14px rgba(28, 59, 89, 0.12);
+}
+
+.ad-empty {
+    margin: 0;
+    color: #6f879c;
+    font-size: 0.88rem;
+}
+
+@media (max-width: 1280px) {
+    .ad-stats-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .ad-main-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .ad-bottom-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .admin-ops-dashboard {
+        padding: 16px 10px 20px;
+    }
+
+    .ad-stats-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .ad-action-grid {
+        grid-template-columns: 1fr;
+    }
+}

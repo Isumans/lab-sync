@@ -19,7 +19,6 @@ unset($_SESSION['success'], $_SESSION['error']);
   <link rel="stylesheet" href="/lab_sync/public/css/footer.css" />
   <link rel="stylesheet" href="/lab_sync/public/paymentModal.css" />
   <link rel="stylesheet" href="/lab_sync/public/appointmentEditModal.css" />
-  <link rel="stylesheet" href="/lab_sync/public/appointmentDeleteModal.css" />
   <link rel="stylesheet" href="/lab_sync/public/appointmentDetailsModal.css" />
   <style>
     :root {
@@ -597,9 +596,6 @@ unset($_SESSION['success'], $_SESSION['error']);
                     <button type="button" class="action-btn edit" title="Edit" onclick="openEdit(this)">
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"></path></svg>
                     </button>
-                    <button type="button" class="action-btn delete" title="Delete" onclick="openDelete(this)">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path></svg>
-                    </button>
                   </div>
                 </td>
               </tr>
@@ -957,38 +953,6 @@ unset($_SESSION['success'], $_SESSION['error']);
         </button>
       </div>
     </form>
-  </div>
-</div>
-
-<div class="appointment-delete-modal" id="patientDeleteAppointmentModal" aria-hidden="true">
-  <div class="appointment-delete-dialog" role="dialog" aria-modal="true" aria-labelledby="patientDeleteAppointmentTitle">
-    <div class="appointment-delete-header">
-      <span class="delete-icon-wrap" aria-hidden="true">!</span>
-      <h2 id="patientDeleteAppointmentTitle">Cancel Appointment</h2>
-      <button type="button" class="appointment-delete-close" id="patientDeleteAppointmentClose" aria-label="Close">&times;</button>
-    </div>
-
-    <p class="appointment-delete-copy">This will mark the appointment as cancelled and keep it in your appointment history.</p>
-    <div class="appointment-delete-alert" id="patientDeleteAppointmentAlert" hidden></div>
-
-    <div class="appointment-delete-summary">
-      <span class="summary-label">Appointment</span>
-      <div class="summary-value" id="patientDeleteAppointmentNumber">#APP-0</div>
-
-      <span class="summary-label">Tests</span>
-      <div class="summary-value" id="patientDeleteAppointmentTests">-</div>
-
-      <span class="summary-label">Schedule</span>
-      <div class="summary-value" id="patientDeleteAppointmentSchedule">-</div>
-    </div>
-
-    <form method="POST" action="/lab_sync/index.php?controller=home&action=edit_appointment">
-      <input type="hidden" name="appointment_id" id="patientDeleteAppointmentId" value="">
-      <button type="submit" name="delete" class="delete-confirm-btn" id="patientDeleteAppointmentConfirm">Cancel Appointment</button>
-      <button type="button" class="delete-cancel-btn" id="patientDeleteAppointmentCancel">Keep Appointment</button>
-    </form>
-
-    <div class="appointment-delete-footer-note">Soft Delete • Appointment Remains In History</div>
   </div>
 </div>
 
@@ -1663,22 +1627,6 @@ unset($_SESSION['success'], $_SESSION['error']);
     }
   }
 
-  function setPatientDeleteModalOpen(open) {
-    const modal = document.getElementById('patientDeleteAppointmentModal');
-    if (!modal) {
-      return;
-    }
-
-    modal.classList.toggle('is-open', open);
-    modal.setAttribute('aria-hidden', open ? 'false' : 'true');
-    document.body.style.overflow = open ? 'hidden' : '';
-    const alertNode = document.getElementById('patientDeleteAppointmentAlert');
-    if (alertNode) {
-      alertNode.hidden = true;
-      alertNode.textContent = '';
-    }
-  }
-
   function renderPatientEditTimeSlots(selectedTime) {
     const host = document.getElementById('patientEditTimeSlots');
     if (!host) return;
@@ -1777,22 +1725,6 @@ unset($_SESSION['success'], $_SESSION['error']);
     setPatientEditModalOpen(true);
   }
 
-  function openDelete(button) {
-    const row = rowDataFromButton(button);
-    if (!row) return;
-
-    if (String(row.status || '').toLowerCase() === 'cancelled') {
-      window.alert('This appointment has already been cancelled.');
-      return;
-    }
-
-    document.getElementById('patientDeleteAppointmentId').value = row.id;
-    document.getElementById('patientDeleteAppointmentNumber').textContent = `#${formatAppointmentNumber(row.id)}`;
-    document.getElementById('patientDeleteAppointmentTests').textContent = row.tests || 'No tests selected';
-    document.getElementById('patientDeleteAppointmentSchedule').textContent = `${row.date} • ${formatDisplayTime(row.time)}`;
-    setPatientDeleteModalOpen(true);
-  }
-
   document.addEventListener('DOMContentLoaded', function () {
     setupSectionTabs();
     setupTablePagination({
@@ -1863,19 +1795,8 @@ unset($_SESSION['success'], $_SESSION['error']);
       }
     });
 
-    const patientDeleteClose = document.getElementById('patientDeleteAppointmentClose');
-    const patientDeleteCancel = document.getElementById('patientDeleteAppointmentCancel');
-    const patientDeleteModal = document.getElementById('patientDeleteAppointmentModal');
     const detailsModal = document.getElementById('appointmentDetailsModal');
     const detailsClose = document.getElementById('appointmentDetailsClose');
-
-    patientDeleteClose && patientDeleteClose.addEventListener('click', () => setPatientDeleteModalOpen(false));
-    patientDeleteCancel && patientDeleteCancel.addEventListener('click', () => setPatientDeleteModalOpen(false));
-    patientDeleteModal && patientDeleteModal.addEventListener('click', function (event) {
-      if (event.target === patientDeleteModal) {
-        setPatientDeleteModalOpen(false);
-      }
-    });
 
     detailsClose && detailsClose.addEventListener('click', closePatientDetailsModal);
     detailsModal && detailsModal.addEventListener('click', function (event) {
@@ -1891,15 +1812,10 @@ unset($_SESSION['success'], $_SESSION['error']);
     }
 
     const patientEditModal = document.getElementById('patientEditAppointmentModal');
-    const patientDeleteModal = document.getElementById('patientDeleteAppointmentModal');
     const detailsModal = document.getElementById('appointmentDetailsModal');
 
     if (patientEditModal && patientEditModal.classList.contains('is-open')) {
       setPatientEditModalOpen(false);
-    }
-
-    if (patientDeleteModal && patientDeleteModal.classList.contains('is-open')) {
-      setPatientDeleteModalOpen(false);
     }
 
     if (detailsModal && detailsModal.classList.contains('is-open')) {

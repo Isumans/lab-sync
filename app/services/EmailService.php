@@ -185,6 +185,86 @@ class EmailService {
         return $this->sendEmail($email, $recipientName, $subject, $htmlContent);
     }
 
+    public function sendPrescriptionReviewedEmail($email, $recipientName, array $payload): array {
+        $requestId = intval($payload['request_id'] ?? 0);
+        $preferredDate = htmlspecialchars((string)($payload['preferred_date'] ?? ''));
+        $preferredTime = htmlspecialchars((string)($payload['preferred_time'] ?? ''));
+        $tests = $this->normalizeTestNames($payload['tests'] ?? []);
+
+        $subject = 'Prescription Reviewed - LabSync';
+        $testsHtml = $this->buildSimpleTestListHtml($tests);
+
+        $scheduleLine = '';
+        if ($preferredDate !== '' || $preferredTime !== '') {
+            $scheduleLine = '<p><strong>Preferred Slot:</strong> ' . trim($preferredDate . ' ' . $preferredTime) . '</p>';
+        }
+
+        $htmlContent = "
+            <html>
+                <head>
+                    <style>
+                        body { font-family: Arial, sans-serif; color: #243046; line-height: 1.6; }
+                        .header { background: #0f4c81; color: #fff; padding: 16px; text-align: center; }
+                        .content { padding: 18px; }
+                        .box { background: #f4f8fc; border-left: 4px solid #0f4c81; padding: 14px; margin: 16px 0; }
+                    </style>
+                </head>
+                <body>
+                    <div class='header'>
+                        <h2>Prescription Reviewed</h2>
+                    </div>
+                    <div class='content'>
+                        <p>Dear " . htmlspecialchars((string)($recipientName ?: 'Patient')) . ",</p>
+                        <p>Your prescription has been reviewed by our team and updated in your patient dashboard. Please proceed with the selected tests.</p>
+                        <div class='box'>
+                            <p><strong>Request ID:</strong> #RX-" . str_pad((string)$requestId, 5, '0', STR_PAD_LEFT) . "</p>
+                            " . $scheduleLine . "
+                            " . $testsHtml . "
+                        </div>
+                        <p>Best regards,<br><strong>LabSync Team</strong></p>
+                    </div>
+                </body>
+            </html>
+        ";
+
+        return $this->sendEmail($email, $recipientName, $subject, $htmlContent);
+    }
+
+    public function sendTestAuthorizedEmail($email, $recipientName, array $payload): array {
+        $appointmentId = intval($payload['appointment_id'] ?? 0);
+        $testName = htmlspecialchars((string)($payload['test_name'] ?? 'Selected test'));
+
+        $subject = 'Test Report Ready - LabSync';
+        $htmlContent = "
+            <html>
+                <head>
+                    <style>
+                        body { font-family: Arial, sans-serif; color: #243046; line-height: 1.6; }
+                        .header { background: #0f4c81; color: #fff; padding: 16px; text-align: center; }
+                        .content { padding: 18px; }
+                        .box { background: #f4f8fc; border-left: 4px solid #0f4c81; padding: 14px; margin: 16px 0; }
+                    </style>
+                </head>
+                <body>
+                    <div class='header'>
+                        <h2>Test Report Completed</h2>
+                    </div>
+                    <div class='content'>
+                        <p>Dear " . htmlspecialchars((string)($recipientName ?: 'Patient')) . ",</p>
+                        <p>Your test has been completed and authorized by our technician team. Please view the result from your patient dashboard or collect it from us.</p>
+                        <div class='box'>
+                            <p><strong>Appointment ID:</strong> #" . $appointmentId . "</p>
+                            <p><strong>Test:</strong> " . $testName . "</p>
+                        </div>
+                        <p>Best regards,<br><strong>LabSync Team</strong></p>
+                    </div>
+                </body>
+            </html>
+        ";
+
+        return $this->sendEmail($email, $recipientName, $subject, $htmlContent);
+    }
+
     private function extractAppointmentData($payload) {
         if (is_array($payload) && isset($payload['appointment']) && is_array($payload['appointment'])) {
             return $payload['appointment'];
@@ -221,5 +301,39 @@ class EmailService {
                 <ul style='padding-left:18px; margin:8px 0 0;'>" . implode('', $items) . "</ul>
             </div>
         ";
+    }
+
+    private function normalizeTestNames($rawTests) {
+        if (!is_array($rawTests)) {
+            return [];
+        }
+
+        $names = [];
+        foreach ($rawTests as $row) {
+            if (is_array($row)) {
+                $name = trim((string)($row['test_name'] ?? ''));
+            } else {
+                $name = trim((string)$row);
+            }
+
+            if ($name !== '') {
+                $names[$name] = $name;
+            }
+        }
+
+        return array_values($names);
+    }
+
+    private function buildSimpleTestListHtml($tests) {
+        if (!is_array($tests) || empty($tests)) {
+            return '<p><strong>Tests:</strong> Selected diagnostic tests</p>';
+        }
+
+        $items = [];
+        foreach ($tests as $name) {
+            $items[] = '<li>' . htmlspecialchars((string)$name) . '</li>';
+        }
+
+        return '<p><strong>Selected Tests:</strong></p><ul style="padding-left:18px; margin:8px 0 0;">' . implode('', $items) . '</ul>';
     }
 }

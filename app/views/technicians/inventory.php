@@ -26,6 +26,7 @@ if (!isset($_SESSION['user_id'])) {
         <?php require 'C:\xampp\htdocs\lab_sync\public\sidebar.php'; ?>
 
         <main class="main-content">
+            
             <section class="reports-dashboard" aria-label="Inventory Dashboard">
                 <?php
                     $pageTitle = 'Inventory';
@@ -208,7 +209,7 @@ if (!isset($_SESSION['user_id'])) {
                                 </select>
                             </div>
                             <div class="inventory-edit-field">
-                                <label for="editItemUnitCost">Item Unit Cost (USD)</label>
+                                <label for="editItemUnitCost">Item Unit Cost (LKR)</label>
                                 <input type="number" id="editItemUnitCost" name="unit_cost" min="0" step="0.01" placeholder="0.00">
                             </div>
                             <div class="inventory-edit-field">
@@ -247,7 +248,7 @@ if (!isset($_SESSION['user_id'])) {
                     </select>
                 </div>
                 <div class="inventory-edit-field">
-                    <label>Unit Cost (USD)</label>
+                    <label>Unit Cost (LKR)</label>
                     <input type="number" class="inventory-edit-source-unit-cost" min="0" step="0.01" placeholder="0.00">
                 </div>
                 <div class="inventory-edit-field">

@@ -207,7 +207,7 @@ CREATE TABLE `general_settings` (
   `session_timeout` int(11) DEFAULT 15,
   `language` varchar(50) DEFAULT 'en_US',
   `timezone` varchar(100) DEFAULT 'America/New_York',
-  `currency` varchar(20) DEFAULT 'USD',
+  `currency` varchar(20) DEFAULT 'LKR',
   `date_format` varchar(20) DEFAULT 'dd/mm/yyyy',
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -217,7 +217,7 @@ CREATE TABLE `general_settings` (
 --
 
 INSERT INTO `general_settings` (`id`, `sms_alerts`, `email_reports`, `password_policy`, `session_timeout`, `language`, `timezone`, `currency`, `date_format`, `updated_at`) VALUES
-(1, 0, 1, '90', 45, 'en_US', 'Asia/Kolkata', 'USD', 'dd/mm/yyyy', '2026-03-03 15:33:22');
+(1, 0, 1, '90', 45, 'en_US', 'Asia/Kolkata', 'LKR', 'dd/mm/yyyy', '2026-03-03 15:33:22');
 
 -- --------------------------------------------------------
 

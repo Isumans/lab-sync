@@ -6,6 +6,8 @@ if (!defined('ROOT_PATH')) {
 }
 
 require_once MODEL_PATH . '/reportModel.php';
+require_once APP_PATH . '/services/EmailService.php';
+require_once APP_PATH . '/services/SmsService.php';
 require_once 'C:\xampp\htdocs\lab_sync\config\db.php';
 
 class reportsController {
@@ -441,10 +443,16 @@ class reportsController {
             return;
         }
 
+        $notification = null;
+        if ($decision === 'authorize') {
+            $notification = $this->notifyAuthorizedTestPatient($model, $appointmentId, $testId);
+        }
+
         echo json_encode([
             'status' => 'success',
             'message' => $decision === 'recheck' ? 'Report flagged for recheck.' : 'Report authorized and signed successfully.',
-            'data' => $outcome
+            'data' => $outcome,
+            'notification' => $notification
         ]);
     }
 
@@ -671,5 +679,82 @@ class reportsController {
         }
 
         return null;
+    }
+
+    private function notifyAuthorizedTestPatient($model, $appointmentId, $testId) {
+        $settings = $this->getNotificationChannelSettings();
+        $result = [
+            'email' => ['status' => 'skipped', 'message' => 'Email not attempted.'],
+            'sms' => ['status' => 'skipped', 'message' => 'SMS not attempted.'],
+        ];
+
+        $payload = $model->getAuthorizedTestNotificationPayload($appointmentId, $testId);
+        if (!is_array($payload)) {
+            $error = $model->getLastError() ?: 'Notification payload unavailable.';
+            $result['email'] = ['status' => 'skipped', 'message' => $error];
+            $result['sms'] = ['status' => 'skipped', 'message' => $error];
+            return $result;
+        }
+
+        $recipientName = trim((string)($payload['patient_name'] ?? 'Patient'));
+        $email = trim((string)($payload['email'] ?? ''));
+        $phone = trim((string)($payload['contact_number'] ?? ''));
+
+        if ($settings['email_enabled']) {
+            if ($email !== '') {
+                $mailer = new EmailService();
+                $result['email'] = $mailer->sendTestAuthorizedEmail($email, $recipientName, $payload);
+                if (($result['email']['status'] ?? '') === 'error') {
+                    error_log('Authorized test email notification failed for appointment_id=' . intval($appointmentId) . ', test_id=' . intval($testId) . ': ' . ($result['email']['message'] ?? 'Unknown error'));
+                }
+            } else {
+                $result['email'] = ['status' => 'skipped', 'message' => 'Patient email is not available.'];
+            }
+        } else {
+            $result['email'] = ['status' => 'skipped', 'message' => 'Email notifications are disabled in settings.'];
+        }
+
+        if ($settings['sms_enabled']) {
+            if ($phone !== '') {
+                $smsService = new SmsService();
+                $result['sms'] = $smsService->sendTestAuthorizedSms($phone, $recipientName, $payload);
+                if (($result['sms']['status'] ?? '') === 'error') {
+                    error_log('Authorized test SMS notification failed for appointment_id=' . intval($appointmentId) . ', test_id=' . intval($testId) . ': ' . ($result['sms']['message'] ?? 'Unknown error'));
+                }
+            } else {
+                $result['sms'] = ['status' => 'skipped', 'message' => 'Patient contact number is not available.'];
+            }
+        } else {
+            $result['sms'] = ['status' => 'skipped', 'message' => 'SMS notifications are disabled in settings.'];
+        }
+
+        return $result;
+    }
+
+    private function getNotificationChannelSettings() {
+        $defaults = [
+            'email_enabled' => true,
+            'sms_enabled' => true,
+        ];
+
+        $conn = connect();
+        if (!$conn) {
+            return $defaults;
+        }
+
+        $settingsResult = $conn->query('SELECT email_reports, sms_alerts FROM general_settings WHERE id = 1 LIMIT 1');
+        if (!$settingsResult) {
+            return $defaults;
+        }
+
+        $row = $settingsResult->fetch_assoc();
+        if (!is_array($row)) {
+            return $defaults;
+        }
+
+        return [
+            'email_enabled' => intval($row['email_reports'] ?? 1) === 1,
+            'sms_enabled' => intval($row['sms_alerts'] ?? 1) === 1,
+        ];
     }
 }

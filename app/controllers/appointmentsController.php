@@ -317,9 +317,12 @@ public function savePrescriptionRequestManagement() {
         return;
     }
 
+    $notification = $this->notifyPrescriptionReviewedPatient($model, $requestId);
+
     echo json_encode([
         'status' => 'success',
-        'message' => 'Request updated and sent to patient successfully.'
+        'message' => 'Request updated and sent to patient successfully.',
+        'notification' => $notification
     ]);
 }
 
@@ -897,6 +900,83 @@ private function validateCsrfOrFail($expectsJson = false, $redirectController = 
     $_SESSION['error'] = 'Security check failed. Please retry.';
     header('Location: ' . route_url($redirectController, $redirectAction));
     exit;
+}
+
+private function notifyPrescriptionReviewedPatient($model, $requestId) {
+    $settings = $this->getNotificationChannelSettings();
+    $result = [
+        'email' => ['status' => 'skipped', 'message' => 'Email not attempted.'],
+        'sms' => ['status' => 'skipped', 'message' => 'SMS not attempted.'],
+    ];
+
+    $payload = $model->getPrescriptionRequestNotificationPayload($requestId);
+    if (!is_array($payload)) {
+        $error = $model->getLastError() ?: 'Notification payload unavailable.';
+        $result['email'] = ['status' => 'skipped', 'message' => $error];
+        $result['sms'] = ['status' => 'skipped', 'message' => $error];
+        return $result;
+    }
+
+    $recipientName = trim((string)($payload['patient_name'] ?? 'Patient'));
+    $email = trim((string)($payload['email'] ?? ''));
+    $phone = trim((string)($payload['contact_number'] ?? ''));
+
+    if ($settings['email_enabled']) {
+        if ($email !== '') {
+            $mailer = new EmailService();
+            $result['email'] = $mailer->sendPrescriptionReviewedEmail($email, $recipientName, $payload);
+            if (($result['email']['status'] ?? '') === 'error') {
+                error_log('Prescription notification email failed for request_id=' . intval($requestId) . ': ' . ($result['email']['message'] ?? 'Unknown error'));
+            }
+        } else {
+            $result['email'] = ['status' => 'skipped', 'message' => 'Patient email is not available.'];
+        }
+    } else {
+        $result['email'] = ['status' => 'skipped', 'message' => 'Email notifications are disabled in settings.'];
+    }
+
+    if ($settings['sms_enabled']) {
+        if ($phone !== '') {
+            $smsService = new SmsService();
+            $result['sms'] = $smsService->sendPrescriptionReviewedSms($phone, $recipientName, $payload);
+            if (($result['sms']['status'] ?? '') === 'error') {
+                error_log('Prescription notification SMS failed for request_id=' . intval($requestId) . ': ' . ($result['sms']['message'] ?? 'Unknown error'));
+            }
+        } else {
+            $result['sms'] = ['status' => 'skipped', 'message' => 'Patient contact number is not available.'];
+        }
+    } else {
+        $result['sms'] = ['status' => 'skipped', 'message' => 'SMS notifications are disabled in settings.'];
+    }
+
+    return $result;
+}
+
+private function getNotificationChannelSettings() {
+    $defaults = [
+        'email_enabled' => true,
+        'sms_enabled' => true,
+    ];
+
+    $conn = connect();
+    if (!$conn) {
+        return $defaults;
+    }
+
+    $settingsResult = $conn->query('SELECT email_reports, sms_alerts FROM general_settings WHERE id = 1 LIMIT 1');
+    if (!$settingsResult) {
+        return $defaults;
+    }
+
+    $row = $settingsResult->fetch_assoc();
+    if (!is_array($row)) {
+        return $defaults;
+    }
+
+    return [
+        'email_enabled' => intval($row['email_reports'] ?? 1) === 1,
+        'sms_enabled' => intval($row['sms_alerts'] ?? 1) === 1,
+    ];
 }
 
 

@@ -35,7 +35,7 @@ document.addEventListener('DOMContentLoaded', function () {
         var disc = parseFloat(discountInput ? discountInput.value : '0') || 0;
         disc = Math.min(100, Math.max(0, disc));
         var price = Math.max(0, cost - (cost * disc / 100));
-        pricePreviewEl.innerHTML = 'Calculated price: <strong>$' + price.toFixed(2) + '</strong>';
+        pricePreviewEl.innerHTML = 'Calculated price: <strong>LKR ' + price.toFixed(2) + '</strong>';
     }
 
     if (costPriceInput) { costPriceInput.addEventListener('input', recalcPrice); }
