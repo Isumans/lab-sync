@@ -4,6 +4,7 @@ if (!isset($_SESSION['user_id'])) {
     header('Location: /lab_sync/index.php?controller=Auth&action=index');
     exit();
 }
+
 ?>
 <html>
 <head>
@@ -59,6 +60,14 @@ if (!isset($_SESSION['user_id'])) {
                                 <option value="urinalysis">Urinalysis</option>
                                 <option value="xray">X-Ray</option>
                                 <option value="chemistry">Chemistry</option>
+                            </select>
+                        </div>
+
+                        <div class="rd-filter-field">
+                            <label for="rdSortOrder">Sort By Appointment</label>
+                            <select id="rdSortOrder">
+                                <option value="newest">Newest First</option>
+                                <option value="oldest">Oldest First</option>
                             </select>
                         </div>
                     </div>

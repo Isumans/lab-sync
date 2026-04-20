@@ -135,10 +135,6 @@ unset($_SESSION['inventory_create_error'], $_SESSION['inventory_create_success']
                             <input type="date" id="expiry_date" name="expiry_date">
                         </div>
 
-                        <div class="inv-create-grid-single">
-                            <label for="unit_cost">Cost Per Unit (LKR)</label>
-                            <input type="number" id="unit_cost" name="unit_cost" min="0" step="0.01" placeholder="0.00">
-                        </div>
                     </article>
 
 

@@ -252,12 +252,6 @@
                     '<td class="rd-payment-method">' + escapeHtml(item.paymentMethod) + "</td>" +
                     '<td><span class="rd-financial-status is-' + escapeHtml(item.statusKey) + '">' + escapeHtml(item.financialStatus) + "</span></td>" +
                     '<td class="rd-detail-cell"><div class="rd-finance-actions">' +
-                    '<button type="button" class="rd-icon-btn rd-bell-btn" data-action="notify" title="Send Reminder" aria-label="Send Reminder">' +
-                    '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22Zm7-6V11a7 7 0 1 0-14 0v5l-2 2v1h18v-1l-2-2Zm-2 .2 1 1H6l1-1V11a5 5 0 1 1 10 0v5.2Z"></path></svg>' +
-                    '</button>' +
-                    '<button type="button" class="rd-icon-btn rd-delete-btn" data-action="delete" title="Delete" aria-label="Delete Bill">' +
-                    '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6l1 2h4v2H4V5h4l1-2Zm1 6h2v9h-2V9Zm4 0h2v9h-2V9ZM7 9h2v9H7V9Z"></path></svg>' +
-                    '</button>' +
                     '<button type="button" class="rd-view-btn rd-manage-btn" data-action="manage">Manage</button>' +
                     '</div></td>' +
                     "</tr>"

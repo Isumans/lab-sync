@@ -314,10 +314,18 @@ class administratorModel {
     }
 
     public function addOnlineSlot(array $data): array {
-        $dayGroup  = $data['day_group'];
-        $startTime = $data['start_time'];
-        $endTime   = $data['end_time'];
-        $maxPat    = (int)$data['max_patients'];
+        if (!$this->db) {
+            return ['success' => false, 'message' => 'Database connection is unavailable.'];
+        }
+
+        $dayGroup  = trim((string)($data['day_group'] ?? ''));
+        $startTime = trim((string)($data['start_time'] ?? ''));
+        $endTime   = trim((string)($data['end_time'] ?? ''));
+        $maxPat    = (int)($data['max_patients'] ?? 0);
+
+        if (!$this->tableExists('online_booking_slots')) {
+            return ['success' => false, 'message' => 'Online slots table is missing. Run latest migrations.'];
+        }
 
         if (!in_array($dayGroup, ['mon_fri', 'sat', 'sun'])) {
             return ['success' => false, 'message' => 'Invalid day group.'];
@@ -339,6 +347,10 @@ class administratorModel {
             "INSERT INTO online_booking_slots (day_group, start_time, end_time, max_patients)
              VALUES (?, ?, ?, ?)"
         );
+        if (!$stmt) {
+            return ['success' => false, 'message' => 'Failed to prepare slot save query.'];
+        }
+
         $stmt->bind_param('sssi', $dayGroup, $startTime, $endTime, $maxPat);
         if ($stmt->execute()) {
             return ['success' => true, 'id' => $stmt->insert_id];
@@ -347,6 +359,17 @@ class administratorModel {
             return ['success' => false, 'message' => 'A slot with this start time already exists for that day group.'];
         }
         return ['success' => false, 'message' => 'Failed to save slot.'];
+    }
+
+    private function tableExists(string $tableName): bool {
+        $safeTable = preg_replace('/[^a-zA-Z0-9_]/', '', $tableName);
+        if ($safeTable === '') {
+            return false;
+        }
+
+        $sql = "SHOW TABLES LIKE '" . $this->db->real_escape_string($safeTable) . "'";
+        $result = $this->db->query($sql);
+        return $result && $result->num_rows > 0;
     }
 
     private function hasOverlappingOnlineSlot(string $dayGroup, string $startTime, string $endTime): bool {
