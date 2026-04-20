@@ -92,7 +92,7 @@ class dashboardController {
         $unpaidBills           = $this->model->countUnpaidBills();
         $unpaidBillsAmount     = $this->model->getUnpaidBillsOutstandingAmount();
         $patientsToday         = $this->model->countPatientsRegisteredToday();
-        $appointmentDensity    = $this->model->getTodayAppointmentDensity();
+        $appointmentDensityRows = $this->model->getTodayOnlineSlotDensity();
         $statusSnapshot        = $this->model->getTodayAppointmentStatusSnapshot();
         $appointmentTypes      = $this->model->getTodayAppointmentTypeSplit();
         $topOrderedTests       = $this->model->getTopOrderedTestsToday(4);

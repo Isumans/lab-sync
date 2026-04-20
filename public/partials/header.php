@@ -40,18 +40,17 @@ if ($patientInitial === '') {
           <div class="logo-mark">
             <img src="/lab_sync/public/assests/Labsync-3.png" alt="LabSync Logo">
           </div>
-          <span>LabSync</span>
+          <span><span style="color:#1F2B5B;">Lab</span><span style="color:#3DBDEC;">Sync</span></span>
         </a>
       </div>
 
       <nav class="nav-links">
         <a href="index.php?controller=home&action=explore">Tests</a>
-        <a href="index.php?controller=home&action=about">About</a>
         <a href="index.php?controller=home&action=how">How it works</a>
+        <a href="index.php?controller=home&action=about">About</a>
+        
         <?php if (isset($user_id) && $user_role === 'patient'): ?>
           <a href="/lab_sync/index.php?controller=home&action=dashboard">Dashboard</a>
-        <?php else: ?>
-          <a href="index.php?controller=home&action=about">About</a>
         <?php endif; ?>
       </nav>
 

@@ -190,18 +190,6 @@ $billStatusClass = match($paymentStatus) {
                     <span class="label">Bill #</span>
                     <strong><?php echo appointmentDetailsEscape($billNumber); ?></strong>
                 </div>
-                <?php if (!empty($billDate)): ?>
-                <div class="billing-row">
-                    <span class="label">Bill Date</span>
-                    <strong><?php echo appointmentDetailsEscape($billDate); ?></strong>
-                </div>
-                <?php endif; ?>
-                <?php if ($subtotal !== null): ?>
-                <div class="billing-row">
-                    <span class="label">Subtotal</span>
-                    <span>LKR <?php echo appointmentDetailsEscape($subtotal); ?></span>
-                </div>
-                <?php endif; ?>
                 <?php if ($discountAmt !== null && (float)str_replace(',', '', $discountAmt) > 0): ?>
                 <div class="billing-row">
                     <span class="label">Discount</span>
@@ -218,18 +206,7 @@ $billStatusClass = match($paymentStatus) {
                     <span class="label">Total</span>
                     <div class="amount">LKR <?php echo appointmentDetailsEscape($totalFee); ?></div>
                 </div>
-                <?php if ($paidAmount !== null): ?>
-                <div class="billing-row">
-                    <span class="label">Paid</span>
-                    <span>LKR <?php echo appointmentDetailsEscape($paidAmount); ?></span>
-                </div>
-                <?php endif; ?>
-                <?php if ($balanceDue !== null): ?>
-                <div class="billing-row">
-                    <span class="label">Balance Due</span>
-                    <strong>LKR <?php echo appointmentDetailsEscape($balanceDue); ?></strong>
-                </div>
-                <?php endif; ?>
+                
                 <div class="billing-row">
                     <span class="label">Status</span>
                     <div class="pill <?php echo appointmentDetailsEscape($billStatusClass); ?>">
