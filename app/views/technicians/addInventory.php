@@ -58,15 +58,7 @@ unset($_SESSION['inventory_create_error'], $_SESSION['inventory_create_success']
                         </div>
 
                         <div class="inv-create-grid-two">
-                            <div>
-                                <label for="category_id">Category</label>
-                                <select id="category_id" name="category_id">
-                                    <option value="">Select category</option>
-                                    <?php foreach ($categories as $category): ?>
-                                        <option value="<?php echo intval($category['category_id']); ?>"><?php echo htmlspecialchars($category['category_name']); ?></option>
-                                    <?php endforeach; ?>
-                                </select>
-                            </div>
+                            
                             <div>
                                 <label for="unit_of_measure">Unit of Measure</label>
                                 <select id="unit_of_measure" name="unit_of_measure" required>

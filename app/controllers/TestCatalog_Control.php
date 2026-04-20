@@ -155,6 +155,12 @@ class TestCatalogController {
                 }
 
                 $model = new TestCatalog($this->db);
+                if ($model->existsTestName($payload['test_name'])) {
+                    $_SESSION['flash'] = ['type' => 'error', 'message' => 'A test with this name already exists. Please use a different test name.'];
+                    header("Location: /lab_sync/index.php?controller=TestCatalog&action=add_test&role=" . urlencode($role));
+                    exit;
+                }
+
                 $success = $model->createTestWithRelations($payload);
                 if ($success) {
                     $_SESSION['flash'] = ['type' => 'success', 'message' => 'Test added successfully.'];

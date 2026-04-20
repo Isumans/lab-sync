@@ -499,7 +499,52 @@ class BillingModel {
         return $row && isset($row['total_rows']) ? intval($row['total_rows']) : 0;
     }
 
-    public function getLastError() {
+    public function getBillsForExport($filters) {
+        $this->lastError = '';
+
+        if (!$this->tableExists('bills')) {
+            return [];
+        }
+
+        list($whereSql, $types, $params) = $this->buildBillsWhereClause($filters);
+        $sql = "
+            SELECT
+                b.bill_id,
+                b.bill_date,
+                b.appointment_id,
+                b.patient_id,
+                b.total_amount,
+                b.paid_amount,
+                b.status,
+                COALESCE(p.patient_name, CONCAT('Patient #', b.patient_id)) AS patient_name,
+                (
+                    SELECT pay.payment_method
+                    FROM payments pay
+                    WHERE pay.bill_id = b.bill_id
+                    ORDER BY pay.payment_date DESC, pay.payment_id DESC
+                    LIMIT 1
+                ) AS latest_payment_method
+            FROM bills b
+            LEFT JOIN patients p ON p.patient_id = b.patient_id
+            {$whereSql}
+            ORDER BY b.bill_date DESC, b.bill_id DESC
+        ";
+
+        $stmt = $this->prepareAndBind($sql, $types, $params, 'getBillsForExport');
+        if ($stmt === null) {
+            return [];
+        }
+
+        if (!$stmt->execute()) {
+            $this->lastError = 'Execute failed in getBillsForExport: ' . $stmt->error;
+            return [];
+        }
+
+        $result = $stmt->get_result();
+        return $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
+    }
+
+    public function getLastError(): string {
         return $this->lastError;
     }
 

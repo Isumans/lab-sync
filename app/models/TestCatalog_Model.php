@@ -260,6 +260,46 @@ class TestCatalog {
         return $this->lastError;
     }
 
+    public function existsTestName(string $testName, ?int $excludeTestId = null): bool {
+        if (!$this->tableExists('tests')) {
+            return false;
+        }
+
+        $normalized = trim($testName);
+        if ($normalized === '') {
+            return false;
+        }
+
+        $sql = "SELECT test_id FROM tests WHERE LOWER(TRIM(test_name)) = LOWER(TRIM(?))";
+        if ($excludeTestId !== null && $excludeTestId > 0) {
+            $sql .= " AND test_id <> ?";
+        }
+        $sql .= " LIMIT 1";
+
+        $stmt = $this->db->prepare($sql);
+        if ($stmt === false) {
+            $this->lastError = 'Failed to validate duplicate test name.';
+            return false;
+        }
+
+        if ($excludeTestId !== null && $excludeTestId > 0) {
+            $stmt->bind_param('si', $normalized, $excludeTestId);
+        } else {
+            $stmt->bind_param('s', $normalized);
+        }
+
+        if (!$stmt->execute()) {
+            $this->lastError = 'Failed to validate duplicate test name.';
+            $stmt->close();
+            return false;
+        }
+
+        $result = $stmt->get_result();
+        $exists = $result && $result->num_rows > 0;
+        $stmt->close();
+        return $exists;
+    }
+
     private function buildTestsListSql($orderBy, $limit = null) {
         $departmentExpr = $this->columnExists('tests', 'department')
             ? 'department'

@@ -15,7 +15,6 @@
             <!-- Patient Search Section -->
             <div class="form-section patient-search-section">
                 <div class="section-header">
-                    <span class="section-icon">👥</span>
                     <h3>Patient Search</h3>
                 </div>
                 
@@ -54,9 +53,7 @@
             <!-- Test Selection Section -->
             <div class="form-section test-selection-section">
                 <div class="section-header">
-                    <span class="section-icon">🧪</span>
                     <h3>Test Selection</h3>
-                    <span class="step-indicator">STEP 1 OF 3</span>
                 </div>
 
                 <div class="test-search-group">
@@ -109,7 +106,6 @@
             <!-- Schedule Details Section -->
             <div class="form-section schedule-details-section">
                 <div class="section-header">
-                    <span class="section-icon">📅</span>
                     <h3>Schedule Details</h3>
                 </div>
 

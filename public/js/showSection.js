@@ -50,25 +50,14 @@ function showSection(sectionId, tabElement, event) {
     // Show the selected section
     sectionElement.style.display = 'block';
 
-    // Remove 'active' from all navItems
-    document.querySelectorAll('.navItem').forEach(function (item) {
-        item.classList.remove('active');
+    // Toggle settings slider active state using the shared reports-dashboard tab class.
+    document.querySelectorAll('.rd-slider-tab').forEach(function (tab) {
+        tab.classList.remove('is-active');
     });
-    // Add 'active' to the clicked navItem
-    if (event && event.target) {
-        event.target.closest('.navItem').classList.add('active');
-    } else {
-        // Fallback or handle initial load if needed
-        const link = document.querySelector(`.navItem[onclick*="'${sectionId}'"]`);
-        if (link) link.classList.add('active');
-    }
 
-    // Remove 'active' from all tabs
-    document.querySelectorAll('.team-tab').forEach(function (tab) {
-        tab.classList.remove('active');
-    });
-    // Add 'active' to the clicked tab
-    tabElement.classList.add('active');
+    if (tabElement) {
+        tabElement.classList.add('is-active');
+    }
 }
 
 document.querySelectorAll('.sidebar a').forEach(link => {

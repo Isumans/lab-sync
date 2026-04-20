@@ -37,7 +37,7 @@ if (!isset($_SESSION['user_id'])) {
                             <!-- Basic Information Section -->
                             <div class="form-section">
                                 <div class="section-header">
-                                    <span class="section-icon">ℹ️</span>
+                                    <span class="section-icon"></span>
                                     <h2>Basic Information</h2>
                                 </div>
 
@@ -82,7 +82,7 @@ if (!isset($_SESSION['user_id'])) {
                             <!-- Tests Offered Section -->
                             <div class="form-section">
                                 <div class="section-header">
-                                    <span class="section-icon">🔬</span>
+                                    <span class="section-icon"></span>
                                     <h2>Tests Offered by the Partner Lab</h2>
                                 </div>
                                 <p class="section-description">Select all the testing services provided by this laboratory partner.</p>
@@ -122,7 +122,7 @@ if (!isset($_SESSION['user_id'])) {
 
                             <!-- Form Actions -->
                             <div class="form-actions">
-                                <button type="submit" class="btn btn-save">💾 Save Partner Lab</button>
+                                <button type="submit" class="btn btn-save">Save Partner Lab</button>
                                 <button type="button" class="btn btn-cancel" onclick="window.history.back()">Cancel</button>
                             </div>
                         </form>

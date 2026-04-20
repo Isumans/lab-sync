@@ -28,7 +28,7 @@ $workflowScriptVersion = file_exists($workflowScriptPath) ? (string)filemtime($w
                     <?php
                         $pageTitle = 'Add New Test';
                         $pageBreadcrumbHtml = '<a href="javascript:history.back()" style="color: var(--primary-color); text-decoration: none;">Test-Catalog-></a>Add-New-Test';
-                        $pageActionHtml = '';
+                        $pageActionHtml = '<a class="add-user-button" href="/lab_sync/index.php?controller=TestCatalog&action=index&role=' . rawurlencode((string)$role) . '">Back to test catalog</a>';
                         require __DIR__ . '/../../../public/partials/page-header.php';
                     ?>
                     <?php if (isset($_SESSION['flash'])): ?>
@@ -246,40 +246,6 @@ $workflowScriptVersion = file_exists($workflowScriptPath) ? (string)filemtime($w
                             <div class="step-content">
                                 <h2 class="step-title">Finalize Test Configuration</h2>
                                 <p class="step-subtitle">Specify external hospital billing details and interpretative reporting standards.</p>
-
-                                <!-- External Hospital Charges -->
-                                <div class="section-box">
-                                    <div class="section-title">
-                                        <span class="icon"></span> External Hospital Charges
-                                    </div>
-
-                                    <div class="form-row">
-                                        <div class="form-group">
-                                            <label for="external-test-code">EXTERNAL TEST CODE</label>
-                                            <input type="text" id="external-test-code" name="external_test_code" placeholder="e.g., EXT-LIB-001">
-                                        </div>
-                                        <div class="form-group">
-                                            <label for="partner-hospital">PARTNER HOSPITAL</label>
-                                            <select id="partner-hospital" name="partner_hospital">
-                                                <option value="">Select Hospital</option>
-                                                <?php if (!empty($partnerLabs) && is_array($partnerLabs)): ?>
-                                                    <?php foreach ($partnerLabs as $lab): ?>
-                                                        <option value="<?php echo htmlspecialchars($lab['id'] ?? ''); ?>">
-                                                            <?php echo htmlspecialchars($lab['lab_name'] ?? ''); ?>
-                                                        </option>
-                                                    <?php endforeach; ?>
-                                                <?php endif; ?>
-                                            </select>
-                                        </div>
-                                        <div class="form-group">
-                                            <label for="charge-cost">CHARGE COST (RS)</label>
-                                            <div class="input-wrapper">
-                                                <span class="currency">₨</span>
-                                                <input type="number" id="charge-cost" name="charge_cost" placeholder="0.00" step="0.01">
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
 
                                 <!-- Report Comments & Interpretation -->
                                 <div class="section-box">
