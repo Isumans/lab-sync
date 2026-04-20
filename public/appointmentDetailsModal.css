@@ -190,6 +190,18 @@
     font-size: 12px;
 }
 
+.test-category-badge {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 6px;
+    padding: 2px 8px;
+    background: #f6e7a8;
+    color: #876b06;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
 .workflow {
     display: grid;
     grid-template-columns: repeat(5, minmax(0, 1fr));

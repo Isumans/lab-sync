@@ -19,9 +19,12 @@ if (!isset($_SESSION['user_id'])) {
         <main class="main-content">
             <section class="reports-dashboard" aria-label="Reports Dashboard">
                 <?php
+                    $role = isset($_GET['role']) ? trim((string)$_GET['role']) : '';
+                    $roleQuery = $role !== '' ? '&role=' . rawurlencode($role) : '';
                     $pageTitle = 'Finances';
                     $pageBreadcrumbText = 'Finances->';
-                    $pageActionHtml = '';
+                    $pageActionHtml = '<a id="rdExportCsvBtn" class="add-user-button" href="/lab_sync/index.php?controller=financesController&action=exportBillsCsv' . $roleQuery . '">Export CSV</a>'
+                        . '<a id="rdExportPdfBtn" class="add-user-button" href="/lab_sync/index.php?controller=financesController&action=exportBillsPrint' . $roleQuery . '" target="_blank" rel="noopener">Save as PDF</a>';
                     require __DIR__ . '/../../../public/partials/page-header.php';
                 ?>
 

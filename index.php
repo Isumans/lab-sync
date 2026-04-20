@@ -160,8 +160,9 @@ elseif ($controllerName === 'appointmentsController') {
     $appointmentController = new appointmentsController();
     $action = $_GET['action'] ?? 'index';
     $role = $_GET['role'] ?? '';
+    $section= $_GET['section'] ?? '';
     if ($action === 'index') {
-        $appointmentController->index($role);
+        $appointmentController->index($role, $section);
     } elseif ($action === 'test_catalog') {
         include VIEW_PATH . '/receptionist/test_catalog.php';
     } elseif ($action === 'createAppointment') {
@@ -270,6 +271,10 @@ elseif($controllerName === 'financesController'){
         $financesController->index($role);
     }elseif($action === 'listBills'){
         $financesController->listBills();
+    }elseif($action === 'exportBillsCsv'){
+        $financesController->exportBillsCsv();
+    }elseif($action === 'exportBillsPrint'){
+        $financesController->exportBillsPrint();
     }elseif($action === 'sendReminder'){
         $financesController->sendReminder();
     }elseif($action === 'deleteBill'){

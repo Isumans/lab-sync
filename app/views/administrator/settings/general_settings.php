@@ -22,7 +22,7 @@ function chk($val) { return $val ? 'checked' : ''; }
     <!-- Notifications Section -->
     <div class="config-section">
         <div class="section-header">
-            <span class="section-icon">🔔</span>
+            <span class="section-icon"></span>
             <h3>Notifications</h3>
         </div>
 
@@ -54,7 +54,7 @@ function chk($val) { return $val ? 'checked' : ''; }
     <!-- Security & Access Section -->
     <div class="config-section">
         <div class="section-header">
-            <span class="section-icon">🔒</span>
+            <span class="section-icon"></span>
             <h3>Security &amp; Access</h3>
         </div>
 
@@ -85,7 +85,7 @@ function chk($val) { return $val ? 'checked' : ''; }
     <!-- System Preferences Section -->
     <div class="config-section">
         <div class="section-header">
-            <span class="section-icon">⚙️</span>
+            <span class="section-icon"></span>
             <h3>System Preferences</h3>
         </div>
 

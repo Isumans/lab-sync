@@ -280,7 +280,7 @@ class HomeController {
         $homeCollection = !empty($_POST['home_collection']) ? 1 : 0;
         $collectionAddress = trim($_POST['collection_address'] ?? '');
         $patientId = $this->model->getPatientIdByUserId($_SESSION['user_id']);
-        $method = 'Online';
+        $method = 'online';
 
         if ($homeCollection && $collectionAddress === '') {
             $_SESSION['error'] = 'Please provide a collection address for home sample collection.';
@@ -496,7 +496,7 @@ class HomeController {
         header('Content-Type: application/json');
         $date = trim($_GET['date'] ?? '');
         if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $date) || !strtotime($date)) {
-            echo json_encode(['error' => 'Invalid date.']);
+            echo json_encode([]);
             return;
         }
 
@@ -511,6 +511,10 @@ class HomeController {
         }
 
         $slots = $this->model->getAvailableSlotsForDate($date, $dayGroup);
+        if (!is_array($slots)) {
+            echo json_encode([]);
+            return;
+        }
 
         // Format times as HH:MM for the frontend
         $formatted = [];

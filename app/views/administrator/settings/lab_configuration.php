@@ -92,64 +92,11 @@ $auto_email        = isset($c['auto_email_reports']) ? (int)$c['auto_email_repor
     </div>
 
     <!-- Operational Hours Section -->
-    <div class="config-section">
-        <div class="operational-header">
-            <h3>Operational Hours</h3>
-        </div>
-
-        <div class="operational-hours">
-            <!-- Monday - Friday -->
-            <div class="hours-row">
-                <div class="day-label">Monday - Friday</div>
-                <div class="time-inputs">
-                    <div class="time-group">
-                        <input type="time" name="hours_mon_fri_open" value="<?= $mf_open ?>" required>
-                        <span class="time-to">to</span>
-                        <input type="time" name="hours_mon_fri_close" value="<?= $mf_close ?>" required>
-                    </div>
-                    <label class="toggle">
-                        <input type="checkbox" name="hours_mon_fri_enabled" <?= $mf_enabled ? 'checked' : '' ?>>
-                        <span class="toggle-slider"></span>
-                    </label>
-                    <span class="<?= $mf_enabled ? 'status-open' : 'status-closed' ?>"><?= $mf_enabled ? 'Open' : 'Closed' ?></span>
-                </div>
-            </div>
+    
 
             <!-- Saturday -->
-            <div class="hours-row">
-                <div class="day-label">Saturday</div>
-                <div class="time-inputs">
-                    <div class="time-group">
-                        <input type="time" name="hours_sat_open" value="<?= $sat_open ?>" required>
-                        <span class="time-to">to</span>
-                        <input type="time" name="hours_sat_close" value="<?= $sat_close ?>" required>
-                    </div>
-                    <label class="toggle">
-                        <input type="checkbox" name="hours_sat_enabled" <?= $sat_enabled ? 'checked' : '' ?>>
-                        <span class="toggle-slider"></span>
-                    </label>
-                    <span class="<?= $sat_enabled ? 'status-open' : 'status-closed' ?>"><?= $sat_enabled ? 'Open' : 'Closed' ?></span>
-                </div>
-            </div>
-
-            <!-- Sunday -->
-            <div class="hours-row">
-                <div class="day-label">Sunday</div>
-                <div class="time-inputs">
-                    <div class="time-group">
-                        <input type="time" name="hours_sun_open" value="<?= $sun_open ?>" required>
-                        <span class="time-to">to</span>
-                        <input type="time" name="hours_sun_close" value="<?= $sun_close ?>" required>
-                    </div>
-                    <label class="toggle">
-                        <input type="checkbox" name="hours_sun_enabled" <?= $sun_enabled ? 'checked' : '' ?>>
-                        <span class="toggle-slider"></span>
-                    </label>
-                    <span class="<?= $sun_enabled ? 'status-open' : 'status-closed' ?>"><?= $sun_enabled ? 'Open' : 'Closed' ?></span>
-                </div>
-            </div>
-        </div>
-    </div>
+            
+ 
 
     <!-- Features Section -->
     <div class="config-section">

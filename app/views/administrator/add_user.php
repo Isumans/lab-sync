@@ -36,7 +36,7 @@ if (!isset($_SESSION['user_id'])) {
                             <!-- Account Information Section -->
                             <div class="form-section">
                                 <div class="section-header">
-                                    <span class="section-icon">ℹ️</span>
+                                    <span class="section-icon"></span>
                                     <h2>Account Information</h2>
                                 </div>
 
@@ -67,7 +67,7 @@ if (!isset($_SESSION['user_id'])) {
                             <!-- Role Assignment Section -->
                             <div class="form-section">
                                 <div class="section-header">
-                                    <span class="section-icon">🔐</span>
+                                    <span class="section-icon"></span>
                                     <h2>Role Assignment</h2>
                                 </div>
 

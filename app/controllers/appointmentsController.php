@@ -9,7 +9,7 @@ require_once APP_PATH . '/services/EmailService.php';
 require_once APP_PATH . '/services/SmsService.php';
 require_once __DIR__ . '/../../config/db.php';
 class appointmentsController {
-    public function index($role = '') {
+    public function index($role = '', $section = '') {
         // Logic to fetch and display appointments can be added here
         $appointmentsModel = new AppointmentModel(connect());
         $appointmentsOnline = $appointmentsModel->getAllAppointmentsByMethod("online");

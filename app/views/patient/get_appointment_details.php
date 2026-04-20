@@ -5,6 +5,30 @@ if (!function_exists('patientAppointmentDetailsEscape')) {
     }
 }
 
+if (!function_exists('normalizePatientWorkflowStatus')) {
+    function normalizePatientWorkflowStatus($value) {
+        $status = strtoupper(trim((string) $value));
+        $map = [
+            'PENDING' => 'PENDING',
+            'NEW' => 'PENDING',
+            'IN_PROGRESS' => 'IN_PROGRESS',
+            'IN PROGRESS' => 'IN_PROGRESS',
+            'PROCESSING' => 'IN_PROGRESS',
+            'PROC' => 'IN_PROGRESS',
+            'COMPLETED' => 'COMPLETED',
+            'COMPLETE' => 'COMPLETED',
+            'DONE' => 'COMPLETED',
+            'AUTHORIZED' => 'AUTHORIZED',
+            'AUTHORISED' => 'AUTHORIZED',
+            'APPROVED' => 'AUTHORIZED',
+            'PRINTED' => 'PRINTED',
+            'PRINT' => 'PRINTED',
+        ];
+
+        return $map[$status] ?? 'PENDING';
+    }
+}
+
 $patientName = $appointment['patient_name'] ?? 'Patient';
 $patientId = $appointment['patient_id'] ?? 'N/A';
 $gender = $appointment['gender'] ?? 'N/A';
@@ -50,6 +74,23 @@ $billStatusClass = match($paymentStatus) {
     'CANCELLED' => 'cancelled',
     default => 'pending',
 };
+
+if (empty($tests)) {
+    $summaryRaw = trim((string)($appointment['tests_summary'] ?? ''));
+    if ($summaryRaw !== '') {
+        $names = array_filter(array_map('trim', explode(',', $summaryRaw)), static fn($v) => $v !== '');
+        if (!empty($names)) {
+            $fallbackStatus = normalizePatientWorkflowStatus($appointment['appointment_status'] ?? 'PENDING');
+            $tests = array_map(static function ($name) use ($fallbackStatus) {
+                return [
+                    'test_name' => $name,
+                    'category' => 'General',
+                    'status' => $fallbackStatus,
+                ];
+            }, array_values(array_unique($names)));
+        }
+    }
+}
 ?>
 <div class="appointment-details-shell">
     <div class="appointment-details-header">
@@ -83,17 +124,22 @@ $billStatusClass = match($paymentStatus) {
         </section>
 
         <section class="appointment-card appointment-tests">
-            <h3>Test List</h3>
+            <h3>Test List and Progress</h3>
             <div class="appointment-card-body">
                 <?php if (!empty($tests)): ?>
                     <?php foreach ($tests as $test): ?>
+                        <?php $workflowStatus = normalizePatientWorkflowStatus($test['status'] ?? 'PENDING'); ?>
                         <div class="test-row">
                             <div class="test-main">
                                 <div class="test-name"><?php echo patientAppointmentDetailsEscape($test['test_name'] ?? 'Unknown Test'); ?></div>
-                                <div class="test-category"><?php echo patientAppointmentDetailsEscape($test['category'] ?? 'General'); ?></div>
+                                <span class="test-category-badge"><?php echo patientAppointmentDetailsEscape($test['category'] ?? 'General'); ?></span>
                             </div>
                             <div class="workflow">
-                                <span class="stage is-active"><?php echo patientAppointmentDetailsEscape(strtoupper((string)($test['status'] ?? 'PENDING'))); ?></span>
+                                <span class="stage <?php echo $workflowStatus === 'PENDING' ? 'is-active' : ''; ?>">Pending</span>
+                                <span class="stage <?php echo $workflowStatus === 'IN_PROGRESS' ? 'is-active' : ''; ?>">Proc.</span>
+                                <span class="stage <?php echo $workflowStatus === 'COMPLETED' ? 'is-active' : ''; ?>">Comp.</span>
+                                <span class="stage <?php echo $workflowStatus === 'AUTHORIZED' ? 'is-active' : ''; ?>">Auth.</span>
+                                <span class="stage <?php echo $workflowStatus === 'PRINTED' ? 'is-active' : ''; ?>">Print.</span>
                             </div>
                         </div>
                     <?php endforeach; ?>

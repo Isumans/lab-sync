@@ -14,6 +14,7 @@ usort($allAppointments, function ($left, $right) {
     return $rightTs <=> $leftTs;
 });
 $role = $role ?? '';
+$section = $section ?? '';
 ?>
 <!DOCTYPE html>
 <html lang="en">

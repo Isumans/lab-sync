@@ -69,7 +69,6 @@ $role = $_GET['role'] ?? ($_GET['user_role'] ?? '');
                                             <option value="">Select Gender</option>
                                             <option value="male">Male</option>
                                             <option value="female">Female</option>
-                                            <option value="other">Other</option>
                                         </select>
                                         <span class="rwp-input-icon" aria-hidden="true">&#9662;</span>
                                     </div>

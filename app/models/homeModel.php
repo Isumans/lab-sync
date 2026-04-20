@@ -283,6 +283,10 @@ class HomeModel {
             return false;
         }
 
+        if (!$this->isFutureOnlineSlotTime($date, $time)) {
+            return false;
+        }
+
         $dayGroup = $this->resolveDayGroupFromDate($date);
         if ($dayGroup === null) {
             $this->setLastError('Invalid appointment date.');
@@ -359,6 +363,10 @@ class HomeModel {
     private function isOnlineSlotCapacityAvailableForUpdate(string $date, string $time): bool {
         if (!$this->hasTable('online_booking_slots')) {
             $this->setLastError('Online slot configuration is unavailable.');
+            return false;
+        }
+
+        if (!$this->isFutureOnlineSlotTime($date, $time)) {
             return false;
         }
 
@@ -453,6 +461,29 @@ class HomeModel {
         }
 
         return 'sun';
+    }
+
+    private function isFutureOnlineSlotTime(string $date, string $time): bool {
+        $date = trim($date);
+        $time = trim($time);
+
+        $slotTimestamp = strtotime($date . ' ' . $time);
+        if ($slotTimestamp === false) {
+            $this->setLastError('Invalid appointment date or time.');
+            return false;
+        }
+
+        $today = date('Y-m-d');
+        if ($date !== $today) {
+            return true;
+        }
+
+        if ($slotTimestamp <= time()) {
+            $this->setLastError('Please select a future time slot for today.');
+            return false;
+        }
+
+        return true;
     }
 
     public function hasTimeSlotConflict($appointmentDate, $appointmentTime) {
@@ -894,6 +925,18 @@ class HomeModel {
 
         $summaryField = $this->buildAppointmentTestsSummaryExpr('a');
         $totalField = $this->buildAppointmentTotalExpr('a');
+        $patientNameField = $this->hasTableColumn('patients', 'patient_name')
+            ? "COALESCE(p.patient_name, '')"
+            : "''";
+        $patientContactField = $this->hasTableColumn('patients', 'contact_number')
+            ? "COALESCE(p.contact_number, '')"
+            : "''";
+        $patientGenderField = $this->hasTableColumn('patients', 'gender')
+            ? "COALESCE(p.gender, '')"
+            : "''";
+        $patientDobField = $this->hasTableColumn('patients', 'date_of_birth')
+            ? "p.date_of_birth"
+            : "NULL";
 
         $sql = "
             SELECT
@@ -903,12 +946,13 @@ class HomeModel {
                 COALESCE(a.collection_address, '') AS collection_address,
                 " . $summaryField . " AS tests_summary,
                 " . $totalField . " AS total_price,
-                COALESCE(p.patient_name, '') AS patient_name,
-                COALESCE(p.contact_number, '') AS contact_number,
-                COALESCE(p.gender, '') AS gender,
-                p.date_of_birth
+                " . $patientNameField . " AS patient_name,
+                " . $patientContactField . " AS contact_number,
+                " . $patientGenderField . " AS gender,
+                " . $patientDobField . " AS date_of_birth
             FROM appointment a
             LEFT JOIN patients p ON p.patient_id = a.patient_id
+            LEFT JOIN tests t ON t.test_id = a.test_id
             WHERE a.appointment_id = ? AND a.patient_id = ?
             LIMIT 1
         ";
@@ -1021,20 +1065,20 @@ class HomeModel {
             $stmt = $this->db->prepare($sql);
             if (!$stmt) {
                 $this->setLastError('Prepare failed: ' . $this->db->error);
-                return [];
+            } else {
+                $stmt->bind_param('i', $appointmentId);
+                if (!$stmt->execute()) {
+                    $this->setLastError('Execute failed: ' . $stmt->error);
+                    $stmt->close();
+                } else {
+                    $result = $stmt->get_result();
+                    $rows = $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
+                    $stmt->close();
+                    if (!empty($rows)) {
+                        return $rows;
+                    }
+                }
             }
-
-            $stmt->bind_param('i', $appointmentId);
-            if (!$stmt->execute()) {
-                $this->setLastError('Execute failed: ' . $stmt->error);
-                $stmt->close();
-                return [];
-            }
-
-            $result = $stmt->get_result();
-            $rows = $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
-            $stmt->close();
-            return $rows;
         }
 
         if ($this->hasTable('appointment_items')) {
@@ -1059,20 +1103,60 @@ class HomeModel {
             $stmt = $this->db->prepare($sql);
             if (!$stmt) {
                 $this->setLastError('Prepare failed: ' . $this->db->error);
-                return [];
+            } else {
+                $stmt->bind_param('i', $appointmentId);
+                if (!$stmt->execute()) {
+                    $this->setLastError('Execute failed: ' . $stmt->error);
+                    $stmt->close();
+                } else {
+                    $result = $stmt->get_result();
+                    $rows = $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
+                    $stmt->close();
+                    if (!empty($rows)) {
+                        return $rows;
+                    }
+                }
             }
+        }
 
-            $stmt->bind_param('i', $appointmentId);
-            if (!$stmt->execute()) {
-                $this->setLastError('Execute failed: ' . $stmt->error);
-                $stmt->close();
-                return [];
+        if (
+            $this->hasTable('prescription_requests') &&
+            $this->hasTableColumn('prescription_requests', 'linked_appointment_id') &&
+            $this->hasTable('prescription_request_tests')
+        ) {
+            $categoryExpr = $hasTestsTable && $this->hasTableColumn('tests', 'category')
+                ? 'COALESCE(t.category, "")'
+                : ($hasTestsTable && $this->hasTableColumn('tests', 'department')
+                    ? 'COALESCE(t.department, "")'
+                    : '""');
+
+            $sql = "
+                SELECT
+                    rt.test_id,
+                    " . ($hasTestsTable ? "COALESCE(t.test_name, CONCAT('Test #', rt.test_id))" : "CONCAT('Test #', rt.test_id)") . " AS test_name,
+                    {$categoryExpr} AS category,
+                    'PENDING' AS status
+                FROM prescription_request_tests rt
+                INNER JOIN prescription_requests pr ON pr.request_id = rt.request_id
+                " . ($hasTestsTable ? 'LEFT JOIN tests t ON t.test_id = rt.test_id' : '') . "
+                WHERE pr.linked_appointment_id = ?
+                ORDER BY test_name ASC, rt.test_id ASC
+            ";
+
+            $stmt = $this->db->prepare($sql);
+            if ($stmt) {
+                $stmt->bind_param('i', $appointmentId);
+                if ($stmt->execute()) {
+                    $result = $stmt->get_result();
+                    $rows = $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
+                    $stmt->close();
+                    if (!empty($rows)) {
+                        return $rows;
+                    }
+                } else {
+                    $stmt->close();
+                }
             }
-
-            $result = $stmt->get_result();
-            $rows = $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
-            $stmt->close();
-            return $rows;
         }
 
         $sql = "
@@ -1116,9 +1200,55 @@ class HomeModel {
     }
 
     public function updateAppointment($appointment_id, $appointment_time, $appointment_date, $patientId = null, $homeCollection = null, $collectionAddress = null) {
+        $appointment_id = intval($appointment_id);
+        if ($appointment_id <= 0) {
+            $this->setLastError('Invalid appointment ID.');
+            return false;
+        }
+
+        $appointmentDate = trim((string)$appointment_date);
+        $appointmentTime = trim((string)$appointment_time);
+
+        $methodQuery = "SELECT LOWER(COALESCE(method, '')) AS booking_method FROM appointment WHERE appointment_id = ?";
+        $methodTypes = 'i';
+        $methodParams = [$appointment_id];
+        if ($patientId !== null) {
+            $methodQuery .= ' AND patient_id = ?';
+            $methodTypes .= 'i';
+            $methodParams[] = intval($patientId);
+        }
+        $methodQuery .= ' LIMIT 1';
+
+        $methodStmt = $this->db->prepare($methodQuery);
+        if (!$methodStmt) {
+            $this->setLastError('Prepare failed: ' . $this->db->error);
+            return false;
+        }
+        $methodStmt->bind_param($methodTypes, ...$methodParams);
+        if (!$methodStmt->execute()) {
+            $this->setLastError('Execute failed: ' . $methodStmt->error);
+            $methodStmt->close();
+            return false;
+        }
+
+        $methodResult = $methodStmt->get_result();
+        $methodRow = $methodResult ? $methodResult->fetch_assoc() : null;
+        $methodStmt->close();
+
+        if (!$methodRow) {
+            $this->setLastError('Appointment not found.');
+            return false;
+        }
+
+        if (($methodRow['booking_method'] ?? '') === 'online') {
+            if (!$this->isOnlineSlotCapacityAvailableForUpdate($appointmentDate, $appointmentTime)) {
+                return false;
+            }
+        }
+
         $query = "UPDATE appointment SET appointment_time = ?, appointment_date = ?";
         $types = "ss";
-        $params = [$appointment_time, $appointment_date];
+        $params = [$appointmentTime, $appointmentDate];
 
         if ($homeCollection !== null) {
             $query .= ", home_collection = ?";
@@ -1504,7 +1634,18 @@ class HomeModel {
         $stmt->execute();
         $result = $stmt->get_result();
         $slots = [];
+        $today = date('Y-m-d');
+        $isToday = ($date === $today);
+        $now = strtotime(date('H:i:s'));
+
         while ($row = $result->fetch_assoc()) {
+            if ($isToday) {
+                $slotTs = strtotime((string)$row['start_time']);
+                if ($slotTs !== false && $slotTs <= $now) {
+                    continue;
+                }
+            }
+
             $row['available'] = ((int)$row['booked_count'] < (int)$row['max_patients']);
             $slots[] = $row;
         }

@@ -145,8 +145,7 @@ $chartPayload = [
                             <h3 class="rt-panel-title">Quick Actions</h3>
                             <div class="rt-action-stack">
                                 <a class="rt-action-btn rt-action-primary" href="/lab_sync/index.php?controller=appointmentsController&action=createAppointment&role=receptionist">Book Appointment</a>
-                                <a class="rt-action-btn" href="/lab_sync/index.php?controller=appointmentsController&action=prescriptionQueue">Prescription Queue</a>
-                                <a class="rt-action-btn" href="/lab_sync/index.php?controller=TestCatalog&action=test_catalog&role=receptionist">Test Catalog</a>
+                                <a class="rt-action-btn" href="/lab_sync/index.php?controller=appointmentsController&action=index&section=prescription&role=receptionist">Prescription Queue</a>
                                 <a class="rt-action-btn" href="/lab_sync/index.php?controller=financesController&action=index&role=receptionist">Billing &amp; Payments</a>
                             </div>
                         </aside>

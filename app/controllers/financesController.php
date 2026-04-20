@@ -38,13 +38,7 @@ class financesController {
         $page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
         $perPage = isset($_GET['per_page']) ? max(1, min(50, intval($_GET['per_page']))) : 10;
 
-        $filters = [
-            'search' => isset($_GET['search']) ? trim((string) $_GET['search']) : '',
-            'status' => isset($_GET['status']) ? trim(strtolower((string) $_GET['status'])) : 'all',
-            'payment_method' => isset($_GET['payment_method']) ? trim(strtolower((string) $_GET['payment_method'])) : 'all',
-            'from_date' => isset($_GET['from_date']) ? trim((string) $_GET['from_date']) : '',
-            'to_date' => isset($_GET['to_date']) ? trim((string) $_GET['to_date']) : '',
-        ];
+        $filters = $this->collectListFiltersFromQuery();
 
         $validationError = $this->validateListFilters($filters);
         if ($validationError !== '') {
@@ -109,6 +103,136 @@ class financesController {
                 'total_pages' => $totalPages,
             ],
         ]);
+    }
+
+    public function exportBillsCsv() {
+        if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
+            http_response_code(405);
+            echo 'Invalid request method.';
+            return;
+        }
+
+        $filters = $this->collectListFiltersFromQuery();
+        $validationError = $this->validateListFilters($filters);
+        if ($validationError !== '') {
+            http_response_code(400);
+            echo $validationError;
+            return;
+        }
+
+        $rows = $this->billingModel->getBillsForExport($filters);
+        $listError = $this->billingModel->getLastError();
+        if ($listError !== '') {
+            http_response_code(500);
+            echo $listError;
+            return;
+        }
+
+        $fileName = 'finances_report_' . date('Ymd_His') . '.csv';
+        header('Content-Type: text/csv; charset=UTF-8');
+        header('Content-Disposition: attachment; filename="' . $fileName . '"');
+
+        $output = fopen('php://output', 'w');
+        if ($output === false) {
+            http_response_code(500);
+            echo 'Unable to generate CSV.';
+            return;
+        }
+
+        fputcsv($output, [
+            'Bill ID',
+            'Bill Date',
+            'Appointment ID',
+            'Patient Name',
+            'Total Amount (LKR)',
+            'Amount Paid (LKR)',
+            'Outstanding Amount (LKR)',
+            'Payment Method',
+            'Financial Status',
+        ]);
+
+        foreach ($rows as $row) {
+            $appointmentNumericId = intval($row['appointment_id'] ?? 0);
+            $totalAmount = floatval($row['total_amount'] ?? 0);
+            $amountPaid = floatval($row['paid_amount'] ?? 0);
+            $outstanding = max(0, $totalAmount - $amountPaid);
+            $statusMeta = $this->mapStatus(strtoupper((string)($row['status'] ?? 'PENDING')));
+            $paymentMethod = $this->formatPaymentMethod(strtoupper((string)($row['latest_payment_method'] ?? '')));
+
+            fputcsv($output, [
+                intval($row['bill_id'] ?? 0),
+                (string)($row['bill_date'] ?? ''),
+                'APT-' . str_pad((string)$appointmentNumericId, 4, '0', STR_PAD_LEFT),
+                (string)($row['patient_name'] ?? 'Unknown Patient'),
+                number_format($totalAmount, 2, '.', ''),
+                number_format($amountPaid, 2, '.', ''),
+                number_format($outstanding, 2, '.', ''),
+                $paymentMethod,
+                $statusMeta['label'],
+            ]);
+        }
+
+        fclose($output);
+    }
+
+    public function exportBillsPrint() {
+        if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
+            http_response_code(405);
+            echo 'Invalid request method.';
+            return;
+        }
+
+        $filters = $this->collectListFiltersFromQuery();
+        $validationError = $this->validateListFilters($filters);
+        if ($validationError !== '') {
+            http_response_code(400);
+            echo $validationError;
+            return;
+        }
+
+        $rows = $this->billingModel->getBillsForExport($filters);
+        $listError = $this->billingModel->getLastError();
+        if ($listError !== '') {
+            http_response_code(500);
+            echo $listError;
+            return;
+        }
+
+        $exportRows = [];
+        $summaryTotals = [
+            'total_amount' => 0.0,
+            'paid_amount' => 0.0,
+            'outstanding_amount' => 0.0,
+        ];
+
+        foreach ($rows as $row) {
+            $appointmentNumericId = intval($row['appointment_id'] ?? 0);
+            $totalAmount = floatval($row['total_amount'] ?? 0);
+            $amountPaid = floatval($row['paid_amount'] ?? 0);
+            $outstanding = max(0, $totalAmount - $amountPaid);
+            $statusMeta = $this->mapStatus(strtoupper((string)($row['status'] ?? 'PENDING')));
+            $paymentMethod = $this->formatPaymentMethod(strtoupper((string)($row['latest_payment_method'] ?? '')));
+
+            $summaryTotals['total_amount'] += $totalAmount;
+            $summaryTotals['paid_amount'] += $amountPaid;
+            $summaryTotals['outstanding_amount'] += $outstanding;
+
+            $exportRows[] = [
+                'bill_id' => intval($row['bill_id'] ?? 0),
+                'bill_date' => (string)($row['bill_date'] ?? ''),
+                'appointment_id' => 'APT-' . str_pad((string)$appointmentNumericId, 4, '0', STR_PAD_LEFT),
+                'patient_name' => (string)($row['patient_name'] ?? 'Unknown Patient'),
+                'total_amount' => $totalAmount,
+                'paid_amount' => $amountPaid,
+                'outstanding_amount' => $outstanding,
+                'payment_method' => $paymentMethod,
+                'financial_status' => $statusMeta['label'],
+            ];
+        }
+
+        $reportGeneratedAt = date('Y-m-d H:i:s');
+        $filterSummary = $this->buildFilterSummary($filters);
+        include __DIR__ . '/../views/administrator/finances_export_print.php';
     }
 
     public function sendReminder() {
@@ -287,6 +411,16 @@ class financesController {
         return $input;
     }
 
+    private function collectListFiltersFromQuery() {
+        return [
+            'search' => isset($_GET['search']) ? trim((string) $_GET['search']) : '',
+            'status' => isset($_GET['status']) ? trim(strtolower((string) $_GET['status'])) : 'all',
+            'payment_method' => isset($_GET['payment_method']) ? trim(strtolower((string) $_GET['payment_method'])) : 'all',
+            'from_date' => isset($_GET['from_date']) ? trim((string) $_GET['from_date']) : '',
+            'to_date' => isset($_GET['to_date']) ? trim((string) $_GET['to_date']) : '',
+        ];
+    }
+
     private function ensureSession() {
     }
 
@@ -352,6 +486,37 @@ class financesController {
         }
 
         return '';
+    }
+
+    private function buildFilterSummary($filters) {
+        $parts = [];
+
+        $search = trim((string)($filters['search'] ?? ''));
+        if ($search !== '') {
+            $parts[] = 'Search: ' . $search;
+        }
+
+        $status = strtolower((string)($filters['status'] ?? 'all'));
+        if ($status !== 'all') {
+            $parts[] = 'Status: ' . ucwords(str_replace('_', ' ', $status));
+        }
+
+        $paymentMethod = strtolower((string)($filters['payment_method'] ?? 'all'));
+        if ($paymentMethod !== 'all') {
+            $parts[] = 'Payment: ' . ucfirst($paymentMethod);
+        }
+
+        $fromDate = trim((string)($filters['from_date'] ?? ''));
+        $toDate = trim((string)($filters['to_date'] ?? ''));
+        if ($fromDate !== '' || $toDate !== '') {
+            $parts[] = 'Date Range: ' . ($fromDate !== '' ? $fromDate : '-') . ' to ' . ($toDate !== '' ? $toDate : '-');
+        }
+
+        if (empty($parts)) {
+            return 'No filters applied';
+        }
+
+        return implode(' | ', $parts);
     }
 
     private function isValidDateYmd($value) {

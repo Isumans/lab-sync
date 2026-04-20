@@ -12,7 +12,7 @@ function showMenuItem($rolesAllowed, $content) {
 
 $currentController = $_GET['controller'] ?? '';
 $currentAction = $_GET['action'] ?? '';
-$reportsAction = ($role === 'receptionist') ? 'receptionistDashboard' : 'index';
+$reportsAction = ($role === 'receptionist') ? 'index' : 'index';
 ?>
 
 <aside class="sidebar">
@@ -42,7 +42,7 @@ $reportsAction = ($role === 'receptionist') ? 'receptionistDashboard' : 'index';
         showMenuItem(['admin', 'receptionist'], "
             <li>
                 <a href='index.php?controller=patientController&action=index&role=" . $role . "'
-                   class='" . (($currentController === 'patientController' && $currentAction === 'index') ? 'active' : '') . "'>
+                   class='" . (($currentController === 'patientController' && ($currentAction === 'index')|| $currentAction === 'register_patient') ? 'active' : '') . "'>
                     <img class='sidebar-icon' src='/lab_sync/public/assests/patients.png' alt='Patients Icon'>Patients
                 </a>
             </li>
@@ -72,7 +72,7 @@ $reportsAction = ($role === 'receptionist') ? 'receptionistDashboard' : 'index';
         showMenuItem(['admin', 'technician'], "
             <li>
                 <a href='index.php?controller=inventoryController&action=index&role=" . $role . "'
-                   class='" . (($currentController === 'inventoryController' && $currentAction === 'index') ? 'active' : '') . "'>
+                   class='" . (($currentController === 'inventoryController' && ($currentAction === 'index') || $currentAction === 'add_inventory') ? 'active' : '') . "'>
                     <img class='sidebar-icon' src='/lab_sync/public/assests/inventory.png' alt='Inventory Icon'>Inventory
                 </a>
             </li>
@@ -92,7 +92,7 @@ $reportsAction = ($role === 'receptionist') ? 'receptionistDashboard' : 'index';
         showMenuItem(['admin'], "
             <li>
                 <a href='index.php?controller=supplierController&action=index&role=" . $role . "'
-                   class='" . (($currentController === 'supplierController' && $currentAction === 'index') ? 'active' : '') . "'>
+                   class='" . (($currentController === 'supplierController' && ($currentAction === 'index' || $currentAction === 'Register_supplier')) ? 'active' : '') . "'>
                     <img class='sidebar-icon' src='/lab_sync/public/assests/supplier.png' alt='Supplier Icon'>Suppliers
                 </a>
             </li>

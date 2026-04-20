@@ -16,9 +16,8 @@
     var tableBody = null;
     var showingText = null;
     var paginationNode = null;
-
-    // var exportBtn = document.getElementById("rdExportBtn");
-    // var generateBtn = document.getElementById("rdGenerateBtn");
+    var exportCsvBtn = null;
+    var exportPdfBtn = null;
 
     var urlParams = new URLSearchParams(window.location.search);
     var currentRole = urlParams.get("role") || "";
@@ -42,6 +41,8 @@
         tableBody = document.getElementById("rdTableBody") || document.getElementById("billingTableBody");
         showingText = document.getElementById("rdShowingText");
         paginationNode = document.getElementById("rdPagination");
+        exportCsvBtn = document.getElementById("rdExportCsvBtn");
+        exportPdfBtn = document.getElementById("rdExportPdfBtn");
     }
 
     function initials(name) {
@@ -210,6 +211,25 @@
             });
     }
 
+    function buildExportQueryString() {
+        var filters = collectFilters();
+        var dateRangeError = getDateRangeError(filters);
+        if (dateRangeError) {
+            window.alert(dateRangeError);
+            return "";
+        }
+
+        var query = new URLSearchParams({
+            search: filters.search,
+            status: filters.status,
+            payment_method: filters.payment_method,
+            from_date: filters.from_date,
+            to_date: filters.to_date
+        });
+
+        return query.toString();
+    }
+
     function renderRows(pageData) {
         if (pageData.length === 0) {
             tableBody.innerHTML =
@@ -326,6 +346,30 @@
 
         if (clearBtn) {
             clearBtn.addEventListener("click", resetFilters);
+        }
+
+        if (exportCsvBtn) {
+            exportCsvBtn.addEventListener("click", function (event) {
+                event.preventDefault();
+                var queryString = buildExportQueryString();
+                if (!queryString) {
+                    return;
+                }
+
+                window.location.href = endpoint("exportBillsCsv") + "&" + queryString;
+            });
+        }
+
+        if (exportPdfBtn) {
+            exportPdfBtn.addEventListener("click", function (event) {
+                event.preventDefault();
+                var queryString = buildExportQueryString();
+                if (!queryString) {
+                    return;
+                }
+
+                window.open(endpoint("exportBillsPrint") + "&" + queryString, "_blank", "noopener");
+            });
         }
 
         paginationNode.addEventListener("click", function (event) {

@@ -522,7 +522,7 @@ body {
 
 /* Clinical Notes Section */
 .clinical-notes-section {
-    border-left: 4px solid #28a745 !important;
+    /* border-left: 4px solid #28a745 !important; */
 }
 
 .reason-textarea {

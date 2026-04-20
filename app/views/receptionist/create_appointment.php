@@ -30,6 +30,7 @@ if (!isset($_SESSION['user_id'])) {
             <div class="Tmain-content">
                 <div class="test-catalog-header">
                     <h1>Create Appointment</h1>
+                    <p class="add-user-button"><a href="/lab_sync/index.php?controller=appointmentsController&action=index" style="color: var(--secondary-color); text-decoration: none;">Back to Appointments</a></p>
                 </div>
                 <div>
                     <p class="MC-p"><a href="javascript:history.back()" style="color: var(--primary-color); text-decoration: none;">Appointments-></a>Create-Appointment</p></br>

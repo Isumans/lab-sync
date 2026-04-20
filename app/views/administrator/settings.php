@@ -65,16 +65,16 @@ $statusMap = [
                     </div>
                 <?php endif; ?>
                 <div class="nav-bar-container">
-                    <div class="nav-bar-line">
-                        <a class="navItem active" onclick="showSection('team', this, event)" href="#">Team</a>
+                    <div class="rd-slider-tabs" role="tablist" aria-label="Settings sections">
+                        <a class="rd-slider-tab is-active" onclick="showSection('team', this, event)" href="#" style="text-decoration: none;">Team</a>
 
-                        <a class="navItem" onclick="showSection('partner-labs', this, event)" href="#">Partner Labs</a>
+                        <a class="rd-slider-tab" onclick="showSection('partner-labs', this, event)" href="#" style="text-decoration: none;">Partner Labs</a>
                         
-                        <a class="navItem" onclick="showSection('configuration', this, event)" href="#">Lab Configuration</a>
+                        <a class="rd-slider-tab" onclick="showSection('configuration', this, event)" href="#" style="text-decoration: none;">Lab Configuration</a>
 
-                        <a class="navItem" onclick="showSection('general', this, event)" href="#">General Settings</a>
+                        <a class="rd-slider-tab" onclick="showSection('general', this, event)" href="#" style="text-decoration: none;">General Settings</a>
 
-                        <a class="navItem" onclick="showSection('online-slots', this, event)" href="#">Online Slots</a>
+                        <a class="rd-slider-tab" onclick="showSection('online-slots', this, event)" href="#" style="text-decoration: none;">Online Slots</a>
 
                     </div>
                 </div>
@@ -119,7 +119,6 @@ $statusMap = [
         <script src="/lab_sync/public/js/labConfig.js"></script>
         <script src="/lab_sync/public/js/generalSettings.js"></script>
         <script src="/lab_sync/public/js/partnerLabsFilter.js"></script>
-        <script src="/lab_sync/public/js/onlineSlots.js?v=2"></script>
         <script src="/lab_sync/public/js/settingsDeleteModal.js"></script>
 
     </body>
