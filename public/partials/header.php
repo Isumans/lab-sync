@@ -61,8 +61,8 @@ if ($patientInitial === '') {
         <?php endif; ?>
         <?php if (isset($user_id) && isset($user_role)): ?>
           <?php if (in_array($user_role, ['admin','receptionist','technician'])): ?>
-            <a href="/lab_sync/index.php?controller=dashboard&action=index" class="login">
-              <span class="user-role"><?= htmlspecialchars($user_role) ?> panel</span>
+            <a href="/lab_sync/index.php?controller=dashboard&action=index" class="appointment-cta">
+              <?= htmlspecialchars(ucwords($user_role)) ?> Panel
             </a>
           <?php endif; ?>
           <?php if ($user_role === 'patient'): ?>
