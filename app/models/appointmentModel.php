@@ -2005,6 +2005,41 @@ class AppointmentModel {
         $this->db->query($sql);
     }
 
+    public function getPrescriptionRequestNotificationPayload($requestId) {
+        $requestId = intval($requestId);
+        if ($requestId <= 0) {
+            $this->lastError = 'Invalid request ID.';
+            return null;
+        }
+
+        $payload = $this->getPrescriptionRequestManagePayload($requestId);
+        if ($payload === null) {
+            $this->lastError = 'Prescription request not found.';
+            return null;
+        }
+
+        $request = is_array($payload['request'] ?? null) ? $payload['request'] : [];
+        $tests = is_array($payload['tests'] ?? null) ? $payload['tests'] : [];
+
+        $testNames = [];
+        foreach ($tests as $row) {
+            $name = trim((string)($row['test_name'] ?? ''));
+            if ($name !== '') {
+                $testNames[$name] = $name;
+            }
+        }
+
+        return [
+            'request_id' => intval($request['request_id'] ?? $requestId),
+            'patient_name' => trim((string)($request['patient_name'] ?? '')),
+            'email' => trim((string)($request['email'] ?? '')),
+            'contact_number' => trim((string)($request['contact_number'] ?? '')),
+            'preferred_date' => trim((string)($request['preferred_date'] ?? '')),
+            'preferred_time' => trim((string)($request['preferred_time'] ?? '')),
+            'tests' => array_values($testNames),
+        ];
+    }
+
     public function tableExists($tableName) {
         return $this->hasTable($tableName);
     }

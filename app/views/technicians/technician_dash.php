@@ -7,252 +7,197 @@ if (($_SESSION['user_role'] ?? '') !== 'technician') {
     header('Location: /lab_sync/index.php?controller=dashboard&action=index');
     exit();
 }
+
+$pendingDelta = intval($pendingEntryCompare['delta'] ?? 0);
+$pendingDeltaPrefix = $pendingDelta >= 0 ? '+' : '';
+
+$workflowRows = [
+    [
+        'label' => 'Data Entry',
+        'value' => intval($workflowBreakdown['data_entry'] ?? 0),
+        'color' => '#20c18a',
+    ],
+    [
+        'label' => 'Review',
+        'value' => intval($workflowBreakdown['review'] ?? 0),
+        'color' => '#f4bc2a',
+    ],
+    [
+        'label' => 'Authorized',
+        'value' => intval($workflowBreakdown['authorized'] ?? 0),
+        'color' => '#39b8e4',
+    ],
+];
+
+$workflowTotalActive = intval($workflowBreakdown['total_active'] ?? 0);
+
+if (empty($testVolumeCategories)) {
+    $testVolumeCategories = [
+        ['category_name' => 'Hematology', 'total_volume' => 0],
+        ['category_name' => 'Biochemistry', 'total_volume' => 0],
+        ['category_name' => 'Immunology', 'total_volume' => 0],
+        ['category_name' => 'Microbiology', 'total_volume' => 0],
+    ];
+}
+
+$volumeMax = 1;
+foreach ($testVolumeCategories as $categoryRow) {
+    $volumeMax = max($volumeMax, intval($categoryRow['total_volume'] ?? 0));
+}
+
+$targetProgress = $completedTarget > 0
+    ? intval(round((intval($reportsCompletedToday ?? 0) / $completedTarget) * 100))
+    : 0;
+$targetProgress = max(0, min(999, $targetProgress));
 ?>
 <html>
     <head>
         <title>Technician Dashboard</title>
         <link rel="stylesheet" href="/lab_sync/public/styles.css">
-        <link rel="stylesheet" href="/lab_sync/public/table.css">
-        <link rel="stylesheet" href="/lab_sync/public/dashboardCards.css">
         <link rel="stylesheet" href="/lab_sync/public/reportsDashboard.css">
-        <style>
-            .dash-table-section {
-                background: var(--secondary-color);
-                border-radius: 15px;
-                padding: 24px;
-                box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-                margin-top: 24px;
-            }
-            .dash-table-section h3 {
-                font-size: 1rem;
-                font-weight: 600;
-                margin: 0 0 16px 0;
-                color: var(--font-color);
-            }
-            .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 24px; }
-            .dash-table {
-                width: 100%;
-                border-collapse: collapse;
-            }
-            .dash-table th {
-                text-align: left;
-                padding: 10px 12px;
-                font-size: 0.8rem;
-                color: #7c8ba3;
-                font-weight: 600;
-                text-transform: uppercase;
-                letter-spacing: 0.04em;
-                border-bottom: 1px solid rgba(0,0,0,0.08);
-            }
-            .dash-table td {
-                padding: 10px 12px;
-                font-size: 0.875rem;
-                border-bottom: 1px solid rgba(0,0,0,0.05);
-                color: var(--font-color);
-            }
-            .dash-table tr:last-child td { border-bottom: none; }
-            .dash-table tr:hover td { background: rgba(61,189,236,0.04); }
-            .status-badge {
-                display: inline-block;
-                padding: 3px 10px;
-                border-radius: 20px;
-                font-size: 0.75rem;
-                font-weight: 600;
-            }
-            .status-PENDING     { background: rgba(230,126,34,0.12); color: #e67e22; }
-            .status-IN_PROGRESS { background: rgba(61,189,236,0.12);  color: #3DBDEC; }
-            .status-COMPLETED   { background: rgba(46,213,115,0.12);  color: #2ed573; }
-            .stock-bar-wrap {
-                width: 100%;
-                background: rgba(0,0,0,0.06);
-                border-radius: 4px;
-                height: 6px;
-                margin-top: 4px;
-            }
-            .stock-bar {
-                height: 6px;
-                border-radius: 4px;
-                background: #ff4757;
-                transition: width 0.3s;
-            }
-            .quick-links { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 24px; }
-            .quick-link-btn {
-                display: inline-flex;
-                align-items: center;
-                gap: 6px;
-                padding: 10px 18px;
-                border-radius: 8px;
-                background: var(--primary-color);
-                color: #fff;
-                font-size: 0.875rem;
-                font-weight: 500;
-                text-decoration: none;
-                transition: opacity 0.2s;
-            }
-            .quick-link-btn:hover { opacity: 0.85; }
-            .empty-state {
-                text-align: center;
-                color: #7c8ba3;
-                padding: 32px 0;
-                font-size: 0.9rem;
-            }
-            @media (max-width: 900px) { .two-col { grid-template-columns: 1fr; } }
-        </style>
+        <link rel="stylesheet" href="/lab_sync/public/technicianDashboard.css?v=20260420">
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     </head>
     <body>
         <?php require 'C:\xampp\htdocs\lab_sync\public\navbar.php'; ?>
         <div class="container">
             <?php require 'C:\xampp\htdocs\lab_sync\public\sidebar.php'; ?>
             <main class="main-content">
-                <section class="reports-dashboard" aria-label="Technician Dashboard">
+                <section class="reports-dashboard technician-workbench" aria-label="Technician Dashboard">
                     <?php
-                        $pageTitle = 'Dashboard';
-                        $pageBreadcrumbText = 'Dashboard';
+                        $pageTitle = 'Technician Dashboard';
+                        $pageBreadcrumbText = 'Technician-Dashboard->';
                         $pageActionHtml = '';
                         require __DIR__ . '/../../../public/partials/page-header.php';
                     ?>
 
-                    <h3>Your Overview</h3>
+                    <div class="td-metrics-grid" aria-label="Top Key Metrics">
+                        <article class="td-metric-card">
+                            <div class="td-metric-head">
+                                <p class="td-metric-label">Pending Entry</p>
+                                <span class="td-metric-pill td-pill-danger"><?php echo $pendingDeltaPrefix . number_format($pendingDelta); ?> vs yesterday</span>
+                            </div>
+                            <p class="td-metric-value"><?php echo number_format($reportsPendingEntry ?? 0); ?></p>
+                        </article>
 
-                    <!-- Metric Cards -->
-                    <div class="metrics-grid">
-                        <div class="metric-card">
-                            <div class="metric-icon pending-icon">📝</div>
-                            <div class="metric-content">
-                                <h3>Reports Pending Entry</h3>
-                                <p class="metric-value"><?php echo number_format($reportsPendingEntry ?? 0); ?></p>
-                                <span class="metric-change <?php echo ($reportsPendingEntry > 0) ? 'down' : ''; ?>">
-                                    <?php echo ($reportsPendingEntry > 0) ? 'Values needed' : 'All up to date'; ?>
-                                </span>
+                        <article class="td-metric-card">
+                            <div class="td-metric-head">
+                                <p class="td-metric-label">Awaiting Auth</p>
+                                <span class="td-metric-icon" aria-hidden="true">&#8987;</span>
                             </div>
-                        </div>
-                        <div class="metric-card">
-                            <div class="metric-icon order-icon">🔍</div>
-                            <div class="metric-content">
-                                <h3>Awaiting Authorization</h3>
-                                <p class="metric-value"><?php echo number_format($reportsAwaitingAuth ?? 0); ?></p>
-                                <span class="metric-change <?php echo ($reportsAwaitingAuth > 0) ? 'down' : ''; ?>">
-                                    <?php echo ($reportsAwaitingAuth > 0) ? 'Pending review' : 'None pending'; ?>
-                                </span>
+                            <p class="td-metric-value"><?php echo number_format($reportsAwaitingAuth ?? 0); ?></p>
+                        </article>
+
+                        <article class="td-metric-card">
+                            <div class="td-metric-head">
+                                <p class="td-metric-label">Completed Today</p>
+                                <span class="td-metric-pill td-pill-success">Target: <?php echo number_format($completedTarget); ?></span>
                             </div>
-                        </div>
-                        <div class="metric-card">
-                            <div class="metric-icon sales-icon">✅</div>
-                            <div class="metric-content">
-                                <h3>Completed Today</h3>
-                                <p class="metric-value"><?php echo number_format($reportsCompletedToday ?? 0); ?></p>
-                                <span class="metric-change up">Reports authorized today</span>
+                            <p class="td-metric-value"><?php echo number_format($reportsCompletedToday ?? 0); ?></p>
+                            <p class="td-metric-sub">Progress <?php echo number_format($targetProgress); ?>%</p>
+                        </article>
+
+                        <article class="td-metric-card">
+                            <div class="td-metric-head">
+                                <p class="td-metric-label">Low-Stock Items</p>
+                                <span class="td-metric-icon td-alert" aria-hidden="true">&#9888;</span>
                             </div>
-                        </div>
-                        <div class="metric-card">
-                            <div class="metric-icon user-icon">📦</div>
-                            <div class="metric-content">
-                                <h3>Low Stock Items</h3>
-                                <p class="metric-value"><?php echo number_format($lowStockCount ?? 0); ?></p>
-                                <span class="metric-change <?php echo ($lowStockCount > 0) ? 'down' : ''; ?>">
-                                    <?php echo ($lowStockCount > 0) ? 'Need restocking' : 'Stock levels OK'; ?>
-                                </span>
-                            </div>
-                        </div>
+                            <p class="td-metric-value"><?php echo str_pad((string) intval($lowStockCount ?? 0), 2, '0', STR_PAD_LEFT); ?></p>
+                        </article>
                     </div>
 
-                    <div class="two-col">
-                        <!-- Pending Reports List -->
-                        <div class="dash-table-section" style="margin-top:0;">
-                            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-                                <h3 style="margin:0;">Pending Reports</h3>
-                                <a href="/lab_sync/index.php?controller=reportsController&action=index&role=technician"
-                                   style="font-size:0.85rem;color:var(--primary-color);text-decoration:none;">View all →</a>
+                    <div class="td-main-grid" aria-label="Middle Charts and Details">
+                        <article class="td-panel td-workflow-panel">
+                            <h3 class="td-panel-title">Report Workflow Status</h3>
+                            <div class="td-workflow-wrap">
+                                <canvas id="tdWorkflowChart" aria-label="Report Workflow Status"></canvas>
+                                <div class="td-workflow-center">
+                                    <strong><?php echo number_format($workflowTotalActive); ?></strong>
+                                    <span>Total Active</span>
+                                </div>
                             </div>
-                            <?php if (empty($pendingReportsList)): ?>
-                            <p class="empty-state">No pending reports.</p>
-                            <?php else: ?>
-                            <table class="dash-table">
-                                <thead>
-                                    <tr>
-                                        <th>#ID</th>
-                                        <th>Patient</th>
-                                        <th>Test</th>
-                                        <th>Status</th>
-                                        <th></th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <?php foreach ($pendingReportsList as $row): ?>
-                                    <tr>
-                                        <td>#<?php echo htmlspecialchars($row['appointment_id'] ?? '—'); ?></td>
-                                        <td><?php echo htmlspecialchars($row['patient_name'] ?? '—'); ?></td>
-                                        <td><?php echo htmlspecialchars($row['test_name'] ?? '—'); ?></td>
-                                        <td>
-                                            <?php
-                                                $st = htmlspecialchars($row['report_status'] ?? $row['status'] ?? 'PENDING');
-                                                $cls = 'status-' . $st;
-                                            ?>
-                                            <span class="status-badge <?php echo $cls; ?>"><?php echo str_replace('_', ' ', $st); ?></span>
-                                        </td>
-                                        <td>
-                                            <a href="/lab_sync/index.php?controller=reportsController&action=index&role=technician"
-                                               style="font-size:0.8rem;color:var(--primary-color);text-decoration:none;">Open</a>
-                                        </td>
-                                    </tr>
-                                    <?php endforeach; ?>
-                                </tbody>
-                            </table>
-                            <?php endif; ?>
-                        </div>
+                            <ul class="td-legend-list">
+                                <?php foreach ($workflowRows as $workflowRow): ?>
+                                    <li>
+                                        <span class="td-legend-meta"><span class="td-dot" style="background: <?php echo htmlspecialchars($workflowRow['color']); ?>;"></span><?php echo htmlspecialchars($workflowRow['label']); ?></span>
+                                        <span><?php echo number_format(intval($workflowRow['value'])); ?></span>
+                                    </li>
+                                <?php endforeach; ?>
+                            </ul>
+                        </article>
 
-                        <!-- Low Stock Items -->
-                        <div class="dash-table-section" style="margin-top:0;">
-                            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-                                <h3 style="margin:0;">Low Stock Alert</h3>
-                                <a href="/lab_sync/index.php?controller=inventoryController&action=index"
-                                   style="font-size:0.85rem;color:var(--primary-color);text-decoration:none;">View all →</a>
-                            </div>
-                            <?php if (empty($lowStockItems)): ?>
-                            <p class="empty-state">All stock levels are adequate.</p>
-                            <?php else: ?>
-                            <table class="dash-table">
-                                <thead>
-                                    <tr>
-                                        <th>Item</th>
-                                        <th>Qty</th>
-                                        <th>Reorder At</th>
-                                        <th>Level</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <?php foreach ($lowStockItems as $item): ?>
+                        <article class="td-panel td-volume-panel">
+                            <h3 class="td-panel-title">Test Volume by Category</h3>
+                            <div class="td-volume-list">
+                                <?php foreach ($testVolumeCategories as $volumeRow): ?>
                                     <?php
-                                        $qty     = intval($item['quantity']);
-                                        $reorder = intval($item['reorder_level']);
-                                        $pct     = $reorder > 0 ? min(100, round(($qty / $reorder) * 100)) : 0;
+                                        $volume = intval($volumeRow['total_volume'] ?? 0);
+                                        $barWidth = intval(round(($volume / $volumeMax) * 100));
+                                        $barWidth = max(2, min(100, $barWidth));
                                     ?>
-                                    <tr>
-                                        <td><?php echo htmlspecialchars($item['item_name']); ?></td>
-                                        <td style="color:#ff4757;font-weight:600;"><?php echo $qty; ?></td>
-                                        <td><?php echo $reorder; ?></td>
-                                        <td style="min-width:70px;">
-                                            <div class="stock-bar-wrap">
-                                                <div class="stock-bar" style="width:<?php echo $pct; ?>%;"></div>
+                                    <div class="td-volume-row">
+                                        <div class="td-volume-meta">
+                                            <span><?php echo htmlspecialchars($volumeRow['category_name'] ?? 'Uncategorized'); ?></span>
+                                            <strong><?php echo number_format($volume); ?></strong>
+                                        </div>
+                                        <div class="td-volume-track"><span class="td-volume-fill" style="width: <?php echo $barWidth; ?>%;"></span></div>
+                                    </div>
+                                <?php endforeach; ?>
+                            </div>
+                        </article>
+
+                        <aside class="td-panel td-inventory-panel">
+                            <h3 class="td-panel-title">Critical Inventory Levels</h3>
+
+                            <?php if (empty($criticalInventory)): ?>
+                                <p class="td-empty-note">No inventory alerts right now.</p>
+                            <?php else: ?>
+                                <div class="td-critical-list">
+                                    <?php foreach ($criticalInventory as $stockRow): ?>
+                                        <?php
+                                            $severityClass = 'is-healthy';
+                                            if (($stockRow['severity'] ?? '') === 'critical') {
+                                                $severityClass = 'is-critical';
+                                            } elseif (($stockRow['severity'] ?? '') === 'warning') {
+                                                $severityClass = 'is-warning';
+                                            }
+                                        ?>
+                                        <div class="td-stock-row <?php echo $severityClass; ?>">
+                                            <div class="td-stock-meta">
+                                                <span><?php echo htmlspecialchars($stockRow['item_name'] ?? 'Inventory item'); ?></span>
+                                                <strong><?php echo number_format(intval($stockRow['quantity'] ?? 0)); ?>/<?php echo number_format(intval($stockRow['reorder_level'] ?? 0)); ?></strong>
                                             </div>
-                                        </td>
-                                    </tr>
+                                            <div class="td-stock-track">
+                                                <span class="td-stock-fill" style="width: <?php echo max(4, min(100, intval($stockRow['ratio_percent'] ?? 0))); ?>%;"></span>
+                                            </div>
+                                        </div>
                                     <?php endforeach; ?>
-                                </tbody>
-                            </table>
+                                </div>
                             <?php endif; ?>
-                        </div>
+
+                            <h4 class="td-shortcut-title">Navigation Shortcuts</h4>
+                            <div class="td-shortcut-list">
+                                <a href="/lab_sync/index.php?controller=reportsController&action=index&role=technician">Reports Module <span>&#8250;</span></a>
+                                <a href="/lab_sync/index.php?controller=inventoryController&action=index">Inventory Manager <span>&#8250;</span></a>
+                            </div>
+                        </aside>
                     </div>
 
-                    <!-- Quick Links -->
-                    <div class="quick-links">
-                        <a class="quick-link-btn" href="/lab_sync/index.php?controller=reportsController&action=index&role=technician">📊 Reports</a>
-                        <a class="quick-link-btn" href="/lab_sync/index.php?controller=inventoryController&action=index">📦 Inventory</a>
-                        <a class="quick-link-btn" href="/lab_sync/index.php?controller=inventoryController&action=listSuppliers">🏢 Suppliers</a>
-                    </div>
+                    <article class="td-panel td-actions-panel" aria-label="Quick Actions">
+                        <h3 class="td-panel-title">Quick Actions</h3>
+                        <div class="td-action-grid">
+                            <a class="td-action-btn" href="/lab_sync/index.php?controller=inventoryController&action=index">Add Inventory</a>
+                            <a class="td-action-btn" href="/lab_sync/index.php?controller=TestCatalog&action=test_catalog&role=receptionist">Add New Test</a>
+                        </div>
+                    </article>
 
                 </section>
             </main>
         </div>
+
+        <script>
+            window.TECHNICIAN_DASHBOARD_DATA = <?php echo json_encode($technicianChartPayload, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
+        </script>
+        <script src="/lab_sync/public/js/technicianDashboard.js?v=20260420"></script>
     </body>
 </html>

@@ -199,35 +199,35 @@ $billStatusClass = match($paymentStatus) {
                 <?php if ($subtotal !== null): ?>
                 <div class="billing-row">
                     <span class="label">Subtotal</span>
-                    <span>$<?php echo appointmentDetailsEscape($subtotal); ?></span>
+                    <span>LKR <?php echo appointmentDetailsEscape($subtotal); ?></span>
                 </div>
                 <?php endif; ?>
                 <?php if ($discountAmt !== null && (float)str_replace(',', '', $discountAmt) > 0): ?>
                 <div class="billing-row">
                     <span class="label">Discount</span>
-                    <span>-$<?php echo appointmentDetailsEscape($discountAmt); ?></span>
+                    <span>-LKR <?php echo appointmentDetailsEscape($discountAmt); ?></span>
                 </div>
                 <?php endif; ?>
                 <?php if ($taxAmt !== null && (float)str_replace(',', '', $taxAmt) > 0): ?>
                 <div class="billing-row">
                     <span class="label">Tax</span>
-                    <span>$<?php echo appointmentDetailsEscape($taxAmt); ?></span>
+                    <span>LKR <?php echo appointmentDetailsEscape($taxAmt); ?></span>
                 </div>
                 <?php endif; ?>
                 <div class="billing-row billing-total-row">
                     <span class="label">Total</span>
-                    <div class="amount">$<?php echo appointmentDetailsEscape($totalFee); ?></div>
+                    <div class="amount">LKR <?php echo appointmentDetailsEscape($totalFee); ?></div>
                 </div>
                 <?php if ($paidAmount !== null): ?>
                 <div class="billing-row">
                     <span class="label">Paid</span>
-                    <span>$<?php echo appointmentDetailsEscape($paidAmount); ?></span>
+                    <span>LKR <?php echo appointmentDetailsEscape($paidAmount); ?></span>
                 </div>
                 <?php endif; ?>
                 <?php if ($balanceDue !== null): ?>
                 <div class="billing-row">
                     <span class="label">Balance Due</span>
-                    <strong>$<?php echo appointmentDetailsEscape($balanceDue); ?></strong>
+                    <strong>LKR <?php echo appointmentDetailsEscape($balanceDue); ?></strong>
                 </div>
                 <?php endif; ?>
                 <div class="billing-row">

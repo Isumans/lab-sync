@@ -100,7 +100,7 @@ ob_start();
                                         </td>
                                         
                                         <td class="price-cell">
-                                            <span class="price-amount">$<?php echo number_format($package['price'] ?? 0, 2); ?></span>
+                                            <span class="price-amount">LKR <?php echo number_format($package['price'] ?? 0, 2); ?></span>
                                         </td>
                                         
                                         <td class="actions-cell rd-th-right">
@@ -244,7 +244,7 @@ ob_start();
                                     <input type="number" id="editTcDiscount" name="discount" class="tc-edit-input" min="0" max="100" step="0.01">
                                 </div>
                             </div>
-                            <p id="editTcPricePreview" class="tc-price-preview">Calculated price: <strong>$0.00</strong></p>
+                            <p id="editTcPricePreview" class="tc-price-preview">Calculated price: <strong>LKR 0.00</strong></p>
                         </div>
 
                         <div class="tc-edit-section">

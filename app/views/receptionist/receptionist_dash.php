@@ -7,195 +7,201 @@ if (($_SESSION['user_role'] ?? '') !== 'receptionist') {
     header('Location: /lab_sync/index.php?controller=dashboard&action=index');
     exit();
 }
+
+$appointmentChangePrefix = $appointmentChangePct >= 0 ? '+' : '';
+
+$densityRows = [
+    'MOR' => intval($appointmentDensity['MOR'] ?? 0),
+    'LUN' => intval($appointmentDensity['LUN'] ?? 0),
+    'AFT' => intval($appointmentDensity['AFT'] ?? 0),
+    'EVE' => intval($appointmentDensity['EVE'] ?? 0),
+];
+$densityMax = max(1, ...array_values($densityRows));
+
+$statusLabels = ['Confirmed', 'Completed', 'In-Progress', 'Cancelled'];
+$statusValues = [
+    intval($statusSnapshot['confirmed'] ?? 0),
+    intval($statusSnapshot['completed'] ?? 0),
+    intval($statusSnapshot['in_progress'] ?? 0),
+    intval($statusSnapshot['cancelled'] ?? 0),
+];
+$statusColors = ['#23C06B', '#3DBDEC', '#F4B400', '#E74C3C'];
+
+$typeLabels = ['Physical', 'Online Scheduled', 'Online Home Visit'];
+$typeValues = [
+    intval($appointmentTypes['physical'] ?? 0),
+    intval($appointmentTypes['online_scheduled'] ?? 0),
+    intval($appointmentTypes['online_home_visit'] ?? 0),
+];
+$typeColors = ['#1F9CDA', '#6BC4F7', '#0E6AA4'];
+
+$chartPayload = [
+    'status' => [
+        'labels' => $statusLabels,
+        'values' => $statusValues,
+        'colors' => $statusColors,
+        'total' => intval($statusTotal ?? 0),
+    ],
+    'types' => [
+        'labels' => $typeLabels,
+        'values' => $typeValues,
+        'colors' => $typeColors,
+        'total' => intval($appointmentTypeTotal ?? 0),
+    ],
+];
 ?>
 <html>
     <head>
         <title>Receptionist Dashboard</title>
         <link rel="stylesheet" href="/lab_sync/public/styles.css">
-        <link rel="stylesheet" href="/lab_sync/public/table.css">
-        <link rel="stylesheet" href="/lab_sync/public/dashboardCards.css">
         <link rel="stylesheet" href="/lab_sync/public/reportsDashboard.css">
-        <style>
-            .dash-table-section {
-                background: var(--secondary-color);
-                border-radius: 15px;
-                padding: 24px;
-                box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-                margin-top: 24px;
-            }
-            .dash-table-section h3 {
-                font-size: 1rem;
-                font-weight: 600;
-                margin: 0 0 16px 0;
-                color: var(--font-color);
-            }
-            .dash-table {
-                width: 100%;
-                border-collapse: collapse;
-            }
-            .dash-table th {
-                text-align: left;
-                padding: 10px 12px;
-                font-size: 0.8rem;
-                color: #7c8ba3;
-                font-weight: 600;
-                text-transform: uppercase;
-                letter-spacing: 0.04em;
-                border-bottom: 1px solid rgba(0,0,0,0.08);
-            }
-            .dash-table td {
-                padding: 10px 12px;
-                font-size: 0.875rem;
-                border-bottom: 1px solid rgba(0,0,0,0.05);
-                color: var(--font-color);
-            }
-            .dash-table tr:last-child td { border-bottom: none; }
-            .dash-table tr:hover td { background: rgba(61,189,236,0.04); }
-            .status-badge {
-                display: inline-block;
-                padding: 3px 10px;
-                border-radius: 20px;
-                font-size: 0.75rem;
-                font-weight: 600;
-            }
-            .status-Pending   { background: rgba(230,126,34,0.12); color: #e67e22; }
-            .status-Confirmed { background: rgba(46,213,115,0.12); color: #2ed573; }
-            .status-Completed { background: rgba(61,189,236,0.12); color: #3DBDEC; }
-            .status-Cancelled { background: rgba(255,71,87,0.12);  color: #ff4757; }
-            .quick-links { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 24px; }
-            .quick-link-btn {
-                display: inline-flex;
-                align-items: center;
-                gap: 6px;
-                padding: 10px 18px;
-                border-radius: 8px;
-                background: var(--primary-color);
-                color: #fff;
-                font-size: 0.875rem;
-                font-weight: 500;
-                text-decoration: none;
-                transition: opacity 0.2s;
-            }
-            .quick-link-btn:hover { opacity: 0.85; }
-            .empty-state {
-                text-align: center;
-                color: #7c8ba3;
-                padding: 32px 0;
-                font-size: 0.9rem;
-            }
-        </style>
+        <link rel="stylesheet" href="/lab_sync/public/receptionistDashboard.css?v=20260420">
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     </head>
     <body>
         <?php require 'C:\xampp\htdocs\lab_sync\public\navbar.php'; ?>
         <div class="container">
             <?php require 'C:\xampp\htdocs\lab_sync\public\sidebar.php'; ?>
             <main class="main-content">
-                <section class="reports-dashboard" aria-label="Receptionist Dashboard">
+                <section class="reports-dashboard receptionist-terminal-dashboard" aria-label="Receptionist Dashboard">
                     <?php
-                        $pageTitle = 'Dashboard';
-                        $pageBreadcrumbText = 'Dashboard';
+                        $pageTitle = 'Receptionist Dashboard';
+                        $pageBreadcrumbText = 'Receptionist-Dashboard->';
                         $pageActionHtml = '';
                         require __DIR__ . '/../../../public/partials/page-header.php';
                     ?>
 
-                    <h3>Your Overview</h3>
 
-                    <!-- Metric Cards -->
-                    <div class="metrics-grid">
-                        <div class="metric-card">
-                            <div class="metric-icon order-icon">📅</div>
-                            <div class="metric-content">
-                                <h3>Appointments Today</h3>
-                                <p class="metric-value"><?php echo number_format($appointmentsToday ?? 0); ?></p>
-                                <span class="metric-change">Scheduled for today</span>
+                    <div class="rt-stats-grid" aria-label="Key Daily Stats">
+                        <div class="rt-stat-card">
+                            <div class="rt-stat-top">
+                                <span class="rt-stat-icon rt-icon-appointments">C</span>
+                                <span class="rt-stat-badge rt-badge-soft"><?php echo $appointmentChangePrefix . intval($appointmentChangePct); ?>% vs yest.</span>
                             </div>
+                            <p class="rt-stat-label">Today's Appointments</p>
+                            <p class="rt-stat-value"><?php echo number_format($appointmentsToday ?? 0); ?></p>
                         </div>
-                        <div class="metric-card">
-                            <div class="metric-icon pending-icon">📋</div>
-                            <div class="metric-content">
-                                <h3>Prescription Requests</h3>
-                                <p class="metric-value"><?php echo number_format($pendingPrescriptions ?? 0); ?></p>
-                                <span class="metric-change <?php echo ($pendingPrescriptions > 0) ? 'down' : ''; ?>">
-                                    <?php echo ($pendingPrescriptions > 0) ? 'Awaiting review' : 'All reviewed'; ?>
-                                </span>
+                        <div class="rt-stat-card">
+                            <div class="rt-stat-top">
+                                <span class="rt-stat-icon rt-icon-requests">+</span>
+                                <span class="rt-stat-badge rt-badge-warning"><?php echo htmlspecialchars($pendingBadgeLabel); ?></span>
                             </div>
+                            <p class="rt-stat-label">Pending Requests</p>
+                            <p class="rt-stat-value"><?php echo str_pad((string) intval($pendingPrescriptions ?? 0), 2, '0', STR_PAD_LEFT); ?></p>
                         </div>
-                        <div class="metric-card">
-                            <div class="metric-icon sales-icon">💳</div>
-                            <div class="metric-content">
-                                <h3>Unpaid Bills</h3>
-                                <p class="metric-value"><?php echo number_format($unpaidBills ?? 0); ?></p>
-                                <span class="metric-change <?php echo ($unpaidBills > 0) ? 'down' : ''; ?>">
-                                    <?php echo ($unpaidBills > 0) ? 'Pending payment' : 'All settled'; ?>
-                                </span>
+                        <div class="rt-stat-card">
+                            <div class="rt-stat-top">
+                                <span class="rt-stat-icon rt-icon-bills">B</span>
+                                <span class="rt-stat-badge rt-badge-danger"><?php echo htmlspecialchars($unpaidBadgeLabel); ?></span>
                             </div>
+                            <p class="rt-stat-label">Unpaid Bills</p>
+                            <p class="rt-stat-value">LKR <?php echo number_format($unpaidBillsAmount ?? 0, 0); ?></p>
                         </div>
-                        <div class="metric-card">
-                            <div class="metric-icon user-icon">👤</div>
-                            <div class="metric-content">
-                                <h3>New Patients Today</h3>
-                                <p class="metric-value"><?php echo number_format($patientsToday ?? 0); ?></p>
-                                <span class="metric-change">Registered today</span>
+                        <div class="rt-stat-card">
+                            <div class="rt-stat-top">
+                                <span class="rt-stat-icon rt-icon-registered">U</span>
+                                <span class="rt-stat-badge rt-badge-success"><?php echo htmlspecialchars($registeredBadgeLabel); ?></span>
                             </div>
+                            <p class="rt-stat-label">Registered Today</p>
+                            <p class="rt-stat-value"><?php echo number_format($patientsToday ?? 0); ?></p>
                         </div>
                     </div>
 
-                    <!-- Today's Appointments Table -->
-                    <div class="dash-table-section">
-                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-                            <h3 style="margin:0;">Today's Appointments</h3>
-                            <a href="/lab_sync/index.php?controller=appointmentsController&action=index&role=receptionist"
-                               style="font-size:0.85rem;color:var(--primary-color);text-decoration:none;">View all →</a>
-                        </div>
-                        <?php if (empty($todaysAppointments)): ?>
-                        <p class="empty-state">No appointments scheduled for today.</p>
-                        <?php else: ?>
-                        <table class="dash-table">
-                            <thead>
-                                <tr>
-                                    <th>Patient</th>
-                                    <th>Test</th>
-                                    <th>Time</th>
-                                    <th>Method</th>
-                                    <th>Status</th>
-                                    <th>Action</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php foreach ($todaysAppointments as $appt): ?>
-                                <tr>
-                                    <td><?php echo htmlspecialchars($appt['patient_name'] ?? '—'); ?></td>
-                                    <td><?php echo htmlspecialchars($appt['test_name'] ?? '—'); ?></td>
-                                    <td><?php echo htmlspecialchars(substr($appt['appointment_time'] ?? '', 0, 5)); ?></td>
-                                    <td style="text-transform:capitalize;"><?php echo htmlspecialchars($appt['method'] ?? '—'); ?></td>
-                                    <td>
-                                        <?php
-                                            $status = htmlspecialchars($appt['status'] ?? 'Pending');
-                                            $cls = 'status-' . str_replace(' ', '', $status);
-                                        ?>
-                                        <span class="status-badge <?php echo $cls; ?>"><?php echo $status; ?></span>
-                                    </td>
-                                    <td>
-                                        <a href="/lab_sync/index.php?controller=appointmentsController&action=index&role=receptionist"
-                                           style="font-size:0.8rem;color:var(--primary-color);text-decoration:none;">Manage</a>
-                                    </td>
-                                </tr>
+                    <div class="rt-main-grid">
+                        <article class="rt-panel rt-density-panel">
+                            <h3 class="rt-panel-title">Appointment Density (8AM-5PM)</h3>
+                            <div class="rt-density-list">
+                                <?php foreach ($densityRows as $slot => $count): ?>
+                                    <?php $width = $densityMax > 0 ? intval(round(($count / $densityMax) * 100)) : 0; ?>
+                                    <div class="rt-density-row">
+                                        <span class="rt-density-slot"><?php echo $slot; ?></span>
+                                        <div class="rt-density-track"><span class="rt-density-fill" style="width: <?php echo $width; ?>%;"></span></div>
+                                        <span class="rt-density-value"><?php echo str_pad((string) $count, 2, '0', STR_PAD_LEFT); ?></span>
+                                    </div>
                                 <?php endforeach; ?>
-                            </tbody>
-                        </table>
-                        <?php endif; ?>
+                            </div>
+                        </article>
+
+                        <article class="rt-panel rt-status-panel">
+                            <h3 class="rt-panel-title">Status Snapshot</h3>
+                            <div class="rt-donut-wrap">
+                                <canvas id="rtStatusChart" aria-label="Status Snapshot Chart"></canvas>
+                                <div class="rt-donut-center">
+                                    <span class="rt-donut-caption">Total</span>
+                                    <strong><?php echo number_format($statusTotal ?? 0); ?></strong>
+                                </div>
+                            </div>
+                            <ul class="rt-legend-list">
+                                <?php for ($i = 0; $i < count($statusLabels); $i++): ?>
+                                <li>
+                                    <span class="rt-legend-meta"><span class="rt-dot" style="background: <?php echo $statusColors[$i]; ?>;"></span><?php echo htmlspecialchars($statusLabels[$i]); ?></span>
+                                    <span><?php echo number_format($statusValues[$i]); ?></span>
+                                </li>
+                                <?php endfor; ?>
+                            </ul>
+                        </article>
+
+                        <aside class="rt-panel rt-actions-panel">
+                            <h3 class="rt-panel-title">Quick Actions</h3>
+                            <div class="rt-action-stack">
+                                <a class="rt-action-btn rt-action-primary" href="/lab_sync/index.php?controller=appointmentsController&action=createAppointment&role=receptionist">Book Appointment</a>
+                                <a class="rt-action-btn" href="/lab_sync/index.php?controller=appointmentsController&action=prescriptionQueue">Prescription Queue</a>
+                                <a class="rt-action-btn" href="/lab_sync/index.php?controller=TestCatalog&action=test_catalog&role=receptionist">Test Catalog</a>
+                                <a class="rt-action-btn" href="/lab_sync/index.php?controller=financesController&action=index&role=receptionist">Billing &amp; Payments</a>
+                            </div>
+                        </aside>
                     </div>
 
-                    <!-- Quick Links -->
-                    <div class="quick-links">
-                        <a class="quick-link-btn" href="/lab_sync/index.php?controller=appointmentsController&action=createAppointment&role=receptionist">📅 Book Appointment</a>
-                        <a class="quick-link-btn" href="/lab_sync/index.php?controller=appointmentsController&action=prescriptionQueue">📋 Prescription Queue</a>
-                        <a class="quick-link-btn" href="/lab_sync/index.php?controller=TestCatalog&action=test_catalog&role=receptionist">🧪 Test Catalog</a>
-                        <a class="quick-link-btn" href="/lab_sync/index.php?controller=financesController&action=index&role=receptionist">💳 Billing</a>
+                    <div class="rt-bottom-grid">
+                        <article class="rt-panel rt-types-panel">
+                            <h3 class="rt-panel-title">Appointment Type</h3>
+                            <div class="rt-donut-wrap rt-donut-wrap-small">
+                                <canvas id="rtTypeChart" aria-label="Appointment Type Chart"></canvas>
+                                <div class="rt-donut-center">
+                                    <strong><?php echo number_format($appointmentTypeTotal ?? 0); ?></strong>
+                                </div>
+                            </div>
+                            <ul class="rt-legend-list rt-legend-list-tight">
+                                <?php for ($i = 0; $i < count($typeLabels); $i++): ?>
+                                    <?php
+                                        $count = intval($typeValues[$i]);
+                                        $pct = ($appointmentTypeTotal ?? 0) > 0 ? round(($count / $appointmentTypeTotal) * 100) : 0;
+                                    ?>
+                                    <li>
+                                        <span class="rt-legend-meta"><span class="rt-dot" style="background: <?php echo $typeColors[$i]; ?>;"></span><?php echo htmlspecialchars($typeLabels[$i]); ?></span>
+                                        <span><?php echo $count; ?> (<?php echo $pct; ?>%)</span>
+                                    </li>
+                                <?php endfor; ?>
+                            </ul>
+                        </article>
+
+                        <article class="rt-panel rt-tests-panel">
+                            <h3 class="rt-panel-title">Top Ordered Tests</h3>
+                            <?php if (empty($topOrderedTests)): ?>
+                                <p class="rt-empty">No tests have been ordered today.</p>
+                            <?php else: ?>
+                                <ul class="rt-tests-list">
+                                    <?php foreach ($topOrderedTests as $test): ?>
+                                        <?php
+                                            $orders = intval($test['total_orders'] ?? 0);
+                                            $pct = ($topOrderedTestsTotal ?? 0) > 0 ? round(($orders / $topOrderedTestsTotal) * 100) : 0;
+                                        ?>
+                                        <li>
+                                            <span class="rt-test-name"><?php echo htmlspecialchars($test['test_name'] ?? 'Unknown Test'); ?></span>
+                                            <span class="rt-test-percent"><?php echo $pct; ?>%</span>
+                                        </li>
+                                    <?php endforeach; ?>
+                                </ul>
+                            <?php endif; ?>
+                        </article>
                     </div>
 
                 </section>
             </main>
         </div>
+        <script>
+            window.RECEPTIONIST_DASHBOARD_DATA = <?php echo json_encode($chartPayload, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
+        </script>
+        <script src="/lab_sync/public/js/receptionistDashboard.js?v=20260420"></script>
     </body>
 </html>

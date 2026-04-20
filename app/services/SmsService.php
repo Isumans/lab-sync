@@ -125,6 +125,42 @@ class SmsService {
         return $this->sendSms($phoneNumber, $message);
     }
 
+    public function sendPrescriptionReviewedSms($phoneNumber, $recipientName, array $payload) {
+        $requestId = intval($payload['request_id'] ?? 0);
+        $testsSnippet = $this->buildCompactTestList($payload['tests'] ?? []);
+
+        $recipientLabel = trim((string)$recipientName);
+        if ($recipientLabel === '') {
+            $recipientLabel = 'Patient';
+        }
+
+        $message = sprintf(
+            'Hi %s, your prescription has been reviewed and updated in your dashboard. Please proceed with tests. Request #RX-%05d. Tests: %s.',
+            $recipientLabel,
+            $requestId,
+            $testsSnippet
+        );
+
+        return $this->sendSms($phoneNumber, $message);
+    }
+
+    public function sendTestAuthorizedSms($phoneNumber, $recipientName, array $payload) {
+        $testName = trim((string)($payload['test_name'] ?? 'Selected test'));
+
+        $recipientLabel = trim((string)$recipientName);
+        if ($recipientLabel === '') {
+            $recipientLabel = 'Patient';
+        }
+
+        $message = sprintf(
+            'Hi %s, %s has been completed. Please view the results in your dashboard or collect them from us.',
+            $recipientLabel,
+            $testName !== '' ? $testName : 'Your test'
+        );
+
+        return $this->sendSms($phoneNumber, $message);
+    }
+
     private function extractAppointmentData($payload) {
         if (is_array($payload) && isset($payload['appointment']) && is_array($payload['appointment'])) {
             return $payload['appointment'];
@@ -203,5 +239,35 @@ class SmsService {
         }
 
         return $firstPart;
+    }
+
+    private function buildCompactTestList($tests) {
+        if (!is_array($tests) || empty($tests)) {
+            return 'Selected diagnostic tests';
+        }
+
+        $names = [];
+        foreach ($tests as $row) {
+            if (is_array($row)) {
+                $name = trim((string)($row['test_name'] ?? ''));
+            } else {
+                $name = trim((string)$row);
+            }
+
+            if ($name !== '') {
+                $names[$name] = $name;
+            }
+        }
+
+        $names = array_values($names);
+        if (empty($names)) {
+            return 'Selected diagnostic tests';
+        }
+
+        if (count($names) > 3) {
+            return $names[0] . ', ' . $names[1] . ', ' . $names[2] . ' +' . (count($names) - 3) . ' more';
+        }
+
+        return implode(', ', $names);
     }
 }

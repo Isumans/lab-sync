@@ -124,43 +124,4 @@
     </section>
 
 
-    <div class="partner-stats-grid">
-        <div class="stat-card">
-            <div class="stat-icon" style="background: #e8f5e9; color: #2e7d32;">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/>
-                </svg>
-            </div>
-            <div class="stat-content">
-                <div class="stat-label">ACTIVE JOBS</div>
-                <div class="stat-value">142</div>
-                <div class="stat-description">Tests currently outsourced</div>
-            </div>
-        </div>
-
-        <div class="stat-card">
-            <div class="stat-icon" style="background: #e3f2fd; color: #1565c0;">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/>
-                </svg>
-            </div>
-            <div class="stat-content">
-                <div class="stat-label">AVG TAT</div>
-                <div class="stat-value">1.2 Days</div>
-                <div class="stat-description">Turnaround time across partners</div>
-            </div>
-        </div>
-
-        <div class="stat-card">
-            <div class="stat-icon" style="background: #f3e5f5; color: #6a1b9a;">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/>
-                </svg>
-            </div>
-            <div class="stat-content">
-                <div class="stat-label">EST. MONTHLY</div>
-                <div class="stat-value">$4.2k</div>
-                <div class="stat-description">Pending partner payouts</div>
-            </div>
-        </div>
-    </div>
+    

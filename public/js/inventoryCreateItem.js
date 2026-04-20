@@ -75,9 +75,9 @@
             parsed = 0;
         }
 
-        return parsed.toLocaleString('en-US', {
-            style: 'currency',
-            currency: 'USD'
+        return 'LKR ' + parsed.toLocaleString('en-US', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
         });
     }
 

@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS inventory_supplier_sources (
     inventory_id INT NOT NULL,
     supplier_id INT NOT NULL,
     unit_cost DECIMAL(10,2) DEFAULT NULL,
-    currency_code CHAR(3) NOT NULL DEFAULT 'USD',
+    currency_code CHAR(3) NOT NULL DEFAULT 'LKR',
     min_order_qty INT DEFAULT NULL,
     lead_time_days INT DEFAULT NULL,
     is_primary TINYINT(1) NOT NULL DEFAULT 0,

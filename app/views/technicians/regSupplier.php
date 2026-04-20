@@ -15,6 +15,7 @@ if (!isset($_SESSION['user_id'])) {
     <link rel="stylesheet" href="/lab_sync/public/settingStyles.css">
     <link rel="stylesheet" href="/lab_sync/public/table.css">
     <link rel="stylesheet" href="/lab_sync/public/inventoryStyles.css">
+    <link rel="stylesheet" href="/lab_sync/public/reportsDashboard.css">
 </head>
 <body>
     <?php require 'C:\xampp\htdocs\lab_sync\public\navbar.php'; ?>
@@ -22,7 +23,8 @@ if (!isset($_SESSION['user_id'])) {
         <?php require 'C:\xampp\htdocs\lab_sync\public\sidebar.php'; ?>
 
         <main class="main-content">
-            <?php
+            <section class="reports-dashboard" aria-label="supplier create">
+                <?php
                 $pageTitle = 'Create Supplier';
                 $pageBreadcrumbText = 'Suppliers->Create Supplier';
                 $pageActionHtml = '<a class="add-user-button" href="/lab_sync/index.php?controller=supplierController&action=index">Back to Suppliers</a>';
@@ -79,6 +81,9 @@ if (!isset($_SESSION['user_id'])) {
                     </div>
                 </aside>
             </form>
+
+            </section>
+            
         </main>
     </div>
 
